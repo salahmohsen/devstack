@@ -40,6 +40,24 @@ const glassTone = (glow: BadgeGlowVariant, text: string) =>
     text
   );
 
+/**
+ * White glossy frost in light **and** dark (not theme `background`).
+ * Shared by AI running status (`glass-white`) and cancel X (`glass-destructive`).
+ */
+const glassWhiteTone = (glow: BadgeGlowVariant, text: string) =>
+  cn(
+    "overflow-visible border-black/10 bg-white/90 shadow-xs/5 backdrop-blur-md not-dark:bg-clip-padding",
+    "dark:border-black/10 dark:bg-white/90",
+    // Running status is `disabled` but must stay full-opacity white glass.
+    "disabled:opacity-100",
+    BADGE_GLOW[glow].border,
+    BADGE_GLOW_VARS[glow],
+    "before:bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,var(--btn-glow)_0%,transparent_72%)]",
+    "after:pointer-events-none after:absolute after:top-0 after:right-[22%] after:left-[22%] after:z-10 after:h-px after:bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,var(--btn-glow-line)_0%,transparent_100%)]",
+    "pointer-coarse:after:inset-0 pointer-coarse:after:right-auto pointer-coarse:after:left-auto pointer-coarse:after:h-auto pointer-coarse:after:bg-transparent",
+    text
+  );
+
 export const buttonVariants = cva(
   cn(
     "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border text-base font-medium whitespace-nowrap transition-shadow outline-none",
@@ -100,10 +118,23 @@ export const buttonVariants = cva(
           "pointer-coarse:after:inset-0 pointer-coarse:after:right-auto pointer-coarse:after:left-auto pointer-coarse:after:h-auto pointer-coarse:after:bg-transparent",
           "[:active,[data-pressed]]:inset-shadow-[0_1px_--theme(--color-black/8%)] [:disabled,:active,[data-pressed]]:shadow-none"
         ),
-        /** Glass cancel / stop chrome (AI flow trigger X). Same frost as `glass`, destructive glow. */
+        /**
+         * White glossy frost (both themes). AI flow running status chip paired with
+         * `glass-destructive` cancel.
+         */
+        "glass-white": cn(
+          glassWhiteTone("on-white", "text-neutral-800 dark:text-neutral-800"),
+          "*:data-[slot=button-loading-indicator]:text-neutral-800"
+        ),
+        /**
+         * AI flow trigger cancel / stop. White glossy frost (both themes) + destructive
+         * bloom; `dark:hover` so the wash wins over `dark:bg-white/90`.
+         */
         "glass-destructive": cn(
-          glassTone("destructive", "text-destructive-foreground"),
-          "hover:bg-destructive/8 data-pressed:bg-destructive/12"
+          glassWhiteTone("destructive", "text-destructive-foreground"),
+          "hover:bg-destructive/8 data-pressed:bg-destructive/12",
+          "hover:dark:bg-destructive/8 dark:data-pressed:bg-destructive/12",
+          "*:data-[slot=button-loading-indicator]:text-destructive-foreground"
         ),
         brand:
           "border-brand/35 bg-background text-brand shadow-xs/5 hover:bg-brand/8 data-pressed:bg-brand/12 *:data-[slot=button-loading-indicator]:text-brand",
@@ -133,6 +164,7 @@ export type ButtonProps = {
 export function buttonGlowVariant(variant: ButtonProps["variant"]): BadgeGlowVariant | null {
   if (variant === "glass") return "default";
   if (variant === "glass-primary") return "on-primary";
+  if (variant === "glass-white") return "on-white";
   if (variant === "glass-destructive") return "destructive";
   return null;
 }

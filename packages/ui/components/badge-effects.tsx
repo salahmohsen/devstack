@@ -24,7 +24,9 @@ export type BadgeGlowVariant =
   | "success"
   | "warning"
   /** Light bloom for dark primary fills (glass-primary buttons). */
-  | "on-primary";
+  | "on-primary"
+  /** Dark bloom for white glossy frost (glass-white / AI running triggers). */
+  | "on-white";
 
 export const BADGE_GLOW_VARS: Record<BadgeGlowVariant, string> = {
   default:
@@ -39,7 +41,8 @@ export const BADGE_GLOW_VARS: Record<BadgeGlowVariant, string> = {
     "[--btn-glow:rgba(113,113,122,0.2)] [--btn-glow-line:rgba(113,113,122,0.24)] dark:[--btn-glow:rgba(250,250,250,0.35)] dark:[--btn-glow-line:rgba(250,250,250,0.55)]",
   success: "[--btn-glow:rgba(34,197,94,0.65)] [--btn-glow-line:rgba(34,197,94,0.95)]",
   warning: "[--btn-glow:rgba(245,158,11,0.65)] [--btn-glow-line:rgba(245,158,11,0.95)]",
-  "on-primary": "[--btn-glow:rgba(250,250,250,0.4)] [--btn-glow-line:rgba(250,250,250,0.75)]"
+  "on-primary": "[--btn-glow:rgba(250,250,250,0.4)] [--btn-glow-line:rgba(250,250,250,0.75)]",
+  "on-white": "[--btn-glow:rgba(24,24,27,0.2)] [--btn-glow-line:rgba(24,24,27,0.22)]"
 };
 
 export const BADGE_GLOW: Record<BadgeGlowVariant, BadgeGlowClasses> = {
@@ -104,6 +107,13 @@ export const BADGE_GLOW: Record<BadgeGlowVariant, BadgeGlowClasses> = {
     border: "border-primary/40",
     soft: "bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(250,250,250,0.55)_0%,transparent_70%)]",
     mid: "bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(250,250,250,0.4)_0%,transparent_70%)]",
+    line: "bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,var(--btn-glow-line)_0%,transparent_100%)]"
+  },
+  "on-white": {
+    icon: "text-neutral-800",
+    border: "border-black/10",
+    soft: "bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(24,24,27,0.55)_0%,transparent_70%)]",
+    mid: "bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(24,24,27,0.4)_0%,transparent_70%)]",
     line: "bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,var(--btn-glow-line)_0%,transparent_100%)]"
   },
   warning: {

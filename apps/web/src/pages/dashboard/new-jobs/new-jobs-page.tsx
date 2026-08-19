@@ -72,7 +72,6 @@ import {
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
   ApplicationMatchScoreBadge,
-  ScanJobAlertsButton,
   clearPendingOpenApplicationId,
   useAgentTakeJob,
   useBatchDismissApplicationsMutation,
@@ -87,7 +86,6 @@ import {
   useRegenerateAgentTakeMutation,
   useRestoreApplicationMutation
 } from "@/features/applications";
-import { FindJobsNowButton } from "@/features/job-discovery";
 import { useGetJobPreferenceQuery } from "@/features/job-preference";
 
 import {
@@ -103,6 +101,7 @@ import { useSidePanelClose } from "@/widgets/layout";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { FixPostingUrlDialog } from "@/pages/dashboard/new-jobs/ui/fix-posting-url-dialog";
+import { NewJobsDiscoveryActions } from "@/pages/dashboard/new-jobs/ui/new-jobs-discovery-actions";
 import { UpdateDescriptionDialog } from "@/pages/dashboard/new-jobs/ui/update-description-dialog";
 
 const ApplicationFormSheet = lazy(() =>
@@ -603,17 +602,7 @@ export function NewJobsPage() {
         <PageHeader
           title="New jobs"
           description="Matches from public job boards. Track to add to your pipeline, or dismiss."
-          actions={
-            importFromEmail ? (
-              <Group>
-                <FindJobsNowButton />
-                <GroupSeparator className="bg-primary/72" />
-                <ScanJobAlertsButton />
-              </Group>
-            ) : (
-              <FindJobsNowButton />
-            )
-          }
+          actions={<NewJobsDiscoveryActions importFromEmail={importFromEmail} />}
         />
 
         <Tabs
@@ -684,15 +673,7 @@ export function NewJobsPage() {
                   description="Public job boards that match your title and keywords show up here. Find jobs now, or set a title under Settings."
                   action={
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                      {importFromEmail ? (
-                        <Group>
-                          <FindJobsNowButton />
-                          <GroupSeparator className="bg-primary/72" />
-                          <ScanJobAlertsButton />
-                        </Group>
-                      ) : (
-                        <FindJobsNowButton />
-                      )}
+                      <NewJobsDiscoveryActions importFromEmail={importFromEmail} />
                       <Button
                         type="button"
                         size="sm"

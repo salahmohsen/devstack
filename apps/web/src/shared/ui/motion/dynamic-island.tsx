@@ -13,6 +13,7 @@ import {
   type ReactNode
 } from "react";
 
+import { BADGE_GLOW_VARS, BadgeTopGlow } from "@tsu-stack/ui/components/badge-effects";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { EASE_OUT } from "@/shared/lib/ease";
@@ -139,7 +140,7 @@ export type DynamicIslandProps = {
   children?: ReactNode;
   /**
    * `inverted` — solid `bg-foreground` (no frost).
-   * `glass` — frosted inverted fill: black in light mode, white in dark mode.
+   * `glass` — same paint as `glass-primary` buttons (Organize): solid primary + bloom.
    */
   appearance?: DynamicIslandAppearance;
   /** Accessible name when expanded (`role="region"`). Compact stays a live status. */
@@ -148,17 +149,14 @@ export type DynamicIslandProps = {
 };
 
 /**
- * Inverted glass: frosted `foreground` fill — black in light mode, white in dark —
- * with AI-trigger-style bloom (glow polarity flipped for the inverted substrate).
- * Outer shell stays `overflow-visible` so the top bloom is not clipped.
+ * Match `buttonVariants` `glass-primary`: solid primary fill + shared top bloom /
+ * hairline (not frosted translucent fills). Outer shell stays `overflow-visible`
+ * so the bloom above the shell is not clipped.
  */
 const GLASS_SHELL_CLASS = cn(
-  "overflow-visible bg-foreground/90 text-background shadow-lg",
-  "border border-white/20 dark:border-black/15",
-  "backdrop-blur-md backdrop-saturate-150 not-dark:bg-clip-padding",
-  // Light bloom on black glass (light mode); dark bloom on white glass (dark mode).
-  "[--btn-glow-line:rgba(250,250,250,0.75)] [--btn-glow:rgba(250,250,250,0.45)]",
-  "dark:[--btn-glow-line:rgba(24,24,27,0.4)] dark:[--btn-glow:rgba(24,24,27,0.28)]",
+  "overflow-visible border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24",
+  "inset-shadow-[0_1px_--theme(--color-white/16%)]",
+  BADGE_GLOW_VARS["on-primary"],
   "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit]",
   "before:bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,var(--btn-glow)_0%,transparent_72%)]",
   "after:pointer-events-none after:absolute after:top-0 after:right-[22%] after:left-[22%] after:z-10 after:h-px",
@@ -167,37 +165,6 @@ const GLASS_SHELL_CLASS = cn(
 
 const INVERTED_SHELL_CLASS =
   "overflow-hidden border border-transparent bg-foreground text-background shadow-2xl";
-
-/** Top bloom for inverted glass (BadgeTopGlow polarity is page-themed, not substrate-themed). */
-function InvertedGlassGlow() {
-  return (
-    <>
-      <span
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -top-2 right-[10%] left-[10%] h-4 opacity-55 blur-[7px]",
-          "bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(250,250,250,0.55)_0%,transparent_70%)]",
-          "dark:bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(24,24,27,0.45)_0%,transparent_70%)]"
-        )}
-      />
-      <span
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -top-1 right-[22%] left-[22%] h-2 opacity-75 blur-[3.5px]",
-          "bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(250,250,250,0.4)_0%,transparent_70%)]",
-          "dark:bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(24,24,27,0.35)_0%,transparent_70%)]"
-        )}
-      />
-      <span
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute top-0 right-[28%] left-[28%] h-px opacity-70 dark:opacity-50",
-          "bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,var(--btn-glow-line)_0%,transparent_100%)]"
-        )}
-      />
-    </>
-  );
-}
 
 export function DynamicIsland({
   view,
@@ -242,7 +209,7 @@ export function DynamicIsland({
           className
         )}
       >
-        {glass ? <InvertedGlassGlow /> : null}
+        {glass ? <BadgeTopGlow variant="on-primary" /> : null}
         {/* Clip morphing content without clipping the glass bloom above the shell. */}
         <div className="relative z-10 overflow-hidden rounded-[inherit]">
           <div ref={sizerRef} className="w-max">

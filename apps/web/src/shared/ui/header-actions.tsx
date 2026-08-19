@@ -188,7 +188,7 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
           {addControl || menuControl ? (
             <Group>
               {addControl}
-              {addControl && menuControl ? <GroupSeparator className="bg-primary/72" /> : null}
+              {addControl && menuControl ? <GroupSeparator /> : null}
               {menuControl}
             </Group>
           ) : null}
@@ -209,13 +209,13 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
                 layout="default"
                 variant="glass-primary"
               />
-              {addControl ? <GroupSeparator className="bg-primary/72" /> : null}
+              {addControl ? <GroupSeparator /> : null}
             </>
           ) : null}
           {addControl}
           {menuControl ? (
             <>
-              {(organize ?? addControl) && <GroupSeparator className="bg-primary/72" />}
+              {(organize ?? addControl) && <GroupSeparator />}
               {menuControl}
             </>
           ) : null}

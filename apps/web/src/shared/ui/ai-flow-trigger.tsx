@@ -16,6 +16,8 @@ import {
 } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { AiLoader } from "@/shared/ui/ai-loader";
+
 /** Fast whole-label swap — letter stagger is too slow for long step copy. */
 function RunningStepLabel({ text }: { text: string }) {
   const reduceMotion = Boolean(useReducedMotion());
@@ -53,9 +55,10 @@ export type AiFlowTriggerProps = {
   /** Native button chrome, full-width field footer, or compact pill. */
   layout?: "default" | "stretch" | "pill";
   /**
+   * Idle only:
    * `glass` — frosted start chrome (Find jobs / Scan / Detect).
    * `glass-primary` — primary fill matching Add, with glass bloom (header Organize).
-   * Running cancel stays `glass-destructive` either way.
+   * Running uses `glass-white` status + `glass-destructive` cancel (both themes).
    */
   variant?: "glass" | "glass-primary";
   /** Idle-only tooltip. Trigger merges into the button so Group radii still flatten. */
@@ -110,7 +113,7 @@ export function WorkflowSolvingOrb({
 }
 
 /**
- * Page-level start trigger (glass). Idle glass button; running orb + step + cancel.
+ * Page-level start trigger (glass). Idle glass button; running AiLoader + step + cancel.
  * Shared by Find jobs now, Scan job alerts, Detect stacks, and Organize.
  */
 export function AiFlowTrigger({
@@ -133,7 +136,6 @@ export function AiFlowTrigger({
   const liveLabel = stepLabel?.trim() ?? runningFallback;
   const compact = size === "sm";
   const flush = "rounded-none before:rounded-none";
-  const primaryGroup = variant === "glass-primary";
 
   if (running) {
     return (
@@ -150,7 +152,7 @@ export function AiFlowTrigger({
         <Button
           type="button"
           size={size}
-          variant={variant}
+          variant="glass-white"
           disabled
           className={cn(
             "pointer-events-none h-full justify-start",
@@ -158,14 +160,14 @@ export function AiFlowTrigger({
             pill && "rounded-full rounded-e-none"
           )}
         >
-          <WorkflowSolvingOrb />
+          <AiLoader size={compact ? "xs" : "sm"} variant="inline" className="shrink-0" />
           {stretch ? (
             <span className="min-w-0 truncate">{liveLabel}</span>
           ) : (
             <RunningStepLabel text={liveLabel} />
           )}
         </Button>
-        <GroupSeparator className={primaryGroup ? "bg-primary/72" : undefined} />
+        <GroupSeparator />
         <TooltipProvider delay={0}>
           <Tooltip>
             <TooltipTrigger

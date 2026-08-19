@@ -27,13 +27,14 @@ function stripTrailingDots(text: string) {
   return text.replace(/(?:\.{2,}|…)+$/u, "").trimEnd();
 }
 
-const invertedOutline =
-  "border-background/30 bg-background/15 text-background hover:bg-background/25 data-pressed:bg-background/25";
-const invertedGhost =
-  "border-transparent text-background hover:bg-background/15 data-pressed:bg-background/15";
-/** Focus ring that reads on inverted frost (page `ring` is invisible on fg glass). */
-const invertedFocus =
-  "outline-none focus-visible:ring-2 focus-visible:ring-background/55 focus-visible:ring-offset-2 focus-visible:ring-offset-foreground";
+/** Controls on primary glass (same plane as Organize / glass-primary). */
+const onPrimaryOutline =
+  "border-primary-foreground/30 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 data-pressed:bg-primary-foreground/25";
+const onPrimaryGhost =
+  "border-transparent text-primary-foreground hover:bg-primary-foreground/15 data-pressed:bg-primary-foreground/15";
+/** Focus ring that reads on primary glass (page `ring` is invisible on dark primary). */
+const onPrimaryFocus =
+  "outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/55 focus-visible:ring-offset-2 focus-visible:ring-offset-primary";
 
 function collapseOrDismiss(foreground: AiIslandRun | undefined, setView: (v: IslandView) => void) {
   if (!foreground) {
@@ -53,9 +54,9 @@ function StepGlyph({ state }: { state: AiIslandStep["state"] }) {
     <span
       className={cn(
         "flex size-5 shrink-0 items-center justify-center",
-        state === "done" && "text-background/70",
-        state === "active" && "text-background",
-        state === "pending" && "text-background/35"
+        state === "done" && "text-primary-foreground/70",
+        state === "active" && "text-primary-foreground",
+        state === "pending" && "text-primary-foreground/35"
       )}
       aria-hidden
     >
@@ -77,7 +78,7 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
   if (steps.length === 0) {
     return (
       <p
-        className="text-sm leading-snug font-medium text-background motion-safe:shimmer"
+        className="text-sm leading-snug font-medium text-primary-foreground motion-safe:shimmer"
         aria-live="polite"
       >
         {liveLabel}
@@ -95,17 +96,17 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
             key={step.id}
             className={cn(
               "flex items-center gap-2.5 py-0.5 text-sm leading-snug",
-              isActive && "font-medium text-background",
-              step.state === "done" && "text-background/65",
-              step.state === "pending" && "text-background/40"
+              isActive && "font-medium text-primary-foreground",
+              step.state === "done" && "text-primary-foreground/65",
+              step.state === "pending" && "text-primary-foreground/40"
             )}
           >
             <StepGlyph state={step.state} />
             <span
               className={cn(
                 "min-w-0 flex-1 text-pretty tabular-nums",
-                // Keep text-background on the shimmer node so currentColor resolves on inverted frost.
-                isActive && "text-background motion-safe:shimmer"
+                // Keep text-primary-foreground on the shimmer node so currentColor resolves on primary glass.
+                isActive && "text-primary-foreground motion-safe:shimmer"
               )}
             >
               {isActive ? liveLabel || label : label}
@@ -125,9 +126,9 @@ function StackPill({ run, onSelect }: { run: AiIslandRun; onSelect: (run: AiIsla
       type="button"
       className={cn(
         "inline-flex max-w-72 cursor-pointer items-center gap-2.5 rounded-full px-5 py-2.5",
-        "border border-white/20 bg-foreground/90 text-background shadow-lg dark:border-black/15",
-        "backdrop-blur-md active:scale-[0.96]",
-        invertedFocus
+        "border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24",
+        "inset-shadow-[0_1px_--theme(--color-white/16%)] active:scale-[0.96]",
+        onPrimaryFocus
       )}
       aria-label={`Switch to ${title}: ${step}`}
       onClick={() => {
@@ -136,8 +137,10 @@ function StackPill({ run, onSelect }: { run: AiIslandRun; onSelect: (run: AiIsla
     >
       <WorkflowSolvingOrb size="toast" surface="inverted" />
       <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5">
-        <span className="truncate text-sm leading-snug font-medium text-background">{title}</span>
-        <span className="truncate text-sm leading-snug font-medium text-background motion-safe:shimmer">
+        <span className="truncate text-sm leading-snug font-medium text-primary-foreground">
+          {title}
+        </span>
+        <span className="truncate text-sm leading-snug font-medium text-primary-foreground motion-safe:shimmer">
           {step}
         </span>
       </span>
@@ -166,9 +169,9 @@ function TouchRunSwitcher({
           key={run.id}
           type="button"
           className={cn(
-            "max-w-full truncate rounded-full border border-background/25 bg-background/10 px-2 py-1",
-            "text-[10px] font-medium text-background/80 hover:bg-background/20 active:scale-[0.96]",
-            invertedFocus
+            "max-w-full truncate rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-2 py-1",
+            "text-[10px] font-medium text-primary-foreground/80 hover:bg-primary-foreground/20 active:scale-[0.96]",
+            onPrimaryFocus
           )}
           aria-label={`Switch to ${stripTrailingDots(run.title)}`}
           onClick={() => {
@@ -284,7 +287,7 @@ export function AiJobIslandHost() {
       type="button"
       className={cn(
         "flex min-w-0 cursor-pointer items-center gap-2.5 rounded-full text-left active:scale-[0.96]",
-        invertedFocus
+        onPrimaryFocus
       )}
       onClick={onCompactActivate}
       aria-expanded={view !== null}
@@ -292,10 +295,12 @@ export function AiJobIslandHost() {
     >
       <WorkflowSolvingOrb size="toast" surface="inverted" paused={!running} />
       <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5" aria-hidden>
-        <span className="truncate text-sm leading-snug font-medium text-background">{title}</span>
+        <span className="truncate text-sm leading-snug font-medium text-primary-foreground">
+          {title}
+        </span>
         <span
           className={cn(
-            "truncate text-sm leading-snug font-medium text-background",
+            "truncate text-sm leading-snug font-medium text-primary-foreground",
             running && "motion-safe:shimmer"
           )}
         >
@@ -304,7 +309,7 @@ export function AiJobIslandHost() {
       </span>
       {runCount > 1 ? (
         <span
-          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-background/20 text-[10px] font-semibold text-background tabular-nums"
+          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/20 text-[10px] font-semibold text-primary-foreground tabular-nums"
           aria-hidden
         >
           {runCount}
@@ -351,10 +356,10 @@ export function AiJobIslandHost() {
             id="timeline"
             className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
           >
-            <div className="flex flex-col gap-1.5 border-b border-background/10 pb-3">
+            <div className="flex flex-col gap-1.5 border-b border-primary-foreground/10 pb-3">
               {/* Optical center: title + Cancel share one midline (better-ui). */}
               <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 flex-1 pe-1 text-sm leading-snug font-semibold tracking-tight text-pretty text-background">
+                <p className="min-w-0 flex-1 pe-1 text-sm leading-snug font-semibold tracking-tight text-pretty text-primary-foreground">
                   {title}
                 </p>
                 <Button
@@ -362,7 +367,7 @@ export function AiJobIslandHost() {
                   size="xs"
                   variant="outline"
                   // Island radius 32 + ~16–20 pad → inner ~12–16 (rounded-xl).
-                  className={cn(invertedOutline, invertedFocus, "shrink-0 rounded-xl")}
+                  className={cn(onPrimaryOutline, onPrimaryFocus, "shrink-0 rounded-xl")}
                   onClick={() => {
                     foreground.onCancel();
                   }}
@@ -392,15 +397,15 @@ export function AiJobIslandHost() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1 space-y-0.5 pe-0.5">
-                    <p className="text-sm leading-snug font-semibold tracking-tight text-balance text-background">
+                    <p className="text-sm leading-snug font-semibold tracking-tight text-balance text-primary-foreground">
                       {stripTrailingDots(foreground.resultTitle ?? foreground.title)}
                     </p>
                     {foreground.errorMessage ? (
-                      <p className="text-xs leading-relaxed text-pretty text-background/70">
+                      <p className="text-xs leading-relaxed text-pretty text-primary-foreground/70">
                         {foreground.errorMessage}
                       </p>
                     ) : foreground.status === "success" && foreground.requiresAction ? (
-                      <p className="text-xs leading-relaxed text-background/60">
+                      <p className="text-xs leading-relaxed text-primary-foreground/60">
                         Ready when you are
                       </p>
                     ) : null}
@@ -409,7 +414,7 @@ export function AiJobIslandHost() {
                     type="button"
                     size="icon-xs"
                     variant="ghost"
-                    className={cn(invertedGhost, invertedFocus, "-mt-0.5 shrink-0 rounded-xl")}
+                    className={cn(onPrimaryGhost, onPrimaryFocus, "-mt-0.5 shrink-0 rounded-xl")}
                     aria-label="Dismiss"
                     onClick={() => {
                       dismissAiJobIsland(foreground.id);
@@ -435,8 +440,8 @@ export function AiJobIslandHost() {
                 size="sm"
                 variant="outline"
                 className={cn(
-                  invertedOutline,
-                  invertedFocus,
+                  onPrimaryOutline,
+                  onPrimaryFocus,
                   "h-8 w-full justify-center rounded-xl"
                 )}
                 onClick={onResultAction}
