@@ -51,14 +51,17 @@ The primary failure to fix is **structure under squeeze**, not merely “show mo
 | Badges        | Hidden                           | Type / featured / project-count not shown in compact               |
 | Action footer | Existing `ListItemActionButtons` | Unchanged composition; keep footer height ~`h-10`; center as today |
 
+The compact identity band remains the primary open/view click target (same role as today’s centered content `button`). The action footer stays a separate stopPropagation zone.
+
 ### Wide layout
 
 - Preserve current centered icon (`size-14`), `line-clamp-2` name, `StackIdentityBadges`, and footer action strip behavior (opacity on hover / open / batch).
+- Add `title={stack.name}` on the wide name as well (parity with sort mode and compact).
 
 ### Sort mode
 
 - Sort mode uses the same compact ↔ wide identity adaptation.
-- Drag handle and batch checkbox positioning stay usable; do not collide with the compact identity band.
+- Drag handle and batch checkbox must not collide with the compact identity band: plan must pick a concrete fix (corner overlays with padding, or a reserved leading slot) — not leave it unspecified.
 
 ### Selection / open
 
