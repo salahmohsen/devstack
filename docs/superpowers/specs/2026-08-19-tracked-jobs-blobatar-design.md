@@ -29,9 +29,10 @@ Replace the custom canvas `AgentAvatar` on tracked jobs with [blobatar](https://
 | Selected   | `animate="always"`                    | `surprised` | Breathe/bob/blink/glance + pose morph  |
 
 - Deterministic `name` = `companyName` (same seed string used today).
-- `background="none"` (transparent; creature only).
+- Transparent backdrop (blobatar default): omit `background`, or pass `background={false}` — do not invent a `"none"` string.
 - Respect library `prefers-reduced-motion` handling (static under reduce).
 - Selection definition unchanged: list row / board card whose id is the open side-panel item. The info panel avatar is for that open item, so it uses the **selected** variant while the panel is showing the job.
+- Preserve existing call-site `size` and outline `className` values (list 32, board 28, panel 44).
 
 ## Component shape
 
