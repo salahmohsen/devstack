@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Eye, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { Eye, GripVertical, Pencil, SquareCheckIcon, SquareIcon, Trash2 } from "lucide-react";
 import { memo, useState } from "react";
 import { toast } from "sonner";
 
@@ -164,17 +164,11 @@ export const StackItem = memo(function StackItem({
           </div>
         ) : null}
         <div data-batch-select className="absolute top-2 left-3 z-10">
-          {!isSort ? (
+          {!isSort && (isChecked || batchSelectActive) ? (
             <Checkbox
               checked={isChecked}
               onCheckedChange={() => onToggleSelect(stack.id)}
               aria-label={`Select ${stack.name}`}
-              className={cn(
-                "motion-safe:transition-opacity motion-safe:duration-150",
-                isChecked || batchSelectActive
-                  ? "opacity-100"
-                  : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-              )}
             />
           ) : null}
         </div>
@@ -255,6 +249,10 @@ export const StackItem = memo(function StackItem({
                   onAction: () => onEdit(stack.id),
                   isLoading: false
                 }}
+                select={{
+                  selected: isChecked,
+                  onToggle: () => onToggleSelect(stack.id)
+                }}
                 togglePortfolio={{
                   onAction: handleTogglePortfolio,
                   initialValue: !!stack.portfolioEntryId,
@@ -321,6 +319,10 @@ export const StackItem = memo(function StackItem({
           >
             <Pencil aria-hidden />
             Edit
+          </ContextMenuItem>
+          <ContextMenuItem closeOnClick onClick={() => onToggleSelect(stack.id)}>
+            {isChecked ? <SquareCheckIcon aria-hidden /> : <SquareIcon aria-hidden />}
+            {isChecked ? "Deselect" : "Select"}
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuSub>

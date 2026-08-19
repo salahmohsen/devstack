@@ -5,20 +5,13 @@ import { useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
-import { IconMorph, IconShake } from "@tsu-stack/ui/components/icon-motion";
-import {
-  Menu,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuSub,
-  MenuSubPopup,
-  MenuSubTrigger,
-  MenuTrigger
-} from "@tsu-stack/ui/components/menu";
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
+import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { StatusMorphToggle } from "@tsu-stack/ui/components/status-morph-toggle";
-import { Switch } from "@tsu-stack/ui/components/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
+
+import { listItemMenuSlots, type ListItemMenuSlots } from "@/shared/ui/list-item-menu-slots";
+import { ListItemOverflowMenu } from "@/shared/ui/list-item-overflow-menu";
 
 type ActionButtonConfig = {
   onAction: () => void;
@@ -107,9 +100,18 @@ type ListItemActionButtonsProps = {
   togglePortfolio?: ToggleConfig;
   toggleFeatured?: ToggleConfig;
   delete?: ActionButtonConfig;
+  /** Batch select — adds Select/Deselect to the ▾ menu (and implies a ▾ exists). */
+  select?: {
+    selected: boolean;
+    onToggle: () => void;
+  };
   /**
-   * Extra items rendered at the top of the overflow menu (e.g. “Detect stacks”).
-   * Callers own MenuItem markup and should stopPropagation on click.
+   * Extra overflow items for both ▾ and right-click menus (slot-based).
+   * Prefer this over `extraMenuItems` so context menus stay in sync.
+   */
+  renderExtraMenuItems?: (slots: ListItemMenuSlots) => React.ReactNode;
+  /**
+   * @deprecated Menu-only extras. Prefer `renderExtraMenuItems` for context-menu parity.
    */
   extraMenuItems?: React.ReactNode;
   classNames?: classNames;
@@ -122,11 +124,15 @@ export function ListItemActionButtons({
   togglePortfolio,
   toggleFeatured,
   delete: deleteConfig,
+  select,
+  renderExtraMenuItems,
   extraMenuItems,
   classNames
 }: ListItemActionButtonsProps) {
   const hasView = viewSlot != null || view != null;
-  const hasOverflowMenu = !!togglePortfolio || !!toggleFeatured || !!extraMenuItems;
+  const hasOverflowMenu =
+    !!togglePortfolio || !!toggleFeatured || !!extraMenuItems || !!renderExtraMenuItems || !!select;
+  // When a ▾ exists (including Select-only), delete lives in the menu — not as a strip button.
   const showDeleteInGroup = !!deleteConfig && !hasOverflowMenu;
   const hasMenu = hasOverflowMenu;
 
@@ -150,90 +156,18 @@ export function ListItemActionButtons({
         <ChevronDown className="size-4" aria-hidden />
       </MenuTrigger>
       <MenuPopup align="end">
-        {/* Edit stays in the strip from md+; on mobile it lives here to save width. */}
-        {edit && hasOverflowMenu ? (
-          <MenuItem
-            className="md:hidden"
-            onClick={(event: React.MouseEvent) => {
-              event.stopPropagation();
-              edit.onAction();
-            }}
-            disabled={edit.isLoading}
-          >
-            <Edit />
-            {edit.label ?? "Edit"}
-          </MenuItem>
-        ) : null}
-        {extraMenuItems}
-        {togglePortfolio || toggleFeatured ? (
-          toggleFeatured ? (
-            <MenuSub>
-              <MenuSubTrigger
-                onClick={(event: React.MouseEvent) => {
-                  event.stopPropagation();
-                }}
-              >
-                Add to
-              </MenuSubTrigger>
-              <MenuSubPopup>
-                {togglePortfolio ? (
-                  <MenuItem
-                    onClick={(event: React.MouseEvent) => {
-                      event.stopPropagation();
-                      togglePortfolio.onAction();
-                    }}
-                    disabled={togglePortfolio.isLoading}
-                  >
-                    <span className="flex-1">Portfolio</span>
-                    <Switch
-                      checked={togglePortfolio.initialValue}
-                      className="pointer-events-none"
-                    />
-                  </MenuItem>
-                ) : null}
-                <MenuItem
-                  onClick={(event: React.MouseEvent) => {
-                    event.stopPropagation();
-                    toggleFeatured.onAction();
-                  }}
-                  disabled={toggleFeatured.isLoading}
-                >
-                  <span className="flex-1">Featured</span>
-                  <Switch checked={toggleFeatured.initialValue} className="pointer-events-none" />
-                </MenuItem>
-              </MenuSubPopup>
-            </MenuSub>
-          ) : togglePortfolio ? (
-            <MenuItem
-              onClick={(event: React.MouseEvent) => {
-                event.stopPropagation();
-                togglePortfolio.onAction();
-              }}
-              disabled={togglePortfolio.isLoading}
-            >
-              <span className="flex-1">In portfolio</span>
-              <Switch checked={togglePortfolio.initialValue} className="pointer-events-none" />
-            </MenuItem>
-          ) : null
-        ) : null}
-        {deleteConfig && !showDeleteInGroup ? (
-          <>
-            <MenuSeparator />
-            <MenuItem
-              variant="destructive"
-              onClick={(event: React.MouseEvent) => {
-                event.stopPropagation();
-                deleteConfig.onAction();
-              }}
-              disabled={deleteConfig.isLoading}
-            >
-              <IconShake mode="hover">
-                <Trash2 className="text-destructive" />
-              </IconShake>
-              Delete
-            </MenuItem>
-          </>
-        ) : null}
+        <ListItemOverflowMenu
+          slots={listItemMenuSlots}
+          select={select}
+          edit={edit && hasOverflowMenu ? edit : undefined}
+          editClassName={edit && hasOverflowMenu ? "md:hidden" : undefined}
+          togglePortfolio={togglePortfolio}
+          toggleFeatured={toggleFeatured}
+          delete={deleteConfig && !showDeleteInGroup ? deleteConfig : undefined}
+          renderExtraMenuItems={
+            renderExtraMenuItems ?? (extraMenuItems ? () => extraMenuItems : undefined)
+          }
+        />
       </MenuPopup>
     </Menu>
   );

@@ -19,7 +19,6 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
-import { MenuItem } from "@tsu-stack/ui/components/menu";
 import {
   PreviewCard,
   PreviewCardPopup,
@@ -487,17 +486,12 @@ export function ProjectsPage() {
               onTogglePortfolio={() => handleTogglePortfolio(project.id, !project.portfolioEntryId)}
               isTogglingPortfolio={togglingId === project.id}
               inPortfolio={!!project.portfolioEntryId}
-              extraMenuItems={
-                <MenuItem
-                  onClick={(event: React.MouseEvent) => {
-                    event.stopPropagation();
-                    handleDetectStacksFromMenu(project);
-                  }}
-                >
+              renderExtraMenuItems={(slots) => (
+                <slots.Item onClick={() => handleDetectStacksFromMenu(project)}>
                   <SparklesIcon className="size-4" aria-hidden />
                   Detect stacks
-                </MenuItem>
-              }
+                </slots.Item>
+              )}
               deleteTitle="Delete this project?"
               deleteDescription="This will permanently delete this project and all its associated data."
               tagsPlacement="after"

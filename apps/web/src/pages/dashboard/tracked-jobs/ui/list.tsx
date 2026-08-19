@@ -229,7 +229,6 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       onSelect={() => openView(app)}
                       isBatchSelected={batchSelected}
                       batchSelectActive={batchSelectActive}
-                      batchCheckboxVisibility="active-only"
                       onToggleSelect={() => toggleSelect(app.id)}
                       tags={trackedJobTags(app)}
                       meta={trackedJobMeta(app)}

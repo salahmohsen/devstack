@@ -16,6 +16,8 @@ import {
   RefreshCwIcon,
   RotateCcwIcon,
   SparklesIcon,
+  SquareCheckIcon,
+  SquareIcon,
   Trash2Icon
 } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -39,14 +41,13 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import {
-  Menu,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuTrigger
-} from "@tsu-stack/ui/components/menu";
+  ContextMenu,
+  ContextMenuPopup,
+  ContextMenuTrigger
+} from "@tsu-stack/ui/components/context-menu";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import {
@@ -62,6 +63,11 @@ import {
   type ListItemMeta,
   type ListItemTag
 } from "@/shared/ui/list-item-content";
+import {
+  createListItemContextSlots,
+  createListItemMenuSlots,
+  type ListItemMenuSlots
+} from "@/shared/ui/list-item-menu-slots";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
@@ -177,11 +183,123 @@ function hasUsableJobDescription(job: ApplicationOutput): boolean {
   return !isThinJobDescription(job.description);
 }
 
+const newJobMenuSlots = createListItemMenuSlots({ stopPropagation: true });
+const newJobContextSlots = createListItemContextSlots();
+
+function NewJobOverflowMenuItems({
+  slots,
+  job,
+  filter,
+  busy,
+  takeBusy,
+  batchSelected,
+  onToggleSelect,
+  onDismiss,
+  onRestore,
+  onTrackAndPackage,
+  onPromote,
+  onRegenerateTake,
+  onUpdateDescription,
+  onFixPostingUrl,
+  onEdit,
+  onRequestDelete
+}: {
+  slots: ListItemMenuSlots;
+  job: ApplicationOutput;
+  filter: InboxFilter;
+  busy: boolean;
+  takeBusy: boolean;
+  batchSelected: boolean;
+  onToggleSelect: () => void;
+  onDismiss: () => void;
+  onRestore: () => void;
+  onTrackAndPackage: () => void;
+  onPromote: () => void;
+  onRegenerateTake: () => void;
+  onUpdateDescription: () => void;
+  onFixPostingUrl: () => void;
+  onEdit: () => void;
+  onRequestDelete: () => void;
+}) {
+  const { Item, Separator } = slots;
+  const hasUsableDescription = hasUsableJobDescription(job);
+  const hasAnyDescription = Boolean(job.description?.trim());
+
+  if (filter === "dismissed") {
+    return (
+      <>
+        <Item onClick={onToggleSelect}>
+          {batchSelected ? <SquareCheckIcon aria-hidden /> : <SquareIcon aria-hidden />}
+          {batchSelected ? "Deselect" : "Select"}
+        </Item>
+        <Separator />
+        <Item onClick={onRestore} disabled={busy}>
+          <RotateCcwIcon aria-hidden />
+          Restore
+        </Item>
+        <Item onClick={onPromote} disabled={busy}>
+          <BookmarkPlusIcon aria-hidden />
+          Track
+        </Item>
+        <Separator />
+        <Item onClick={onRequestDelete} disabled={busy} variant="destructive">
+          <Trash2Icon className="text-destructive" aria-hidden />
+          Delete permanently
+        </Item>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Item onClick={onToggleSelect}>
+        {batchSelected ? <SquareCheckIcon aria-hidden /> : <SquareIcon aria-hidden />}
+        {batchSelected ? "Deselect" : "Select"}
+      </Item>
+      <Separator />
+      <Item onClick={onEdit} disabled={busy}>
+        <PencilIcon aria-hidden />
+        Edit
+      </Item>
+      <Item onClick={onPromote} disabled={busy}>
+        <BookmarkPlusIcon aria-hidden />
+        Track only
+      </Item>
+      <Item
+        onClick={hasUsableDescription ? onTrackAndPackage : undefined}
+        disabled={!hasUsableDescription || busy}
+      >
+        <PackageIcon aria-hidden />
+        Track &amp; package
+      </Item>
+      <Item onClick={onRegenerateTake} disabled={takeBusy || busy}>
+        <RefreshCwIcon aria-hidden />
+        {job.agentTake?.trim() ? "Regenerate take" : "Generate take"}
+      </Item>
+      <Item onClick={onFixPostingUrl} disabled={busy}>
+        <LinkIcon aria-hidden />
+        Fix posting URL
+      </Item>
+      <Item onClick={onUpdateDescription} disabled={busy}>
+        <FileTextIcon aria-hidden />
+        {hasAnyDescription ? "Update description" : "Add description"}
+      </Item>
+      <Separator />
+      <Item onClick={onDismiss} disabled={busy} variant="destructive">
+        <BanIcon aria-hidden />
+        Dismiss
+      </Item>
+    </>
+  );
+}
+
 function NewJobRowActions({
   job,
   filter,
   busy,
   takeBusy,
+  batchSelected,
+  onToggleSelect,
   onDismiss,
   onRestore,
   onTrackAndPackage,
@@ -197,6 +315,8 @@ function NewJobRowActions({
   filter: InboxFilter;
   busy: boolean;
   takeBusy: boolean;
+  batchSelected: boolean;
+  onToggleSelect: () => void;
   onDismiss: () => void;
   onRestore: () => void;
   onTrackAndPackage: () => void;
@@ -208,6 +328,27 @@ function NewJobRowActions({
   onRequestDelete: () => void;
   onViewListing?: () => void;
 }) {
+  const overflow = (
+    <NewJobOverflowMenuItems
+      slots={newJobMenuSlots}
+      job={job}
+      filter={filter}
+      busy={busy}
+      takeBusy={takeBusy}
+      batchSelected={batchSelected}
+      onToggleSelect={onToggleSelect}
+      onDismiss={onDismiss}
+      onRestore={onRestore}
+      onTrackAndPackage={onTrackAndPackage}
+      onPromote={onPromote}
+      onRegenerateTake={onRegenerateTake}
+      onUpdateDescription={onUpdateDescription}
+      onFixPostingUrl={onFixPostingUrl}
+      onEdit={onEdit}
+      onRequestDelete={onRequestDelete}
+    />
+  );
+
   if (filter === "dismissed") {
     return (
       <div className="flex flex-wrap items-center justify-end gap-1.5">
@@ -219,23 +360,28 @@ function NewJobRowActions({
           <BookmarkPlusIcon className="size-3.5" aria-hidden />
           Track
         </Button>
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          className="text-destructive"
-          disabled={busy}
-          aria-label="Delete permanently"
-          onClick={onRequestDelete}
-        >
-          <Trash2Icon className="size-3.5" aria-hidden />
-        </Button>
+        <Menu>
+          <MenuTrigger
+            render={
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="outline"
+                aria-label="More job actions"
+              />
+            }
+          >
+            <ChevronDownIcon className="size-3.5" aria-hidden />
+          </MenuTrigger>
+          <MenuPopup align="end" className="min-w-48">
+            {overflow}
+          </MenuPopup>
+        </Menu>
       </div>
     );
   }
 
   const hasUsableDescription = hasUsableJobDescription(job);
-  const hasAnyDescription = Boolean(job.description?.trim());
 
   return (
     <Group aria-label="Job actions">
@@ -281,39 +427,7 @@ function NewJobRowActions({
           <ChevronDownIcon className="size-3.5" aria-hidden />
         </MenuTrigger>
         <MenuPopup align="end" className="min-w-48">
-          <MenuItem closeOnClick disabled={busy} onClick={onEdit}>
-            <PencilIcon aria-hidden />
-            Edit
-          </MenuItem>
-          <MenuItem closeOnClick disabled={busy} onClick={onPromote}>
-            <BookmarkPlusIcon aria-hidden />
-            Track only
-          </MenuItem>
-          {!hasUsableDescription ? (
-            <MenuItem closeOnClick disabled title="Add a real job description first">
-              <PackageIcon aria-hidden />
-              Track &amp; package
-            </MenuItem>
-          ) : null}
-          <MenuItem closeOnClick disabled={takeBusy || busy} onClick={onRegenerateTake}>
-            <RefreshCwIcon aria-hidden />
-            {job.agentTake?.trim() ? "Regenerate take" : "Generate take"}
-          </MenuItem>
-          {hasUsableDescription ? (
-            <MenuItem closeOnClick disabled={busy} onClick={onFixPostingUrl}>
-              <LinkIcon aria-hidden />
-              Fix posting URL
-            </MenuItem>
-          ) : null}
-          <MenuItem closeOnClick disabled={busy} onClick={onUpdateDescription}>
-            <FileTextIcon aria-hidden />
-            {hasAnyDescription ? "Update description" : "Add description"}
-          </MenuItem>
-          <MenuSeparator />
-          <MenuItem closeOnClick disabled={busy} variant="destructive" onClick={onDismiss}>
-            <BanIcon aria-hidden />
-            Dismiss
-          </MenuItem>
+          {overflow}
         </MenuPopup>
       </Menu>
     </Group>
@@ -613,98 +727,111 @@ export function NewJobsPage() {
                   const takeBusy =
                     agentTakeJob.status === "running" && agentTakeJob.applicationId === job.id;
                   const listingUrl = job.url ?? job.applyUrl ?? null;
+                  const rowActions = {
+                    onDismiss: () =>
+                      void run(job.id, () => dismiss.mutateAsync({ id: job.id }), "Dismissed"),
+                    onRestore: () =>
+                      void run(
+                        job.id,
+                        () => restore.mutateAsync({ id: job.id }),
+                        "Restored to New jobs"
+                      ),
+                    onPromote: () =>
+                      void run(
+                        job.id,
+                        () => promote.mutateAsync({ id: job.id }),
+                        "Moved to Tracked jobs"
+                      ),
+                    onTrackAndPackage: () => {
+                      if (!hasUsableJobDescription(job)) {
+                        setFixUrlApp(job);
+                        return;
+                      }
+                      void run(
+                        job.id,
+                        async () => {
+                          await promote.mutateAsync({ id: job.id });
+                          const packed = await generatePackage.mutateAsync({
+                            applicationId: job.id
+                          });
+                          setPackageApplication(packed);
+                        },
+                        "Tracked — package ready"
+                      );
+                    },
+                    onRegenerateTake: () => {
+                      void regenerateTake.mutateAsync({
+                        id: job.id,
+                        title: job.title,
+                        companyName: job.companyName,
+                        trackingStatus: filter === "dismissed" ? "dismissed" : "inbox"
+                      });
+                    },
+                    onUpdateDescription: () => setDescriptionApp(job),
+                    onFixPostingUrl: () => setFixUrlApp(job),
+                    onEdit: () => setEditApp(job),
+                    onRequestDelete: () => setDeleteId(job.id),
+                    onToggleSelect: () => toggleSelect(job.id)
+                  };
                   return (
                     <li key={job.id} data-item-id={job.id}>
-                      <ListItemContent
-                        title={job.title}
-                        selected={selected}
-                        onSelect={() =>
-                          setViewItem((current) => {
-                            if (current?.id === job.id) return null;
-                            expandDashboardSidePanel();
-                            return job;
-                          })
-                        }
-                        isBatchSelected={batchSelected}
-                        batchSelectActive={isBatchSelectActive(selectedIds)}
-                        onToggleSelect={() => toggleSelect(job.id)}
-                        tags={newJobTags(job)}
-                        meta={newJobMeta(job)}
-                        leading={
-                          <ItemAvatar
-                            name={job.companyName}
-                            size={40}
+                      <ContextMenu>
+                        <ContextMenuTrigger className="block w-full outline-none">
+                          <ListItemContent
+                            title={job.title}
                             selected={selected}
-                            className="size-10"
-                            aria-label={job.companyName}
+                            onSelect={() =>
+                              setViewItem((current) => {
+                                if (current?.id === job.id) return null;
+                                expandDashboardSidePanel();
+                                return job;
+                              })
+                            }
+                            isBatchSelected={batchSelected}
+                            batchSelectActive={isBatchSelectActive(selectedIds)}
+                            onToggleSelect={rowActions.onToggleSelect}
+                            tags={newJobTags(job)}
+                            meta={newJobMeta(job)}
+                            leading={
+                              <ItemAvatar
+                                name={job.companyName}
+                                size={40}
+                                selected={selected}
+                                className="size-10"
+                                aria-label={job.companyName}
+                              />
+                            }
+                            actions={
+                              <NewJobRowActions
+                                job={job}
+                                filter={filter}
+                                busy={busy}
+                                takeBusy={takeBusy}
+                                batchSelected={batchSelected}
+                                onViewListing={
+                                  listingUrl
+                                    ? () => {
+                                        window.open(listingUrl, "_blank", "noopener,noreferrer");
+                                      }
+                                    : undefined
+                                }
+                                {...rowActions}
+                              />
+                            }
                           />
-                        }
-                        actions={
-                          <NewJobRowActions
+                        </ContextMenuTrigger>
+                        <ContextMenuPopup className="min-w-48">
+                          <NewJobOverflowMenuItems
+                            slots={newJobContextSlots}
                             job={job}
                             filter={filter}
                             busy={busy}
                             takeBusy={takeBusy}
-                            onDismiss={() =>
-                              void run(
-                                job.id,
-                                () => dismiss.mutateAsync({ id: job.id }),
-                                "Dismissed"
-                              )
-                            }
-                            onRestore={() =>
-                              void run(
-                                job.id,
-                                () => restore.mutateAsync({ id: job.id }),
-                                "Restored to New jobs"
-                              )
-                            }
-                            onPromote={() =>
-                              void run(
-                                job.id,
-                                () => promote.mutateAsync({ id: job.id }),
-                                "Moved to Tracked jobs"
-                              )
-                            }
-                            onTrackAndPackage={() => {
-                              if (!hasUsableJobDescription(job)) {
-                                setFixUrlApp(job);
-                                return;
-                              }
-                              void run(
-                                job.id,
-                                async () => {
-                                  await promote.mutateAsync({ id: job.id });
-                                  const packed = await generatePackage.mutateAsync({
-                                    applicationId: job.id
-                                  });
-                                  setPackageApplication(packed);
-                                },
-                                "Tracked — package ready"
-                              );
-                            }}
-                            onRegenerateTake={() => {
-                              void regenerateTake.mutateAsync({
-                                id: job.id,
-                                title: job.title,
-                                companyName: job.companyName,
-                                trackingStatus: filter === "dismissed" ? "dismissed" : "inbox"
-                              });
-                            }}
-                            onUpdateDescription={() => setDescriptionApp(job)}
-                            onFixPostingUrl={() => setFixUrlApp(job)}
-                            onEdit={() => setEditApp(job)}
-                            onRequestDelete={() => setDeleteId(job.id)}
-                            onViewListing={
-                              listingUrl
-                                ? () => {
-                                    window.open(listingUrl, "_blank", "noopener,noreferrer");
-                                  }
-                                : undefined
-                            }
+                            batchSelected={batchSelected}
+                            {...rowActions}
                           />
-                        }
-                      />
+                        </ContextMenuPopup>
+                      </ContextMenu>
                     </li>
                   );
                 })}
