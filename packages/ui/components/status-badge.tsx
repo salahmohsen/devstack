@@ -3,12 +3,8 @@
 import { AlertTriangleIcon, CheckCircleIcon, LoaderIcon, XCircleIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-import { Badge } from "@tsu-stack/ui/components/badge";
-import {
-  BADGE_GLOW,
-  BADGE_ICON_VARIANTS,
-  type BadgeGlowVariant
-} from "@tsu-stack/ui/components/badge-effects";
+import { Badge, type BadgeProps } from "@tsu-stack/ui/components/badge";
+import { BADGE_GLOW, BADGE_ICON_VARIANTS } from "@tsu-stack/ui/components/badge-effects";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 export type StatusState = "pending" | "warning" | "failed" | "success";
@@ -26,7 +22,7 @@ const DEFAULT_LABELS: Record<StatusState, string> = {
   success: "Saved"
 };
 
-const STATE_TO_VARIANT: Record<StatusState, BadgeGlowVariant> = {
+const STATE_TO_VARIANT: Record<StatusState, NonNullable<BadgeProps["variant"]>> = {
   pending: "warning",
   warning: "warning",
   failed: "error",
