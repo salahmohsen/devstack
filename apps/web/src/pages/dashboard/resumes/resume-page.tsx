@@ -30,7 +30,8 @@ import {
 import { toastAiError } from "@/shared/lib/toast-ai-error";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
-import { ListItem } from "@/shared/ui/list-item";
+import { ITEM_AVATAR_EYEBROW_CLASSNAME, ItemAvatar } from "@/shared/ui/item-avatar";
+import { ListItemContent, type ListItemTag } from "@/shared/ui/list-item-content";
 
 import {
   ItemInfoPanel,
@@ -48,6 +49,26 @@ import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { useResumeStore } from "@/pages/dashboard/resumes/_lib/resume.slice";
 
 const resumesRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/resumes/");
+
+function resumeTags(author: ResumeAuthor, isDefault: boolean): ListItemTag[] {
+  const tags: ListItemTag[] = [
+    {
+      id: "author",
+      node: (
+        <Badge variant="secondary" size="sm">
+          {author}
+        </Badge>
+      )
+    }
+  ];
+  if (isDefault) {
+    tags.push({
+      id: "default",
+      node: <Badge size="sm">Default</Badge>
+    });
+  }
+  return tags;
+}
 
 function ResumeTypeBadges({ author, isDefault }: { author: ResumeAuthor; isDefault: boolean }) {
   return (
@@ -206,38 +227,52 @@ export function ResumesPage() {
 
     return (
       <ul ref={containerRef} className="flex flex-col gap-2">
-        {visibleResumes.map((resume) => (
-          <ListItem
-            key={resume.id}
-            selected={isItemOpen?.[resume.id] ?? false}
-            onSelect={() => openItem(resume.id, resume)}
-            isBatchSelected={isIdSelected(selectedIds, resume.id)}
-            batchSelectActive={batchSelectActive}
-            onToggleSelect={() => toggleSelect(resume.id)}
-            onView={() => window.open(`/api/resume/download/?id=${resume.id}&view=1`, "_blank")}
-            onDelete={() => {
-              deleteMutation.mutate(
-                { ids: [resume.id] },
-                {
-                  onSuccess: () => {
-                    toast.success("Resume deleted.");
-                    if (openedItem?.id === resume.id) {
-                      setOpenedItem(null);
-                      setIsItemOpen(null);
+        {visibleResumes.map((resume) => {
+          const selected = isItemOpen?.[resume.id] ?? false;
+          return (
+            <ListItemContent
+              key={resume.id}
+              title={resume.filename}
+              selected={selected}
+              onSelect={() => openItem(resume.id, resume)}
+              isBatchSelected={isIdSelected(selectedIds, resume.id)}
+              batchSelectActive={batchSelectActive}
+              onToggleSelect={() => toggleSelect(resume.id)}
+              onView={() => window.open(`/api/resume/download/?id=${resume.id}&view=1`, "_blank")}
+              onDelete={() => {
+                deleteMutation.mutate(
+                  { ids: [resume.id] },
+                  {
+                    onSuccess: () => {
+                      toast.success("Resume deleted.");
+                      if (openedItem?.id === resume.id) {
+                        setOpenedItem(null);
+                        setIsItemOpen(null);
+                      }
                     }
                   }
-                }
-              );
-            }}
-            isDeleting={
-              deleteMutation.isPending && Boolean(deleteMutation.variables?.ids.includes(resume.id))
-            }
-            deleteTitle="Delete this resume?"
-            deleteDescription="This will permanently delete this resume PDF."
-            title={resume.filename}
-            titleEnd={<ResumeTypeBadges author={resume.author} isDefault={resume.default} />}
-          />
-        ))}
+                );
+              }}
+              isDeleting={
+                deleteMutation.isPending &&
+                Boolean(deleteMutation.variables?.ids.includes(resume.id))
+              }
+              deleteTitle="Delete this resume?"
+              deleteDescription="This will permanently delete this resume PDF."
+              tagsPlacement="after"
+              tags={resumeTags(resume.author, resume.default)}
+              leading={
+                <ItemAvatar
+                  name={resume.filename}
+                  size={40}
+                  selected={selected}
+                  className="size-10"
+                  aria-label={resume.filename}
+                />
+              }
+            />
+          );
+        })}
       </ul>
     );
   }
@@ -286,7 +321,16 @@ export function ResumesPage() {
             if (!item) return null;
             return (
               <ItemInfoPanel
-                eyebrow={<FileTextIcon strokeWidth={1.75} />}
+                eyebrow={
+                  <ItemAvatar
+                    name={item.filename}
+                    size={48}
+                    selected
+                    className="size-12"
+                    aria-label={item.filename}
+                  />
+                }
+                eyebrowClassName={ITEM_AVATAR_EYEBROW_CLASSNAME}
                 title={item.filename}
                 description={
                   <span className="flex flex-wrap items-center gap-1.5">

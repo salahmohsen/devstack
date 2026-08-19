@@ -45,11 +45,12 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { ItemAvatar } from "@/shared/ui/item-avatar";
+
 import {
   APPLICATION_STAGE_BADGE_VARIANT,
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
-  CompanyAvatar,
   getApplicationPrimaryAction,
   useUpdateStageMutation
 } from "@/features/applications";
@@ -113,8 +114,8 @@ function ApplicationCard({
             if (!isDragging) openView(app);
           }}
         >
-          <CompanyAvatar
-            companyName={app.companyName}
+          <ItemAvatar
+            name={app.companyName}
             size={40}
             selected={avatarAnimated}
             className="size-10"

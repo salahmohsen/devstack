@@ -38,11 +38,11 @@ import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
+import { ItemAvatar } from "@/shared/ui/item-avatar";
 import { ListItemContent, type ListItemTag } from "@/shared/ui/list-item-content";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
-import { CompanyAvatar } from "@/features/applications";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
@@ -503,8 +503,9 @@ export function ProjectsPage() {
               tagsPlacement="after"
               tags={tags}
               leading={
-                <CompanyAvatar
-                  companyName={project.title}
+                <ItemAvatar
+                  name={project.title}
+                  imageSrc={project.logo}
                   size={40}
                   selected={selected}
                   className="size-10"

@@ -1,10 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
-import { AlignLeftIcon, BriefcaseIcon, Building2Icon } from "lucide-react";
+import { AlignLeftIcon, Building2Icon } from "lucide-react";
 
 import { type ExperienceOutput } from "@tsu-stack/core";
 
+import { ITEM_AVATAR_EYEBROW_CLASSNAME, ItemAvatar } from "@/shared/ui/item-avatar";
 import { Markdown } from "@/shared/ui/markdown";
 
 import {
@@ -37,7 +38,16 @@ export function ExperienceInfoPanel({
 }) {
   return (
     <ItemInfoPanel
-      eyebrow={<BriefcaseIcon strokeWidth={1.75} />}
+      eyebrow={
+        <ItemAvatar
+          name={experience.organization}
+          size={48}
+          selected
+          className="size-12"
+          aria-label={experience.organization}
+        />
+      }
+      eyebrowClassName={ITEM_AVATAR_EYEBROW_CLASSNAME}
       title={experience.title}
       description={
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1">

@@ -46,6 +46,7 @@ import {
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 
+import { ITEM_AVATAR_EYEBROW_CLASSNAME, ItemAvatar } from "@/shared/ui/item-avatar";
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
@@ -55,7 +56,6 @@ import {
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
-  CompanyAvatar,
   actionsFor,
   coverLetterDownloadUrl,
   formatCoverLetterCopy,
@@ -374,15 +374,15 @@ export function ApplicationInfoPanel({
     <>
       <ItemInfoPanel
         eyebrow={
-          <CompanyAvatar
-            companyName={item.companyName}
+          <ItemAvatar
+            name={item.companyName}
             size={48}
             selected
             className="size-12"
             aria-label={item.companyName}
           />
         }
-        eyebrowClassName="size-12 overflow-visible rounded-none bg-transparent [&_img]:!size-full [&_svg]:!size-full"
+        eyebrowClassName={ITEM_AVATAR_EYEBROW_CLASSNAME}
         title={item.title}
         description={
           <div className="space-y-2.5">

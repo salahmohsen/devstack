@@ -30,11 +30,11 @@ import {
 import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
+import { ItemAvatar } from "@/shared/ui/item-avatar";
 import { ListItemContent, type ListItemMeta } from "@/shared/ui/list-item-content";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
-import { CompanyAvatar } from "@/features/applications";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
@@ -412,8 +412,8 @@ export function ExperiencesPage() {
               deleteDescription="This will permanently delete this experience and all its associated projects."
               meta={meta}
               leading={
-                <CompanyAvatar
-                  companyName={experience.organization}
+                <ItemAvatar
+                  name={experience.organization}
                   size={40}
                   selected={selected}
                   className="size-10"

@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
+import { ItemAvatar } from "@/shared/ui/item-avatar";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -26,7 +27,6 @@ import {
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
-  CompanyAvatar,
   getApplicationPrimaryAction,
   useDeleteApplicationsMutation
 } from "@/features/applications";
@@ -234,8 +234,8 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       tags={trackedJobTags(app)}
                       meta={trackedJobMeta(app)}
                       leading={
-                        <CompanyAvatar
-                          companyName={app.companyName}
+                        <ItemAvatar
+                          name={app.companyName}
                           size={40}
                           selected={selected}
                           className="size-10"

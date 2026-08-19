@@ -56,6 +56,7 @@ import {
 } from "@/shared/lib/batch-selection";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
+import { ItemAvatar } from "@/shared/ui/item-avatar";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -65,7 +66,6 @@ import {
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
   ApplicationMatchScoreBadge,
-  CompanyAvatar,
   ScanJobAlertsButton,
   clearPendingOpenApplicationId,
   useAgentTakeJob,
@@ -631,8 +631,8 @@ export function NewJobsPage() {
                         tags={newJobTags(job)}
                         meta={newJobMeta(job)}
                         leading={
-                          <CompanyAvatar
-                            companyName={job.companyName}
+                          <ItemAvatar
+                            name={job.companyName}
                             size={40}
                             selected={selected}
                             className="size-10"

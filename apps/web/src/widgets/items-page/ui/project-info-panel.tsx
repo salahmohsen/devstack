@@ -24,6 +24,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@tsu-stack/ui/components/tab
 
 import { publicRepoOverviewLocation, type PublicSurface } from "@/shared/lib/public-surface";
 import { Icon } from "@/shared/ui/icon";
+import { ITEM_AVATAR_EYEBROW_CLASSNAME, ItemAvatar } from "@/shared/ui/item-avatar";
 import { Markdown } from "@/shared/ui/markdown";
 
 import {
@@ -199,12 +200,16 @@ export function ProjectInfoPanel({
   const panel = (
     <ItemInfoPanel
       eyebrow={
-        project.logo ? (
-          <img src={project.logo} alt="" />
-        ) : (
-          <FolderKanbanIcon strokeWidth={1.75} aria-hidden="true" />
-        )
+        <ItemAvatar
+          name={project.title}
+          imageSrc={project.logo}
+          size={48}
+          selected
+          className="size-12"
+          aria-label={project.title}
+        />
       }
+      eyebrowClassName={ITEM_AVATAR_EYEBROW_CLASSNAME}
       title={project.title}
       description={
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
