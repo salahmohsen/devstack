@@ -1,0 +1,13 @@
+/*
+ * Blobatar idle amp is tuned for large headers. At 40–48px list/panel marks,
+ * breathe/bob are near sub-pixel. Boost amp while selected so the loop reads.
+ */
+[data-slot="item-avatar"][data-selected="true"] .mo-root.mo-always {
+  --mo-amp: 2.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="item-avatar"][data-selected="true"] .mo-root.mo-always {
+    --mo-amp: 1;
+  }
+}
