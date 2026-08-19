@@ -117,7 +117,10 @@ export function patchAiJobIsland(
   if (!current) return;
   store.setState((prev) => {
     return {
-      runs: { ...prev.runs, [id]: { ...current, ...patch } }
+      runs: {
+        ...prev.runs,
+        [id]: { ...current, ...patch, updatedAt: Date.now() }
+      }
     };
   });
 }

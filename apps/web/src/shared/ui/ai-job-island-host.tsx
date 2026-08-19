@@ -31,6 +31,9 @@ const invertedOutline =
   "border-background/30 bg-background/15 text-background hover:bg-background/25 data-pressed:bg-background/25";
 const invertedGhost =
   "border-transparent text-background hover:bg-background/15 data-pressed:bg-background/15";
+/** Focus ring that reads on inverted frost (page `ring` is invisible on fg glass). */
+const invertedFocus =
+  "outline-none focus-visible:ring-2 focus-visible:ring-background/55 focus-visible:ring-offset-2 focus-visible:ring-offset-foreground";
 
 function collapseOrDismiss(foreground: AiIslandRun | undefined, setView: (v: IslandView) => void) {
   if (!foreground) {
@@ -83,7 +86,7 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
   }
 
   return (
-    <ul className="flex w-full min-w-56 flex-col gap-0.5" aria-live="polite">
+    <ul className="flex w-full min-w-56 flex-col gap-0.5">
       {steps.map((step) => {
         const label = stripTrailingDots(step.label);
         const isActive = step.state === "active";
@@ -101,7 +104,8 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
             <span
               className={cn(
                 "min-w-0 flex-1 text-pretty tabular-nums",
-                isActive && "motion-safe:shimmer"
+                // Keep text-background on the shimmer node so currentColor resolves on inverted frost.
+                isActive && "text-background motion-safe:shimmer"
               )}
             >
               {isActive ? liveLabel || label : label}
@@ -114,25 +118,27 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
 }
 
 function StackPill({ run, onSelect }: { run: AiIslandRun; onSelect: (run: AiIslandRun) => void }) {
+  const title = stripTrailingDots(run.title);
+  const step = stripTrailingDots(run.activeStepLabel ?? "Working");
   return (
     <button
       type="button"
       className={cn(
         "inline-flex max-w-72 cursor-pointer items-center gap-2.5 rounded-full px-5 py-2.5",
         "border border-white/20 bg-foreground/90 text-background shadow-lg dark:border-black/15",
-        "backdrop-blur-md outline-none active:scale-[0.96]"
+        "backdrop-blur-md active:scale-[0.96]",
+        invertedFocus
       )}
+      aria-label={`Switch to ${title}: ${step}`}
       onClick={() => {
         onSelect(run);
       }}
     >
       <WorkflowSolvingOrb size="toast" surface="inverted" />
       <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5">
-        <span className="truncate text-sm leading-snug font-medium text-background">
-          {stripTrailingDots(run.title)}
-        </span>
+        <span className="truncate text-sm leading-snug font-medium text-background">{title}</span>
         <span className="truncate text-sm leading-snug font-medium text-background motion-safe:shimmer">
-          {stripTrailingDots(run.activeStepLabel ?? "Working")}
+          {step}
         </span>
       </span>
     </button>
@@ -160,10 +166,11 @@ function TouchRunSwitcher({
           key={run.id}
           type="button"
           className={cn(
-            "max-w-full truncate rounded-full border border-background/25 bg-background/10 px-2 py-0.5",
-            "text-[10px] font-medium text-background/80 outline-none hover:bg-background/20",
-            "active:scale-[0.96]"
+            "max-w-full truncate rounded-full border border-background/25 bg-background/10 px-2 py-1",
+            "text-[10px] font-medium text-background/80 hover:bg-background/20 active:scale-[0.96]",
+            invertedFocus
           )}
+          aria-label={`Switch to ${stripTrailingDots(run.title)}`}
           onClick={() => {
             onSelect(run);
           }}
@@ -266,26 +273,39 @@ export function AiJobIslandHost() {
   const showTouchSwitcher = !canHover && runCount > 1 && view !== null;
   const running = foreground.status === "running";
 
+  const title = stripTrailingDots(foreground.title);
+  const liveStep = stripTrailingDots(foreground.activeStepLabel ?? "Working");
+  const compactLabel = running
+    ? `${title}. ${liveStep}. Expand for steps.`
+    : `${stripTrailingDots(foreground.resultTitle ?? foreground.title)}. Expand result.`;
+
   const compactNode = (
     <button
       type="button"
-      className="flex min-w-0 cursor-pointer items-center gap-2.5 text-left outline-none active:scale-[0.96]"
+      className={cn(
+        "flex min-w-0 cursor-pointer items-center gap-2.5 rounded-full text-left active:scale-[0.96]",
+        invertedFocus
+      )}
       onClick={onCompactActivate}
       aria-expanded={view !== null}
+      aria-label={compactLabel}
     >
       <WorkflowSolvingOrb size="toast" surface="inverted" paused={!running} />
-      <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5">
-        <span className="truncate text-sm leading-snug font-medium text-background">
-          {stripTrailingDots(foreground.title)}
-        </span>
-        <span className="truncate text-sm leading-snug font-medium text-background motion-safe:shimmer">
-          {stripTrailingDots(foreground.activeStepLabel ?? "Working")}
+      <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5" aria-hidden>
+        <span className="truncate text-sm leading-snug font-medium text-background">{title}</span>
+        <span
+          className={cn(
+            "truncate text-sm leading-snug font-medium text-background",
+            running && "motion-safe:shimmer"
+          )}
+        >
+          {liveStep}
         </span>
       </span>
       {runCount > 1 ? (
         <span
           className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-background/20 text-[10px] font-semibold text-background tabular-nums"
-          aria-label={`${runCount} jobs`}
+          aria-hidden
         >
           {runCount}
         </span>
@@ -294,7 +314,19 @@ export function AiJobIslandHost() {
   );
 
   return (
-    <div className="pointer-events-none fixed bottom-4 left-4 z-40 overflow-visible">
+    <div
+      className={cn(
+        "pointer-events-none fixed z-40 overflow-visible",
+        // Keep clear of home-indicator / notched insets on phones.
+        "bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))]"
+      )}
+    >
+      {/* Expanded shell is a region (not live); keep step announcements here. */}
+      {view !== null && running ? (
+        <p className="sr-only" role="status" aria-live="polite">
+          {`${title}: ${liveStep}`}
+        </p>
+      ) : null}
       <div
         ref={hostRef}
         className="pointer-events-auto flex flex-col items-start gap-2 overflow-visible"
@@ -314,7 +346,7 @@ export function AiJobIslandHost() {
           </div>
         ) : null}
 
-        <DynamicIsland view={view} compact={compactNode} appearance="glass">
+        <DynamicIsland view={view} compact={compactNode} appearance="glass" label={title}>
           <DynamicIslandView
             id="timeline"
             className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
@@ -323,14 +355,14 @@ export function AiJobIslandHost() {
               {/* Optical center: title + Cancel share one midline (better-ui). */}
               <div className="flex items-center justify-between gap-3">
                 <p className="min-w-0 flex-1 pe-1 text-sm leading-snug font-semibold tracking-tight text-pretty text-background">
-                  {stripTrailingDots(foreground.title)}
+                  {title}
                 </p>
                 <Button
                   type="button"
                   size="xs"
                   variant="outline"
                   // Island radius 32 + ~16–20 pad → inner ~12–16 (rounded-xl).
-                  className={cn(invertedOutline, "shrink-0 rounded-xl")}
+                  className={cn(invertedOutline, invertedFocus, "shrink-0 rounded-xl")}
                   onClick={() => {
                     foreground.onCancel();
                   }}
@@ -377,13 +409,13 @@ export function AiJobIslandHost() {
                     type="button"
                     size="icon-xs"
                     variant="ghost"
-                    className={cn(invertedGhost, "-mt-0.5 shrink-0 rounded-xl")}
+                    className={cn(invertedGhost, invertedFocus, "-mt-0.5 shrink-0 rounded-xl")}
                     aria-label="Dismiss"
                     onClick={() => {
                       dismissAiJobIsland(foreground.id);
                     }}
                   >
-                    <XIcon />
+                    <XIcon aria-hidden />
                   </Button>
                 </div>
                 {showTouchSwitcher ? (
@@ -402,7 +434,11 @@ export function AiJobIslandHost() {
                 type="button"
                 size="sm"
                 variant="outline"
-                className={cn(invertedOutline, "h-8 w-full justify-center rounded-xl")}
+                className={cn(
+                  invertedOutline,
+                  invertedFocus,
+                  "h-8 w-full justify-center rounded-xl"
+                )}
                 onClick={onResultAction}
               >
                 {foreground.resultAction.label}

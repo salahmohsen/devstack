@@ -142,6 +142,8 @@ export type DynamicIslandProps = {
    * `glass` — frosted inverted fill: black in light mode, white in dark mode.
    */
   appearance?: DynamicIslandAppearance;
+  /** Accessible name when expanded (`role="region"`). Compact stays a live status. */
+  label?: string;
   className?: string;
 };
 
@@ -202,6 +204,7 @@ export function DynamicIsland({
   compact,
   children,
   appearance = "inverted",
+  label = "AI job",
   className
 }: DynamicIslandProps) {
   const reduce = useReducedMotion();
@@ -215,9 +218,13 @@ export function DynamicIsland({
   return (
     <IslandContext.Provider value={contextValue}>
       <motion.div
-        role="status"
-        aria-live="polite"
+        // Compact = polite live status. Expanded hosts Cancel/actions — never
+        // nest interactive controls inside a live region (a11y).
+        role={expanded ? "region" : "status"}
+        aria-live={expanded ? undefined : "polite"}
+        aria-label={expanded ? label : undefined}
         data-appearance={appearance}
+        data-expanded={expanded ? "" : undefined}
         initial={false}
         animate={
           size

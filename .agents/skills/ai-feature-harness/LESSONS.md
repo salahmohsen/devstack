@@ -17,6 +17,16 @@
 
 ---
 
+## 2026-08-19 — AI island production polish: live region vs controls
+
+- **Trigger:** Production polish pass on Dynamic Island (better-interface / a11y / impeccable polish)
+- **Finding:** Never put Cancel/Dismiss/actions inside `role="status"` / `aria-live`. Compact pill may be a polite status; expanded shell must be `role="region"` with a separate `sr-only` status for step announcements
+- **Finding:** Inverted frost needs its own focus ring (`ring-background` + `ring-offset-foreground`). Page `ring-ring` disappears on black/white glass
+- **Finding:** Drop `shimmer` on inverted island text (transparent fill reads empty). Use AiLoader + weight/opacity as the active cue
+- **Finding:** Pin the host with `max(1rem, env(safe-area-inset-*))` so notched phones do not clip the pill
+- **Finding:** `patchAiJobIsland` must bump `updatedAt` or concurrent-job sort/steal stays stale while steps advance
+- **Evidence class:** Code review + Playwright organize expand; compact `aria-label`; expanded `role=region`
+
 ## 2026-08-19 — AI job Dynamic Island: subscription, shimmer, springs
 
 - **Trigger:** Replace AI running Sonner toast with bottom-left beUI Dynamic Island; polish expand steps / result / glass toast
