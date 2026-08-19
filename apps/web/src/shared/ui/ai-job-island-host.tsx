@@ -1,7 +1,9 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
+import { BorderBeam } from "border-beam";
 import { CheckIcon, XIcon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
@@ -19,7 +21,11 @@ import {
 import { useHoverCapable } from "@/shared/lib/use-hover-capable";
 import { WorkflowSolvingOrb } from "@/shared/ui/ai-flow-trigger";
 import { AiLoader } from "@/shared/ui/ai-loader";
-import { DynamicIsland, DynamicIslandView } from "@/shared/ui/motion/dynamic-island";
+import {
+  DYNAMIC_ISLAND_RADIUS,
+  DynamicIsland,
+  DynamicIslandView
+} from "@/shared/ui/motion/dynamic-island";
 
 type IslandView = null | "timeline" | "result";
 
@@ -190,6 +196,7 @@ export function AiJobIslandHost() {
   const islandState = useAiJobIsland();
   const navigate = useNavigate();
   const canHover = useHoverCapable();
+  const { resolvedTheme } = useTheme();
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   const [view, setView] = useState<IslandView>(null);
@@ -351,106 +358,117 @@ export function AiJobIslandHost() {
           </div>
         ) : null}
 
-        <DynamicIsland view={view} compact={compactNode} appearance="glass" label={title}>
-          <DynamicIslandView
-            id="timeline"
-            className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
-          >
-            <div className="flex flex-col gap-1.5 border-b border-primary-foreground/10 pb-3">
-              {/* Optical center: title + Cancel share one midline (better-ui). */}
-              <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 flex-1 pe-1 text-sm leading-snug font-semibold tracking-tight text-pretty text-primary-foreground">
-                  {title}
-                </p>
-                <Button
-                  type="button"
-                  size="xs"
-                  variant="outline"
-                  // Island radius 32 + ~16–20 pad → inner ~12–16 (rounded-xl).
-                  className={cn(onPrimaryOutline, onPrimaryFocus, "shrink-0 rounded-xl")}
-                  onClick={() => {
-                    foreground.onCancel();
-                  }}
-                >
-                  {foreground.cancelLabel ?? "Cancel"}
-                </Button>
-              </div>
-              {showTouchSwitcher ? (
-                <TouchRunSwitcher runs={runs} foregroundId={foreground.id} onSelect={selectRun} />
-              ) : null}
-            </div>
-            <TimelineSteps run={foreground} />
-          </DynamicIslandView>
-
-          <DynamicIslandView
-            id="result"
-            className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
-          >
-            <div className="flex items-start gap-3">
-              {/* Optical nudge: orb midline ≈ title cap height */}
-              <WorkflowSolvingOrb
-                size="toast"
-                surface="inverted"
-                paused
-                className="mt-0.5 shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start gap-2">
-                  <div className="min-w-0 flex-1 space-y-0.5 pe-0.5">
-                    <p className="text-sm leading-snug font-semibold tracking-tight text-balance text-primary-foreground">
-                      {stripTrailingDots(foreground.resultTitle ?? foreground.title)}
-                    </p>
-                    {foreground.errorMessage ? (
-                      <p className="text-xs leading-relaxed text-pretty text-primary-foreground/70">
-                        {foreground.errorMessage}
-                      </p>
-                    ) : foreground.status === "success" && foreground.requiresAction ? (
-                      <p className="text-xs leading-relaxed text-primary-foreground/60">
-                        Ready when you are
-                      </p>
-                    ) : null}
-                  </div>
+        {/* beam.jakubantalik.com/pulse — breathing border on the opaque island shell */}
+        <BorderBeam
+          size="pulse-inner"
+          colorVariant="colorful"
+          theme={resolvedTheme === "light" ? "light" : "dark"}
+          strength={1}
+          duration={2.3}
+          borderRadius={DYNAMIC_ISLAND_RADIUS}
+          className="inline-flex"
+        >
+          <DynamicIsland view={view} compact={compactNode} appearance="glass" label={title}>
+            <DynamicIslandView
+              id="timeline"
+              className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
+            >
+              <div className="flex flex-col gap-1.5 border-b border-primary-foreground/10 pb-3">
+                {/* Optical center: title + Cancel share one midline (better-ui). */}
+                <div className="flex items-center justify-between gap-3">
+                  <p className="min-w-0 flex-1 pe-1 text-sm leading-snug font-semibold tracking-tight text-pretty text-primary-foreground">
+                    {title}
+                  </p>
                   <Button
                     type="button"
-                    size="icon-xs"
-                    variant="ghost"
-                    className={cn(onPrimaryGhost, onPrimaryFocus, "-mt-0.5 shrink-0 rounded-xl")}
-                    aria-label="Dismiss"
+                    size="xs"
+                    variant="outline"
+                    // Island radius 32 + ~16–20 pad → inner ~12–16 (rounded-xl).
+                    className={cn(onPrimaryOutline, onPrimaryFocus, "shrink-0 rounded-xl")}
                     onClick={() => {
-                      dismissAiJobIsland(foreground.id);
+                      foreground.onCancel();
                     }}
                   >
-                    <XIcon aria-hidden />
+                    {foreground.cancelLabel ?? "Cancel"}
                   </Button>
                 </div>
                 {showTouchSwitcher ? (
-                  <div className="mt-2">
-                    <TouchRunSwitcher
-                      runs={runs}
-                      foregroundId={foreground.id}
-                      onSelect={selectRun}
-                    />
-                  </div>
+                  <TouchRunSwitcher runs={runs} foregroundId={foreground.id} onSelect={selectRun} />
                 ) : null}
               </div>
-            </div>
-            {foreground.resultAction ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={cn(
-                  onPrimaryOutline,
-                  onPrimaryFocus,
-                  "h-8 w-full justify-center rounded-xl"
-                )}
-                onClick={onResultAction}
-              >
-                {foreground.resultAction.label}
-              </Button>
-            ) : null}
-          </DynamicIslandView>
-        </DynamicIsland>
+              <TimelineSteps run={foreground} />
+            </DynamicIslandView>
+
+            <DynamicIslandView
+              id="result"
+              className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
+            >
+              <div className="flex items-start gap-3">
+                {/* Optical nudge: orb midline ≈ title cap height */}
+                <WorkflowSolvingOrb
+                  size="toast"
+                  surface="inverted"
+                  paused
+                  className="mt-0.5 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1 space-y-0.5 pe-0.5">
+                      <p className="text-sm leading-snug font-semibold tracking-tight text-balance text-primary-foreground">
+                        {stripTrailingDots(foreground.resultTitle ?? foreground.title)}
+                      </p>
+                      {foreground.errorMessage ? (
+                        <p className="text-xs leading-relaxed text-pretty text-primary-foreground/70">
+                          {foreground.errorMessage}
+                        </p>
+                      ) : foreground.status === "success" && foreground.requiresAction ? (
+                        <p className="text-xs leading-relaxed text-primary-foreground/60">
+                          Ready when you are
+                        </p>
+                      ) : null}
+                    </div>
+                    <Button
+                      type="button"
+                      size="icon-xs"
+                      variant="ghost"
+                      className={cn(onPrimaryGhost, onPrimaryFocus, "-mt-0.5 shrink-0 rounded-xl")}
+                      aria-label="Dismiss"
+                      onClick={() => {
+                        dismissAiJobIsland(foreground.id);
+                      }}
+                    >
+                      <XIcon aria-hidden />
+                    </Button>
+                  </div>
+                  {showTouchSwitcher ? (
+                    <div className="mt-2">
+                      <TouchRunSwitcher
+                        runs={runs}
+                        foregroundId={foreground.id}
+                        onSelect={selectRun}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+              {foreground.resultAction ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className={cn(
+                    onPrimaryOutline,
+                    onPrimaryFocus,
+                    "h-8 w-full justify-center rounded-xl"
+                  )}
+                  onClick={onResultAction}
+                >
+                  {foreground.resultAction.label}
+                </Button>
+              ) : null}
+            </DynamicIslandView>
+          </DynamicIsland>
+        </BorderBeam>
       </div>
     </div>
   );

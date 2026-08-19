@@ -49,6 +49,7 @@
     "@tsu-stack/ui": "workspace:*",
     "ai": "catalog:",
     "blobatar": "catalog:",
+    "border-beam": "catalog:",
     "cmdk": "catalog:",
     "cuelume": "catalog:",
     "date-fns": "catalog:",
