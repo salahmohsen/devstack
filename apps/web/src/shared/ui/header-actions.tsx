@@ -4,6 +4,7 @@ import {
   ArrowUpDownIcon,
   BookmarkPlusIcon,
   CheckIcon,
+  ChevronDownIcon,
   GitMergeIcon,
   PlusIcon,
   RotateCcwIcon,
@@ -15,6 +16,7 @@ import {
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { IconMorph, IconShake } from "@tsu-stack/ui/components/icon-motion";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 
 import { AiFlowTrigger } from "@/shared/ui/ai-flow-trigger";
 
@@ -56,9 +58,51 @@ type HeaderActionProps = {
   };
 };
 
+function ReorderMenu({ onSortStart }: { onSortStart: () => void }) {
+  return (
+    <Menu>
+      <MenuTrigger render={<Button type="button" size="icon" aria-label="More actions" />}>
+        <ChevronDownIcon aria-hidden />
+      </MenuTrigger>
+      <MenuPopup align="end">
+        <MenuItem onClick={onSortStart}>
+          <ArrowUpDownIcon />
+          Reorder
+        </MenuItem>
+      </MenuPopup>
+    </Menu>
+  );
+}
+
+function AddButton({
+  onAdd,
+  label,
+  isLoading
+}: {
+  onAdd: () => void;
+  label?: string;
+  isLoading?: boolean;
+}) {
+  return (
+    <Button onClick={onAdd} loading={isLoading} size="default">
+      <IconMorph
+        mode="hover"
+        iconA={<PlusIcon aria-hidden />}
+        iconB={<CheckIcon aria-hidden className="text-primary-foreground" />}
+      />
+      {label ?? "Add"}
+    </Button>
+  );
+}
+
 export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps) {
   const { isSort, isSortPending, onSortStart, onSortSave, onSortRestore, onSortCancel } =
     sort ?? {};
+
+  const addControl = add?.onAdd ? (
+    <AddButton onAdd={add.onAdd} label={add.label} isLoading={add.isLoading} />
+  ) : null;
+  const menuControl = onSortStart ? <ReorderMenu onSortStart={onSortStart} /> : null;
 
   return (
     <div className="flex gap-2">
@@ -127,38 +171,55 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
             </Button>
           )}
         </Group>
-      ) : (
+      ) : organize?.isRunning ? (
         <>
-          {organize ? (
-            <AiFlowTrigger
-              idleLabel="Organize"
-              icon={<SparklesIcon aria-hidden />}
-              running={organize.isRunning}
-              stepLabel={organize.currentStep}
-              runningFallback="Organizing"
-              onStart={organize.onStart}
-              onCancel={organize.onCancel}
-              size="default"
-              layout="default"
-            />
+          <AiFlowTrigger
+            idleLabel="Organize"
+            icon={<SparklesIcon aria-hidden />}
+            running
+            stepLabel={organize.currentStep}
+            runningFallback="Organizing"
+            onStart={organize.onStart}
+            onCancel={organize.onCancel}
+            size="default"
+            layout="default"
+            variant="glass-primary"
+          />
+          {addControl || menuControl ? (
+            <Group>
+              {addControl}
+              {addControl && menuControl ? <GroupSeparator className="bg-primary/72" /> : null}
+              {menuControl}
+            </Group>
           ) : null}
-          {onSortStart && (
-            <Button onClick={onSortStart} variant="outline" size="default">
-              <ArrowUpDownIcon />
-              Reorder
-            </Button>
-          )}
-          {add?.onAdd && (
-            <Button onClick={add.onAdd} loading={add.isLoading} size="default">
-              <IconMorph
-                mode="hover"
-                iconA={<PlusIcon aria-hidden />}
-                iconB={<CheckIcon aria-hidden className="text-primary-foreground" />}
-              />
-              {add.label ?? "Add"}
-            </Button>
-          )}
         </>
+      ) : (
+        <Group>
+          {organize ? (
+            <>
+              <AiFlowTrigger
+                idleLabel="Organize"
+                icon={<SparklesIcon aria-hidden />}
+                running={false}
+                stepLabel={organize.currentStep}
+                runningFallback="Organizing"
+                onStart={organize.onStart}
+                onCancel={organize.onCancel}
+                size="default"
+                layout="default"
+                variant="glass-primary"
+              />
+              {addControl ? <GroupSeparator className="bg-primary/72" /> : null}
+            </>
+          ) : null}
+          {addControl}
+          {menuControl ? (
+            <>
+              {(organize ?? addControl) && <GroupSeparator className="bg-primary/72" />}
+              {menuControl}
+            </>
+          ) : null}
+        </Group>
       )}
     </div>
   );

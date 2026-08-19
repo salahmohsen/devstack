@@ -52,6 +52,14 @@ export type AiFlowTriggerProps = {
   size?: "sm" | "default";
   /** Native button chrome, full-width field footer, or compact pill. */
   layout?: "default" | "stretch" | "pill";
+  /**
+   * `glass` — frosted start chrome (Find jobs / Scan / Detect).
+   * `glass-primary` — primary fill matching Add, with glass bloom (header Organize).
+   * Running cancel stays `glass-destructive` either way.
+   */
+  variant?: "glass" | "glass-primary";
+  /** Idle-only tooltip. Trigger merges into the button so Group radii still flatten. */
+  tooltip?: string;
 };
 
 /**
@@ -116,13 +124,16 @@ export function AiFlowTrigger({
   disabled = false,
   className,
   size = "default",
-  layout = "default"
+  layout = "default",
+  variant = "glass",
+  tooltip
 }: AiFlowTriggerProps) {
   const pill = layout === "pill";
   const stretch = layout === "stretch";
   const liveLabel = stepLabel?.trim() ?? runningFallback;
   const compact = size === "sm";
   const flush = "rounded-none before:rounded-none";
+  const primaryGroup = variant === "glass-primary";
 
   if (running) {
     return (
@@ -139,7 +150,7 @@ export function AiFlowTrigger({
         <Button
           type="button"
           size={size}
-          variant="glass"
+          variant={variant}
           disabled
           className={cn(
             "pointer-events-none h-full justify-start",
@@ -154,7 +165,7 @@ export function AiFlowTrigger({
             <RunningStepLabel text={liveLabel} />
           )}
         </Button>
-        <GroupSeparator />
+        <GroupSeparator className={primaryGroup ? "bg-primary/72" : undefined} />
         <TooltipProvider delay={0}>
           <Tooltip>
             <TooltipTrigger
@@ -183,11 +194,11 @@ export function AiFlowTrigger({
     );
   }
 
-  return (
+  const idleButton = (
     <Button
       type="button"
       size={size}
-      variant="glass"
+      variant={variant}
       disabled={disabled}
       onClick={onStart}
       className={cn(stretch && cn("w-full", flush), pill && "rounded-full", className)}
@@ -195,5 +206,14 @@ export function AiFlowTrigger({
       {icon}
       {idleLabel}
     </Button>
+  );
+
+  if (!tooltip) return idleButton;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={idleButton} />
+      <TooltipPopup>{tooltip}</TooltipPopup>
+    </Tooltip>
   );
 }

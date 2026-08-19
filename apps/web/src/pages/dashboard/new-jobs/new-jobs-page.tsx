@@ -448,10 +448,15 @@ export function NewJobsPage() {
           title="New jobs"
           description="Matches from public job boards. Track to add to your pipeline, or dismiss."
           actions={
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            importFromEmail ? (
+              <Group>
+                <FindJobsNowButton />
+                <GroupSeparator className="bg-primary/72" />
+                <ScanJobAlertsButton />
+              </Group>
+            ) : (
               <FindJobsNowButton />
-              {importFromEmail ? <ScanJobAlertsButton /> : null}
-            </div>
+            )
           }
         />
 
@@ -523,8 +528,15 @@ export function NewJobsPage() {
                   description="Public job boards that match your title and keywords show up here. Find jobs now, or set a title under Settings."
                   action={
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                      <FindJobsNowButton />
-                      {importFromEmail ? <ScanJobAlertsButton /> : null}
+                      {importFromEmail ? (
+                        <Group>
+                          <FindJobsNowButton />
+                          <GroupSeparator className="bg-primary/72" />
+                          <ScanJobAlertsButton />
+                        </Group>
+                      ) : (
+                        <FindJobsNowButton />
+                      )}
                       <Button
                         type="button"
                         size="sm"

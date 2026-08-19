@@ -13,7 +13,7 @@ export function FindJobsNowButton({ className }: { className?: string }) {
 
   return (
     <AiFlowTrigger
-      idleLabel="Find jobs now"
+      idleLabel="Find jobs"
       icon={<SearchIcon aria-hidden />}
       running={status === "running"}
       stepLabel={stepLabel}
@@ -24,6 +24,8 @@ export function FindJobsNowButton({ className }: { className?: string }) {
       onCancel={dismissFindJobsNowTracking}
       size="default"
       layout="default"
+      variant="glass-primary"
+      tooltip="Search public job boards that match your preferences"
       className={className}
     />
   );

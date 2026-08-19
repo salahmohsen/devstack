@@ -83,8 +83,23 @@ export const buttonVariants = cva(
           "border-input bg-popover text-foreground shadow-xs/5 not-dark:bg-clip-padding not-disabled:not-active:not-data-pressed:before:shadow-[0_1px_--theme(--color-black/4%)] hover:bg-accent/50 data-pressed:bg-accent/50 *:data-[slot=button-loading-indicator]:text-foreground dark:bg-input/32 dark:not-disabled:before:shadow-[0_-1px_--theme(--color-white/2%)] dark:not-disabled:not-active:not-data-pressed:before:shadow-[0_-1px_--theme(--color-white/6%)] hover:dark:bg-input/64 dark:data-pressed:bg-input/64 [:disabled,:active,[data-pressed]]:shadow-none",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90 data-pressed:bg-secondary/90 *:data-[slot=button-loading-indicator]:text-secondary-foreground [:active,[data-pressed]]:bg-secondary/80",
-        /** Page-level start actions only (Find jobs now, Scan, Detect, Organize). */
+        /** Page-level start actions only (Find jobs now, Scan, Detect). */
         glass: glassTone("default", "text-foreground"),
+        /**
+         * Same paint plane as `default` (solid primary + shared border/shadow) so it
+         * joins Add in a Group, plus glass bloom (top glow / hairline) — not frosted /90.
+         */
+        "glass-primary": cn(
+          "overflow-visible border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24",
+          "not-disabled:inset-shadow-[0_1px_--theme(--color-white/16%)]",
+          "hover:bg-primary/90 data-pressed:bg-primary/90",
+          "*:data-[slot=button-loading-indicator]:text-primary-foreground",
+          BADGE_GLOW_VARS["on-primary"],
+          "before:bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,var(--btn-glow)_0%,transparent_72%)]",
+          "after:pointer-events-none after:absolute after:top-0 after:right-[22%] after:left-[22%] after:z-10 after:h-px after:bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,var(--btn-glow-line)_0%,transparent_100%)]",
+          "pointer-coarse:after:inset-0 pointer-coarse:after:right-auto pointer-coarse:after:left-auto pointer-coarse:after:h-auto pointer-coarse:after:bg-transparent",
+          "[:active,[data-pressed]]:inset-shadow-[0_1px_--theme(--color-black/8%)] [:disabled,:active,[data-pressed]]:shadow-none"
+        ),
         /** Glass cancel / stop chrome (AI flow trigger X). Same frost as `glass`, destructive glow. */
         "glass-destructive": cn(
           glassTone("destructive", "text-destructive-foreground"),
@@ -117,6 +132,7 @@ export type ButtonProps = {
 
 export function buttonGlowVariant(variant: ButtonProps["variant"]): BadgeGlowVariant | null {
   if (variant === "glass") return "default";
+  if (variant === "glass-primary") return "on-primary";
   if (variant === "glass-destructive") return "destructive";
   return null;
 }
@@ -177,7 +193,12 @@ export function Button({
         ) : null}
       </>
     ),
-    className: cn(buttonVariants({ size, variant }), className, flipHover && "overflow-hidden"),
+    // Glass blooms sit above the shell — never clip them with flip-hover overflow.
+    className: cn(
+      buttonVariants({ size, variant }),
+      className,
+      flipHover && !glow && "overflow-hidden"
+    ),
     "aria-disabled": loading || undefined,
     "data-loading": loading ? "" : undefined,
     "data-hovered": hovered ? "" : undefined,

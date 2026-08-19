@@ -17,17 +17,19 @@ export function ScanJobAlertsButton({ className }: { className?: string }) {
 
   return (
     <AiFlowTrigger
-      idleLabel="Scan job alerts"
+      idleLabel="Scan mail"
       icon={<MailSearchIcon aria-hidden />}
       running={status === "running"}
       stepLabel={stepLabel}
-      runningFallback="Scanning job alerts…"
+      runningFallback="Scanning mail…"
       onStart={() => {
         void startScanJobAlerts(queryClient);
       }}
       onCancel={dismissScanJobAlertsTracking}
       size="default"
       layout="default"
+      variant="glass-primary"
+      tooltip="Pull openings from job-alert digests in your inbox"
       className={className}
     />
   );

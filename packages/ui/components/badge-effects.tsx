@@ -22,7 +22,9 @@ export type BadgeGlowVariant =
   | "outline"
   | "secondary"
   | "success"
-  | "warning";
+  | "warning"
+  /** Light bloom for dark primary fills (glass-primary buttons). */
+  | "on-primary";
 
 export const BADGE_GLOW_VARS: Record<BadgeGlowVariant, string> = {
   default:
@@ -36,7 +38,8 @@ export const BADGE_GLOW_VARS: Record<BadgeGlowVariant, string> = {
   secondary:
     "[--btn-glow:rgba(113,113,122,0.2)] [--btn-glow-line:rgba(113,113,122,0.24)] dark:[--btn-glow:rgba(250,250,250,0.35)] dark:[--btn-glow-line:rgba(250,250,250,0.55)]",
   success: "[--btn-glow:rgba(34,197,94,0.65)] [--btn-glow-line:rgba(34,197,94,0.95)]",
-  warning: "[--btn-glow:rgba(245,158,11,0.65)] [--btn-glow-line:rgba(245,158,11,0.95)]"
+  warning: "[--btn-glow:rgba(245,158,11,0.65)] [--btn-glow-line:rgba(245,158,11,0.95)]",
+  "on-primary": "[--btn-glow:rgba(250,250,250,0.4)] [--btn-glow-line:rgba(250,250,250,0.75)]"
 };
 
 export const BADGE_GLOW: Record<BadgeGlowVariant, BadgeGlowClasses> = {
@@ -95,6 +98,13 @@ export const BADGE_GLOW: Record<BadgeGlowVariant, BadgeGlowClasses> = {
     soft: "bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(34,197,94,0.9)_0%,transparent_70%)]",
     mid: "bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(34,197,94,0.75)_0%,transparent_70%)]",
     line: "bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,rgba(34,197,94,0.95)_0%,transparent_100%)]"
+  },
+  "on-primary": {
+    icon: "text-primary-foreground",
+    border: "border-primary/40",
+    soft: "bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(250,250,250,0.55)_0%,transparent_70%)]",
+    mid: "bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(250,250,250,0.4)_0%,transparent_70%)]",
+    line: "bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,var(--btn-glow-line)_0%,transparent_100%)]"
   },
   warning: {
     icon: "text-amber-600 dark:text-amber-400",
