@@ -190,6 +190,7 @@ catalog:
   tslib: 2.8.1
   tw-shimmer: ^0.4.12
   "@assistant-ui/react-lexical": 0.2.9
+  blobatar: ^2.0.0
 
 catalogMode: prefer
 
@@ -206,6 +207,7 @@ minimumReleaseAgeExclude:
   - "@mastra/ai-sdk@1.7.0"
   - "@mastra/observability@1.16.3"
   - "@mastra/pg@1.18.0"
+  - blobatar@2.0.0
 
 overrides:
   vite: "catalog:"

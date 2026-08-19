@@ -258,6 +258,9 @@ catalogs:
     better-auth:
       specifier: ^1.6.23
       version: 1.6.23
+    blobatar:
+      specifier: ^2.0.0
+      version: 2.0.0
     bullmq:
       specifier: ^5.58.0
       version: 5.81.2
@@ -810,6 +813,9 @@ importers:
       ai:
         specifier: 'catalog:'
         version: 6.0.208(zod@4.4.3)
+      blobatar:
+        specifier: 'catalog:'
+        version: 2.0.0(react@19.2.7)
       cmdk:
         specifier: 'catalog:'
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -8483,6 +8489,14 @@ packages:
       zod: ^4.0.0
     peerDependenciesMeta:
       zod:
+        optional: true
+
+  blobatar@2.0.0:
+    resolution: {integrity: sha512-46STsjELfKv5hnnRYsWKgN1vlWFkaewSkwnqRRnptCD+LwxejfyXs1lYwek4fkwAtGrXabmJHP4fpzDxjnqAEg==}
+    peerDependencies:
+      react: '>=18'
+    peerDependenciesMeta:
+      react:
         optional: true
 
   body-parser@2.3.0:
@@ -19649,6 +19663,10 @@ snapshots:
       set-cookie-parser: 3.1.0
     optionalDependencies:
       zod: 4.4.3
+
+  blobatar@2.0.0(react@19.2.7):
+    optionalDependencies:
+      react: 19.2.7
 
   body-parser@2.3.0:
     dependencies:
