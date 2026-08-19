@@ -143,44 +143,86 @@ export const StackItem = memo(function StackItem({
   const showLeadingOverlay =
     Boolean(isSort && dragHandleProps) || (!isSort && (isChecked || batchSelectActive));
 
-  // Compact (<12rem container): horizontal icon+name band.
-  // Wide (@[12rem]): square poster with centered icon + badges.
+  // Compact: force actions (hide title) when open or batch-selecting.
+  // Hover/focus-within uses group-* classes so idle cards keep a readable title.
+  const compactActionsForced = isOpen || batchSelectActive;
+
+  // Compact (<12rem): icon + title; on hover/open title yields to icon-only actions.
+  // Wide (@[12rem]): square poster with centered icon + badges + footer actions.
   // Container is the grid cell (`@container` on stacks-page wrappers).
-  const identityLayoutClassName = cn(
-    "flex min-h-0 flex-1",
-    "flex-row items-center gap-2.5 py-3 pe-3",
-    showLeadingOverlay ? "ps-8" : "ps-3",
+  const identityRowClassName = cn(
+    "relative flex min-h-0 flex-1 items-center gap-2.5 py-2.5",
+    showLeadingOverlay ? "ps-8 pe-2" : "ps-3 pe-2",
     "@[12rem]:flex-col @[12rem]:items-center @[12rem]:justify-center @[12rem]:gap-2 @[12rem]:p-4 @[12rem]:pt-8"
   );
 
-  const identityBody = (
-    <>
-      <Icon
-        icon={stack.icon}
-        className="size-9 shrink-0 rounded object-contain @[12rem]:size-14"
-        fallbackToLetter
-        letterClassName="size-9 text-sm @[12rem]:size-14 @[12rem]:text-xl"
-        name={stack.name}
-      />
-      <p
-        className={cn(
-          "min-w-0 flex-1 truncate text-left text-sm font-medium",
-          "@[12rem]:line-clamp-2 @[12rem]:block @[12rem]:max-w-full @[12rem]:flex-none @[12rem]:text-center @[12rem]:wrap-break-word"
-        )}
-        title={stack.name}
-      >
-        {stack.name}
-      </p>
-      {stack.type || stack.isFeatured || usageCount > 0 ? (
-        <div className="hidden max-w-full flex-wrap items-center justify-center gap-1 @[12rem]:flex">
-          <StackIdentityBadges
-            type={stack.type}
-            isFeatured={stack.isFeatured}
-            projectCount={usageCount}
-          />
-        </div>
-      ) : null}
-    </>
+  const titleClassName = cn(
+    "min-w-0 flex-1 truncate text-left text-sm font-medium",
+    // Compact only: hide title when actions take the trailing slot.
+    // Wide always keeps the name (@max so group-hover cannot win at ≥12rem).
+    compactActionsForced
+      ? "hidden @[12rem]:block"
+      : "@max-[12rem]:group-focus-within:hidden @max-[12rem]:group-hover:hidden",
+    "@[12rem]:line-clamp-2 @[12rem]:block @[12rem]:max-w-full @[12rem]:flex-none @[12rem]:text-center @[12rem]:wrap-break-word"
+  );
+
+  // Compact strip must not appear in poster mode — use @max so group-hover:flex
+  // cannot override an @[12rem]:hidden rule.
+  const compactActionsClassName = cn(
+    "relative z-10 ms-auto hidden shrink-0 items-center",
+    compactActionsForced
+      ? "@max-[12rem]:flex"
+      : "@max-[12rem]:group-focus-within:flex @max-[12rem]:group-hover:flex"
+  );
+
+  const wideFooterClassName = cn(
+    "hidden h-10 shrink-0 items-center justify-center px-2 pb-2 @[12rem]:flex",
+    "motion-safe:transition-opacity motion-safe:duration-150",
+    compactActionsForced
+      ? "opacity-100"
+      : "opacity-0 group-hover:opacity-100 focus-within:opacity-100"
+  );
+
+  const sharedActionProps = {
+    select: {
+      selected: isChecked,
+      onToggle: () => onToggleSelect(stack.id)
+    },
+    togglePortfolio: {
+      onAction: handleTogglePortfolio,
+      initialValue: !!stack.portfolioEntryId,
+      isLoading: togglePortfolioMutation.isPending
+    },
+    toggleFeatured: {
+      onAction: handleToggleFeatured,
+      initialValue: !!stack.isFeatured,
+      isLoading: featuredMutation.isPending
+    },
+    delete: {
+      onAction: () => setDeleteDialogOpen(true),
+      isLoading: deleteMutation.isPending
+    }
+  } as const;
+
+  const compactActionButtons = (
+    <ListItemActionButtons
+      {...sharedActionProps}
+      edit={{
+        onAction: () => onEdit(stack.id),
+        isLoading: false,
+        iconOnly: true
+      }}
+    />
+  );
+
+  const wideActionButtons = (
+    <ListItemActionButtons
+      {...sharedActionProps}
+      edit={{
+        onAction: () => onEdit(stack.id),
+        isLoading: false
+      }}
+    />
   );
 
   const card = (
@@ -189,12 +231,14 @@ export const StackItem = memo(function StackItem({
       data-selected={isOpen}
       className={cn(
         // content-visibility skips layout/paint for off-screen cards in long grids
-        "[contain-intrinsic-size:auto_7.5rem] [content-visibility:auto]",
+        "[contain-intrinsic-size:auto_4.25rem] [content-visibility:auto]",
         "@[12rem]:aspect-square @[12rem]:[contain-intrinsic-size:12.5rem]",
         "group relative w-full max-w-full shrink-0 overflow-hidden py-0!",
-        "motion-safe:transition-shadow motion-safe:duration-150",
+        // Border color only — external ring is clipped by overflow-hidden and
+        // stacks on Card’s own border/inset shadow into a flicker line.
+        "motion-safe:transition-[border-color,box-shadow] motion-safe:duration-150",
         isSort && "cursor-grab active:cursor-grabbing",
-        isOpen && "ring-1 ring-primary/40"
+        isOpen && "border-primary/50"
       )}
     >
       <div className="relative flex h-full flex-col">
@@ -217,63 +261,91 @@ export const StackItem = memo(function StackItem({
           ) : null}
         </div>
         {isSort ? (
-          <CardContent className={cn("p-0", identityLayoutClassName)}>{identityBody}</CardContent>
+          <CardContent className={cn("p-0", identityRowClassName)}>
+            <Icon
+              icon={stack.icon}
+              className="size-9 shrink-0 rounded object-contain @[12rem]:size-14"
+              fallbackToLetter
+              letterClassName="size-9 text-sm @[12rem]:size-14 @[12rem]:text-xl"
+              name={stack.name}
+            />
+            <p
+              className={cn(
+                "min-w-0 flex-1 truncate text-left text-sm font-medium",
+                "@[12rem]:line-clamp-2 @[12rem]:max-w-full @[12rem]:flex-none @[12rem]:text-center @[12rem]:wrap-break-word"
+              )}
+              title={stack.name}
+            >
+              {stack.name}
+            </p>
+            {stack.type || stack.isFeatured || usageCount > 0 ? (
+              <div className="hidden max-w-full flex-wrap items-center justify-center gap-1 @[12rem]:flex">
+                <StackIdentityBadges
+                  type={stack.type}
+                  isFeatured={stack.isFeatured}
+                  projectCount={usageCount}
+                />
+              </div>
+            ) : null}
+          </CardContent>
         ) : (
           <>
-            <button
-              type="button"
-              aria-pressed={isOpen}
-              aria-label={`View details for ${stack.name}`}
-              className={cn(
-                identityLayoutClassName,
-                "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              )}
-              onClick={() => {
-                onOpen(stack.id, stack);
-              }}
-              onMouseEnter={
-                onPrefetch
-                  ? () => {
-                      onPrefetch(stack.id);
-                    }
-                  : undefined
-              }
-            >
-              {identityBody}
-            </button>
-            <div
-              className={cn(
-                "flex h-10 shrink-0 items-center justify-center px-2 pb-2",
-                "motion-safe:transition-opacity motion-safe:duration-150",
-                isOpen || batchSelectActive
-                  ? "opacity-100"
-                  : "opacity-0 group-hover:opacity-100 focus-within:opacity-100"
-              )}
-            >
-              <ListItemActionButtons
-                edit={{
-                  onAction: () => onEdit(stack.id),
-                  isLoading: false
+            <div className={identityRowClassName}>
+              {/* Full-row hit target; actions sit above with stopPropagation. */}
+              <button
+                type="button"
+                aria-pressed={isOpen}
+                aria-label={`View details for ${stack.name}`}
+                className="absolute inset-0 z-0 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
+                onClick={() => {
+                  onOpen(stack.id, stack);
                 }}
-                select={{
-                  selected: isChecked,
-                  onToggle: () => onToggleSelect(stack.id)
-                }}
-                togglePortfolio={{
-                  onAction: handleTogglePortfolio,
-                  initialValue: !!stack.portfolioEntryId,
-                  isLoading: togglePortfolioMutation.isPending
-                }}
-                toggleFeatured={{
-                  onAction: handleToggleFeatured,
-                  initialValue: !!stack.isFeatured,
-                  isLoading: featuredMutation.isPending
-                }}
-                delete={{
-                  onAction: () => setDeleteDialogOpen(true),
-                  isLoading: deleteMutation.isPending
-                }}
+                onMouseEnter={
+                  onPrefetch
+                    ? () => {
+                        onPrefetch(stack.id);
+                      }
+                    : undefined
+                }
               />
+              <Icon
+                icon={stack.icon}
+                className="pointer-events-none relative z-1 size-9 shrink-0 rounded object-contain @[12rem]:size-14"
+                fallbackToLetter
+                letterClassName="size-9 text-sm @[12rem]:size-14 @[12rem]:text-xl"
+                name={stack.name}
+              />
+              <p
+                className={cn("pointer-events-none relative z-1", titleClassName)}
+                title={stack.name}
+              >
+                {stack.name}
+              </p>
+              {stack.type || stack.isFeatured || usageCount > 0 ? (
+                <div className="pointer-events-none relative z-1 hidden max-w-full flex-wrap items-center justify-center gap-1 @[12rem]:flex">
+                  <StackIdentityBadges
+                    type={stack.type}
+                    isFeatured={stack.isFeatured}
+                    projectCount={usageCount}
+                  />
+                </div>
+              ) : null}
+              <div
+                role="presentation"
+                className={compactActionsClassName}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+              >
+                {compactActionButtons}
+              </div>
+            </div>
+            <div
+              role="presentation"
+              className={wideFooterClassName}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {wideActionButtons}
             </div>
           </>
         )}

@@ -9,6 +9,7 @@ import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { StatusMorphToggle } from "@tsu-stack/ui/components/status-morph-toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { listItemMenuSlots, type ListItemMenuSlots } from "@/shared/ui/list-item-menu-slots";
 import { ListItemOverflowMenu } from "@/shared/ui/list-item-overflow-menu";
@@ -20,6 +21,8 @@ type ActionButtonConfig = {
   label?: string;
   /** Accessible name when it differs from the label. */
   ariaLabel?: string;
+  /** Strip control as icon-only; label/aria still used for accessibility. */
+  iconOnly?: boolean;
 };
 
 type ToggleConfig = {
@@ -211,7 +214,8 @@ export function ListItemActionButtons({
         ) : null}
         {edit ? (
           <Button
-            className={hasOverflowMenu ? "max-md:hidden" : undefined}
+            size={edit.iconOnly ? "icon" : undefined}
+            className={cn(hasOverflowMenu && !edit.iconOnly ? "max-md:hidden" : undefined)}
             onClick={(event: React.MouseEvent) => {
               event.stopPropagation();
               edit.onAction();
@@ -221,7 +225,7 @@ export function ListItemActionButtons({
             aria-label={edit.ariaLabel ?? edit.label ?? "Edit"}
           >
             <IconMorph mode="hover" iconA={<Edit />} iconB={<Check className="text-success" />} />
-            {edit.label ?? "Edit"}
+            {edit.iconOnly ? null : (edit.label ?? "Edit")}
           </Button>
         ) : null}
         {showDeleteInGroup ? (

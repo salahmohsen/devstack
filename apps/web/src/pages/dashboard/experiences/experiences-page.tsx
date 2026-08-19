@@ -18,7 +18,7 @@ import {
   AlertDialogPopup,
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
+import { ChaoticPixelsLoader } from "@tsu-stack/ui/components/chaotic-pixels-loader";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
@@ -433,11 +433,11 @@ export function ExperiencesPage() {
         {list}
         <div
           ref={sentinelRef}
-          className="flex h-10 w-full items-center justify-center"
+          className="flex w-full items-center justify-center py-2"
           aria-hidden={!experiencesQuery.hasNextPage}
         >
           {experiencesQuery.isFetchingNextPage ? (
-            <Spinner className="size-4 text-muted-foreground" />
+            <ChaoticPixelsLoader label="Loading more experiences" />
           ) : null}
         </div>
         {totalCount != null && visibleExperiences.length > 0 ? (

@@ -24,7 +24,7 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
+import { ChaoticPixelsLoader } from "@tsu-stack/ui/components/chaotic-pixels-loader";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
@@ -667,11 +667,11 @@ export function StacksPage() {
           </div>
           <div
             ref={sentinelRef}
-            className="flex h-10 w-full items-center justify-center"
+            className="flex w-full items-center justify-center py-2"
             aria-hidden={!stacksQuery.hasNextPage}
           >
             {stacksQuery.isFetchingNextPage ? (
-              <Spinner className="size-4 text-muted-foreground" />
+              <ChaoticPixelsLoader label="Loading more stacks" />
             ) : null}
           </div>
           {totalCount != null && stacks.length > 0 ? (
