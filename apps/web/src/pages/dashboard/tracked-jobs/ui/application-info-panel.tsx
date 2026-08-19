@@ -34,7 +34,6 @@ import {
   type ApplicationSourceTag,
   type JobSkillTag
 } from "@tsu-stack/core";
-import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -78,6 +77,7 @@ import {
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
+import { CompanyAvatar } from "@/pages/dashboard/tracked-jobs/ui/company-avatar";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";
@@ -374,14 +374,15 @@ export function ApplicationInfoPanel({
     <>
       <ItemInfoPanel
         eyebrow={
-          <AgentAvatar
-            seed={item.companyName}
+          <CompanyAvatar
+            companyName={item.companyName}
             size={44}
+            selected
             className="size-11 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             aria-label={item.companyName}
           />
         }
-        eyebrowClassName="size-11 rounded-full bg-transparent"
+        eyebrowClassName="size-11 overflow-visible rounded-none bg-transparent [&_img]:size-auto"
         title={item.title}
         description={
           <div className="space-y-2.5">

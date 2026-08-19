@@ -34,7 +34,6 @@ import {
   type ApplicationOutput,
   type ApplicationStage
 } from "@tsu-stack/core";
-import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -60,6 +59,7 @@ import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/applica
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
+import { CompanyAvatar } from "@/pages/dashboard/tracked-jobs/ui/company-avatar";
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
@@ -113,11 +113,11 @@ function ApplicationCard({
             if (!isDragging) openView(app);
           }}
         >
-          <AgentAvatar
-            seed={app.companyName}
+          <CompanyAvatar
+            companyName={app.companyName}
             size={28}
-            animated={avatarAnimated}
-            className="mt-0.5 size-7 shrink-0 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+            selected={avatarAnimated}
+            className="mt-0.5 size-7 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             aria-label={app.companyName}
           />
           <span className="min-w-0 flex-1">

@@ -4,7 +4,6 @@ import { BriefcaseIcon, Building2Icon, FileTextIcon, MapPinIcon, PlusIcon } from
 import { useMemo } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
-import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -36,6 +35,7 @@ import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/applica
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
+import { CompanyAvatar } from "@/pages/dashboard/tracked-jobs/ui/company-avatar";
 
 const LIST_FILTERS = [
   { value: "open", label: "Open" },
@@ -216,11 +216,11 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
                         </div>
                         <div className="flex min-w-0 items-start gap-2.5">
-                          <AgentAvatar
-                            seed={app.companyName}
+                          <CompanyAvatar
+                            companyName={app.companyName}
                             size={32}
-                            animated={selected}
-                            className="mt-0.5 size-8 shrink-0 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                            selected={selected}
+                            className="mt-0.5 size-8 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                             aria-label={app.companyName}
                           />
                           <div className="min-w-0 flex-1">
