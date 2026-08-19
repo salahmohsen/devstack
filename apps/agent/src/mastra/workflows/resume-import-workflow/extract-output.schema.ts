@@ -47,11 +47,22 @@ export const ResumeExtractProjectSchema = z.object({
   toDate: z.string().nullable().optional().describe("End date used only for year fallback")
 });
 
-export const ResumeExtractStackSchema = z.object({
+const ResumeExtractStackObjectSchema = z.object({
   name: z.string().describe("Skill/tool display name, e.g. React"),
   description: z.string().nullable().optional().describe("One-line what they used it for"),
   type: z.string().nullable().optional().describe("Category if obvious, e.g. framework")
 });
+
+/**
+ * Models often emit bare skill strings despite an object schema.
+ * Coerce `"React"` → `{ name: "React" }` so structured-output validation succeeds.
+ */
+export const ResumeExtractStackSchema = z.preprocess((val) => {
+  if (typeof val === "string") {
+    return { name: val };
+  }
+  return val;
+}, ResumeExtractStackObjectSchema);
 
 export const ResumeExtractProfileSchema = z.object({
   name: z.string().optional().nullable().describe("Full name from the resume header"),
@@ -64,7 +75,10 @@ export const ResumeExtractOutputSchema = z.object({
   profile: ResumeExtractProfileSchema.describe("Header / about section"),
   experiences: z.array(ResumeExtractExperienceSchema).default([]).describe("Work history roles"),
   projects: z.array(ResumeExtractProjectSchema).default([]).describe("Projects / portfolio items"),
-  stacks: z.array(ResumeExtractStackSchema).default([]).describe("Skills mentioned on the resume"),
+  stacks: z
+    .array(ResumeExtractStackSchema)
+    .default([])
+    .describe("Skills as objects with name (string entries are coerced)"),
   warnings: z.array(z.string()).optional().describe("Extraction caveats, if any")
 });
 

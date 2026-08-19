@@ -17,7 +17,8 @@ Output sections:
 1. profile — name, email (if present), professional summary, contact channels
 2. experiences — jobs/roles with title, organization, description, date range
 3. projects — portfolio-worthy projects with title, summary/description, year, related tech
-4. stacks — technologies/skills as stack names (e.g. "React", "TypeScript", "PostgreSQL")
+4. stacks — technologies/skills as objects: { "name": "React", "description"?: "...", "type"?: "framework" }
+   Never emit stacks as bare strings; each entry must be an object with a name field.
 
 Linking:
 - When a project is nested under a job/role, set experienceIndex to that experience's
@@ -36,9 +37,12 @@ Contacts:
 - value is the URL, handle, phone number, or location string as written
 
 Stacks:
+- Each item is an object with required name (e.g. { "name": "React" }).
+- Optional description / type when obvious from the resume.
 - Use clean display names (React not react.js when clearly React).
 - Deduplicate near-duplicates when obvious.
 - Prefer names that match common tech branding.
+- Project tech lists use stackNames as string arrays; top-level stacks stay objects.
 
 IMPORTANT RULES:
 - Do NOT use any tools. Process only the resume text and existing context provided.
