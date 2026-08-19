@@ -41,6 +41,12 @@ export type ListItemContentProps = ListItemPassthrough & {
   title: string;
   tags?: ListItemTag[];
   meta?: ListItemMeta[];
+  /**
+   * Where tags sit relative to the title.
+   * - `before` (default): status chips above the identity row (jobs).
+   * - `after`: title first, then chips under it (projects).
+   */
+  tagsPlacement?: "before" | "after";
   /** Optional leading mark (avatar, icon, etc.). */
   leading?: ReactNode;
   /** Optional actions row under the identity block (typically mobile). */
@@ -61,38 +67,51 @@ function renderTag(tag: ListItemTag): ReactNode {
   );
 }
 
+function TagsRow({ tags }: { tags: ListItemTag[] }) {
+  if (tags.length === 0) return null;
+  return (
+    <div className="no-scrollbar flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain">
+      {tags.map((tag) => (
+        <span key={tag.id} className="shrink-0">
+          {renderTag(tag)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /**
- * Dashboard list-row content for {@link ListItem}: tags → leading + title/meta.
+ * Dashboard list-row content for {@link ListItem}: tags + leading + title/meta.
  * Domain pages pass tags, meta, leading, and actions; this owns the layout only.
  */
 export function ListItemContent({
   title,
   tags = [],
   meta = [],
+  tagsPlacement = "before",
   leading,
   mobileActions,
   className,
   ...listItemProps
 }: ListItemContentProps) {
+  const tagsBefore = tagsPlacement === "before";
+
   return (
     <ListItem
       {...listItemProps}
       className={cn(listItemProps.selected && "border-primary/40", className)}
     >
       <div className="flex min-w-0 flex-col gap-1.5">
-        {tags.length > 0 ? (
-          <div className="no-scrollbar flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain">
-            {tags.map((tag) => (
-              <span key={tag.id} className="shrink-0">
-                {renderTag(tag)}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        {tagsBefore ? <TagsRow tags={tags} /> : null}
         <div className="flex min-w-0 items-center gap-2.5">
           {leading}
           <div className="min-w-0 flex-1">
             <h3 className="min-w-0 truncate text-sm font-medium">{title}</h3>
+            {!tagsBefore && tags.length > 0 ? (
+              <div className="mt-1.5">
+                <TagsRow tags={tags} />
+              </div>
+            ) : null}
             {meta.length > 0 ? (
               <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
                 {meta.map((item) => {

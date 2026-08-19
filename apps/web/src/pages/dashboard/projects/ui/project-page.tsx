@@ -38,10 +38,11 @@ import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
-import { ListItem } from "@/shared/ui/list-item";
+import { ListItemContent, type ListItemTag } from "@/shared/ui/list-item-content";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
+import { CompanyAvatar } from "@/features/applications";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
@@ -432,69 +433,87 @@ export function ProjectsPage() {
         siblingsDimOnHover
         containerClassName="space-y-2"
       >
-        {(project, dragHandleProps) => (
-          <ListItem
-            selected={isItemOpen?.[project.id] ?? false}
-            onSelect={() => openItem(project.id, project)}
-            dragHandleProps={dragHandleProps}
-            isSort={isSort}
-            isBatchSelected={isIdSelected(selectedIds, project.id)}
-            batchSelectActive={batchSelectActive}
-            onToggleSelect={() => toggleSelect(project.id)}
-            onMouseEnter={() => {
-              void queryClient.ensureQueryData(
-                orpcQueryClient.projects.get.queryOptions({ input: { id: project.id } })
-              );
-            }}
-            onEdit={() => openDialog(project.id)}
-            onDelete={() => deleteMutation.mutate({ id: project.id })}
-            isDeleting={deleteMutation.isPending}
-            onTogglePortfolio={() => handleTogglePortfolio(project.id, !project.portfolioEntryId)}
-            isTogglingPortfolio={togglingId === project.id}
-            inPortfolio={!!project.portfolioEntryId}
-            extraMenuItems={
-              <MenuItem
-                onClick={(event: React.MouseEvent) => {
-                  event.stopPropagation();
-                  handleDetectStacksFromMenu(project);
-                }}
-              >
-                <SparklesIcon className="size-4" aria-hidden />
-                Detect stacks
-              </MenuItem>
-            }
-            deleteTitle="Delete this project?"
-            deleteDescription="This will permanently delete this project and all its associated data."
-            title={project.title}
-            titleEnd={
-              project.stacks.length > 0 ? (
-                <>
-                  {project.stacks.slice(0, 6).map((stack) => (
-                    <Badge key={stack.id} variant="secondary" size="sm">
-                      {stack.icon ? <Icon icon={stack.icon} name={stack.name} /> : null}
-                      {stack.name}
-                    </Badge>
-                  ))}
-                  {project.stacks.length > 6 ? (
-                    <PreviewCard>
-                      <PreviewCardTrigger render={<Badge variant="secondary" size="sm" />}>
-                        +{project.stacks.length - 6}
-                      </PreviewCardTrigger>
-                      <PreviewCardPopup className="flex w-md flex-wrap gap-1 p-1">
-                        {project.stacks.slice(6).map((stack) => (
-                          <Badge key={stack.id} variant="secondary" size="sm">
-                            {stack.icon ? <Icon icon={stack.icon} name={stack.name} /> : null}
-                            {stack.name}
-                          </Badge>
-                        ))}
-                      </PreviewCardPopup>
-                    </PreviewCard>
-                  ) : null}
-                </>
-              ) : undefined
-            }
-          />
-        )}
+        {(project, dragHandleProps) => {
+          const selected = isItemOpen?.[project.id] ?? false;
+          const tags: ListItemTag[] = project.stacks.slice(0, 6).map((stack) => {
+            return {
+              id: stack.id,
+              node: (
+                <Badge variant="secondary" size="sm">
+                  {stack.icon ? <Icon icon={stack.icon} name={stack.name} /> : null}
+                  {stack.name}
+                </Badge>
+              )
+            };
+          });
+          if (project.stacks.length > 6) {
+            tags.push({
+              id: "stacks-overflow",
+              node: (
+                <PreviewCard>
+                  <PreviewCardTrigger render={<Badge variant="secondary" size="sm" />}>
+                    +{project.stacks.length - 6}
+                  </PreviewCardTrigger>
+                  <PreviewCardPopup className="flex w-md flex-wrap gap-1 p-1">
+                    {project.stacks.slice(6).map((stack) => (
+                      <Badge key={stack.id} variant="secondary" size="sm">
+                        {stack.icon ? <Icon icon={stack.icon} name={stack.name} /> : null}
+                        {stack.name}
+                      </Badge>
+                    ))}
+                  </PreviewCardPopup>
+                </PreviewCard>
+              )
+            });
+          }
+          return (
+            <ListItemContent
+              title={project.title}
+              selected={selected}
+              onSelect={() => openItem(project.id, project)}
+              dragHandleProps={dragHandleProps}
+              isSort={isSort}
+              isBatchSelected={isIdSelected(selectedIds, project.id)}
+              batchSelectActive={batchSelectActive}
+              onToggleSelect={() => toggleSelect(project.id)}
+              onMouseEnter={() => {
+                void queryClient.ensureQueryData(
+                  orpcQueryClient.projects.get.queryOptions({ input: { id: project.id } })
+                );
+              }}
+              onEdit={() => openDialog(project.id)}
+              onDelete={() => deleteMutation.mutate({ id: project.id })}
+              isDeleting={deleteMutation.isPending}
+              onTogglePortfolio={() => handleTogglePortfolio(project.id, !project.portfolioEntryId)}
+              isTogglingPortfolio={togglingId === project.id}
+              inPortfolio={!!project.portfolioEntryId}
+              extraMenuItems={
+                <MenuItem
+                  onClick={(event: React.MouseEvent) => {
+                    event.stopPropagation();
+                    handleDetectStacksFromMenu(project);
+                  }}
+                >
+                  <SparklesIcon className="size-4" aria-hidden />
+                  Detect stacks
+                </MenuItem>
+              }
+              deleteTitle="Delete this project?"
+              deleteDescription="This will permanently delete this project and all its associated data."
+              tagsPlacement="after"
+              tags={tags}
+              leading={
+                <CompanyAvatar
+                  companyName={project.title}
+                  size={40}
+                  selected={selected}
+                  className="size-10"
+                  aria-label={project.title}
+                />
+              }
+            />
+          );
+        }}
       </SortableList>
     );
 
