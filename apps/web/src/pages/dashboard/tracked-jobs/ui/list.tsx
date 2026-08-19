@@ -218,9 +218,9 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                         <div className="flex min-w-0 items-center gap-2.5">
                           <CompanyAvatar
                             companyName={app.companyName}
-                            size={32}
+                            size={40}
                             selected={selected}
-                            className="size-8"
+                            className="size-10"
                             aria-label={app.companyName}
                           />
                           <div className="min-w-0 flex-1">

@@ -376,13 +376,13 @@ export function ApplicationInfoPanel({
         eyebrow={
           <CompanyAvatar
             companyName={item.companyName}
-            size={64}
+            size={96}
             selected
-            className="size-16"
+            className="size-24"
             aria-label={item.companyName}
           />
         }
-        eyebrowClassName="size-16 overflow-visible rounded-none bg-transparent [&_img]:size-auto"
+        eyebrowClassName="size-24 overflow-visible rounded-none bg-transparent [&_img]:!size-full [&_svg]:!size-full"
         title={item.title}
         description={
           <div className="space-y-2.5">

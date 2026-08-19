@@ -115,9 +115,9 @@ function ApplicationCard({
         >
           <CompanyAvatar
             companyName={app.companyName}
-            size={28}
+            size={40}
             selected={avatarAnimated}
-            className="size-7"
+            className="size-10"
             aria-label={app.companyName}
           />
           <span className="min-w-0 flex-1">

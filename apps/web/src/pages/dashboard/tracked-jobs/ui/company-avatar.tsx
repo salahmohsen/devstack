@@ -20,39 +20,44 @@ export type CompanyAvatarProps = {
  * Tracked-jobs company face via blobatar.
  * Unselected → static idle; selected → animate="always" + surprised.
  * Transparent backdrop (library default — do not pass background).
+ *
+ * Blobatars leave transparent margin in the viewBox; a light scale makes the
+ * creature fill the layout slot without changing the reserved size.
  */
 export function CompanyAvatar({
   companyName,
-  size,
+  size = 32,
   selected = false,
   className,
   "aria-label": ariaLabel
 }: CompanyAvatarProps) {
   const label = ariaLabel ?? companyName;
-  const sharedClassName = cn("shrink-0", className);
-
-  // Split branches so TypeScript keeps Blobatar's static vs animated prop union.
-  if (selected) {
-    return (
-      <Blobatar
-        name={companyName}
-        size={size}
-        title={companyName}
-        aria-label={label}
-        className={sharedClassName}
-        animate="always"
-        expression={surprised}
-      />
-    );
-  }
+  const faceClassName = "size-full max-h-none max-w-none origin-center scale-[1.28]";
 
   return (
-    <Blobatar
-      name={companyName}
-      size={size}
-      title={companyName}
-      aria-label={label}
-      className={sharedClassName}
-    />
+    <span
+      className={cn("inline-flex shrink-0 items-center justify-center overflow-visible", className)}
+      style={{ width: size, height: size }}
+    >
+      {selected ? (
+        <Blobatar
+          name={companyName}
+          size={size}
+          title={companyName}
+          aria-label={label}
+          className={faceClassName}
+          animate="always"
+          expression={surprised}
+        />
+      ) : (
+        <Blobatar
+          name={companyName}
+          size={size}
+          title={companyName}
+          aria-label={label}
+          className={faceClassName}
+        />
+      )}
+    </span>
   );
 }
