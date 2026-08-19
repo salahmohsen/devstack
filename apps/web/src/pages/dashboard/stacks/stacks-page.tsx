@@ -649,8 +649,9 @@ export function StacksPage() {
       return (
         <>
           <div className={gridClassName}>
+            {/* @container on cell: stack-item compact/wide queries card width */}
             {displayItems.map((stack) => (
-              <div key={stack.id} className="animate-grid-item min-w-0">
+              <div key={stack.id} className="@container animate-grid-item min-w-0">
                 <StackItem
                   stack={stack}
                   isChecked={Boolean(selectedIds?.[stack.id])}
@@ -695,7 +696,7 @@ export function StacksPage() {
         containerClassName={gridClassName}
       >
         {(stack, dragHandleProps) => (
-          <div key={stack.id} className="animate-grid-item min-w-0">
+          <div key={stack.id} className="@container animate-grid-item min-w-0">
             <StackItem
               stack={stack}
               isChecked={Boolean(selectedIds?.[stack.id])}

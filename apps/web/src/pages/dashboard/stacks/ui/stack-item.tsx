@@ -140,14 +140,58 @@ export const StackItem = memo(function StackItem({
     });
   }
 
+  const showLeadingOverlay =
+    Boolean(isSort && dragHandleProps) || (!isSort && (isChecked || batchSelectActive));
+
+  // Compact (<12rem container): horizontal icon+name band.
+  // Wide (@[12rem]): square poster with centered icon + badges.
+  // Container is the grid cell (`@container` on stacks-page wrappers).
+  const identityLayoutClassName = cn(
+    "flex min-h-0 flex-1",
+    "flex-row items-center gap-2.5 py-3 pe-3",
+    showLeadingOverlay ? "ps-8" : "ps-3",
+    "@[12rem]:flex-col @[12rem]:items-center @[12rem]:justify-center @[12rem]:gap-2 @[12rem]:p-4 @[12rem]:pt-8"
+  );
+
+  const identityBody = (
+    <>
+      <Icon
+        icon={stack.icon}
+        className="size-9 shrink-0 rounded object-contain @[12rem]:size-14"
+        fallbackToLetter
+        letterClassName="size-9 text-sm @[12rem]:size-14 @[12rem]:text-xl"
+        name={stack.name}
+      />
+      <p
+        className={cn(
+          "min-w-0 flex-1 truncate text-left text-sm font-medium",
+          "@[12rem]:line-clamp-2 @[12rem]:block @[12rem]:max-w-full @[12rem]:flex-none @[12rem]:text-center @[12rem]:wrap-break-word"
+        )}
+        title={stack.name}
+      >
+        {stack.name}
+      </p>
+      {stack.type || stack.isFeatured || usageCount > 0 ? (
+        <div className="hidden max-w-full flex-wrap items-center justify-center gap-1 @[12rem]:flex">
+          <StackIdentityBadges
+            type={stack.type}
+            isFeatured={stack.isFeatured}
+            projectCount={usageCount}
+          />
+        </div>
+      ) : null}
+    </>
+  );
+
   const card = (
     <Card
       data-item-id={stack.id}
       data-selected={isOpen}
       className={cn(
         // content-visibility skips layout/paint for off-screen cards in long grids
-        "[contain-intrinsic-size:12.5rem] [content-visibility:auto]",
-        "group relative aspect-square w-full max-w-full shrink-0 overflow-hidden py-0!",
+        "[contain-intrinsic-size:auto_7.5rem] [content-visibility:auto]",
+        "@[12rem]:aspect-square @[12rem]:[contain-intrinsic-size:12.5rem]",
+        "group relative w-full max-w-full shrink-0 overflow-hidden py-0!",
         "motion-safe:transition-shadow motion-safe:duration-150",
         isSort && "cursor-grab active:cursor-grabbing",
         isOpen && "ring-1 ring-primary/40"
@@ -173,37 +217,17 @@ export const StackItem = memo(function StackItem({
           ) : null}
         </div>
         {isSort ? (
-          <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-4 pt-8">
-            <Icon
-              icon={stack.icon}
-              className="size-14 shrink-0 rounded object-contain"
-              fallbackToLetter
-              letterClassName="size-14 text-xl"
-              name={stack.name}
-            />
-            <p
-              className="line-clamp-2 block max-w-full text-center text-sm font-medium wrap-break-word"
-              title={stack.name}
-            >
-              {stack.name}
-            </p>
-            {stack.type || stack.isFeatured || usageCount > 0 ? (
-              <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
-                <StackIdentityBadges
-                  type={stack.type}
-                  isFeatured={stack.isFeatured}
-                  projectCount={usageCount}
-                />
-              </div>
-            ) : null}
-          </CardContent>
+          <CardContent className={cn("p-0", identityLayoutClassName)}>{identityBody}</CardContent>
         ) : (
           <>
             <button
               type="button"
               aria-pressed={isOpen}
               aria-label={`View details for ${stack.name}`}
-              className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-4 pt-8 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className={cn(
+                identityLayoutClassName,
+                "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              )}
               onClick={() => {
                 onOpen(stack.id, stack);
               }}
@@ -215,25 +239,7 @@ export const StackItem = memo(function StackItem({
                   : undefined
               }
             >
-              <Icon
-                icon={stack.icon}
-                className="size-14 shrink-0 rounded object-contain"
-                fallbackToLetter
-                letterClassName="size-14 text-xl"
-                name={stack.name}
-              />
-              <p className="line-clamp-2 block max-w-full text-center text-sm font-medium wrap-break-word">
-                {stack.name}
-              </p>
-              {stack.type || stack.isFeatured || usageCount > 0 ? (
-                <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
-                  <StackIdentityBadges
-                    type={stack.type}
-                    isFeatured={stack.isFeatured}
-                    projectCount={usageCount}
-                  />
-                </div>
-              ) : null}
+              {identityBody}
             </button>
             <div
               className={cn(
