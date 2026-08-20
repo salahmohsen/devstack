@@ -158,6 +158,40 @@ export const applicationRepository = {
       .orderBy(desc(application.updatedAt));
   },
 
+  async findByIdsForUser(userId: string, ids: string[]): Promise<ApplicationEntity[]> {
+    if (ids.length === 0) return [];
+    return getDb()
+      .select()
+      .from(application)
+      .where(and(eq(application.userId, userId), inArray(application.id, ids)));
+  },
+
+  /** Jobs that currently point at these resume PDFs (apply-package accept). */
+  async listLinkedByResumeIds(
+    userId: string,
+    resumeIds: string[]
+  ): Promise<
+    Array<{
+      id: string;
+      resumeId: string | null;
+      companyName: string;
+      title: string;
+      companyLogoUrl: string | null;
+    }>
+  > {
+    if (resumeIds.length === 0) return [];
+    return getDb()
+      .select({
+        id: application.id,
+        resumeId: application.resumeId,
+        companyName: application.companyName,
+        title: application.title,
+        companyLogoUrl: application.companyLogoUrl
+      })
+      .from(application)
+      .where(and(eq(application.userId, userId), inArray(application.resumeId, resumeIds)));
+  },
+
   /** Tracked, outcome-null rows for silence ticks (all tenants). */
   async listOpenTracked(limit: number): Promise<ApplicationEntity[]> {
     if (limit <= 0) return [];
