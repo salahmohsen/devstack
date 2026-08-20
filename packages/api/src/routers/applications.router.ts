@@ -5,12 +5,14 @@ import {
   AddApplicationNoteInputSchema,
   ApplicationActivityOutputSchema,
   DeleteApplicationNoteInputSchema,
+  ApplicationGetOutputSchema,
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
   BatchDismissApplicationsInputSchema,
   BatchRestoreApplicationsInputSchema,
   buildApplicationSourceTags,
   canonicalizeJobUrl,
+  silencePhase,
   CountApplicationsInputSchema,
   CreateApplicationInputSchema,
   DeleteApplicationsInputSchema,
@@ -410,11 +412,44 @@ export const applicationsRouter = {
       method: "GET"
     })
     .input(z.object({ id: z.string() }))
-    .output(ApplicationOutputSchema.nullable())
+    .output(ApplicationGetOutputSchema.nullable())
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const row = await applicationRepository.findByIdForUser(input.id, userId);
-      return row ? await toApplicationOutputWithListing(row) : null;
+      if (!row) return null;
+      const [base, mails, activity] = await Promise.all([
+        toApplicationOutputWithListing(row),
+        mailMessageRepository.listByApplicationId(row.id, userId, 50),
+        applicationActivityRepository.listByApplicationId(row.id, userId, {
+          limit: 50,
+          order: "desc"
+        })
+      ]);
+      const lastLinkedMailAt = mails[0]?.receivedAt ?? null;
+      const lastSilenceNudgeAt =
+        activity.find((item) => item.kind === "silence_nudged")?.createdAt ?? null;
+      const lastGhostSuggestAt =
+        activity.find((item) => item.kind === "ghosted_suggested")?.createdAt ?? null;
+      return {
+        ...base,
+        linkedMails: mails.map((mail) => {
+          return {
+            id: mail.id,
+            subject: mail.subject,
+            fromName: mail.fromName,
+            fromEmail: mail.fromEmail,
+            receivedAt: mail.receivedAt,
+            labels: mail.labels ?? []
+          };
+        }),
+        silencePhase: silencePhase({
+          now: new Date(),
+          stageChangedAt: row.stageChangedAt,
+          lastLinkedMailAt,
+          lastSilenceNudgeAt,
+          lastGhostSuggestAt
+        })
+      };
     }),
 
   create: protectedProcedure

@@ -56,7 +56,9 @@ export const ApplicationActivityKindSchema = z.enum([
   "note",
   "stage_changed",
   "outcome_set",
-  "package_generated"
+  "package_generated",
+  "silence_nudged",
+  "ghosted_suggested"
 ]);
 export type ApplicationActivityKind = z.infer<typeof ApplicationActivityKindSchema>;
 
@@ -149,6 +151,22 @@ export const ApplicationOutputSchema = z.object({
     listingClosed: boolean;
   }
 >;
+
+export const ApplicationLinkedMailSchema = z.object({
+  id: z.string(),
+  subject: z.string(),
+  fromName: z.string(),
+  fromEmail: z.string(),
+  receivedAt: z.coerce.date(),
+  labels: z.array(z.string())
+});
+export type ApplicationLinkedMail = z.infer<typeof ApplicationLinkedMailSchema>;
+
+export const ApplicationGetOutputSchema = ApplicationOutputSchema.extend({
+  linkedMails: z.array(ApplicationLinkedMailSchema).default([]),
+  silencePhase: z.enum(["quiet", "nudge7", "suggestGhost14"]).optional()
+});
+export type ApplicationGetOutput = z.infer<typeof ApplicationGetOutputSchema>;
 
 export const ApplicationListOutputSchema = z.array(ApplicationOutputSchema);
 

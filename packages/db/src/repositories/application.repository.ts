@@ -158,6 +158,17 @@ export const applicationRepository = {
       .orderBy(desc(application.updatedAt));
   },
 
+  /** Tracked, outcome-null rows for silence ticks (all tenants). */
+  async listOpenTracked(limit: number): Promise<ApplicationEntity[]> {
+    if (limit <= 0) return [];
+    return getDb()
+      .select()
+      .from(application)
+      .where(and(eq(application.trackingStatus, "tracked"), isNull(application.outcome)))
+      .orderBy(asc(application.updatedAt), asc(application.id))
+      .limit(limit);
+  },
+
   /** Open pipeline set: tracked + no terminal outcome. */
   async findOpenByUserId(userId: string) {
     return getDb()

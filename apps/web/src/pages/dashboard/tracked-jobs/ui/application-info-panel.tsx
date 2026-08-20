@@ -70,6 +70,7 @@ import {
   materialsFor,
   resumeDownloadUrl,
   useRegenerateAgentTakeMutation,
+  useSetOutcomeMutation,
   writeClipboardText,
   type ApplicationMaterialKind,
   type MaterialActionId
@@ -352,7 +353,14 @@ export function ApplicationInfoPanel({
 }: ApplicationInfoPanelProps) {
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const regenerateTake = useRegenerateAgentTakeMutation();
+  const setOutcome = useSetOutcomeMutation();
   const isDiscovery = variant === "discovery";
+  const detailQuery = useQuery({
+    ...orpcQueryClient.applications.get.queryOptions({ input: { id: item.id } }),
+    enabled: Boolean(item.id)
+  });
+  const linkedMails = detailQuery.data?.linkedMails ?? [];
+  const silencePhase = detailQuery.data?.silencePhase;
 
   const customSourceLabel = item.sourceLabel?.trim();
   const enumSourceLabel =
@@ -534,6 +542,44 @@ export function ApplicationInfoPanel({
               {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
             </Button>
           </ItemInfoSection>
+
+          {!isDiscovery ? (
+            <ItemInfoSection title="Mail" icon={<MailIcon />}>
+              {silencePhase === "suggestGhost14" && item.outcome == null ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mb-3"
+                  loading={setOutcome.isPending}
+                  onClick={() => {
+                    void setOutcome.mutateAsync({ id: item.id, outcome: "ghosted" });
+                  }}
+                >
+                  Mark ghosted
+                </Button>
+              ) : null}
+              {linkedMails.length === 0 ? (
+                <p className="italic">No mail linked yet.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {linkedMails.map((mail) => (
+                    <li key={mail.id}>
+                      <a
+                        href={`/dashboard/mail?message=${encodeURIComponent(mail.id)}`}
+                        className="text-sm font-medium text-foreground underline-offset-2 hover:underline"
+                      >
+                        {mail.subject.trim() || "(no subject)"}
+                      </a>
+                      <p className="text-xs text-muted-foreground">
+                        {mail.fromName || mail.fromEmail}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </ItemInfoSection>
+          ) : null}
 
           {!isDiscovery && hasMaterials ? (
             <ItemInfoSection title="Materials" icon={<FileTextIcon />}>

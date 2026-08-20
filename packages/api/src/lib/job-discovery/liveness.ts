@@ -14,6 +14,8 @@ import {
   type JobPostingEntity
 } from "@tsu-stack/db";
 
+import { runSilenceTick } from "#@/lib/application/silence-tick";
+
 const GONE_STATUSES = new Set([404, 410]);
 const PROBE_CONCURRENCY = 5;
 const FREEHIRE_JOB_API = (externalId: string) =>
@@ -75,6 +77,7 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
   }
 
   await jobPostingRepository.deleteClosedUnreferenced(now);
+  await runSilenceTick(now);
 
   return { checked: targets.length, closed, dismissedExpired };
 }

@@ -78,7 +78,9 @@ export const APPLICATION_ACTIVITY_KIND_LABELS: Record<ApplicationActivityKind, s
   note: "Note",
   stage_changed: "Stage changed",
   outcome_set: "Outcome set",
-  package_generated: "Package generated"
+  package_generated: "Package generated",
+  silence_nudged: "Quiet reminder",
+  ghosted_suggested: "Suggest ghosted"
 };
 
 /**
@@ -135,6 +137,10 @@ export function formatApplicationActivitySummary(input: {
     }
     case "package_generated":
       return "Apply package generated";
+    case "silence_nudged":
+      return "This job has been quiet for 7 days";
+    case "ghosted_suggested":
+      return "Still quiet after 14 days. You can mark this as ghosted.";
     default: {
       const _exhaustive: never = input.kind;
       return _exhaustive;

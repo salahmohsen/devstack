@@ -380,6 +380,19 @@ export const mailMessageRepository = {
     return updated ?? null;
   },
 
+  async listByApplicationId(
+    applicationId: string,
+    userId: string,
+    limit = 50
+  ): Promise<MailMessageEntity[]> {
+    return getDb()
+      .select()
+      .from(mailMessage)
+      .where(and(eq(mailMessage.userId, userId), eq(mailMessage.applicationId, applicationId)))
+      .orderBy(desc(mailMessage.receivedAt), desc(mailMessage.id))
+      .limit(limit);
+  },
+
   /** Link (or clear) a Career Inbox message to an Applications CRM row. */
   async setApplicationId(
     id: string,
