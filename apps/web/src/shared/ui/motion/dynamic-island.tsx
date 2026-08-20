@@ -152,9 +152,9 @@ export type DynamicIslandProps = {
 /**
  * Match `buttonVariants` `glass-primary`: solid primary fill + shared top bloom /
  * hairline (not frosted translucent fills). Outer shell stays `overflow-visible`
- * so the bloom above the shell is not clipped.
+ * so the bloom above the shell is not clipped. Reused by stacked AI job pills.
  */
-const GLASS_SHELL_CLASS = cn(
+export const GLASS_ISLAND_SHELL_CLASS = cn(
   "overflow-visible border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24",
   "inset-shadow-[0_1px_--theme(--color-white/16%)]",
   BADGE_GLOW_VARS["on-primary"],
@@ -206,7 +206,7 @@ export function DynamicIsland({
         // island in its parent (bottom-left host) to complete the effect.
         className={cn(
           "relative inline-flex items-end justify-center",
-          glass ? GLASS_SHELL_CLASS : INVERTED_SHELL_CLASS,
+          glass ? GLASS_ISLAND_SHELL_CLASS : INVERTED_SHELL_CLASS,
           className
         )}
       >

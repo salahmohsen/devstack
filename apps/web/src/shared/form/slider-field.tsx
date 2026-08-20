@@ -1,8 +1,9 @@
 "use client";
 
-import { Field, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
-import { Slider } from "@tsu-stack/ui/components/slider";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { RangeSlider } from "@/shared/ui/motion/range-slider";
 
 import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
@@ -44,27 +45,21 @@ function SliderField(props: SliderFieldProps) {
             description: props.classNames?.description
           }}
         />
-        {props.label ? (
-          <span className="text-sm font-medium text-foreground tabular-nums">{display}</span>
-        ) : (
-          <FieldLabel htmlFor={field.name} className="sr-only">
-            {display}
-          </FieldLabel>
-        )}
+        <span className="text-sm font-medium text-foreground tabular-nums">{display}</span>
       </div>
-      <Slider
+      <RangeSlider
         id={field.name}
         aria-label={props.label ?? "Slider"}
         min={min}
         max={max}
         step={step}
-        value={[value]}
+        value={value}
+        formatValueText={props.formatValue}
         onValueChange={(next) => {
-          const raw = Array.isArray(next) ? next[0] : next;
-          if (typeof raw !== "number" || Number.isNaN(raw)) return;
-          field.handleChange(Math.min(max, Math.max(min, Math.round(raw))));
+          if (typeof next !== "number" || Number.isNaN(next)) return;
+          field.handleChange(Math.min(max, Math.max(min, next)));
         }}
-        onValueCommitted={() => field.handleBlur()}
+        onCommit={() => field.handleBlur()}
         className={props.classNames?.slider}
       />
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />

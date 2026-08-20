@@ -4,8 +4,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { BorderBeam } from "border-beam";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
+import { BadgeTopGlow } from "@tsu-stack/ui/components/badge-effects";
 import { Button } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -24,7 +25,8 @@ import { AiLoader } from "@/shared/ui/ai-loader";
 import {
   DYNAMIC_ISLAND_RADIUS,
   DynamicIsland,
-  DynamicIslandView
+  DynamicIslandView,
+  GLASS_ISLAND_SHELL_CLASS
 } from "@/shared/ui/motion/dynamic-island";
 
 type IslandView = null | "timeline" | "result";
@@ -83,10 +85,7 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
 
   if (steps.length === 0) {
     return (
-      <p
-        className="text-sm leading-snug font-medium text-primary-foreground motion-safe:shimmer"
-        aria-live="polite"
-      >
+      <p className="text-sm leading-snug font-medium text-primary-foreground" aria-live="polite">
         {liveLabel}
       </p>
     );
@@ -108,13 +107,7 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
             )}
           >
             <StepGlyph state={step.state} />
-            <span
-              className={cn(
-                "min-w-0 flex-1 text-pretty tabular-nums",
-                // Keep text-primary-foreground on the shimmer node so currentColor resolves on primary glass.
-                isActive && "text-primary-foreground motion-safe:shimmer"
-              )}
-            >
+            <span className="min-w-0 flex-1 text-pretty tabular-nums">
               {isActive ? liveLabel || label : label}
             </span>
           </li>
@@ -124,33 +117,73 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
   );
 }
 
-function StackPill({ run, onSelect }: { run: AiIslandRun; onSelect: (run: AiIslandRun) => void }) {
-  const title = stripTrailingDots(run.title);
-  const step = stripTrailingDots(run.activeStepLabel ?? "Working");
+function IslandBeam({ children }: { children: ReactNode }) {
+  const { resolvedTheme } = useTheme();
   return (
-    <button
-      type="button"
-      className={cn(
-        "inline-flex max-w-72 cursor-pointer items-center gap-2.5 rounded-full px-5 py-2.5",
-        "border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24",
-        "inset-shadow-[0_1px_--theme(--color-white/16%)] active:scale-[0.96]",
-        onPrimaryFocus
-      )}
-      aria-label={`Switch to ${title}: ${step}`}
-      onClick={() => {
-        onSelect(run);
-      }}
+    <BorderBeam
+      size="pulse-inner"
+      colorVariant="colorful"
+      theme={resolvedTheme === "light" ? "light" : "dark"}
+      strength={1}
+      duration={2.3}
+      borderRadius={DYNAMIC_ISLAND_RADIUS}
+      className="inline-flex"
     >
-      <WorkflowSolvingOrb size="toast" surface="inverted" />
-      <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5">
+      {children}
+    </BorderBeam>
+  );
+}
+
+function CompactRunCopy({
+  title,
+  step,
+  running
+}: {
+  title: string;
+  step: string;
+  running: boolean;
+}) {
+  return (
+    <>
+      <WorkflowSolvingOrb size="toast" surface="inverted" paused={!running} />
+      <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5" aria-hidden>
         <span className="truncate text-sm leading-snug font-medium text-primary-foreground">
           {title}
         </span>
-        <span className="truncate text-sm leading-snug font-medium text-primary-foreground motion-safe:shimmer">
+        <span className="truncate text-sm leading-snug font-medium text-primary-foreground">
           {step}
         </span>
       </span>
-    </button>
+    </>
+  );
+}
+
+function StackPill({ run, onSelect }: { run: AiIslandRun; onSelect: (run: AiIslandRun) => void }) {
+  const title = stripTrailingDots(run.title);
+  const step = stripTrailingDots(run.activeStepLabel ?? "Working");
+  const running = run.status === "running";
+  return (
+    <IslandBeam>
+      <span
+        className={cn("relative inline-flex items-center", GLASS_ISLAND_SHELL_CLASS)}
+        style={{ borderRadius: DYNAMIC_ISLAND_RADIUS }}
+      >
+        <BadgeTopGlow variant="on-primary" />
+        <button
+          type="button"
+          className={cn(
+            "relative z-10 flex min-w-0 cursor-pointer items-center gap-2.5 rounded-full px-5 py-2.5 text-left active:scale-[0.96]",
+            onPrimaryFocus
+          )}
+          aria-label={`Switch to ${title}: ${step}`}
+          onClick={() => {
+            onSelect(run);
+          }}
+        >
+          <CompactRunCopy title={title} step={step} running={running} />
+        </button>
+      </span>
+    </IslandBeam>
   );
 }
 
@@ -196,7 +229,6 @@ export function AiJobIslandHost() {
   const islandState = useAiJobIsland();
   const navigate = useNavigate();
   const canHover = useHoverCapable();
-  const { resolvedTheme } = useTheme();
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   const [view, setView] = useState<IslandView>(null);
@@ -300,20 +332,7 @@ export function AiJobIslandHost() {
       aria-expanded={view !== null}
       aria-label={compactLabel}
     >
-      <WorkflowSolvingOrb size="toast" surface="inverted" paused={!running} />
-      <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5" aria-hidden>
-        <span className="truncate text-sm leading-snug font-medium text-primary-foreground">
-          {title}
-        </span>
-        <span
-          className={cn(
-            "truncate text-sm leading-snug font-medium text-primary-foreground",
-            running && "motion-safe:shimmer"
-          )}
-        >
-          {liveStep}
-        </span>
-      </span>
+      <CompactRunCopy title={title} step={liveStep} running={running} />
       {runCount > 1 ? (
         <span
           className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/20 text-[10px] font-semibold text-primary-foreground tabular-nums"
@@ -359,15 +378,7 @@ export function AiJobIslandHost() {
         ) : null}
 
         {/* beam.jakubantalik.com/pulse — breathing border on the opaque island shell */}
-        <BorderBeam
-          size="pulse-inner"
-          colorVariant="colorful"
-          theme={resolvedTheme === "light" ? "light" : "dark"}
-          strength={1}
-          duration={2.3}
-          borderRadius={DYNAMIC_ISLAND_RADIUS}
-          className="inline-flex"
-        >
+        <IslandBeam>
           <DynamicIsland view={view} compact={compactNode} appearance="glass" label={title}>
             <DynamicIslandView
               id="timeline"
@@ -468,7 +479,7 @@ export function AiJobIslandHost() {
               ) : null}
             </DynamicIslandView>
           </DynamicIsland>
-        </BorderBeam>
+        </IslandBeam>
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 
-import { CompanyLogoPictogram, JobYearsBadge } from "@/shared/ui/job-card-marks";
+import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
 
 import { HubHitlFrame } from "./hub-hitl-frame";
 
@@ -74,10 +74,11 @@ function RowList({
               />
               <div className="min-w-0 flex-1 space-y-0.5">
                 <p className="flex items-center gap-1.5 text-sm leading-snug font-medium text-foreground">
-                  <CompanyLogoPictogram
+                  <JobIdentityMark
                     companyName={row.companyName}
                     logoUrl={row.companyLogoUrl}
-                    size={14}
+                    size={20}
+                    className="size-5"
                   />
                   <span className="min-w-0 truncate">{row.title.trim() || "Untitled role"}</span>
                 </p>

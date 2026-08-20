@@ -1,6 +1,6 @@
 "use client";
 
-import { Link, useParams } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import {
   Bell,
@@ -67,6 +67,8 @@ const MailBody = lazy(() =>
 );
 
 const EMPTY_MESSAGES: MailMessageListItem[] = [];
+
+const mailCategoryRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/mail/$category");
 
 const ICONS = {
   briefcase: BriefcaseBusiness,
@@ -170,6 +172,8 @@ function MessageTags({
 export function MailCategoryPage() {
   const params = useParams({ strict: false }) as { category?: string };
   const categoryId = parseCategoryParam(params.category);
+  const navigate = useNavigate();
+  const { message: deepLinkMessageId } = mailCategoryRouteApi.useSearch();
 
   const listQuery = useListMailQuery({ category: categoryId });
   const rulesQuery = useListMailSmartRulesQuery();
@@ -188,17 +192,24 @@ export function MailCategoryPage() {
 
   const category = navCards.find((c) => c.id === categoryId) ?? resolveCategoryCard(categoryId);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  // When category changes or list updates, keep selection only if still present.
+  // URL `?message=` wins so job-info / notification deep links open that row,
+  // even when it is not on this category's current list page.
   const activeId = useMemo(() => {
     const list = listQuery.data ?? EMPTY_MESSAGES;
-    if (selectedId && list.some((m) => m.id === selectedId)) return selectedId;
+    if (deepLinkMessageId) return deepLinkMessageId;
     return list[0]?.id ?? null;
-  }, [listQuery.data, selectedId]);
+  }, [listQuery.data, deepLinkMessageId]);
 
-  const selectedListItem = activeId ? (messages.find((m) => m.id === activeId) ?? null) : null;
   const detailQuery = useGetMailQuery(activeId);
+  const detail = detailQuery.data ?? null;
+  const selectedFromList = activeId ? (messages.find((m) => m.id === activeId) ?? null) : null;
+  const selectedListItem = selectedFromList ?? (detail && detail.id === activeId ? detail : null);
+
+  const displayMessages = useMemo(() => {
+    if (!activeId || messages.some((m) => m.id === activeId)) return messages;
+    if (detail && detail.id === activeId) return [detail, ...messages];
+    return messages;
+  }, [messages, activeId, detail]);
 
   const listCount = listQuery.isSuccess ? messages.length : null;
 
@@ -222,6 +233,7 @@ export function MailCategoryPage() {
                   key={item.id}
                   to="/dashboard/mail/$category"
                   params={{ category: mailCategoryToSlug(item.id) }}
+                  search={{}}
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
                     "outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -261,16 +273,22 @@ export function MailCategoryPage() {
             </div>
           ) : (
             <MessageList
-              messages={messages}
+              messages={displayMessages}
               selectedId={activeId}
-              onSelect={setSelectedId}
+              onSelect={(id) => {
+                void navigate({
+                  from: "/dashboard/mail/$category",
+                  search: { message: id },
+                  replace: true
+                });
+              }}
               categoryTitle={category.title}
             />
           )}
           <MessageReader
             key={activeId ?? "empty"}
             listItem={selectedListItem}
-            detail={detailQuery.data ?? null}
+            detail={detail}
             isLoadingDetail={Boolean(activeId) && detailQuery.isLoading}
           />
         </div>
@@ -376,6 +394,13 @@ function MessageReader({
   isLoadingDetail: boolean;
 }) {
   if (!listItem) {
+    if (isLoadingDetail) {
+      return (
+        <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+          <AiLoader />
+        </div>
+      );
+    }
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
         Select a message

@@ -24,9 +24,8 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { toast } from "sonner";
 
 import {
-  APPLICATION_SOURCE_TAG_LABELS,
+  applicationSourceChipLabels,
   type ApplicationOutput,
-  type ApplicationSourceTag,
   isThinJobDescription
 } from "@tsu-stack/core";
 import {
@@ -133,13 +132,6 @@ const INBOX_TABS = [
   { value: "dismissed" as const, label: "Dismissed" }
 ];
 
-function sourceTagLabel(tag: string): string {
-  if (tag in APPLICATION_SOURCE_TAG_LABELS) {
-    return APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag];
-  }
-  return tag;
-}
-
 function newJobTags(job: ApplicationOutput): ListItemTag[] {
   const tags: ListItemTag[] = [];
   if (job.listingClosed) {
@@ -164,10 +156,13 @@ function newJobTags(job: ApplicationOutput): ListItemTag[] {
       node: <JobYearsBadge years={job.experienceYearsMin} />
     });
   }
-  for (const tag of (job.sourceTags ?? []).slice(0, 2)) {
+  for (const label of applicationSourceChipLabels({
+    sourceTags: job.sourceTags,
+    sourceLabel: job.sourceLabel
+  }).slice(0, 2)) {
     tags.push({
-      id: `source-${tag}`,
-      label: sourceTagLabel(tag),
+      id: `source-${label}`,
+      label,
       variant: "secondary",
       size: "xs"
     });
