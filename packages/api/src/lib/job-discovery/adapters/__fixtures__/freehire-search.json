@@ -6,6 +6,7 @@
       "url": "https://boards.greenhouse.io/acme/jobs/123?utm_source=freehire",
       "title": "Senior Go Engineer",
       "company": "Acme",
+      "company_slug": "acme",
       "location": "Remote — EU",
       "work_mode": "remote",
       "skills": ["go", "postgresql"],
@@ -14,7 +15,8 @@
       "enrichment": {
         "salary_min": 90000,
         "salary_max": 130000,
-        "salary_currency": "EUR"
+        "salary_currency": "EUR",
+        "experience_years_min": 5
       }
     },
     {

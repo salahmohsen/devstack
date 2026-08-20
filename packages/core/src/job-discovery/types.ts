@@ -23,7 +23,11 @@ export const NormalizedListingSchema = z.object({
   skills: z.array(z.string()),
   description: z.string().nullable(),
   postedAt: z.coerce.date().nullable(),
-  sourcePlatform: z.string().nullable()
+  sourcePlatform: z.string().nullable(),
+  companySlug: z.string().min(1).nullable().optional(),
+  companyLogoUrl: z.string().min(1).nullable().optional(),
+  experienceYearsMin: z.number().int().nullable().optional(),
+  seniority: z.string().min(1).nullable().optional()
 });
 export type NormalizedListing = z.infer<typeof NormalizedListingSchema>;
 

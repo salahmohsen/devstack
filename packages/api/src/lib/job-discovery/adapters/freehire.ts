@@ -82,7 +82,10 @@ export function normalizeFreehireJob(raw: unknown): NormalizedListing | null {
     skills: asStringList(rec.skills),
     description: asNonEmptyString(rec.description ?? rec.preview),
     postedAt: asPostedAt(rec.posted_at),
-    sourcePlatform: source
+    sourcePlatform: source,
+    companySlug: asNonEmptyString(rec.company_slug),
+    experienceYearsMin: asFiniteNumber(enrichment?.experience_years_min),
+    seniority: asNonEmptyString(enrichment?.seniority)
   });
 }
 

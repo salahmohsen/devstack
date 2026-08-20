@@ -43,19 +43,19 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
   let closed = 0;
 
   const probes = await mapPool(targets, PROBE_CONCURRENCY, async (target) => {
-    const gone = await listingIsClosed(target);
-    return { target, gone };
+    const reason = await listingClosedReason(target);
+    return { target, reason };
   });
   await applicationRepository.touchUpdatedAt(
     due.map((row) => row.id),
     now
   );
 
-  for (const { target, gone } of probes) {
-    if (!gone) continue;
+  for (const { target, reason } of probes) {
+    if (!reason) continue;
     closed += 1;
     if (target.postingId) {
-      await jobPostingRepository.markClosed(target.postingId, now);
+      await jobPostingRepository.markClosed(target.postingId, now, reason);
     } else {
       goneUrls.add(target.listingUrl);
     }
@@ -73,6 +73,8 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
     if (!isInboxExpired({ inboxExpiresAt: row.inboxExpiresAt, now })) continue;
     if (await dismissInbox(row, "ttl")) dismissedExpired += 1;
   }
+
+  await jobPostingRepository.deleteClosedUnreferenced(now);
 
   return { checked: targets.length, closed, dismissedExpired };
 }
@@ -111,15 +113,15 @@ function uniqueIds(ids: Array<string | null>): string[] {
   return [...new Set(ids.filter((id): id is string => id != null))];
 }
 
-async function listingIsClosed(target: LivenessTarget): Promise<boolean> {
+async function listingClosedReason(target: LivenessTarget): Promise<string | null> {
   const listing = await probeListingUrl(target.listingUrl);
-  if (listing.status != null && GONE_STATUSES.has(listing.status)) return true;
+  if (listing.status != null && GONE_STATUSES.has(listing.status)) return "http_gone";
 
   if (target.adapterId === "freehire" && target.externalId && !listing.ok) {
     const api = await fetchPublicHttpStatus(FREEHIRE_JOB_API(target.externalId), { method: "GET" });
-    if (api.status != null && GONE_STATUSES.has(api.status)) return true;
+    if (api.status != null && GONE_STATUSES.has(api.status)) return "freehire_missing";
   }
-  return false;
+  return null;
 }
 
 async function probeListingUrl(url: string): Promise<FetchPublicHttpStatusResult> {

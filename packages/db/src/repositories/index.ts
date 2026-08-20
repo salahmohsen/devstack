@@ -46,6 +46,11 @@ export {
   type UpsertJobPreferenceData
 } from "./job-preference.repository.ts";
 export {
+  jobCompanyRepository,
+  type JobCompanyEntity,
+  type UpsertJobCompanyBySlugInput
+} from "./job-company.repository.ts";
+export {
   jobPostingRepository,
   preferCatalogSkills,
   preferLongerJobDescription,

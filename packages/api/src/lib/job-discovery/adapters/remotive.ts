@@ -60,7 +60,8 @@ export function normalizeRemotiveJob(raw: unknown): NormalizedListing | null {
     skills: asStringList(rec.tags),
     description: asNonEmptyString(rec.description),
     postedAt: asPostedAt(rec.publication_date),
-    sourcePlatform: "remotive"
+    sourcePlatform: "remotive",
+    companyLogoUrl: asNonEmptyString(rec.company_logo)
   });
 }
 

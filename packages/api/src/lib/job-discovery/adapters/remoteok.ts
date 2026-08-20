@@ -39,7 +39,8 @@ export function normalizeRemoteokJob(raw: unknown): NormalizedListing | null {
     skills: asStringList(rec.tags),
     description: asNonEmptyString(rec.description),
     postedAt: asPostedAt(rec.date),
-    sourcePlatform: "remoteok"
+    sourcePlatform: "remoteok",
+    companyLogoUrl: asNonEmptyString(rec.logo) ?? asNonEmptyString(rec.company_logo)
   });
 }
 

@@ -47,6 +47,12 @@ describe("normalizeFreehireJob", () => {
     expect(row?.externalId).toBe(fixture.data[0].public_slug);
   });
 
+  it("maps company_slug and enrichment.experience_years_min", () => {
+    const row = normalizeFreehireJob(fixture.data[0]);
+    expect(row?.companySlug).toBe("acme");
+    expect(row?.experienceYearsMin).toBe(5);
+  });
+
   it("maps Ashby workplaceType, LatAm location, and FullTime", () => {
     const row = normalizeFreehireJob(ashbyShapedRaw);
     expect(row?.workMode).toBe("remote");

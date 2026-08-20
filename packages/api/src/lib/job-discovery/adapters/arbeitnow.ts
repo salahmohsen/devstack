@@ -41,7 +41,8 @@ export function normalizeArbeitnowJob(raw: unknown): NormalizedListing | null {
     skills: asStringList(rec.tags),
     description: asNonEmptyString(rec.description),
     postedAt: asPostedAt(rec.created_at),
-    sourcePlatform: "arbeitnow"
+    sourcePlatform: "arbeitnow",
+    companyLogoUrl: asNonEmptyString(rec.company_logo) ?? asNonEmptyString(rec.logo)
   });
 }
 

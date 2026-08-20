@@ -47,7 +47,9 @@ export function normalizeHimalayasJob(raw: unknown): NormalizedListing | null {
     skills: [],
     description: asNonEmptyString(rec.description),
     postedAt: asPostedAt(rec.createdAt ?? rec.pubDate),
-    sourcePlatform: "himalayas"
+    sourcePlatform: "himalayas",
+    companySlug: asNonEmptyString(rec.companySlug),
+    companyLogoUrl: asNonEmptyString(rec.companyLogo) ?? asNonEmptyString(rec.companyLogoUrl)
   });
 }
 
