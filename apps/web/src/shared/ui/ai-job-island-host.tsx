@@ -4,7 +4,14 @@ import { useNavigate } from "@tanstack/react-router";
 import { BorderBeam } from "border-beam";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode
+} from "react";
 
 import { BadgeTopGlow } from "@tsu-stack/ui/components/badge-effects";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -43,6 +50,21 @@ const onPrimaryGhost =
 /** Focus ring that reads on primary glass (page `ring` is invisible on dark primary). */
 const onPrimaryFocus =
   "outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/55 focus-visible:ring-offset-2 focus-visible:ring-offset-primary";
+
+/**
+ * Collapsed stack + hover unfold — same language as Base UI toast
+ * (`packages/ui/components/toast.tsx`): scale + peek at rest, gap + full size on expand.
+ */
+const ISLAND_STACK_ITEM_CLASS = cn(
+  "absolute bottom-0 left-0 origin-bottom-left",
+  "[--island-scale:calc(max(0,1-(var(--island-index)*.1)))]",
+  "[--island-shrink:calc(1-var(--island-scale))]",
+  "[transition:transform_.5s_cubic-bezier(.22,1,.36,1),opacity_.5s]",
+  "transform-[translateY(calc((var(--island-index)*var(--island-peek)+var(--island-shrink)*100%)*-1))_scale(var(--island-scale))]",
+  "data-expanded:transform-[translateY(calc(var(--island-index)*(100%+var(--island-gap))*-1))_scale(1)]",
+  "after:absolute after:bottom-full after:left-0 after:h-[calc(var(--island-gap)+1px)] after:w-full after:content-['']",
+  "motion-reduce:transition-none"
+);
 
 function collapseOrDismiss(foreground: AiIslandRun | undefined, setView: (v: IslandView) => void) {
   if (!foreground) {
@@ -158,7 +180,15 @@ function CompactRunCopy({
   );
 }
 
-function StackPill({ run, onSelect }: { run: AiIslandRun; onSelect: (run: AiIslandRun) => void }) {
+function StackPill({
+  run,
+  onSelect,
+  interactive
+}: {
+  run: AiIslandRun;
+  onSelect: (run: AiIslandRun) => void;
+  interactive: boolean;
+}) {
   const title = stripTrailingDots(run.title);
   const step = stripTrailingDots(run.activeStepLabel ?? "Working");
   const running = run.status === "running";
@@ -171,16 +201,25 @@ function StackPill({ run, onSelect }: { run: AiIslandRun; onSelect: (run: AiIsla
         <BadgeTopGlow variant="on-primary" />
         <button
           type="button"
+          tabIndex={interactive ? 0 : -1}
           className={cn(
             "relative z-10 flex min-w-0 cursor-pointer items-center gap-2.5 rounded-full px-5 py-2.5 text-left active:scale-[0.96]",
-            onPrimaryFocus
+            onPrimaryFocus,
+            !interactive && "pointer-events-none"
           )}
           aria-label={`Switch to ${title}: ${step}`}
           onClick={() => {
             onSelect(run);
           }}
         >
-          <CompactRunCopy title={title} step={step} running={running} />
+          <span
+            className={cn(
+              "flex min-w-0 items-center gap-2.5 transition-opacity duration-250 motion-reduce:transition-none",
+              interactive ? "opacity-100" : "opacity-0"
+            )}
+          >
+            <CompactRunCopy title={title} step={step} running={running} />
+          </span>
         </button>
       </span>
     </IslandBeam>
@@ -233,6 +272,7 @@ export function AiJobIslandHost() {
 
   const [view, setView] = useState<IslandView>(null);
   const [hovered, setHovered] = useState(false);
+  const [focusInside, setFocusInside] = useState(false);
   const [syncKey, setSyncKey] = useState<string | null>(null);
 
   const runs = Object.values(islandState.runs).toSorted((a, b) => b.updatedAt - a.updatedAt);
@@ -290,6 +330,7 @@ export function AiJobIslandHost() {
   const selectRun = (run: AiIslandRun) => {
     focusIslandRun(run.id);
     setHovered(false);
+    setFocusInside(false);
     setView(run.status === "running" ? "timeline" : "result");
   };
 
@@ -310,16 +351,17 @@ export function AiJobIslandHost() {
     dismissAiJobIsland(fg.id);
   };
 
-  const showHoverStack = canHover && hovered && runCount > 1 && view === null;
-  const otherRuns = showHoverStack ? runs.filter((run) => run.id !== foreground.id) : [];
+  const showStack = canHover && runCount > 1 && view === null;
+  const otherRuns = showStack ? runs.filter((run) => run.id !== foreground.id) : [];
+  const stackExpanded = showStack && (hovered || focusInside);
   const showTouchSwitcher = !canHover && runCount > 1 && view !== null;
   const running = foreground.status === "running";
 
   const title = stripTrailingDots(foreground.title);
   const liveStep = stripTrailingDots(foreground.activeStepLabel ?? "Working");
   const compactLabel = running
-    ? `${title}. ${liveStep}. Expand for steps.`
-    : `${stripTrailingDots(foreground.resultTitle ?? foreground.title)}. Expand result.`;
+    ? `${title}. ${liveStep}.${runCount > 1 ? ` ${runCount} jobs.` : ""} Expand for steps.`
+    : `${stripTrailingDots(foreground.resultTitle ?? foreground.title)}.${runCount > 1 ? ` ${runCount} jobs.` : ""} Expand result.`;
 
   const compactNode = (
     <button
@@ -360,126 +402,158 @@ export function AiJobIslandHost() {
       ) : null}
       <div
         ref={hostRef}
-        className="pointer-events-auto flex flex-col items-start gap-2 overflow-visible"
+        className={cn(
+          "pointer-events-auto relative isolate flex flex-col items-start overflow-visible",
+          "[--island-gap:--spacing(3)] [--island-peek:--spacing(3)]"
+        )}
         onPointerEnter={() => {
           if (canHover) setHovered(true);
         }}
         onPointerLeave={() => {
           setHovered(false);
         }}
+        onFocus={() => {
+          if (canHover) setFocusInside(true);
+        }}
+        onBlur={(event) => {
+          const next = event.relatedTarget;
+          if (next instanceof Node && event.currentTarget.contains(next)) return;
+          setFocusInside(false);
+        }}
+        data-expanded={stackExpanded ? "" : undefined}
         data-hovered={hovered ? "" : undefined}
       >
-        {otherRuns.length > 0 ? (
-          <div className="flex flex-col items-start gap-1.5" aria-label="Other AI jobs">
-            {otherRuns.map((run) => (
-              <StackPill key={run.id} run={run} onSelect={selectRun} />
-            ))}
-          </div>
-        ) : null}
-
         {/* beam.jakubantalik.com/pulse — breathing border on the opaque island shell */}
-        <IslandBeam>
-          <DynamicIsland view={view} compact={compactNode} appearance="glass" label={title}>
-            <DynamicIslandView
-              id="timeline"
-              className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
-            >
-              <div className="flex flex-col gap-1.5 border-b border-primary-foreground/10 pb-3">
-                {/* Optical center: title + Cancel share one midline (better-ui). */}
-                <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 flex-1 pe-1 text-sm leading-snug font-semibold tracking-tight text-pretty text-primary-foreground">
-                    {title}
-                  </p>
-                  <Button
-                    type="button"
-                    size="xs"
-                    variant="outline"
-                    // Island radius 32 + ~16–20 pad → inner ~12–16 (rounded-xl).
-                    className={cn(onPrimaryOutline, onPrimaryFocus, "shrink-0 rounded-xl")}
-                    onClick={() => {
-                      foreground.onCancel();
-                    }}
-                  >
-                    {foreground.cancelLabel ?? "Cancel"}
-                  </Button>
-                </div>
-                {showTouchSwitcher ? (
-                  <TouchRunSwitcher runs={runs} foregroundId={foreground.id} onSelect={selectRun} />
-                ) : null}
-              </div>
-              <TimelineSteps run={foreground} />
-            </DynamicIslandView>
-
-            <DynamicIslandView
-              id="result"
-              className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
-            >
-              <div className="flex items-start gap-3">
-                {/* Optical nudge: orb midline ≈ title cap height */}
-                <WorkflowSolvingOrb
-                  size="toast"
-                  surface="inverted"
-                  paused
-                  className="mt-0.5 shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1 space-y-0.5 pe-0.5">
-                      <p className="text-sm leading-snug font-semibold tracking-tight text-balance text-primary-foreground">
-                        {stripTrailingDots(foreground.resultTitle ?? foreground.title)}
-                      </p>
-                      {foreground.errorMessage ? (
-                        <p className="text-xs leading-relaxed text-pretty text-primary-foreground/70">
-                          {foreground.errorMessage}
-                        </p>
-                      ) : foreground.status === "success" && foreground.requiresAction ? (
-                        <p className="text-xs leading-relaxed text-primary-foreground/60">
-                          Ready when you are
-                        </p>
-                      ) : null}
-                    </div>
+        <div
+          className={cn(
+            "relative z-20",
+            showStack &&
+              "after:absolute after:bottom-full after:left-0 after:h-[calc(var(--island-gap)+1px)] after:w-full after:content-['']"
+          )}
+        >
+          <IslandBeam>
+            <DynamicIsland view={view} compact={compactNode} appearance="glass" label={title}>
+              <DynamicIslandView
+                id="timeline"
+                className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
+              >
+                <div className="flex flex-col gap-1.5 border-b border-primary-foreground/10 pb-3">
+                  {/* Optical center: title + Cancel share one midline (better-ui). */}
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="min-w-0 flex-1 pe-1 text-sm leading-snug font-semibold tracking-tight text-pretty text-primary-foreground">
+                      {title}
+                    </p>
                     <Button
                       type="button"
-                      size="icon-xs"
-                      variant="ghost"
-                      className={cn(onPrimaryGhost, onPrimaryFocus, "-mt-0.5 shrink-0 rounded-xl")}
-                      aria-label="Dismiss"
+                      size="xs"
+                      variant="outline"
+                      // Island radius 32 + ~16–20 pad → inner ~12–16 (rounded-xl).
+                      className={cn(onPrimaryOutline, onPrimaryFocus, "shrink-0 rounded-xl")}
                       onClick={() => {
-                        dismissAiJobIsland(foreground.id);
+                        foreground.onCancel();
                       }}
                     >
-                      <XIcon aria-hidden />
+                      {foreground.cancelLabel ?? "Cancel"}
                     </Button>
                   </div>
                   {showTouchSwitcher ? (
-                    <div className="mt-2">
-                      <TouchRunSwitcher
-                        runs={runs}
-                        foregroundId={foreground.id}
-                        onSelect={selectRun}
-                      />
-                    </div>
+                    <TouchRunSwitcher
+                      runs={runs}
+                      foregroundId={foreground.id}
+                      onSelect={selectRun}
+                    />
                   ) : null}
                 </div>
-              </div>
-              {foreground.resultAction ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={cn(
-                    onPrimaryOutline,
-                    onPrimaryFocus,
-                    "h-8 w-full justify-center rounded-xl"
-                  )}
-                  onClick={onResultAction}
-                >
-                  {foreground.resultAction.label}
-                </Button>
-              ) : null}
-            </DynamicIslandView>
-          </DynamicIsland>
-        </IslandBeam>
+                <TimelineSteps run={foreground} />
+              </DynamicIslandView>
+
+              <DynamicIslandView
+                id="result"
+                className="w-[min(19.5rem,calc(100vw-2.5rem))] flex-col items-stretch gap-3"
+              >
+                <div className="flex items-start gap-3">
+                  {/* Optical nudge: orb midline ≈ title cap height */}
+                  <WorkflowSolvingOrb
+                    size="toast"
+                    surface="inverted"
+                    paused
+                    className="mt-0.5 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-0 flex-1 space-y-0.5 pe-0.5">
+                        <p className="text-sm leading-snug font-semibold tracking-tight text-balance text-primary-foreground">
+                          {stripTrailingDots(foreground.resultTitle ?? foreground.title)}
+                        </p>
+                        {foreground.errorMessage ? (
+                          <p className="text-xs leading-relaxed text-pretty text-primary-foreground/70">
+                            {foreground.errorMessage}
+                          </p>
+                        ) : foreground.status === "success" && foreground.requiresAction ? (
+                          <p className="text-xs leading-relaxed text-primary-foreground/60">
+                            Ready when you are
+                          </p>
+                        ) : null}
+                      </div>
+                      <Button
+                        type="button"
+                        size="icon-xs"
+                        variant="ghost"
+                        className={cn(
+                          onPrimaryGhost,
+                          onPrimaryFocus,
+                          "-mt-0.5 shrink-0 rounded-xl"
+                        )}
+                        aria-label="Dismiss"
+                        onClick={() => {
+                          dismissAiJobIsland(foreground.id);
+                        }}
+                      >
+                        <XIcon aria-hidden />
+                      </Button>
+                    </div>
+                    {showTouchSwitcher ? (
+                      <div className="mt-2">
+                        <TouchRunSwitcher
+                          runs={runs}
+                          foregroundId={foreground.id}
+                          onSelect={selectRun}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+                {foreground.resultAction ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className={cn(
+                      onPrimaryOutline,
+                      onPrimaryFocus,
+                      "h-8 w-full justify-center rounded-xl"
+                    )}
+                    onClick={onResultAction}
+                  >
+                    {foreground.resultAction.label}
+                  </Button>
+                ) : null}
+              </DynamicIslandView>
+            </DynamicIsland>
+          </IslandBeam>
+        </div>
+
+        {otherRuns.map((run, i) => (
+          <div
+            key={run.id}
+            data-expanded={stackExpanded ? "" : undefined}
+            aria-hidden={!stackExpanded}
+            className={ISLAND_STACK_ITEM_CLASS}
+            style={{ "--island-index": i + 1, zIndex: 20 - (i + 1) } as CSSProperties}
+          >
+            <StackPill run={run} onSelect={selectRun} interactive={stackExpanded} />
+          </div>
+        ))}
       </div>
     </div>
   );
