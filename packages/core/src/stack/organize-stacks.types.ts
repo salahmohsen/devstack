@@ -25,6 +25,11 @@ export const OrganizeStacksInputSchema = z.object({
           .optional()
           .default([])
           .describe("npm packages linked to this stack"),
+        alternativeNames: z
+          .array(z.string())
+          .optional()
+          .default([])
+          .describe("Existing aliases for this skill"),
         isFeatured: z.boolean().optional().describe("Already featured on the public profile"),
         includedInPortfolio: z.boolean().optional().describe("Already on the public portfolio")
       })
@@ -46,8 +51,12 @@ export const OrganizeActionSchema = z.object({
       // For merge: which stack to merge into
       mergeIntoId: z.string().optional().describe("Survivor stack ID for merge"),
       mergeIntoName: z.string().optional().describe("Survivor stack name for merge"),
-      // For rename: new name
+      // For rename: new name + aliases to keep
       newName: z.string().optional().describe("Proposed new name"),
+      alternativeNames: z
+        .array(z.string())
+        .optional()
+        .describe("Aliases to store (old name, abbreviations, npm-style)"),
       // For enrich: new metadata
       newDescription: z.string().optional().describe("Enriched description"),
       newIcon: z.string().optional().describe("SVG icon string"),
