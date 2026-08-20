@@ -103,6 +103,9 @@ export const ApplicationOutputSchema = z.object({
   applyUrl: z.string().nullable(),
   applyMethod: ApplicationApplyMethodSchema,
   matchScore: z.number().int().min(0).max(100).nullable(),
+  /** Denorm from posting at land; stable after catalog close. */
+  experienceYearsMin: z.number().int().nullable(),
+  companyLogoUrl: z.string().nullable(),
   source: ApplicationSourceSchema.nullable(),
   /** Free-text when platform is `other` (e.g. "Jack & Jill"). */
   sourceLabel: z.string().nullable(),
