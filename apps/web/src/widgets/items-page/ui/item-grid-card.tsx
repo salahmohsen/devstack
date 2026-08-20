@@ -70,14 +70,14 @@ export function ItemGridCard({
   );
 
   const compactActionsClassName = cn(
-    "z-10 col-start-1 row-start-1 flex h-7 min-w-0 items-center justify-center",
+    "pointer-events-auto relative z-20 col-start-1 row-start-1 flex h-7 w-fit max-w-full justify-self-center",
     compactActionsForced
       ? "@[12rem]:hidden"
       : "hidden @max-[12rem]:group-focus-within:flex @max-[12rem]:group-hover:flex"
   );
 
   const wideFooterClassName = cn(
-    "hidden h-10 shrink-0 items-center justify-center px-2 pb-2 @[12rem]:flex",
+    "pointer-events-none relative z-20 hidden h-10 shrink-0 items-center justify-center px-2 pb-2 @[12rem]:flex",
     "motion-safe:transition-opacity motion-safe:duration-150",
     compactActionsForced
       ? "opacity-100"
@@ -105,9 +105,9 @@ export function ItemGridCard({
       className={cn(
         "[contain-intrinsic-size:auto_2.75rem] [content-visibility:auto]",
         "@[12rem]:aspect-square @[12rem]:[contain-intrinsic-size:12.5rem]",
-        "group relative h-full w-full max-w-full shrink-0 overflow-hidden py-0!",
+        "group relative isolate h-full w-full max-w-full shrink-0 overflow-hidden py-0!",
         "motion-safe:transition-[border-color,box-shadow] motion-safe:duration-150",
-        isSort && "cursor-grab touch-none active:cursor-grabbing",
+        isSort ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-pointer",
         isOpen && "border-primary/50"
       )}
     >
@@ -120,15 +120,25 @@ export function ItemGridCard({
             <GripVertical className="size-4" />
           </div>
         ) : null}
-        <div data-batch-select className="absolute top-2 left-3 z-10">
-          {!isSort && (isChecked || batchSelectActive) ? (
+        {!isSort && (isChecked || batchSelectActive) ? (
+          <div data-batch-select className="pointer-events-auto absolute top-2 left-3 z-20">
             <Checkbox
               checked={isChecked}
               onCheckedChange={() => onToggleSelect()}
               aria-label={`Select ${name}`}
             />
-          ) : null}
-        </div>
+          </div>
+        ) : null}
+        {isSort ? null : (
+          <button
+            type="button"
+            aria-pressed={isOpen}
+            aria-label={`View details for ${name}`}
+            className="absolute inset-0 z-10 cursor-pointer outline-none focus-visible:ring-0 focus-visible:outline-none"
+            onClick={onOpen}
+            onMouseEnter={onPrefetch}
+          />
+        )}
         {isSort ? (
           <CardContent className={cn("p-0", identityRowClassName)}>
             <div className={markClassName}>{mark}</div>
@@ -149,18 +159,10 @@ export function ItemGridCard({
           </CardContent>
         ) : (
           <>
-            <div className={identityRowClassName}>
-              <button
-                type="button"
-                aria-pressed={isOpen}
-                aria-label={`View details for ${name}`}
-                className="absolute inset-0 z-0 cursor-pointer outline-none focus-visible:ring-0 focus-visible:outline-none"
-                onClick={onOpen}
-                onMouseEnter={onPrefetch}
-              />
+            <div className={cn(identityRowClassName, "pointer-events-none")}>
               <div className={markClassName}>{mark}</div>
-              <div className="relative z-1 grid h-7 min-w-0 flex-1 grid-cols-1 grid-rows-1 items-center @[12rem]:h-auto @[12rem]:w-full @[12rem]:flex-none">
-                <p className={cn("pointer-events-none", titleClassName)} title={name}>
+              <div className="relative grid h-7 min-w-0 flex-1 grid-cols-1 grid-rows-1 items-center @[12rem]:h-auto @[12rem]:w-full @[12rem]:flex-none">
+                <p className={titleClassName} title={name}>
                   {name}
                 </p>
                 {compactActions ? (
@@ -175,19 +177,21 @@ export function ItemGridCard({
                 ) : null}
               </div>
               {badges ? (
-                <div className="pointer-events-none relative z-1 hidden max-w-full flex-wrap items-center justify-center gap-1 @[12rem]:flex">
+                <div className="hidden max-w-full flex-wrap items-center justify-center gap-1 @[12rem]:flex">
                   {badges}
                 </div>
               ) : null}
             </div>
             {wideActions ? (
-              <div
-                role="presentation"
-                className={wideFooterClassName}
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}
-              >
-                {wideActions}
+              <div className={wideFooterClassName}>
+                <div
+                  role="presentation"
+                  className="pointer-events-auto w-fit max-w-full"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  {wideActions}
+                </div>
               </div>
             ) : null}
           </>

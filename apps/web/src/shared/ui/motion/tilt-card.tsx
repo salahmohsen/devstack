@@ -1,13 +1,7 @@
 "use client";
 // beui.dev/components/motion/tilt-card
 
-import {
-  motion,
-  useMotionTemplate,
-  useMotionValue,
-  useReducedMotion,
-  useSpring
-} from "motion/react";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import { useRef, type MouseEvent, type ReactNode } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -52,8 +46,16 @@ export function TiltCard({ children, max = 12, glare = true, className }: TiltCa
     ry.set(0);
   };
 
-  const transform = useMotionTemplate`perspective(1000px) rotateX(${srx}deg) rotateY(${sry}deg)`;
-  const glareBg = useMotionTemplate`radial-gradient(circle at ${gx}% ${gy}%, oklch(1 0 0 / 0.55), transparent 50%)`;
+  const transform = useTransform(
+    [srx, sry],
+    ([rotateX, rotateY]) =>
+      `perspective(1000px) rotateX(${String(rotateX)}deg) rotateY(${String(rotateY)}deg)`
+  );
+  const glareBg = useTransform(
+    [gx, gy],
+    ([glareX, glareY]) =>
+      `radial-gradient(circle at ${String(glareX)}% ${String(glareY)}%, oklch(1 0 0 / 0.55), transparent 50%)`
+  );
 
   return (
     <motion.div
@@ -61,7 +63,10 @@ export function TiltCard({ children, max = 12, glare = true, className }: TiltCa
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       style={{ transform, transformStyle: "preserve-3d" }}
-      className={cn("relative overflow-hidden rounded-2xl will-change-transform", className)}
+      className={cn(
+        "relative isolate overflow-hidden rounded-2xl will-change-transform",
+        className
+      )}
     >
       {children}
       {glare && enabled ? (
