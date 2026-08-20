@@ -290,6 +290,18 @@
  * Never depends on the 16px icon hit box.
  */
 
+@property --im-tx {
+  syntax: "<time>";
+  inherits: true;
+  initial-value: 0ms;
+}
+
+@keyframes im-arm-tx {
+  to {
+    --im-tx: var(--icon-swap-dur, 250ms);
+  }
+}
+
 [data-slot="icon-motion"] {
   --im-active: 0;
   position: relative;
@@ -299,6 +311,7 @@
   width: 1rem;
   height: 1rem;
   pointer-events: none;
+  animation: im-arm-tx 1ms linear forwards;
 }
 
 /* Parent host hovered — full button/link surface (set by Button) */
@@ -328,11 +341,6 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
   will-change: opacity, transform, filter;
 }
 
-/* First paint is already at the idle/active target — don't tween from UA defaults. */
-[data-slot="icon-motion"]:not([data-im-ready]) .t-im-layer {
-  transition: none;
-}
-
 .t-im-layer > svg {
   width: 100%;
   height: 100%;
@@ -342,9 +350,9 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
 .t-im-morph [data-part="a"],
 .t-im-morph [data-part="b"] {
   transition:
-    opacity var(--icon-swap-dur, 250ms) var(--icon-swap-ease, ease-in-out),
-    transform var(--icon-swap-dur, 250ms) var(--icon-swap-ease, ease-in-out),
-    filter var(--icon-swap-dur, 250ms) var(--icon-swap-ease, ease-in-out);
+    opacity var(--im-tx, 0ms) var(--icon-swap-ease, ease-in-out),
+    transform var(--im-tx, 0ms) var(--icon-swap-ease, ease-in-out),
+    filter var(--im-tx, 0ms) var(--icon-swap-ease, ease-in-out);
 }
 
 .t-im-morph [data-part="a"] {
@@ -363,9 +371,9 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
 .t-im-slide [data-part="a"],
 .t-im-slide [data-part="b"] {
   transition:
-    opacity var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1),
-    transform var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1),
-    filter var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1);
+    opacity var(--im-tx, 0ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--im-tx, 0ms) cubic-bezier(0.22, 1, 0.36, 1),
+    filter var(--im-tx, 0ms) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .t-im-slide [data-part="a"] {
@@ -390,8 +398,8 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
   opacity: var(--im-active, 0);
   transform: scale(var(--im-active, 0)) rotate(calc(-45deg * (1 - var(--im-active, 0))));
   transition:
-    opacity var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1),
-    transform var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1);
+    opacity var(--im-tx, 0ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--im-tx, 0ms) cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: 40ms;
   pointer-events: none;
 }
@@ -435,11 +443,12 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
 
 /* ── Rotate ──────────────────────────────────────────────────── */
 .t-im-rotate [data-part="icon"] {
-  transition: transform var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform var(--im-tx, 0ms) cubic-bezier(0.22, 1, 0.36, 1);
   transform: rotate(calc(var(--im-rotate-deg, 180deg) * var(--im-active, 0)));
 }
 
 @media (prefers-reduced-motion: reduce) {
+  [data-slot="icon-motion"],
   .t-im-layer,
   .t-im-sparkle {
     transition: none !important;

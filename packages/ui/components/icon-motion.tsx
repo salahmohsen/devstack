@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -34,18 +34,12 @@ function Root({
   className?: string;
   children: ReactNode;
 }): React.ReactElement {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    setReady(true);
-  }, []);
-
   return (
     <span
       className={cn("t-im", `t-im-${im}`, className)}
       data-slot="icon-motion"
       data-im={im}
       data-im-mode={mode}
-      data-im-ready={ready ? "" : undefined}
       data-state={mode === "state" ? (active ? "b" : "a") : undefined}
       aria-hidden
     >
