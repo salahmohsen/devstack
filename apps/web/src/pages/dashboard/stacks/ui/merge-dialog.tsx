@@ -60,17 +60,17 @@ export function MergeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Merge stacks</DialogTitle>
+          <DialogTitle>Merge skills</DialogTitle>
           <DialogDescription>
-            All projects and dependencies from the victim stacks will be moved to the survivor. The
-            victim stacks will be deleted.
+            All projects and dependencies from the other skills will be moved to the one you keep.
+            The rest will be deleted.
           </DialogDescription>
         </DialogHeader>
 
         <RadioGroup
           value={survivorId}
           onValueChange={setSurvivorId}
-          aria-label="Choose survivor stack"
+          aria-label="Choose skill to keep"
         >
           {sorted.map((s) => (
             <Label

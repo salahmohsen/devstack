@@ -478,7 +478,7 @@ export function ReviewStep({
                   <TabCount selected={counts.projects} total={totals.projects} />
                 </TabsTab>
                 <TabsTab value="stacks">
-                  Stacks
+                  Skills
                   <TabCount selected={counts.stacks} total={totals.stacks} />
                 </TabsTab>
               </TabsList>
@@ -676,14 +676,14 @@ export function ReviewStep({
               <TabsPanel value="stacks" className="mt-5 flex flex-col gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <BulkSelectGroup
-                    label="stacks"
+                    label="skills"
                     total={draft.stacks.length}
                     selected={counts.stacks}
                     onSelectAll={() => setAllSelected("stacks", true)}
                     onSelectNone={() => setAllSelected("stacks", false)}
                   />
                   {counts.stacks > 0 ? (
-                    <Group aria-label="Portfolio for selected stacks">
+                    <Group aria-label="Portfolio for selected skills">
                       <Button
                         type="button"
                         size="xs"
@@ -743,7 +743,7 @@ export function ReviewStep({
                             value={stack.name}
                             disabled={!stack.selected}
                             onChange={(e) => updateStack(index, { name: e.target.value })}
-                            aria-label="Stack name"
+                            aria-label="Skill name"
                             className="min-w-0 flex-1 font-medium"
                           />
                           <Switch
@@ -792,7 +792,7 @@ export function ReviewStep({
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Descriptions can be added later from Stacks. Import is name + type.
+                  Descriptions can be added later from Skills. Import is name + type.
                 </p>
               </TabsPanel>
             </Tabs>

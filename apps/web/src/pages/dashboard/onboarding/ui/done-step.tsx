@@ -71,9 +71,9 @@ export function DoneStep({ summary, skipped, onImportAnother }: DoneStepProps) {
                 <FolderKanbanIcon />
                 Projects
               </Button>
-              <Button render={<Link to="/dashboard/stacks" />} variant="outline" size="sm">
+              <Button render={<Link to="/dashboard/skills" />} variant="outline" size="sm">
                 <LayersIcon />
-                Stacks
+                Skills
               </Button>
             </>
           ) : null}

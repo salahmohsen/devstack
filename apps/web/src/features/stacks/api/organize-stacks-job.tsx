@@ -137,7 +137,7 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
       }
 
       if (eventType === "workflow-failed" || eventType === "error") {
-        throw new Error(workflowFailedMessage(event, payload, "Organize stacks failed."));
+        throw new Error(workflowFailedMessage(event, payload, "Organize skills failed."));
       }
     }
   } catch (error) {
@@ -145,7 +145,7 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
       cancelMastraWorkflowRun(ORGANIZE_WORKFLOW_ID, runId);
       throw new DOMException("Organize cancelled.", "AbortError");
     }
-    throw new Error(getWorkflowErrorMessage(error, "Organize stacks failed."));
+    throw new Error(getWorkflowErrorMessage(error, "Organize skills failed."));
   } finally {
     signal.removeEventListener("abort", onAbort);
   }
@@ -325,7 +325,7 @@ export function startOrganizeStacksJob() {
         return;
       }
 
-      const message = getWorkflowErrorMessage(error, "Organize stacks failed.");
+      const message = getWorkflowErrorMessage(error, "Organize skills failed.");
       setOrganizeJobState({
         status: "failed",
         stepLabel: null,
