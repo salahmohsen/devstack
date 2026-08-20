@@ -328,6 +328,11 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
   will-change: opacity, transform, filter;
 }
 
+/* First paint is already at the idle/active target — don't tween from UA defaults. */
+[data-slot="icon-motion"]:not([data-im-ready]) .t-im-layer {
+  transition: none;
+}
+
 .t-im-layer > svg {
   width: 100%;
   height: 100%;

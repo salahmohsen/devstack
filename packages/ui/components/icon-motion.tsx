@@ -1,14 +1,14 @@
 "use client";
 
-import type * as React from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 export type IconMotionMode = "state" | "hover";
 
 type SharedProps = {
-  iconA: React.ReactNode;
-  iconB?: React.ReactNode;
+  iconA: ReactNode;
+  iconB?: ReactNode;
   /** When mode="state": false → A, true → B. */
   active?: boolean;
   /**
@@ -32,14 +32,20 @@ function Root({
   mode: IconMotionMode;
   active: boolean;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }): React.ReactElement {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(true);
+  }, []);
+
   return (
     <span
       className={cn("t-im", `t-im-${im}`, className)}
       data-slot="icon-motion"
       data-im={im}
       data-im-mode={mode}
+      data-im-ready={ready ? "" : undefined}
       data-state={mode === "state" ? (active ? "b" : "a") : undefined}
       aria-hidden
     >
@@ -111,7 +117,7 @@ export function IconShake({
   active = false,
   mode = "hover"
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   active?: boolean;
   mode?: IconMotionMode;
@@ -135,7 +141,7 @@ export function IconRotate({
   mode = "hover",
   degrees = 180
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   active?: boolean;
   mode?: IconMotionMode;
@@ -146,7 +152,7 @@ export function IconRotate({
       <span
         data-part="icon"
         className="t-im-layer"
-        style={{ "--im-rotate-deg": `${degrees}deg` } as React.CSSProperties}
+        style={{ "--im-rotate-deg": `${degrees}deg` } as CSSProperties}
       >
         {children}
       </span>
