@@ -39,18 +39,20 @@ export function RootLayout({ children }: PropsWithChildren) {
     sidePanel.close();
   }, [pathname, sidePanel.close]);
 
-  useEffect(() => 
-    registerCommandHandler("panel.close", () => {
-      if (
-        document.querySelector(
-          "[data-slot=dialog-popup], [data-slot=alert-dialog-popup], [data-slot=sheet-popup]"
-        )
-      ) {
-        return;
-      }
-      sidePanel.close();
-    })
-  , [sidePanel.close]);
+  useEffect(
+    () =>
+      registerCommandHandler("panel.close", () => {
+        if (
+          document.querySelector(
+            "[data-slot=dialog-popup], [data-slot=alert-dialog-popup], [data-slot=sheet-popup]"
+          )
+        ) {
+          return;
+        }
+        sidePanel.close();
+      }),
+    [sidePanel.close]
+  );
 
   useEffect(() => {
     setCommandEnabled("panel.close", sidePanel.inspectOpen);

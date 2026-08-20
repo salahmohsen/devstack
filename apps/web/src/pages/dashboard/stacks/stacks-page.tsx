@@ -308,11 +308,12 @@ export function StacksPage() {
       if (!applyFailedEarly) {
         // Batch update renames + enrichments + portfolio flags in one map
         const batchItemMap = new Map<string, { id: string; data: Record<string, unknown> }>();
+        const stackById = new Map(stacks.map((stack) => [stack.id, stack]));
 
         for (const action of renameActions) {
           const newName = action.details.newName;
           if (!newName) continue;
-          const current = stacks.find((stack) => stack.id === action.stackId);
+          const current = stackById.get(action.stackId);
           batchItemMap.set(action.stackId, {
             id: action.stackId,
             data: {

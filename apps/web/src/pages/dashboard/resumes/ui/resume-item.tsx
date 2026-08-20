@@ -72,7 +72,7 @@ export const ResumeItem = memo(function ResumeItem({
   const title = resumeCardTitle(resume);
 
   function openPdf() {
-    window.open(resumeViewHref(resume.id), "_blank");
+    window.open(resumeViewHref(resume.id), "_blank", "noopener,noreferrer");
   }
 
   function openJob() {

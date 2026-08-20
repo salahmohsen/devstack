@@ -1,7 +1,7 @@
 "use client";
 
 import { FilePenLineIcon } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useEffectEvent, useState } from "react";
 
 import {
   AlertDialog,
@@ -85,6 +85,10 @@ export function EntityFormSheet({
     onOpenChange(false);
   }, [onOpenChange]);
 
+  const onEscapeClose = useEffectEvent(() => {
+    requestClose();
+  });
+
   useEffect(() => {
     if (!open || useSheet) return;
     setCommandEnabled("panel.close", false);
@@ -92,14 +96,14 @@ export function EntityFormSheet({
       if (event.key !== "Escape") return;
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       event.preventDefault();
-      requestClose();
+      onEscapeClose();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       setCommandEnabled("panel.close", inspectOpen);
     };
-  }, [inspectOpen, open, requestClose, useSheet]);
+  }, [inspectOpen, open, useSheet]);
 
   const chrome = (
     <ItemInfoPanel

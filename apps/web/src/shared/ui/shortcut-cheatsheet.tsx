@@ -27,17 +27,19 @@ export function ShortcutCheatsheet() {
   const open = useShortcutCheatsheetOpen();
   const bindings = useCommandBindings();
 
-  const grouped = useMemo(() => 
-    GROUP_ORDER.flatMap((group) => {
-      const commands = COMMAND_CATALOG.filter((command) => {
-        if (command.group !== group) return false;
-        return bindings[command.id] != null;
-      }).map((command) => {
-        return { command, binding: bindings[command.id] as CommandBinding };
-      });
-      return commands.length > 0 ? [{ group, commands }] : [];
-    })
-  , [bindings]);
+  const grouped = useMemo(
+    () =>
+      GROUP_ORDER.flatMap((group) => {
+        const commands = COMMAND_CATALOG.filter((command) => {
+          if (command.group !== group) return false;
+          return bindings[command.id] != null;
+        }).map((command) => {
+          return { command, binding: bindings[command.id] as CommandBinding };
+        });
+        return commands.length > 0 ? [{ group, commands }] : [];
+      }),
+    [bindings]
+  );
 
   return (
     <Dialog open={open} onOpenChange={setShortcutCheatsheetOpen}>

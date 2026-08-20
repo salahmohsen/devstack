@@ -107,12 +107,14 @@ export function ShortcutsSettings() {
     }
   });
 
-  const grouped = useMemo(() => 
-    GROUP_ORDER.flatMap((group) => {
-      const commands = COMMAND_CATALOG.filter((command) => command.group === group);
-      return commands.length > 0 ? [{ group, commands }] : [];
-    })
-  , []);
+  const grouped = useMemo(
+    () =>
+      GROUP_ORDER.flatMap((group) => {
+        const commands = COMMAND_CATALOG.filter((command) => command.group === group);
+        return commands.length > 0 ? [{ group, commands }] : [];
+      }),
+    []
+  );
 
   function startRecording(id: CommandId) {
     const binding = bindings[id] ?? DEFAULT_COMMAND_BINDINGS[id];

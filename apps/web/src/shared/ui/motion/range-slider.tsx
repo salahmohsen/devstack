@@ -1,14 +1,7 @@
 "use client";
 // beui.dev/components/motion/range-slider
 
-import {
-  motion,
-  useMotionTemplate,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-  useTransform
-} from "motion/react";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import { useEffect } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -35,8 +28,8 @@ export function RangeSlider({ showTicks = true, className, ...options }: RangeSl
   }, [percent, target]);
   const smooth = useSpring(target, SPRING_GLIDE);
   const pos = reduce ? target : smooth;
-  const left = useMotionTemplate`${pos}%`;
-  const thumbX = useTransform(pos, (p) => `${-p}%`);
+  const left = useTransform(pos, (p) => `${String(p)}%`);
+  const thumbX = useTransform(pos, (p) => `${String(-p)}%`);
 
   const steps = Math.floor(Number(((max - min) / step).toFixed(6)));
   const ticks =

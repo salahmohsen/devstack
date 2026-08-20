@@ -17,8 +17,8 @@ export function HotkeyKbd({ binding, className }: HotkeyKbdProps) {
 
   return (
     <KbdGroup className={cn("ms-auto shrink-0", className)} aria-label={bindingAriaLabel(binding)}>
-      {parts.map((part, index) => (
-        <Kbd key={`${part}-${index}`}>{part}</Kbd>
+      {parts.map((part) => (
+        <Kbd key={part}>{part}</Kbd>
       ))}
     </KbdGroup>
   );
