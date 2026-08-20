@@ -39,6 +39,7 @@ import { Route as rootLayoutUsernameReposRepoRouteRouteImport } from './routes/(
 import { Route as rootLayout_protectedPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/__protected/playground/agent/index'
 import { Route as rootLayout_protectedDashboardTrackedJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/tracked-jobs/index'
 import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
+import { Route as rootLayout_protectedDashboardSkillsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/skills/index'
 import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/onboarding/index'
@@ -50,6 +51,7 @@ import { Route as rootLayoutUsernameReposRepoIndexRouteImport } from './routes/(
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
 import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
 import { Route as rootLayout_protectedDashboardMailCategoryRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/$category'
+import { Route as rootLayout_protectedDashboardSettingsShortcutsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/shortcuts/index'
 import { Route as rootLayout_protectedDashboardSettingsRulesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/rules/index'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/notifications/index'
@@ -231,6 +233,12 @@ const rootLayout_protectedDashboardStacksIndexRoute =
     path: '/stacks/',
     getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSkillsIndexRoute =
+  rootLayout_protectedDashboardSkillsIndexRouteImport.update({
+    id: '/skills/',
+    path: '/skills/',
+    getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardResumesIndexRoute =
   rootLayout_protectedDashboardResumesIndexRouteImport.update({
     id: '/',
@@ -296,6 +304,12 @@ const rootLayout_protectedDashboardMailCategoryRoute =
     id: '/mail/$category',
     path: '/mail/$category',
     getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardSettingsShortcutsIndexRoute =
+  rootLayout_protectedDashboardSettingsShortcutsIndexRouteImport.update({
+    id: '/shortcuts/',
+    path: '/shortcuts/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
 const rootLayout_protectedDashboardSettingsRulesIndexRoute =
   rootLayout_protectedDashboardSettingsRulesIndexRouteImport.update({
@@ -407,6 +421,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
+  '/dashboard/skills/': typeof rootLayout_protectedDashboardSkillsIndexRoute
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/dashboard/tracked-jobs/': typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
   '/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
@@ -422,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   '/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
+  '/dashboard/settings/shortcuts/': typeof rootLayout_protectedDashboardSettingsShortcutsIndexRoute
 }
 export interface FileRoutesByTo {
   '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
@@ -454,6 +470,7 @@ export interface FileRoutesByTo {
   '/dashboard/onboarding': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesIndexRoute
+  '/dashboard/skills': typeof rootLayout_protectedDashboardSkillsIndexRoute
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/dashboard/tracked-jobs': typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
   '/playground/agent': typeof rootLayout_protectedPlaygroundAgentIndexRoute
@@ -469,6 +486,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/notifications': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   '/dashboard/settings/rules': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
+  '/dashboard/settings/shortcuts': typeof rootLayout_protectedDashboardSettingsShortcutsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -510,6 +528,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/(root-layout)/__protected/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
+  '/(root-layout)/__protected/dashboard/skills/': typeof rootLayout_protectedDashboardSkillsIndexRoute
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/(root-layout)/__protected/dashboard/tracked-jobs/': typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
   '/(root-layout)/__protected/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
@@ -525,6 +544,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   '/(root-layout)/__protected/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/shortcuts/': typeof rootLayout_protectedDashboardSettingsShortcutsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -565,6 +585,7 @@ export interface FileRouteTypes {
     | '/dashboard/onboarding/'
     | '/dashboard/projects/'
     | '/dashboard/resumes/'
+    | '/dashboard/skills/'
     | '/dashboard/stacks/'
     | '/dashboard/tracked-jobs/'
     | '/playground/agent/'
@@ -580,6 +601,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/notifications/'
     | '/dashboard/settings/profile/'
     | '/dashboard/settings/rules/'
+    | '/dashboard/settings/shortcuts/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/firebase-messaging-sw.js'
@@ -612,6 +634,7 @@ export interface FileRouteTypes {
     | '/dashboard/onboarding'
     | '/dashboard/projects'
     | '/dashboard/resumes'
+    | '/dashboard/skills'
     | '/dashboard/stacks'
     | '/dashboard/tracked-jobs'
     | '/playground/agent'
@@ -627,6 +650,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/notifications'
     | '/dashboard/settings/profile'
     | '/dashboard/settings/rules'
+    | '/dashboard/settings/shortcuts'
   id:
     | '__root__'
     | '/(root-layout)'
@@ -667,6 +691,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/onboarding/'
     | '/(root-layout)/__protected/dashboard/projects/'
     | '/(root-layout)/__protected/dashboard/resumes/'
+    | '/(root-layout)/__protected/dashboard/skills/'
     | '/(root-layout)/__protected/dashboard/stacks/'
     | '/(root-layout)/__protected/dashboard/tracked-jobs/'
     | '/(root-layout)/__protected/playground/agent/'
@@ -682,6 +707,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings/notifications/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
     | '/(root-layout)/__protected/dashboard/settings/rules/'
+    | '/(root-layout)/__protected/dashboard/settings/shortcuts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -908,6 +934,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardStacksIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/skills/': {
+      id: '/(root-layout)/__protected/dashboard/skills/'
+      path: '/skills'
+      fullPath: '/dashboard/skills/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSkillsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/resumes/': {
       id: '/(root-layout)/__protected/dashboard/resumes/'
       path: '/'
@@ -984,6 +1017,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/mail/$category'
       preLoaderRoute: typeof rootLayout_protectedDashboardMailCategoryRouteImport
       parentRoute: typeof rootLayout_protectedDashboardRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/settings/shortcuts/': {
+      id: '/(root-layout)/__protected/dashboard/settings/shortcuts/'
+      path: '/shortcuts'
+      fullPath: '/dashboard/settings/shortcuts/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsShortcutsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
     '/(root-layout)/__protected/dashboard/settings/rules/': {
       id: '/(root-layout)/__protected/dashboard/settings/rules/'
@@ -1113,6 +1153,7 @@ interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsNotificationsIndexRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   rootLayout_protectedDashboardSettingsRulesIndexRoute: typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
+  rootLayout_protectedDashboardSettingsShortcutsIndexRoute: typeof rootLayout_protectedDashboardSettingsShortcutsIndexRoute
 }
 
 const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protectedDashboardSettingsRouteRouteChildren =
@@ -1137,6 +1178,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
       rootLayout_protectedDashboardSettingsProfileIndexRoute,
     rootLayout_protectedDashboardSettingsRulesIndexRoute:
       rootLayout_protectedDashboardSettingsRulesIndexRoute,
+    rootLayout_protectedDashboardSettingsShortcutsIndexRoute:
+      rootLayout_protectedDashboardSettingsShortcutsIndexRoute,
   }
 
 const rootLayout_protectedDashboardSettingsRouteRouteWithChildren =
@@ -1154,6 +1197,7 @@ interface rootLayout_protectedDashboardRouteRouteChildren {
   rootLayout_protectedDashboardNewJobsIndexRoute: typeof rootLayout_protectedDashboardNewJobsIndexRoute
   rootLayout_protectedDashboardOnboardingIndexRoute: typeof rootLayout_protectedDashboardOnboardingIndexRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
+  rootLayout_protectedDashboardSkillsIndexRoute: typeof rootLayout_protectedDashboardSkillsIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
   rootLayout_protectedDashboardTrackedJobsIndexRoute: typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
 }
@@ -1178,6 +1222,8 @@ const rootLayout_protectedDashboardRouteRouteChildren: rootLayout_protectedDashb
       rootLayout_protectedDashboardOnboardingIndexRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:
       rootLayout_protectedDashboardProjectsIndexRoute,
+    rootLayout_protectedDashboardSkillsIndexRoute:
+      rootLayout_protectedDashboardSkillsIndexRoute,
     rootLayout_protectedDashboardStacksIndexRoute:
       rootLayout_protectedDashboardStacksIndexRoute,
     rootLayout_protectedDashboardTrackedJobsIndexRoute:

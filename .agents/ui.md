@@ -4,6 +4,10 @@ Use this when adding or refactoring UI in `apps/web` or reusable components in `
 
 This file is the source of truth for app UI composition, extraction decisions, and shared component boundaries. For route/file placement, follow [TanStack patterns](./tanstack-patterns.md).
 
+## Visual craft (required)
+
+Before any UI or design work — layout, styling, motion, icons, polish, redesign, empty states — load **better-ui** and **impeccable** and follow them. Do not skip because the change is small. Then use this file for composition and `packages/ui` boundaries.
+
 ## Goals
 
 - Prefer existing primitives from `@tsu-stack/ui` before creating new app-local ones.
@@ -17,6 +21,7 @@ This file is the source of truth for app UI composition, extraction decisions, a
 - Prefer app wrappers from `apps/web/src/shared/ui` when the app already owns routing, image, locale, or other app-specific integration details.
 - Use `lucide-react` for icons unless an existing asset or brand graphic is the better fit.
 - Use `@tsu-stack/ui/lib/utils` `cn(...)` for class composition.
+- Keyboard shortcuts: [TanStack Hotkeys](./hotkeys.md). Do not write a custom `keydown` matcher.
 
 ## App Composition
 

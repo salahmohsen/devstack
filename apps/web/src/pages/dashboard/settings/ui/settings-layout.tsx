@@ -4,6 +4,7 @@ import {
   Briefcase,
   Building2,
   Filter,
+  Keyboard,
   KeyRound,
   Blocks,
   Mail,
@@ -31,7 +32,8 @@ type NavItem = {
     | "/dashboard/settings/jobs"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
-    | "/dashboard/settings/invites";
+    | "/dashboard/settings/invites"
+    | "/dashboard/settings/shortcuts";
   icon: typeof UserRound;
   group: "You" | "Workspace" | "Intelligence";
 };
@@ -52,6 +54,14 @@ const SETTINGS_NAV: readonly NavItem[] = [
     description: "Username, sessions, and sign-in security",
     to: "/dashboard/settings/account",
     icon: KeyRound,
+    group: "You"
+  },
+  {
+    id: "shortcuts",
+    label: "Shortcuts",
+    description: "Keyboard shortcuts you can customize",
+    to: "/dashboard/settings/shortcuts",
+    icon: Keyboard,
     group: "You"
   },
   {

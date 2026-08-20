@@ -19,11 +19,9 @@ export type CommandItem = {
   icon?: ComponentType<{ className?: string }>;
   iconClassName?: string;
   keywords?: string[];
-  /** Chord keys shown in the palette and bound as a global sequence (e.g. `["D", "H"]`). */
-  shortcut?: string[];
   action: CommandAction;
   priority?: number;
   meta?: CommandItemMeta;
-  /** When true, item is only listed and shortcut-bound for signed-in users. */
+  /** When true, item is only listed for signed-in users. */
   authRequired?: boolean;
 };

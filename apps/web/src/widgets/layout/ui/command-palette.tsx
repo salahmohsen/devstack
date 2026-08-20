@@ -22,10 +22,12 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { type CommandItem as CommandItemType } from "@/shared/lib/command-palette/types";
 import { useCommandPalette } from "@/shared/lib/command-palette/use-command-palette";
+import { isCommandId, useCommandBindings } from "@/shared/lib/commands";
+import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 
 const GROUP_ORDER = [
   "Pages",
-  "Dashboard",
+  "Agent",
   "Settings",
   "Playground",
   "Actions",
@@ -36,6 +38,7 @@ const GROUP_ORDER = [
 
 export function CommandPalette() {
   const { open, setOpen, close, items } = useCommandPalette();
+  const bindings = useCommandBindings();
   const router = useRouter();
   const [search, setSearch] = useState("");
 
@@ -113,13 +116,7 @@ export function CommandPalette() {
                             ) : null}
                             <span className="truncate">{item.label}</span>
                           </div>
-                          {item.shortcut ? (
-                            <KbdGroup className="ms-auto shrink-0">
-                              {item.shortcut.map((key) => (
-                                <Kbd key={key}>{key}</Kbd>
-                              ))}
-                            </KbdGroup>
-                          ) : null}
+                          {isCommandId(item.id) ? <HotkeyKbd binding={bindings[item.id]} /> : null}
                         </CommandItem>
                       )}
                     </CommandCollection>

@@ -8,6 +8,7 @@ import {
   FlaskConical,
   FolderKanban,
   Home,
+  Keyboard,
   KeyRound,
   Layers,
   Blocks,
@@ -20,6 +21,9 @@ import {
   UserRound
 } from "lucide-react";
 
+import { setShortcutCheatsheetOpen } from "@/shared/lib/commands/cheatsheet-state";
+
+import { setCommandPaletteOpen } from "./open-state";
 import { type CommandItem } from "./types";
 
 let commands: CommandItem[] = [];
@@ -51,128 +55,126 @@ export function subscribeCommands(listener: () => void): () => void {
 }
 
 /**
- * Static palette destinations.
- *
- * Shortcut convention: chord `D` + first letter of the destination noun
- * (e.g. Home → D H, Repositories → D R, Projects → D P).
- * When two destinations share a letter, use the next distinctive consonant
- * from the noun (Resumes → C for CV, Stack → T, Profile → F).
+ * Static palette destinations. Keyboard bindings live in `shared/lib/commands`
+ * so they can be customized without changing the command itself.
  *
  * Protected routes set `authRequired` and are filtered out when signed out.
- * Dynamic Profile / Repositories chords live in `use-command-items.ts`.
+ * Dynamic Profile / Repositories items live in `use-command-items.ts`.
  */
 registerCommands([
+  {
+    id: "shortcuts.cheatsheet",
+    label: "Keyboard shortcuts",
+    group: "Actions",
+    icon: Keyboard,
+    keywords: ["shortcuts", "cheatsheet", "hotkeys", "keyboard", "help"],
+    action: {
+      type: "execute",
+      fn: () => {
+        setCommandPaletteOpen(false);
+        setShortcutCheatsheetOpen(true);
+      }
+    }
+  },
+
   // —— Public ——
   {
     id: "nav:home",
-    label: "Go to Home",
+    label: "Home",
     group: "Pages",
     icon: Home,
     keywords: ["home", "landing", "portfolio"],
-    shortcut: ["D", "H"],
     action: { type: "navigate", to: "/" }
   },
 
-  // —— Dashboard (auth) ——
+  // —— Agent (auth) ——
   {
     id: "nav:dashboard",
-    label: "Go to Dashboard",
-    group: "Dashboard",
+    label: "Agent",
+    group: "Agent",
     icon: Bot,
     keywords: ["agent", "hub", "home", "dashboard"],
-    shortcut: ["D", "D"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard" }
   },
   {
     id: "nav:onboarding",
-    label: "Go to Onboarding",
-    group: "Dashboard",
+    label: "Onboarding",
+    group: "Agent",
     icon: Rocket,
     keywords: ["onboarding", "setup", "getting started"],
-    shortcut: ["D", "O"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/onboarding" }
   },
   {
     id: "nav:experiences",
-    label: "Go to Experiences",
-    group: "Dashboard",
+    label: "Experiences",
+    group: "Agent",
     icon: Briefcase,
     keywords: ["experience", "work", "jobs", "career"],
-    shortcut: ["D", "E"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/experiences" }
   },
   {
     id: "nav:projects",
-    label: "Go to Projects",
-    group: "Dashboard",
+    label: "Projects",
+    group: "Agent",
     icon: FolderKanban,
     keywords: ["projects", "portfolio", "work"],
-    shortcut: ["D", "P"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/projects" }
   },
   {
     id: "nav:stacks",
-    label: "Go to Stack",
-    group: "Dashboard",
+    label: "Skills",
+    group: "Agent",
     icon: Layers,
     keywords: ["stack", "tech", "skills", "tools"],
-    // S taken by Settings → sTack
-    shortcut: ["D", "T"],
     authRequired: true,
-    action: { type: "navigate", to: "/dashboard/stacks" }
+    action: { type: "navigate", to: "/dashboard/skills" }
   },
   {
     id: "nav:resumes",
-    label: "Go to Resumes",
-    group: "Dashboard",
+    label: "Resumes",
+    group: "Agent",
     icon: FileText,
     keywords: ["resume", "cv", "document"],
-    // R taken by Repositories → CV
-    shortcut: ["D", "C"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/resumes" }
   },
   {
     id: "nav:new-jobs",
-    label: "Go to New jobs",
-    group: "Dashboard",
+    label: "New jobs",
+    group: "Agent",
     icon: Sparkles,
     keywords: ["new jobs", "discoveries", "inbox", "harvest", "job alerts"],
-    shortcut: ["D", "N"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/new-jobs" }
   },
   {
     id: "nav:tracked-jobs",
-    label: "Go to Tracked jobs",
-    group: "Dashboard",
+    label: "Tracked jobs",
+    group: "Agent",
     icon: ListChecks,
     keywords: ["tracked", "applications", "jobs", "pipeline", "crm", "seeker"],
-    shortcut: ["D", "A"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/tracked-jobs" }
   },
   {
     id: "nav:mail",
-    label: "Go to Mail",
-    group: "Dashboard",
+    label: "Mail",
+    group: "Agent",
     icon: Mail,
     keywords: ["mail", "inbox", "email", "career"],
-    shortcut: ["D", "M"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/mail/applications" }
   },
   {
     id: "nav:settings",
-    label: "Go to Settings",
-    group: "Dashboard",
+    label: "Settings",
+    group: "Agent",
     icon: Settings,
     keywords: ["settings", "preferences", "config"],
-    shortcut: ["D", "S"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/settings/profile" }
   },
@@ -269,11 +271,20 @@ registerCommands([
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/settings/invites" }
   },
+  {
+    id: "nav:settings-shortcuts",
+    label: "Settings: Shortcuts",
+    group: "Settings",
+    icon: Keyboard,
+    keywords: ["shortcuts", "hotkeys", "keyboard", "bindings"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/shortcuts" }
+  },
 
   // —— Playground (auth) ——
   {
     id: "nav:playground",
-    label: "Go to Playground",
+    label: "Playground",
     group: "Playground",
     icon: FlaskConical,
     keywords: ["playground", "dev", "experiments"],
@@ -282,7 +293,7 @@ registerCommands([
   },
   {
     id: "nav:playground-agent",
-    label: "Go to Agent Playground",
+    label: "Agent Playground",
     group: "Playground",
     icon: Bot,
     keywords: ["agent", "playground", "mastra", "chat"],
@@ -290,6 +301,6 @@ registerCommands([
     action: { type: "navigate", to: "/playground/agent" }
   }
 
-  // Profile (D U) and Repositories (D O) are injected in use-command-items
+  // Profile (P R) and Repositories (R E P O) are injected in use-command-items
   // once a username is known so paths resolve correctly.
 ]);

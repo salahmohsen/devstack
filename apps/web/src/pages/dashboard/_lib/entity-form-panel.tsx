@@ -15,10 +15,11 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Sheet, SheetDescription, SheetPopup, SheetTitle } from "@tsu-stack/ui/components/sheet";
 
+import { setCommandEnabled } from "@/shared/lib/commands";
 import { useIsClient, useMediaQuery } from "@/shared/lib/use-media-query";
 
 import { ItemInfoPanel, PanelCancelButton } from "@/widgets/items-page";
-import { SidePanelPortal } from "@/widgets/layout";
+import { SidePanelPortal, useSidePanel } from "@/widgets/layout";
 
 type EntityFormSheetProps = {
   open: boolean;
@@ -56,6 +57,7 @@ export function EntityFormSheet({
 }: EntityFormSheetProps) {
   const ready = useIsClient();
   const isXl = useMediaQuery("(min-width: 1280px)");
+  const { inspectOpen } = useSidePanel();
   const [showAlert, setShowAlert] = useState(false);
   const useSheet = ready && !isXl;
 
@@ -85,6 +87,7 @@ export function EntityFormSheet({
 
   useEffect(() => {
     if (!open || useSheet) return;
+    setCommandEnabled("panel.close", false);
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (event.altKey || event.ctrlKey || event.metaKey) return;
@@ -92,8 +95,11 @@ export function EntityFormSheet({
       requestClose();
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, useSheet, requestClose]);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      setCommandEnabled("panel.close", inspectOpen);
+    };
+  }, [inspectOpen, open, requestClose, useSheet]);
 
   const chrome = (
     <ItemInfoPanel
