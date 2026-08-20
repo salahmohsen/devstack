@@ -75,6 +75,8 @@ function toApplicationOutput(row: ApplicationRow, listingClosed = false) {
     applyUrl: row.applyUrl,
     applyMethod: row.applyMethod,
     matchScore: row.matchScore,
+    experienceYearsMin: row.experienceYearsMin ?? null,
+    companyLogoUrl: row.companyLogoUrl ?? null,
     source: row.source,
     sourceLabel: row.sourceLabel ?? null,
     sourceTags: row.sourceTags ?? [],
