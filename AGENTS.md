@@ -49,6 +49,7 @@ Pick the most specific file for the task. Use links within that file instead of 
 - [Career Mail Assistant P0](docs/superpowers/specs/2026-07-31-career-mail-assistant-design.md) — design lock + [implementation plan](docs/superpowers/plans/2026-07-31-career-mail-assistant-p0.md).
 - [Seeker applications CRM](docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md) — pipeline board/list that Career Inbox advances.
 - [Job discovery adapters](docs/superpowers/specs/2026-08-14-job-discovery-adapters-design.md) — public board adapters, shared catalog, cheap rank + BYO AI; mail harvest opt-in.
+- [Jobs hardening from Freehire](docs/superpowers/specs/2026-08-20-devhub-jobs-hardening-from-freehire-design.md) — company table, years/logo, score cap, mail-on-job, silence nudges. Grill lock. ADR [0026](docs/adr/0026-job-posting-shared-pool-and-company-table.md).
 
 ## Task Entry Points
 

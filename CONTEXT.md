@@ -104,6 +104,23 @@ Per-application hiring pressure: `unknown | immediate | soon | flexible`.
 Not the tenant’s job preference.
 _Avoid_: conflating with job preference.
 
+**Job posting** (`job_posting`):
+Shared pantry row for one public listing (adapter + external id). No
+`userId`. Many tenants may land the same posting onto their own
+application. HTTP/ATS fields only; never a personal match score.
+_Avoid_: duplicating the full JD per user; putting `matchScore` on the pantry.
+
+**Job company** (`job_company`):
+Shared employer record keyed by slug. Name, optional logo URL, website,
+profile. Postings point here. Years required are _not_ a company field.
+_Avoid_: treating companyName strings as identity; storing years on the company.
+
+**Years required**:
+Minimum years the _role_ asks for (`experienceYearsMin` on the posting).
+Shown as a badge. Caps personal `matchScore`. Does not hide the job from
+New jobs.
+_Avoid_: dropping listings that ask for more years than the profile.
+
 ## Job search
 
 **Job preference**:
@@ -123,6 +140,12 @@ _Avoid_: putting worldwide on the hybrid locations list.
 The lowest IC seniority the tenant will consider: `junior | mid | senior |
 staff`. Roles below it are out.
 _Avoid_: hiring urgency, application stage, title pack.
+
+**Agent take**:
+Short markdown on an application explaining fit. At most five concise
+bullets. Humanizer voice (plain, no hype, no invented facts). Written at
+land / harvest / regenerate. Not a paragraph.
+_Avoid_: 1–3 sentence blurbs; selling the job; JSON.
 
 **Search brief**:
 A per-tenant generated markdown document for AI layers. One artifact: opening
