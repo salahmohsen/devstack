@@ -1,4 +1,5 @@
 import {
+  applyYearsCap,
   applyZeroDollarCandidate,
   buildApplicationSourceTags,
   canonicalizeJobUrl,
@@ -12,6 +13,7 @@ import {
   JOB_ADAPTER_IDS,
   JOB_ADAPTER_LABELS,
   MAX_OPEN_INBOX,
+  mergeExperienceYears,
   resolveJobSkillTags,
   scoreCatalogAgainstPreference,
   WorkModeSchema,
@@ -25,6 +27,7 @@ import {
 import {
   applicationActivityRepository,
   applicationRepository,
+  experienceRepository,
   jobPostingRepository,
   preferLongerJobDescription,
   stackRepository,
@@ -47,6 +50,26 @@ import {
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
+
+async function displayScoreForUser(input: {
+  userId: string;
+  aiScore: number;
+  listingMinYears: number | null | undefined;
+}): Promise<{
+  landScore: number;
+  displayScore: number;
+  capped: boolean;
+  seekerYears: number | null;
+}> {
+  const rows = await experienceRepository.findAllByUserId(input.userId);
+  const seekerYears = mergeExperienceYears(rows);
+  const cap = applyYearsCap({
+    aiScore: input.aiScore,
+    listingMinYears: input.listingMinYears,
+    seekerYears
+  });
+  return { ...cap, seekerYears };
+}
 
 const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
   greenhouse: "Greenhouse",
@@ -314,6 +337,8 @@ async function insertDiscoveryApplication(input: {
     employmentType: input.employmentType,
     description: input.description,
     agentTake: input.agentTake ?? null,
+    experienceYearsMin: input.posting.experienceYearsMin ?? null,
+    companyLogoUrl: input.posting.companyLogoUrl ?? null,
     trackingStatus: input.trackingStatus,
     stage: "saved" as const,
     postingId: input.posting.id,
@@ -465,8 +490,15 @@ async function runInboxAiForApplication(input: {
     return { outcome: "heuristic" };
   }
 
+  const cap = await displayScoreForUser({
+    userId: input.userId,
+    aiScore: match.score,
+    listingMinYears: owned.experienceYearsMin ?? posting?.experienceYearsMin
+  });
   await applicationRepository.update(owned.id, input.userId, {
-    matchScore: match.score
+    matchScore: cap.displayScore,
+    experienceYearsMin: owned.experienceYearsMin ?? posting?.experienceYearsMin ?? null,
+    companyLogoUrl: owned.companyLogoUrl ?? posting?.companyLogoUrl ?? null
   });
 
   try {
@@ -675,6 +707,11 @@ async function runInboxAiForPosting(input: {
   }
 
   const keep = decideInboxAiKeep(match);
+  const cap = await displayScoreForUser({
+    userId: input.userId,
+    aiScore: match.score,
+    listingMinYears: posting.experienceYearsMin
+  });
   let takeText: string | null = null;
   if (keep === "heuristic" && shouldRefundHeuristicIncrement(leftoverExtractRan)) {
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
@@ -690,8 +727,11 @@ async function runInboxAiForPosting(input: {
           location: leftover.location,
           employmentType,
           salaryRange,
-          matchScore: match.score,
-          description
+          matchScore: cap.displayScore,
+          description,
+          experienceYearsMin: posting.experienceYearsMin,
+          seekerYears: cap.seekerYears,
+          yearsCapped: cap.capped
         },
         matchReasons: match.reasons
       });
@@ -727,7 +767,9 @@ async function runInboxAiForPosting(input: {
   const row = await insertDiscoveryApplication({
     ...baseInsert,
     matchScore:
-      keep === "dismissed" || keep === "passed" || keep === "heuristic" ? match.score : cheap.score,
+      keep === "dismissed" || keep === "passed" || keep === "heuristic"
+        ? cap.displayScore
+        : cheap.score,
     matchReasons: match.reasons,
     trackingStatus: plan.insert.trackingStatus,
     jobsPerRun: prefs.jobsPerRun,

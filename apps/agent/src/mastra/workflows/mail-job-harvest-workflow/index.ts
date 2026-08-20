@@ -20,6 +20,7 @@ import {
   MailJobHarvestWorkflowOutputSchema,
   MailNotifierExtractSchema,
   mergeJobListingExtract,
+  normalizeAgentTakeText,
   scoreJobAgainstPreference,
   shouldPassAllHarvestJobs,
   type HarvestedJob,
@@ -645,9 +646,11 @@ ${formatSearchBriefForPrompt(prefs.searchBriefMarkdown)}
 Jobs (JSON array):
 ${JSON.stringify(jobsJson, null, 2)}
 
-Return takes[] with listingUrl + agentTake (1–3 sentences each, product tone).
-Ground takes in job fields and match reasons. Do not invent employers or tech not in the input.
-Use the exact listingUrl from each job.`;
+Return takes[] with listingUrl + agentTake.
+Each agentTake is markdown only: maximum 5 short bullets (prefer 3-5). No JSON, no preamble.
+Plain words. is/are/has. No hype, no em dashes. Do not invent employers, skills, or years.
+If fit is weak, say so. Prefer under 800 characters.
+Ground takes in job fields and match reasons. Use the exact listingUrl from each job.`;
 
     const requestContext = harvestRequestContext(
       inputData.llm as RuntimeLlmConfig | undefined,
@@ -679,7 +682,7 @@ Use the exact listingUrl from each job.`;
 
       const takeByUrl = new Map(
         parsed.data.takes.map((t) => {
-          const take = t.agentTake.replace(/\s+/g, " ").trim().slice(0, 1200);
+          const take = normalizeAgentTakeText(t.agentTake);
           return [urlKey(t.listingUrl), take] as const;
         })
       );

@@ -1,8 +1,10 @@
 import {
+  applyYearsCap,
   assessAgentTakeReadiness,
   formatSearchBriefForPrompt,
   formatSeekerEvidenceForPrompt,
   llmLogFields,
+  mergeExperienceYears,
   normalizeAgentTakeText,
   type JobPreference,
   type RuntimeLlmConfig,
@@ -11,6 +13,7 @@ import {
 import {
   applicationActivityRepository,
   applicationRepository,
+  experienceRepository,
   type ApplicationEntity
 } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -55,6 +58,9 @@ export type AgentTakeJobInput = {
   salaryRange: string | null;
   matchScore: number | null;
   description: string | null;
+  experienceYearsMin?: number | null;
+  seekerYears?: number | null;
+  yearsCapped?: boolean;
 };
 
 function buildPrompt(
@@ -69,11 +75,23 @@ function buildPrompt(
     employmentType: job.employmentType,
     salaryRange: job.salaryRange,
     matchScore: job.matchScore,
+    experienceYearsMin: job.experienceYearsMin ?? null,
+    seekerYears: job.seekerYears ?? null,
+    yearsCapped: job.yearsCapped ?? false,
     description: (job.description ?? "").slice(0, 2500) || null
   };
-  return `Write the agent take for this job.
+  return `Write the agent take for this job as markdown only.
 
-Column hard-fails (exclude phrase, level floor, salary floor) are law. Phrase identity: "react" is not "react native". Search brief is narrative flavor only. Two-axis (workModes / locations / remoteRegions) is land-only — not a harvest/inbox hard-fail.
+Rules:
+- Maximum 5 bullets. Prefer 3-5. One short point per bullet.
+- Optional one-line heading at most. No JSON, no preamble paragraph.
+- Ground in listing fields, match reasons, prefs, years, and skills when provided.
+- If yearsCapped is true, say the listing asks experienceYearsMin years.
+- Column hard-fails (exclude, level floor, salary, years cap) are law; mention them when they fired.
+- Plain words. Short sentences. is/are/has. No hype, no pivotal/landscape/delve, no em dashes.
+- Do not invent employers, skills, or years.
+- If fit is weak, say so. Do not sell the job.
+- Prefer under 800 characters.
 
 Job (JSON):
 ${JSON.stringify(listing, null, 2)}
@@ -82,9 +100,7 @@ Match reasons (if any):
 ${matchReasons.length > 0 ? matchReasons.map((r) => `- ${r}`).join("\n") : "(none)"}
 
 Seeker preferences summary:
-${prefsSummary ?? "(not set)"}
-
-Reply with 1–3 sentences only.`;
+${prefsSummary ?? "(not set)"}`;
 }
 
 type TakePrefsColumns = Pick<
@@ -300,6 +316,13 @@ export async function generateAgentTake(input: {
     ? meta.matchReasons.filter((reason): reason is string => typeof reason === "string")
     : [];
 
+  const experiences = await experienceRepository.findAllByUserId(input.userId);
+  const seekerYears = mergeExperienceYears(experiences);
+  const years = applyYearsCap({
+    aiScore: owned.matchScore ?? 0,
+    listingMinYears: owned.experienceYearsMin,
+    seekerYears
+  });
   const text = await generateAgentTakeText({
     userId: input.userId,
     job: {
@@ -309,7 +332,10 @@ export async function generateAgentTake(input: {
       employmentType: owned.employmentType,
       salaryRange: owned.salaryRange,
       matchScore: owned.matchScore,
-      description: owned.description
+      description: owned.description,
+      experienceYearsMin: owned.experienceYearsMin,
+      seekerYears,
+      yearsCapped: owned.matchScore != null && years.capped
     },
     matchReasons
   });
