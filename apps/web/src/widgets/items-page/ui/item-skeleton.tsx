@@ -2,6 +2,8 @@ import { Card } from "@tsu-stack/ui/components/card.js";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { ITEMS_GRID_CLASSNAME } from "@/widgets/items-page/lib/items-grid-layout";
+
 type ItemSkeletonProps = {
   /** How many skeleton rows to render. */
   count?: number;
@@ -26,11 +28,7 @@ export function ListSkeleton({ count = 6 }: ItemSkeletonProps) {
 
 export function GridSkeleton({ count = 6 }: ItemSkeletonProps) {
   return (
-    <div
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8"
-      aria-busy="true"
-      aria-live="polite"
-    >
+    <div className={ITEMS_GRID_CLASSNAME} aria-busy="true" aria-live="polite">
       {Array.from({ length: count }).map((_, index) => (
         <Card
           // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role

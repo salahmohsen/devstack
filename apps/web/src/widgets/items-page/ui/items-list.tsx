@@ -23,7 +23,7 @@ type ItemsListProps<T> = {
   /** Empty state shown when `items` is empty and not loading. */
   emptyState: React.ReactNode;
   /** Optional container ref override. Falls back to the provider's ref. */
-  containerRef?: React.RefObject<HTMLUListElement | null>;
+  containerRef?: React.RefObject<HTMLElement | null>;
   className?: string;
 };
 
@@ -67,7 +67,11 @@ export function ItemsList<T extends { id: string }>({
   }
 
   return (
-    <ul ref={ref} className={className ?? "space-y-2 outline-none"} data-items-list>
+    <ul
+      ref={ref as React.RefObject<HTMLUListElement | null>}
+      className={className ?? "space-y-2 outline-none"}
+      data-items-list
+    >
       {items.map((item) => (
         <li key={item.id} data-item-id={item.id}>
           {renderItem(item)}

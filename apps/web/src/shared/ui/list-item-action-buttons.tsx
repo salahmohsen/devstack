@@ -35,12 +35,14 @@ function PortfolioStatusButton({
   inPortfolio,
   isLoading,
   onToggle,
-  className
+  className,
+  size = "icon"
 }: {
   inPortfolio: boolean;
   isLoading?: boolean;
   onToggle: () => void;
   className?: string;
+  size?: "icon" | "icon-sm";
 }) {
   const [active, setActive] = useState(inPortfolio);
   const [prevInPortfolio, setPrevInPortfolio] = useState(inPortfolio);
@@ -58,7 +60,7 @@ function PortfolioStatusButton({
       <TooltipTrigger
         render={
           <Button
-            size="icon"
+            size={size}
             variant="outline"
             disabled={isLoading}
             onClick={(event) => {
@@ -100,6 +102,11 @@ type ListItemActionButtonsProps = {
    */
   viewSlot?: React.ReactNode;
   edit?: ActionButtonConfig;
+  /**
+   * Keep Edit in the overflow menu only (no strip button).
+   * Use on compact cards where the strip is toggle + ▾.
+   */
+  editInMenu?: boolean;
   togglePortfolio?: ToggleConfig;
   toggleFeatured?: ToggleConfig;
   delete?: ActionButtonConfig;
@@ -118,26 +125,39 @@ type ListItemActionButtonsProps = {
    */
   extraMenuItems?: React.ReactNode;
   classNames?: classNames;
+  /** Icon-sm strip (28px) for compact grid cards — matches the identity mark. */
+  compact?: boolean;
 };
 
 export function ListItemActionButtons({
   view,
   viewSlot,
   edit,
+  editInMenu = false,
   togglePortfolio,
   toggleFeatured,
   delete: deleteConfig,
   select,
   renderExtraMenuItems,
   extraMenuItems,
-  classNames
+  classNames,
+  compact = false
 }: ListItemActionButtonsProps) {
+  const iconSize = compact ? "icon-sm" : "icon";
+  const iconClassName = cn(compact && "size-7", classNames?.trigger);
   const hasView = viewSlot != null || view != null;
   const hasOverflowMenu =
-    !!togglePortfolio || !!toggleFeatured || !!extraMenuItems || !!renderExtraMenuItems || !!select;
+    !!togglePortfolio ||
+    !!toggleFeatured ||
+    !!extraMenuItems ||
+    !!renderExtraMenuItems ||
+    !!select ||
+    editInMenu;
   // When a ▾ exists (including Select-only), delete lives in the menu — not as a strip button.
   const showDeleteInGroup = !!deleteConfig && !hasOverflowMenu;
   const hasMenu = hasOverflowMenu;
+  const editOnStrip = Boolean(edit) && !editInMenu;
+  const editInOverflow = Boolean(edit) && (hasOverflowMenu || editInMenu);
 
   if (!hasView && !edit && !hasMenu && !showDeleteInGroup) {
     return null;
@@ -148,11 +168,11 @@ export function ListItemActionButtons({
       <MenuTrigger
         render={
           <Button
-            size="icon"
+            size={iconSize}
             variant="outline"
             onClick={(e) => e.stopPropagation()}
             aria-label="More actions"
-            className={classNames?.trigger}
+            className={iconClassName}
           />
         }
       >
@@ -162,8 +182,8 @@ export function ListItemActionButtons({
         <ListItemOverflowMenu
           slots={listItemMenuSlots}
           select={select}
-          edit={edit && hasOverflowMenu ? edit : undefined}
-          editClassName={edit && hasOverflowMenu ? "md:hidden" : undefined}
+          edit={editInOverflow ? edit : undefined}
+          editClassName={editOnStrip && hasOverflowMenu ? "md:hidden" : undefined}
           togglePortfolio={togglePortfolio}
           toggleFeatured={toggleFeatured}
           delete={deleteConfig && !showDeleteInGroup ? deleteConfig : undefined}
@@ -192,27 +212,28 @@ export function ListItemActionButtons({
   const viewControl = viewSlot ?? defaultViewButton;
 
   if (
-    (hasView || edit || showDeleteInGroup) &&
-    (hasMenu || showDeleteInGroup || (hasView && edit))
+    (hasView || editOnStrip || showDeleteInGroup || Boolean(togglePortfolio)) &&
+    (hasMenu || showDeleteInGroup || (hasView && editOnStrip) || Boolean(togglePortfolio))
   ) {
     return (
-      <Group aria-label="Item actions" className={classNames?.wrapper}>
+      <Group aria-label="Item actions" className={cn(compact && "h-7", classNames?.wrapper)}>
         {togglePortfolio ? (
           <>
             <PortfolioStatusButton
               inPortfolio={togglePortfolio.initialValue}
               isLoading={togglePortfolio.isLoading}
               onToggle={togglePortfolio.onAction}
-              className={classNames?.trigger}
+              size={iconSize}
+              className={iconClassName}
             />
             <GroupSeparator />
           </>
         ) : null}
         {viewControl}
-        {hasView && edit ? (
+        {hasView && editOnStrip ? (
           <GroupSeparator className={hasOverflowMenu ? "max-md:hidden" : undefined} />
         ) : null}
-        {edit ? (
+        {editOnStrip && edit ? (
           <Button
             size={edit.iconOnly ? "icon" : undefined}
             className={cn(hasOverflowMenu && !edit.iconOnly ? "max-md:hidden" : undefined)}
@@ -230,7 +251,7 @@ export function ListItemActionButtons({
         ) : null}
         {showDeleteInGroup ? (
           <>
-            {hasView || edit ? <GroupSeparator /> : null}
+            {hasView || editOnStrip ? <GroupSeparator /> : null}
             <Button
               onClick={(event: React.MouseEvent) => {
                 event.stopPropagation();
@@ -247,7 +268,7 @@ export function ListItemActionButtons({
         ) : null}
         {hasMenu ? (
           <>
-            {hasView || edit || showDeleteInGroup ? <GroupSeparator /> : null}
+            {hasView || editOnStrip || showDeleteInGroup ? <GroupSeparator /> : null}
             {menuContent}
           </>
         ) : null}
@@ -280,8 +301,8 @@ export function ListItemActionButtons({
   if (view) {
     return (
       <Button
-        size="icon"
-        className={classNames?.wrapper}
+        size={iconSize}
+        className={cn(iconClassName, classNames?.wrapper)}
         onClick={(event: React.MouseEvent) => {
           event.stopPropagation();
           view.onAction();
@@ -297,8 +318,8 @@ export function ListItemActionButtons({
   if (edit) {
     return (
       <Button
-        size="icon"
-        className={classNames?.wrapper}
+        size={iconSize}
+        className={cn(iconClassName, classNames?.wrapper)}
         onClick={(event: React.MouseEvent) => {
           event.stopPropagation();
           edit.onAction();
