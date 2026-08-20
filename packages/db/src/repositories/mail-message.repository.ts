@@ -275,6 +275,7 @@ export const mailMessageRepository = {
         toEmail: input.toEmail ?? null,
         subject: input.subject ?? "",
         preview: input.preview ?? "",
+        summary: input.summary ?? null,
         bodyText: input.bodyText ?? "",
         bodyHtml: input.bodyHtml ?? null,
         receivedAt: input.receivedAt ?? new Date(),

@@ -1,7 +1,12 @@
 import {
+  fetchPublicHtmlAsText,
   fetchPublicHttpStatus,
   inboxLivenessDueAt,
+  isClosedJobListingHtml,
+  isClosedJobListingText,
+  isGoneHttpListingStatus,
   isInboxExpired,
+  isMissingJobListingTitle,
   LIVENESS_REPROBE_AFTER_MS,
   LIVENESS_TICK_BATCH,
   type FetchPublicHttpStatusResult
@@ -16,7 +21,6 @@ import {
 
 import { runSilenceTick } from "#@/lib/application/silence-tick";
 
-const GONE_STATUSES = new Set([404, 410]);
 const PROBE_CONCURRENCY = 5;
 const FREEHIRE_JOB_API = (externalId: string) =>
   `https://freehire.me/api/v1/jobs/${encodeURIComponent(externalId)}`;
@@ -118,18 +122,29 @@ function uniqueIds(ids: Array<string | null>): string[] {
 
 async function listingClosedReason(target: LivenessTarget): Promise<string | null> {
   const listing = await probeListingUrl(target.listingUrl);
-  if (listing.status != null && GONE_STATUSES.has(listing.status)) return "http_gone";
+  if (isGoneHttpListingStatus(listing.status)) return "http_gone";
 
-  if (target.adapterId === "freehire" && target.externalId && !listing.ok) {
+  // LinkedIn deleted jobs stay HTTP 200 with a multilingual "Page not found" body.
+  const page = await fetchPublicHtmlAsText(target.listingUrl, {
+    includeHtml: true,
+    maxChars: 8_000
+  });
+  if (isGoneHttpListingStatus(page.status)) return "http_gone";
+  if (page.html && isClosedJobListingHtml(page.html)) return "http_gone";
+  if (isClosedJobListingText(page.text) || isMissingJobListingTitle(page.title)) {
+    return "http_gone";
+  }
+
+  if (target.adapterId === "freehire" && target.externalId && !listing.ok && !page.ok) {
     const api = await fetchPublicHttpStatus(FREEHIRE_JOB_API(target.externalId), { method: "GET" });
-    if (api.status != null && GONE_STATUSES.has(api.status)) return "freehire_missing";
+    if (isGoneHttpListingStatus(api.status)) return "freehire_missing";
   }
   return null;
 }
 
 async function probeListingUrl(url: string): Promise<FetchPublicHttpStatusResult> {
   const head = await fetchPublicHttpStatus(url, { method: "HEAD" });
-  if ((head.status != null && GONE_STATUSES.has(head.status)) || head.ok) return head;
+  if (isGoneHttpListingStatus(head.status) || head.ok) return head;
   return fetchPublicHttpStatus(url, { method: "GET" });
 }
 

@@ -4,6 +4,10 @@ import {
   fetchListingAlternateText,
   fetchPublicHtmlAsText,
   formatJobPageTextForLlm,
+  isClosedJobListingHtml,
+  isClosedJobListingText,
+  isGoneHttpListingStatus,
+  isMissingJobListingTitle,
   pickBetterListingDescription,
   type PublicJobListingExtract
 } from "@tsu-stack/core";
@@ -42,10 +46,18 @@ export async function fetchListingPageText(url: string): Promise<FetchListingPag
   const listingUrl = canonicalizeJobUrl(url) ?? url;
   const result = await fetchListingHtml(listingUrl);
   const pageUrl = result.finalUrl ?? listingUrl;
-  const extract =
+  let extract: PublicJobListingExtract | null =
     result.html && result.html.length > 200
       ? await extractPublicJobListingFromHtmlAsync(result.html, pageUrl)
       : null;
+  const listingGone =
+    isGoneHttpListingStatus(result.status) ||
+    isMissingJobListingTitle(result.title) ||
+    (result.html ? isClosedJobListingHtml(result.html) : false) ||
+    isClosedJobListingText(result.text);
+  if (listingGone) {
+    extract = { ...extract, listingClosed: true };
+  }
   if (extract && result.html) {
     const alternate = await fetchListingAlternateText(result.html, pageUrl);
     const picked = pickBetterListingDescription(extract.description, alternate);

@@ -962,13 +962,66 @@ const CLOSED_LISTING_MARKERS = [
   "no longer accepting applicants"
 ] as const;
 
+/** LinkedIn (and similar) 404 bodies — not a bare "page not found" (real JDs mention 404s). */
+const GONE_PAGE_PHRASES = [
+  "uh oh, we can't seem to find the page you're looking for",
+  "we can't seem to find the page you're looking for",
+  "try going back to the previous page or see our help center"
+] as const;
+
+/** One heading is weak; two+ translations is LinkedIn's deleted-job chrome. */
+const GONE_PAGE_HEADINGS = [
+  "page not found",
+  "seite nicht gefunden",
+  "siden blev ikke fundet",
+  "página no encontrada",
+  "pagina non trovata",
+  "page introuvable",
+  "pagina niet gevonden",
+  "لم يتم العثور على الصفحة"
+] as const;
+
+function foldListingPageText(text: string): string {
+  return text.toLowerCase().replace(/[\u2018\u2019\u201A\u201B]/g, "'");
+}
+
+/** Deleted listing SPA that still returns HTTP 200 (LinkedIn multilingual 404). */
+export function isGonePublicListingPage(text: string): boolean {
+  if (!text || text.length < 20) return false;
+  const folded = foldListingPageText(text);
+  if (GONE_PAGE_PHRASES.some((phrase) => folded.includes(phrase))) return true;
+  let headings = 0;
+  for (const heading of GONE_PAGE_HEADINGS) {
+    if (folded.includes(heading) || text.includes(heading)) {
+      headings += 1;
+      if (headings >= 2) return true;
+    }
+  }
+  return false;
+}
+
+export function isGoneHttpListingStatus(status: number | null | undefined): boolean {
+  return status === 404 || status === 410;
+}
+
+/** Page `<title>` is the 404 document, not a role. */
+export function isMissingJobListingTitle(title: string | null | undefined): boolean {
+  const head =
+    title
+      ?.trim()
+      .split(/[|/—–-]/)[0]
+      ?.trim()
+      .toLowerCase() ?? "";
+  return head === "page not found" || head === "seite nicht gefunden";
+}
+
 /**
- * True when HTML (LinkedIn guest, etc.) marks the listing as closed/expired.
+ * True when HTML (LinkedIn guest, etc.) marks the listing as closed/expired/deleted.
  */
 export function isClosedJobListingHtml(html: string): boolean {
   if (!html || html.length < 20) return false;
-  const lower = html.toLowerCase();
-  return CLOSED_LISTING_MARKERS.some((m) => lower.includes(m));
+  const lower = foldListingPageText(html);
+  return CLOSED_LISTING_MARKERS.some((m) => lower.includes(m)) || isGonePublicListingPage(html);
 }
 
 /**
@@ -977,8 +1030,11 @@ export function isClosedJobListingHtml(html: string): boolean {
  */
 export function isClosedJobListingText(text: string): boolean {
   if (!text || text.length < 10) return false;
-  const lower = text.toLowerCase();
-  return CLOSED_LISTING_MARKERS.some((m) => !m.startsWith("closed-job") && lower.includes(m));
+  const lower = foldListingPageText(text);
+  return (
+    CLOSED_LISTING_MARKERS.some((m) => !m.startsWith("closed-job") && lower.includes(m)) ||
+    isGonePublicListingPage(text)
+  );
 }
 
 /**

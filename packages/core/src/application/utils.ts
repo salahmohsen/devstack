@@ -62,6 +62,48 @@ export const APPLICATION_SOURCE_TAG_LABELS: Record<ApplicationSourceTag, string>
   other: "Other"
 };
 
+const SOURCE_CHANNEL_TAGS = new Set(["mail", "hub", "manual", "discovery"]);
+
+/**
+ * Chips for lists/inspect: adapter name (or Mail), never a bare "Discovery".
+ */
+export function applicationSourceChipLabels(input: {
+  sourceTags?: readonly string[] | null;
+  sourceLabel?: string | null;
+}): string[] {
+  const tags = input.sourceTags ?? [];
+  const trimmedLabel = input.sourceLabel?.trim() ?? "";
+  const adapter = trimmedLabel.length > 0 ? trimmedLabel : null;
+  const chips: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (label: string) => {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    chips.push(trimmed);
+  };
+
+  if (tags.includes("mail")) add(APPLICATION_SOURCE_TAG_LABELS.mail);
+  else if (adapter) add(adapter);
+  else if (tags.includes("hub")) add(APPLICATION_SOURCE_TAG_LABELS.hub);
+  else if (tags.includes("manual")) add(APPLICATION_SOURCE_TAG_LABELS.manual);
+
+  for (const tag of tags) {
+    if (SOURCE_CHANNEL_TAGS.has(tag)) continue;
+    if (tag === "other" && adapter) continue;
+    if (!(tag in APPLICATION_SOURCE_TAG_LABELS)) continue;
+    const label = APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag];
+    if (adapter && label.toLowerCase() === adapter.toLowerCase()) continue;
+    add(label);
+  }
+
+  if (chips.length === 0 && tags.includes("discovery")) add("Job search");
+  return chips;
+}
+
 export const APPLICATION_TRACKING_STATUS_LABELS: Record<ApplicationTrackingStatus, string> = {
   inbox: "New",
   tracked: "Tracked",

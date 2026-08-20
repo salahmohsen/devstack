@@ -21,6 +21,8 @@ import {
   inferSourceLabelFromUrl,
   isClosedJobListingHtml,
   isClosedJobListingText,
+  isGonePublicListingPage,
+  isMissingJobListingTitle,
   isValidHarvestedJob,
   mergeJobListingExtract,
   normalizeHarvestApplyMethod,
@@ -863,6 +865,34 @@ describe("LinkedIn guest page extract", () => {
     expect(isClosedJobListingText("No longer accepting applications")).toBe(true);
     expect(isClosedJobListingText("This job has expired on Indeed")).toBe(true);
     expect(isClosedJobListingText("Great team, remote role, apply today")).toBe(false);
+  });
+
+  it("detects LinkedIn multilingual deleted-job 404 body", () => {
+    const text = `選擇語言
+
+لم يتم العثور على الصفحة
+
+عفواً، لم نتمكن من العثور على الصفحة التي تبحث عنها. برجاء المحاولة مرة أخرى للصفحة السابقة أو الانتقال لـ مركز المساعدة للمزيد من المعلومات
+
+Siden blev ikke fundet
+
+Seite nicht gefunden
+
+Page not found
+
+Uh oh, we can’t seem to find the page you’re looking for. Try going back to the previous page or see our Help Center for more information`;
+    expect(isGonePublicListingPage(text)).toBe(true);
+    expect(isClosedJobListingText(text)).toBe(true);
+    expect(isClosedJobListingHtml(`<html><body>${text}</body></html>`)).toBe(true);
+    expect(isMissingJobListingTitle("Page not found | LinkedIn")).toBe(true);
+  });
+
+  it("does not treat a real JD that mentions 404 as deleted", () => {
+    const jd =
+      "Build the careers site. Handle page not found errors in the SPA with a friendly empty state.";
+    expect(isGonePublicListingPage(jd)).toBe(false);
+    expect(isClosedJobListingText(jd)).toBe(false);
+    expect(isMissingJobListingTitle("Frontend Engineer")).toBe(false);
   });
 });
 

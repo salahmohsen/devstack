@@ -2,6 +2,7 @@ import {
   MAIL_CATEGORY_TO_SYSTEM_LABEL,
   MAIL_NEEDS_ACTION_LABELS,
   MAIL_SMART_RULE_LABEL_PREFIX,
+  MAIL_SYSTEM_LABEL_TO_CATEGORY,
   MAIL_SYSTEM_LABELS
 } from "./constants";
 import {
@@ -92,6 +93,17 @@ export function mailCategoryToSlug(id: string): string {
     return id.replace(MAIL_SMART_RULE_LABEL_PREFIX, "rule-");
   }
   return id.replaceAll("_", "-");
+}
+
+/** Hub category slug for a deep link from labels (job-info mail, notifications). */
+export function mailHubCategorySlugForLabels(labels: readonly string[]): string {
+  for (const label of labels) {
+    if (!Object.hasOwn(MAIL_SYSTEM_LABEL_TO_CATEGORY, label)) continue;
+    const category =
+      MAIL_SYSTEM_LABEL_TO_CATEGORY[label as keyof typeof MAIL_SYSTEM_LABEL_TO_CATEGORY];
+    return mailCategoryToSlug(category);
+  }
+  return mailCategoryToSlug("all");
 }
 
 export function mailSlugToCategoryId(slug: string): string {
