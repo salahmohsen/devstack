@@ -115,6 +115,9 @@ export const application = pgTable(
       .default([]),
     salaryRange: text("salary_range"),
     employmentType: employmentTypeEnum("employment_type").notNull().default("unknown"),
+    /** Denorm from posting at land; stable after catalog close. */
+    experienceYearsMin: integer("experience_years_min"),
+    companyLogoUrl: text("company_logo_url"),
     description: text("description"),
     notes: text("notes"),
     /** AI narrative fit blurb (harvest agent take). */
