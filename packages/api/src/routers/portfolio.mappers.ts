@@ -23,6 +23,7 @@ export type StackRow = {
   projectCount?: number;
   sortOrder: number;
   isFeatured?: boolean;
+  alternativeNames?: string[];
   portfolioEntryId: string | null;
   dependencies?: Array<{
     npmPackage: string;
@@ -52,6 +53,7 @@ export function toStackOutput(s: StackRow): StackOutput {
     isFeatured: Boolean(s.isFeatured),
     portfolioEntryId: s.portfolioEntryId,
     includedInPortfolio: !!s.portfolioEntryId,
+    alternativeNames: s.alternativeNames ?? [],
     dependencies: (s.dependencies ?? []).map((d) => {
       return {
         npmPackage: d.npmPackage,
@@ -145,6 +147,7 @@ export function toPublicEmbeddedStack(stack: StackOutput): StackOutput {
     icon: null,
     description: null,
     healthStatus: null,
+    alternativeNames: [],
     dependencies: [],
     projects: []
   };
