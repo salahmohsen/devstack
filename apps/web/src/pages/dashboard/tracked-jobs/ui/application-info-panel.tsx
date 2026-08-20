@@ -46,7 +46,14 @@ import {
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 
-import { ITEM_AVATAR_EYEBROW_CLASSNAME, ItemAvatar } from "@/shared/ui/item-avatar";
+import { ITEM_AVATAR_EYEBROW_CLASSNAME } from "@/shared/ui/item-avatar";
+import {
+  AgentTakeMarkdown,
+  JobIdentityMark,
+  JobSkillsBar,
+  JobYearsBadge,
+  skillBarInputs
+} from "@/shared/ui/job-card-marks";
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
@@ -374,12 +381,12 @@ export function ApplicationInfoPanel({
     <>
       <ItemInfoPanel
         eyebrow={
-          <ItemAvatar
-            name={item.companyName}
+          <JobIdentityMark
+            companyName={item.companyName}
+            logoUrl={item.companyLogoUrl}
             size={48}
             selected
             className="size-12"
-            aria-label={item.companyName}
           />
         }
         eyebrowClassName={ITEM_AVATAR_EYEBROW_CLASSNAME}
@@ -418,6 +425,7 @@ export function ApplicationInfoPanel({
                   <span className="shrink-0">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</span>
                 </>
               ) : null}
+              <JobYearsBadge years={item.experienceYearsMin} />
               {item.listingClosed ? (
                 <Badge
                   variant="secondary"
@@ -452,6 +460,7 @@ export function ApplicationInfoPanel({
                 </Badge>
               ))}
             </span>
+            <JobSkillsBar {...skillBarInputs(item.requiredSkills, item.preferredSkills)} />
           </div>
         }
         actions={
@@ -493,7 +502,7 @@ export function ApplicationInfoPanel({
 
           <ItemInfoSection title="Agent's take" icon={<SparklesIcon />}>
             {takeReady.ok && item.agentTake?.trim() ? (
-              <p className="text-foreground">{item.agentTake}</p>
+              <AgentTakeMarkdown text={item.agentTake} />
             ) : (
               <p className="italic">
                 {takeReady.ok

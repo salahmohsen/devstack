@@ -45,7 +45,7 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { ItemAvatar } from "@/shared/ui/item-avatar";
+import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
 
 import {
   APPLICATION_STAGE_BADGE_VARIANT,
@@ -114,16 +114,21 @@ function ApplicationCard({
             if (!isDragging) openView(app);
           }}
         >
-          <ItemAvatar
-            name={app.companyName}
+          <JobIdentityMark
+            companyName={app.companyName}
+            logoUrl={app.companyLogoUrl}
             size={40}
             selected={avatarAnimated}
             className="size-10"
-            aria-label={app.companyName}
           />
           <span className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">{app.companyName}</div>
             <div className="truncate text-xs text-muted-foreground">{app.title}</div>
+            {app.experienceYearsMin != null ? (
+              <div className="mt-1">
+                <JobYearsBadge years={app.experienceYearsMin} />
+              </div>
+            ) : null}
           </span>
         </button>
       </div>

@@ -7,6 +7,8 @@ import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 
+import { CompanyLogoPictogram, JobYearsBadge } from "@/shared/ui/job-card-marks";
+
 import { HubHitlFrame } from "./hub-hitl-frame";
 
 export type NewJobsTriageCardInput = {
@@ -71,14 +73,20 @@ function RowList({
                 className="mt-0.5"
               />
               <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="text-sm leading-snug font-medium text-foreground">
-                  {row.title.trim() || "Untitled role"}
+                <p className="flex items-center gap-1.5 text-sm leading-snug font-medium text-foreground">
+                  <CompanyLogoPictogram
+                    companyName={row.companyName}
+                    logoUrl={row.companyLogoUrl}
+                    size={14}
+                  />
+                  <span className="min-w-0 truncate">{row.title.trim() || "Untitled role"}</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                   {row.companyName.trim() || "Unknown company"}
                   {typeof row.matchScore === "number"
                     ? ` · Match ${Math.round(row.matchScore)}%`
                     : null}
+                  <JobYearsBadge years={row.experienceYearsMin} />
                 </p>
                 {row.reason?.trim() ? (
                   <p className="text-xs leading-relaxed text-foreground/80">{row.reason.trim()}</p>

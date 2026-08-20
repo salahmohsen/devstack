@@ -57,7 +57,7 @@ import {
 } from "@/shared/lib/batch-selection";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
-import { ItemAvatar } from "@/shared/ui/item-avatar";
+import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -156,6 +156,12 @@ function newJobTags(job: ApplicationOutput): ListItemTag[] {
     tags.push({
       id: "match-score",
       node: <ApplicationMatchScoreBadge matchScore={job.matchScore} />
+    });
+  }
+  if (job.experienceYearsMin != null) {
+    tags.push({
+      id: "years",
+      node: <JobYearsBadge years={job.experienceYearsMin} />
     });
   }
   for (const tag of (job.sourceTags ?? []).slice(0, 2)) {
@@ -774,12 +780,12 @@ export function NewJobsPage() {
                             tags={newJobTags(job)}
                             meta={newJobMeta(job)}
                             leading={
-                              <ItemAvatar
-                                name={job.companyName}
+                              <JobIdentityMark
+                                companyName={job.companyName}
+                                logoUrl={job.companyLogoUrl}
                                 size={40}
                                 selected={selected}
                                 className="size-10"
-                                aria-label={job.companyName}
                               />
                             }
                             actions={

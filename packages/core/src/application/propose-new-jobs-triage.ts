@@ -16,7 +16,9 @@ export const ProposeNewJobsTriageRowSchema = z.object({
     .max(500)
     .optional()
     .nullable()
-    .describe("One short sentence why track or dismiss")
+    .describe("One short sentence why track or dismiss"),
+  experienceYearsMin: z.number().int().optional().nullable(),
+  companyLogoUrl: z.string().optional().nullable()
 });
 export type ProposeNewJobsTriageRow = z.infer<typeof ProposeNewJobsTriageRowSchema>;
 

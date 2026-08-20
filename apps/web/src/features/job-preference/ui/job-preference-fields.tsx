@@ -230,7 +230,7 @@ export const JobPreferenceFields = withForm({
             {(field) => (
               <field.SliderField
                 label="Minimum match score"
-                description="AI match bar (0–100). Cheap ranking does not use this."
+                description="This is the passing line. Each job gets a match score. If that score is below this number, it does not go into New jobs. Years on a listing can lower the score you see; they do not hide the job by themselves."
                 min={0}
                 max={100}
                 step={1}
