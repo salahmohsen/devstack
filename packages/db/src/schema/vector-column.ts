@@ -1,7 +1,7 @@
 import { customType } from "drizzle-orm/pg-core";
 
 /**
- * pgvector `vector(n)` column for Neon/Postgres.
+ * pgvector `vector(n)` column for Postgres.
  * Driver wire format: `[0.1,0.2,...]` string.
  */
 export function vector(name: string, config: { dimensions: number }) {

@@ -201,7 +201,7 @@ Ingress (gmail | resend | manual)
 pnpm check / pnpm fix     # Vite Plus checks
 pnpm test:unit:run
 pnpm test:e2e:run
-pnpm db:setup | db:migrate | db:studio
+pnpm db:migrate | db:studio
 pnpm tanstack …           # TanStack docs CLI
 ```
 
@@ -212,22 +212,20 @@ Contributor docs: `.agents/*` (TanStack, oRPC, auth, media, logging, testing, wo
 ## Quick start (local)
 
 ```bash
-# Infra (Postgres, Redis, MinIO, …)
-pnpm dev:infra
-
-# Env: copy and edit
+# Env: copy and edit (DATABASE_URL → local Docker Postgres)
 cp packages/env/.env.example packages/env/.env
 
-# DB
-pnpm db:setup
-
-# Apps (web + server + agent via scripts/dev.sh)
+# Apps — scripts/dev.sh starts Postgres/Redis/MinIO and runs migrations
 # If server/agent crash on a file-watch reload, the orchestrator restarts them.
 # Disable: DEV_NO_RESTART=1 pnpm dev
 pnpm dev
 
 # Public HTTPS tunnel for Resend / Gmail / GitHub webhooks (cloudflared CLI)
 pnpm dev:tunnel
+
+# Optional: infra or migrate without booting apps
+# pnpm dev:infra
+# pnpm db:migrate
 ```
 
 Configure at least: `VITE_WEB_URL`, `VITE_SERVER_URL`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, and OAuth as needed. LLM features use **Settings → AI** BYO keys. Agent worker uses Better Auth sessions.
