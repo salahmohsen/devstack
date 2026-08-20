@@ -110,6 +110,8 @@ function toApplicationOutput(row: ApplicationRow, listingClosed = false) {
     outreachProviderMessageId: row.outreachProviderMessageId,
     applyPackageDraft: row.applyPackageDraft,
     applyPackageDraftedAt: row.applyPackageDraftedAt,
+    fitAnalysis: row.fitAnalysis ?? null,
+    fitAnalysisPackageHash: row.fitAnalysisPackageHash ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     listingClosed

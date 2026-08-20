@@ -152,6 +152,8 @@ export const application = pgTable(
     /** Transient AI draft payload; cleared on accept. */
     applyPackageDraft: jsonb("apply_package_draft").$type<unknown>(),
     applyPackageDraftedAt: timestamp("apply_package_drafted_at", { withTimezone: true }),
+    fitAnalysis: jsonb("fit_analysis").$type<unknown>(),
+    fitAnalysisPackageHash: text("fit_analysis_package_hash"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

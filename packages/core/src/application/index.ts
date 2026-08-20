@@ -1,4 +1,5 @@
 export * from "#@/application/agent-take";
+export * from "#@/application/fit-analysis";
 export * from "#@/application/apply-package";
 export * from "#@/application/constants";
 export * from "#@/application/job-skills";

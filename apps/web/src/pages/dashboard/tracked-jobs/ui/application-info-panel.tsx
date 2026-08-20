@@ -27,6 +27,7 @@ import {
   APPLICATION_SOURCE_LABELS,
   APPLICATION_SOURCE_TAG_LABELS,
   assessAgentTakeReadiness,
+  sanitizeFitAnalysis,
   EMPLOYMENT_TYPE_LABELS,
   HIRING_URGENCY_LABELS,
   WORK_MODE_LABELS,
@@ -57,6 +58,7 @@ import {
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
+import { requestHubInterviewRehearsal } from "@/features/agent-hub";
 import {
   ApplicationActivitySection,
   ApplicationApplyMethodBadge,
@@ -508,6 +510,29 @@ export function ApplicationInfoPanel({
             </ItemInfoSection>
           ) : null}
 
+          {!isDiscovery && item.fitAnalysis
+            ? (() => {
+                const report = sanitizeFitAnalysis(item.fitAnalysis);
+                if (!report) return null;
+                return (
+                  <ItemInfoSection title="Resume vs this JD" icon={<FileTextIcon />}>
+                    <p className="text-sm">
+                      Overall {report.displayOverall}
+                      {report.capped ? " (years cap on the number you see)" : ""}
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {report.dimensions.map((dim) => (
+                        <li key={dim.key}>
+                          {dim.key}: {dim.score}
+                          {dim.comment ? `: ${dim.comment}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </ItemInfoSection>
+                );
+              })()
+            : null}
+
           <ItemInfoSection title="Agent's take" icon={<SparklesIcon />}>
             {takeReady.ok && item.agentTake?.trim() ? (
               <AgentTakeMarkdown text={item.agentTake} />
@@ -542,6 +567,25 @@ export function ApplicationInfoPanel({
               {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
             </Button>
           </ItemInfoSection>
+
+          {!isDiscovery && item.trackingStatus === "tracked" ? (
+            <ItemInfoSection title="Interview" icon={<SparklesIcon />}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  requestHubInterviewRehearsal({
+                    applicationId: item.id,
+                    title: item.title,
+                    companyName: item.companyName
+                  });
+                }}
+              >
+                Practice interview
+              </Button>
+            </ItemInfoSection>
+          ) : null}
 
           {!isDiscovery ? (
             <ItemInfoSection title="Mail" icon={<MailIcon />}>

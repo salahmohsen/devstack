@@ -138,6 +138,8 @@ export const ApplicationOutputSchema = z.object({
   /** Structured draft JSON; validated at generate/accept, not on every list read. */
   applyPackageDraft: z.unknown().nullable(),
   applyPackageDraftedAt: z.coerce.date().nullable(),
+  fitAnalysis: z.unknown().nullable(),
+  fitAnalysisPackageHash: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   /** Computed from job_posting.closedAt join — not a DB column on application. */
