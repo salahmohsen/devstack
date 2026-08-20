@@ -23,6 +23,7 @@ export async function loadJobPreference(userId: string): Promise<JobPreference> 
     titleId: (row.titleId as JobTitleId | null) ?? null,
     customTitle: row.customTitle ?? null,
     jobsPerRun: row.jobsPerRun ?? 25,
+    dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
     importFromEmail: row.importFromEmail ?? false
   };
 }

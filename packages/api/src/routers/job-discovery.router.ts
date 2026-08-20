@@ -89,7 +89,7 @@ export const jobDiscoveryRouter = {
         ? await userJobAiBudgetRepository.remainingAttempts(
             userId,
             utcDay(),
-            dailyAiAttemptCap(prefs.jobsPerRun)
+            dailyAiAttemptCap(prefs.dailyBoardScoreCap)
           )
         : 0;
       const budget = computeLandBudget({

@@ -1,20 +1,26 @@
 "use client";
 
 import { useStore } from "@tanstack/react-form";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, RotateCcw } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import {
   applyTitlePack,
+  DAILY_BOARD_SCORE_CAP_STEP,
   JOBS_PER_RUN_STEP,
+  MAX_DAILY_BOARD_SCORE_CAP,
   MAX_JOBS_PER_RUN,
+  MIN_DAILY_BOARD_SCORE_CAP,
   MIN_JOBS_PER_RUN,
   type JobTitleId
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
+import { Button } from "@tsu-stack/ui/components/button";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 
 import { withForm } from "@/shared/form";
+import { ProgressBar } from "@/shared/ui/interior/progress-bar";
+import { NumberTicker } from "@/shared/ui/motion/number-ticker";
 
 import {
   emptyJobPreferenceForm,
@@ -30,10 +36,20 @@ import {
 export const JobPreferenceFields = withForm({
   defaultValues: emptyJobPreferenceForm,
   props: {
-    emptyHint: "Used to find and rank jobs from public boards. Email import is optional."
+    emptyHint: "Used to find and rank jobs from public boards. Email import is optional.",
+    boardScoresUsedToday: undefined as number | undefined,
+    onResetBoardScoresToday: undefined as (() => void) | undefined,
+    resetBoardScoresPending: false
   },
-  render: function JobPreferenceFieldsRender({ form, emptyHint }) {
+  render: function JobPreferenceFieldsRender({
+    form,
+    emptyHint,
+    boardScoresUsedToday,
+    onResetBoardScoresToday,
+    resetBoardScoresPending
+  }) {
     const titleId = useStore(form.store, (state) => state.values.titleId);
+    const dailyBoardScoreCap = useStore(form.store, (state) => state.values.dailyBoardScoreCap);
     const previousTitleIdRef = useRef<JobTitleId | "">(titleId);
 
     useEffect(() => {
@@ -213,6 +229,32 @@ export const JobPreferenceFields = withForm({
             </form.AppField>
           </div>
 
+          <form.AppField name="dailyBoardScoreCap">
+            {(field) => (
+              <div className="w-full max-w-lg min-w-0 rounded-2xl border border-border/80 p-4">
+                <field.SliderField
+                  label="Public listings to score today"
+                  description="Find jobs now uses your AI key to score public listings before they appear in New jobs. This is the most it may score in one day, so one search cannot spend your key on too many listings. Jobs per search is how many can land in a single run. Job-alert emails are not counted."
+                  min={MIN_DAILY_BOARD_SCORE_CAP}
+                  max={MAX_DAILY_BOARD_SCORE_CAP}
+                  step={DAILY_BOARD_SCORE_CAP_STEP}
+                  formatValue={(value) => `${value} listings`}
+                  classNames={{ field: "max-w-none" }}
+                  footer={
+                    boardScoresUsedToday != null ? (
+                      <BoardScoreUsage
+                        used={boardScoresUsedToday}
+                        cap={dailyBoardScoreCap}
+                        pending={resetBoardScoresPending}
+                        onReset={onResetBoardScoresToday}
+                      />
+                    ) : null
+                  }
+                />
+              </div>
+            )}
+          </form.AppField>
+
           <form.AppField name="jobsPerRun">
             {(field) => (
               <field.SliderField
@@ -253,3 +295,59 @@ export const JobPreferenceFields = withForm({
     );
   }
 });
+
+function BoardScoreUsage({
+  used,
+  cap,
+  pending,
+  onReset
+}: {
+  used: number;
+  cap: number;
+  pending: boolean;
+  onReset?: () => void;
+}) {
+  const meterMax = Math.max(cap, 1);
+  const percent = Math.round((Math.min(used, meterMax) / meterMax) * 100);
+  const exhausted = used >= cap && cap > 0;
+  const countLabel = exhausted
+    ? `${used} of ${cap} listings today · none left`
+    : `${used} of ${cap} listings today`;
+
+  return (
+    <div className="flex w-full flex-col gap-1.5">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+        <NumberTicker
+          value={percent}
+          suffix="%"
+          startOnView={false}
+          className="text-2xl font-semibold tracking-tight"
+        />
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
+          <p className="min-w-0 text-xs text-muted-foreground tabular-nums">{countLabel}</p>
+          {onReset ? (
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              className="shrink-0 active:scale-[0.96] motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out"
+              disabled={used === 0 || pending}
+              loading={pending}
+              aria-label="Clear today's scoring count"
+              onClick={onReset}
+            >
+              <RotateCcw aria-hidden="true" />
+              Clear today
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      <ProgressBar
+        value={percent}
+        max={100}
+        hideHeader
+        label={`${percent}% of today's listing cap, ${used} of ${cap} listings scored`}
+      />
+    </div>
+  );
+}

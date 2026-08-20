@@ -52,6 +52,25 @@ describe("decideEvaluateOutcome", () => {
     ).toEqual({ trackingStatus: "inbox", agentTake: null });
   });
 
+  it("inserts a heuristic keeper with take when the one try succeeds", () => {
+    expect(
+      decideEvaluateOutcome({
+        scoreError: false,
+        keep: "heuristic",
+        takeText: "Fit is unclear but the stack matches."
+      }).insert
+    ).toEqual({
+      trackingStatus: "inbox",
+      agentTake: "Fit is unclear but the stack matches."
+    });
+  });
+
+  it("still inserts a heuristic keeper when take fails", () => {
+    expect(
+      decideEvaluateOutcome({ scoreError: false, keep: "heuristic", takeText: null }).insert
+    ).toEqual({ trackingStatus: "inbox", agentTake: null });
+  });
+
   it("does not insert a dismissed row on score_error", () => {
     expect(decideEvaluateOutcome({ scoreError: true, keep: null, takeText: null })).toEqual({
       outcome: "skipped",

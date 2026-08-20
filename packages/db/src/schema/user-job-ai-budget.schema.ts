@@ -3,8 +3,8 @@ import { integer, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
 import { user } from "./auth.schema.ts";
 
 /**
- * Per-user UTC-day AI attempt counter for discovery / harvest.
- * Cap is computed in core (`2 * jobsPerRun`), not stored here.
+ * Per-user UTC-day AI attempt counter for catalog Find jobs now / cron / backfill.
+ * Cap is `job_preference.daily_board_score_cap`. Mail harvest does not increment this.
  */
 export const userJobAiBudget = pgTable(
   "user_job_ai_budget",

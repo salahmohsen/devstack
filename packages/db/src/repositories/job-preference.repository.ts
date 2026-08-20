@@ -24,6 +24,7 @@ export type UpsertJobPreferenceData = {
   titleId: string | null;
   customTitle: string | null;
   jobsPerRun: number;
+  dailyBoardScoreCap: number;
   importFromEmail: boolean;
 };
 
@@ -57,6 +58,7 @@ export const jobPreferenceRepository = {
           titleId: input.titleId,
           customTitle: input.customTitle,
           jobsPerRun: input.jobsPerRun,
+          dailyBoardScoreCap: input.dailyBoardScoreCap,
           importFromEmail: input.importFromEmail,
           updatedAt: new Date()
         })
@@ -83,6 +85,7 @@ export const jobPreferenceRepository = {
         titleId: input.titleId,
         customTitle: input.customTitle,
         jobsPerRun: input.jobsPerRun,
+        dailyBoardScoreCap: input.dailyBoardScoreCap,
         importFromEmail: input.importFromEmail
       })
       .returning();

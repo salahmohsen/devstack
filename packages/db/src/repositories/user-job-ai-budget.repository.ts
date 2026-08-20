@@ -6,6 +6,15 @@ import { userJobAiBudget } from "../schema/user-job-ai-budget.schema.ts";
 export type UserJobAiBudgetEntity = InferSelectModel<typeof userJobAiBudget>;
 
 export const userJobAiBudgetRepository = {
+  async attemptsForDay(userId: string, dayUtc: string): Promise<number> {
+    const [row] = await getDb()
+      .select({ attempts: userJobAiBudget.attempts })
+      .from(userJobAiBudget)
+      .where(and(eq(userJobAiBudget.userId, userId), eq(userJobAiBudget.dayUtc, dayUtc)))
+      .limit(1);
+    return row?.attempts ?? 0;
+  },
+
   async remainingAttempts(userId: string, dayUtc: string, cap: number): Promise<number> {
     if (cap <= 0) return 0;
     const [row] = await getDb()
@@ -39,6 +48,14 @@ export const userJobAiBudgetRepository = {
       .returning({ id: userJobAiBudget.id });
 
     return Boolean(row);
+  },
+
+  /** Clear today's attempt count so board search can score again. */
+  async resetForDay(userId: string, dayUtc: string): Promise<void> {
+    await getDb()
+      .update(userJobAiBudget)
+      .set({ attempts: 0 })
+      .where(and(eq(userJobAiBudget.userId, userId), eq(userJobAiBudget.dayUtc, dayUtc)));
   },
 
   /** Refund one reserved attempt (heuristic / no model call). Never goes below 0. */

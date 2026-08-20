@@ -40,6 +40,7 @@ function rowToPreference(row: JobPreferenceEntity): JobPreference {
     titleId: row.titleId as JobPreference["titleId"],
     customTitle: row.customTitle ?? null,
     jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
     importFromEmail: row.importFromEmail ?? false
   };
 }
@@ -104,6 +105,7 @@ export const upsertSoftJobPreferencesTool = createTool({
         titleId: next.titleId,
         customTitle: next.customTitle,
         jobsPerRun: next.jobsPerRun,
+        dailyBoardScoreCap: next.dailyBoardScoreCap,
         importFromEmail: next.importFromEmail
       });
       await jobPreferenceRepository.clearSearchBrief(userId);

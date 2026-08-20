@@ -1,0 +1,1 @@
+ALTER TABLE "job_preference" ADD COLUMN "daily_board_score_cap" integer DEFAULT 50 NOT NULL;

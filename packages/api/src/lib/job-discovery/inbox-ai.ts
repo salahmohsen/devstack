@@ -126,7 +126,7 @@ export function decideEvaluateOutcome(input: {
   if (input.keep === "heuristic") {
     return {
       outcome: "heuristic",
-      insert: { trackingStatus: "inbox", agentTake: null },
+      insert: { trackingStatus: "inbox", agentTake: input.takeText },
       backfill: false
     };
   }
@@ -144,6 +144,18 @@ export function shouldRefundHeuristicIncrement(leftoverExtractRan: boolean): boo
 
 function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
+}
+
+/** One take attempt for an inbox keeper. Failure does not block land. */
+async function takeOnceForKeeper(
+  input: Parameters<typeof generateAgentTakeText>[0]
+): Promise<string | null> {
+  try {
+    const take = await generateAgentTakeText(input);
+    return take.ok ? take.text : null;
+  } catch {
+    return null;
+  }
 }
 
 function asWorkMode(value: string | null | undefined): WorkMode | null {
@@ -431,7 +443,7 @@ async function runInboxAiForApplication(input: {
   const reserved = await userJobAiBudgetRepository.tryIncrement(
     input.userId,
     utcDay(),
-    dailyAiAttemptCap(prefs.jobsPerRun)
+    dailyAiAttemptCap(prefs.dailyBoardScoreCap)
   );
   if (!reserved) {
     return { outcome: "skipped" };
@@ -485,9 +497,8 @@ async function runInboxAiForApplication(input: {
   }
 
   if (decision === "heuristic") {
-    // Soft AI failure did not judge the JD — do not burn the 2×N cap.
+    // Soft AI failure did not judge the JD — do not burn the daily score cap.
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
-    return { outcome: "heuristic" };
   }
 
   const cap = await displayScoreForUser({
@@ -507,10 +518,10 @@ async function runInboxAiForApplication(input: {
       userId: input.userId
     });
   } catch {
-    // Soft-fail: leave agentTake null. Do not retrigger land.
+    // One try. Land/keep the row even if take is empty.
   }
 
-  return { outcome: "passed" };
+  return { outcome: decision === "heuristic" ? "heuristic" : "passed" };
 }
 
 /** Discovery evaluate-then-insert: leftover extract → score → insert inbox or dismissed. */
@@ -602,7 +613,7 @@ async function runInboxAiForPosting(input: {
     const reserved = await userJobAiBudgetRepository.tryIncrement(
       input.userId,
       utcDay(),
-      dailyAiAttemptCap(prefs.jobsPerRun)
+      dailyAiAttemptCap(prefs.dailyBoardScoreCap)
     );
     if (!reserved) return { outcome: "skipped" };
 
@@ -716,29 +727,24 @@ async function runInboxAiForPosting(input: {
   if (keep === "heuristic" && shouldRefundHeuristicIncrement(leftoverExtractRan)) {
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
   }
-  if (keep === "passed") {
-    try {
-      const take = await generateAgentTakeText({
-        userId: input.userId,
-        llm,
-        job: {
-          title: posting.title,
-          companyName: posting.companyName,
-          location: leftover.location,
-          employmentType,
-          salaryRange,
-          matchScore: cap.displayScore,
-          description,
-          experienceYearsMin: posting.experienceYearsMin,
-          seekerYears: cap.seekerYears,
-          yearsCapped: cap.capped
-        },
-        matchReasons: match.reasons
-      });
-      takeText = take.ok ? take.text : null;
-    } catch {
-      takeText = null;
-    }
+  if (keep === "passed" || keep === "heuristic") {
+    takeText = await takeOnceForKeeper({
+      userId: input.userId,
+      llm,
+      job: {
+        title: posting.title,
+        companyName: posting.companyName,
+        location: leftover.location,
+        employmentType,
+        salaryRange,
+        matchScore: cap.displayScore,
+        description,
+        experienceYearsMin: posting.experienceYearsMin,
+        seekerYears: cap.seekerYears,
+        yearsCapped: cap.capped
+      },
+      matchReasons: match.reasons
+    });
   }
 
   const plan = decideEvaluateOutcome({ scoreError: false, keep, takeText });
