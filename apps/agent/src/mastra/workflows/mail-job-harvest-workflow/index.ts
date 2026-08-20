@@ -14,6 +14,7 @@ import {
   HarvestedJobSchema,
   HarvestJobPreferenceSchema,
   inferApplicationSource,
+  isGoneHttpListingStatus,
   isValidHarvestedJob,
   MailJobHarvestAfterScoreSchema,
   MailJobHarvestWorkflowInputSchema,
@@ -230,8 +231,8 @@ const enrichJobsFromPages = createStep({
         if (page.ok) pagesOk += 1;
         else pagesFailed += 1;
 
-        // Drop closed / expired public postings (LinkedIn "No longer accepting applications").
-        if (page.extract?.listingClosed) {
+        // Drop closed / expired / deleted public postings (LinkedIn 404 still returns 200).
+        if (isGoneHttpListingStatus(page.status) || page.extract?.listingClosed) {
           pagesClosed += 1;
           continue;
         }

@@ -9,6 +9,8 @@ import {
   canonicalizeJobUrl,
   dailyAiAttemptCap,
   INBOX_TTL_MS,
+  isClosedJobListingText,
+  isMissingJobListingTitle,
   isValidHarvestedJob,
   MAX_OPEN_INBOX,
   resolveApplicationSourceFields,
@@ -219,6 +221,11 @@ export async function runMailJobHarvest(input: {
 
       if (!job.matchPassed) {
         skippedLowMatch += 1;
+        continue;
+      }
+
+      if (isMissingJobListingTitle(job.title) || isClosedJobListingText(job.description ?? "")) {
+        skippedFailed += 1;
         continue;
       }
 
