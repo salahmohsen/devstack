@@ -17,6 +17,15 @@
 
 ---
 
+## 2026-08-20 — Job-info mail links must deep-link the message, not the mail index
+
+- **Trigger:** Jobs hardening harness; click a linked mail on tracked-job inspect
+- **Finding:** A native `/dashboard/mail?message=` href hits the mail **index** redirect to `/dashboard/mail/applications` and drops search unless both routes `validateSearch` and the redirect **forwards** `message`
+- **Finding:** Same class as tracked-jobs `?applicationId=`. The destination page must treat the search id as selected even when that row is not on the current list page (list cap 50, or category filter uses a sibling label like `application_status` vs `application`). `get` the message; prepend it to the list; do not fall back to `list[0]`
+- **Finding:** Job-info links must be TanStack `Link` to `/dashboard/mail/$category` with `mailHubCategorySlugForLabels` + `search.message`. Island category nav should pass `search={{}}` so a stale message id does not follow the user
+- **Finding:** Existing `job_posting` pantry rows from before company hydrate have `experience_years_min` / `company_logo_url` null and `job_company` empty until a **new ingest**. UI still shows blobatar + `logo.freehire.me` pictogram. Regenerated takes are markdown bullets; old takes stay 1–3 sentence prose
+- **Evidence class:** Playwright Trivelta inspect → mail reader heading `Thank you for applying to Trivelta` at `/dashboard/mail/applications?message=…`; oRPC assign/unassign 200/404; findNow ingest wrote `job_company` rows; unauth `:4111/chat` 401
+
 ## 2026-08-19 — AI island production polish: live region vs controls
 
 - **Trigger:** Production polish pass on Dynamic Island (better-interface / a11y / impeccable polish)
