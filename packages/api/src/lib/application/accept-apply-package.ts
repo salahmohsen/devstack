@@ -18,17 +18,36 @@ import {
   userRepository,
   type ApplicationEntity
 } from "@tsu-stack/db";
+import {
+  PdfEngineUnavailableError,
+  PdfRenderFailedError,
+  renderCoverLetterPdfBytes,
+  renderResumePdfBytes,
+  type ResumePdfPortfolio
+} from "@tsu-stack/pdf";
 
-import { buildCoverLetterPdfBytes } from "#@/lib/application/cover-letter-pdf";
-import { renderResumePdfBytes, type ResumeBuilderData } from "#@/routers/resume-pdf";
-
-export type AcceptApplyPackageErrorCode = "NOT_FOUND" | "NO_DRAFT" | "INVALID_DRAFT";
+export type AcceptApplyPackageErrorCode =
+  | "NOT_FOUND"
+  | "NO_DRAFT"
+  | "INVALID_DRAFT"
+  | "PDF_ENGINE_UNAVAILABLE"
+  | "PDF_RENDER_FAILED";
 
 export type AcceptApplyPackageResult =
   | { ok: true; application: ApplicationEntity }
   | { ok: false; code: AcceptApplyPackageErrorCode; message?: string };
 
 const emailSchema = z.string().email();
+
+function pdfFailure(error: unknown): Extract<AcceptApplyPackageResult, { ok: false }> {
+  if (error instanceof PdfEngineUnavailableError) {
+    return { ok: false, code: "PDF_ENGINE_UNAVAILABLE", message: error.message };
+  }
+  if (error instanceof PdfRenderFailedError) {
+    return { ok: false, code: "PDF_RENDER_FAILED", message: error.message };
+  }
+  return { ok: false, code: "PDF_RENDER_FAILED", message: "PDF render failed" };
+}
 
 function resolveDraft(
   input: AcceptApplyPackageInput,
@@ -136,7 +155,7 @@ export async function acceptApplyPackage(input: {
   const stackNameById = new Map(stackRows.map((row) => [row.id, row.name]));
   const stackTypeById = new Map(stackRows.map((row) => [row.id, row.type ?? null]));
 
-  const resumeExperiences: ResumeBuilderData["portfolio"]["experiences"] = [];
+  const resumeExperiences: ResumePdfPortfolio["experiences"] = [];
   for (const draftExp of includedExperiences) {
     const live = expById.get(draftExp.experienceId);
     if (!live) continue;
@@ -154,7 +173,7 @@ export async function acceptApplyPackage(input: {
     });
   }
 
-  const resumeProjects: ResumeBuilderData["portfolio"]["projects"] = [];
+  const resumeProjects: ResumePdfPortfolio["projects"] = [];
   for (const draftProj of includedProjects) {
     const live = projectById.get(draftProj.projectId);
     if (!live) continue;
@@ -190,7 +209,7 @@ export async function acceptApplyPackage(input: {
     });
   }
 
-  const resumeStacks: ResumeBuilderData["portfolio"]["stacks"] = includedStacks.map((s) => {
+  const resumeStacks: ResumePdfPortfolio["stacks"] = includedStacks.map((s) => {
     const row = stackRows.find((r) => r.id === s.stackId);
     return {
       name: stackNameById.get(s.stackId) ?? s.name,
@@ -200,7 +219,7 @@ export async function acceptApplyPackage(input: {
     };
   });
 
-  const portfolio: ResumeBuilderData["portfolio"] = {
+  const portfolio: ResumePdfPortfolio = {
     experiences: resumeExperiences,
     projects: resumeProjects.filter((p) => !p.isArchived),
     stacks: resumeStacks,
@@ -221,24 +240,6 @@ export async function acceptApplyPackage(input: {
   });
   const resumeR2Key = `${input.userId}/resumes/${crypto.randomUUID()}.pdf`;
 
-  const resumeBytes = await renderResumePdfBytes({
-    portfolio,
-    profile,
-    professionalSummary: draft.professionalSummary
-  });
-
-  await input.mediaBucket.put(resumeR2Key, resumeBytes.slice().buffer as ArrayBuffer, {
-    httpMetadata: { contentType: "application/pdf" }
-  });
-
-  const createdResume = await resumeRepository.create({
-    userId: input.userId,
-    prompt: `apply-package:${app.id}`,
-    author: "agent",
-    filename: resumeFilename,
-    r2Key: resumeR2Key
-  });
-
   // Write the new cover object first so DB never points at a deleted key.
   // Only delete the previous cover after the application row commits.
   const previousCoverKey = app.coverLetterR2Key;
@@ -250,11 +251,37 @@ export async function acceptApplyPackage(input: {
   });
   const coverR2Key = `${input.userId}/cover-letters/${app.id}-${coverUuid}.pdf`;
 
-  const coverBytes = await buildCoverLetterPdfBytes({
-    candidateName: profile.name,
-    body: draft.coverLetterBody,
-    companyName: app.companyName,
-    roleTitle: app.title
+  let resumeBytes: Uint8Array;
+  let coverBytes: Uint8Array;
+  try {
+    resumeBytes = await renderResumePdfBytes({
+      portfolio,
+      profile,
+      summary: userRow.summary ?? "",
+      professionalSummary: draft.professionalSummary
+    });
+    coverBytes = await renderCoverLetterPdfBytes({
+      candidateName: profile.name,
+      body: draft.coverLetterBody,
+      companyName: app.companyName,
+      roleTitle: app.title,
+      contacts: portfolio.contacts,
+      email: profile.email
+    });
+  } catch (error) {
+    return pdfFailure(error);
+  }
+
+  await input.mediaBucket.put(resumeR2Key, resumeBytes.slice().buffer as ArrayBuffer, {
+    httpMetadata: { contentType: "application/pdf" }
+  });
+
+  const createdResume = await resumeRepository.create({
+    userId: input.userId,
+    prompt: `apply-package:${app.id}`,
+    author: "agent",
+    filename: resumeFilename,
+    r2Key: resumeR2Key
   });
 
   await input.mediaBucket.put(coverR2Key, coverBytes.slice().buffer as ArrayBuffer, {

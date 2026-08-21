@@ -1135,6 +1135,12 @@ export const applicationsRouter = {
       },
       INVALID_DRAFT: {
         message: "Apply package draft is invalid — regenerate the package"
+      },
+      PDF_ENGINE_UNAVAILABLE: {
+        message: "PDF engine is unavailable (rendercv or typst missing on PATH)"
+      },
+      PDF_RENDER_FAILED: {
+        message: "PDF render failed"
       }
     })
     .handler(async ({ input, context, errors }) => {
@@ -1148,6 +1154,12 @@ export const applicationsRouter = {
       if (!result.ok) {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
         if (result.code === "NO_DRAFT") throw errors.NO_DRAFT({ message: result.message });
+        if (result.code === "PDF_ENGINE_UNAVAILABLE") {
+          throw errors.PDF_ENGINE_UNAVAILABLE({ message: result.message });
+        }
+        if (result.code === "PDF_RENDER_FAILED") {
+          throw errors.PDF_RENDER_FAILED({ message: result.message });
+        }
         throw errors.INVALID_DRAFT({ message: result.message });
       }
       return toApplicationOutputWithListing(result.application);

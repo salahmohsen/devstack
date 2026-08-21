@@ -1051,6 +1051,9 @@ importers:
       '@tsu-stack/logger':
         specifier: workspace:*
         version: link:../logger
+      '@tsu-stack/pdf':
+        specifier: workspace:*
+        version: link:../pdf
       bullmq:
         specifier: 'catalog:'
         version: 5.81.2
@@ -1066,9 +1069,6 @@ importers:
       jose:
         specifier: 'catalog:'
         version: 6.2.4
-      pdfnative:
-        specifier: 'catalog:'
-        version: 1.6.0
       unpdf:
         specifier: 'catalog:'
         version: 1.8.0
