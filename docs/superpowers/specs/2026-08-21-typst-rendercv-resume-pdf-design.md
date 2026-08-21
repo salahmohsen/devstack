@@ -31,7 +31,7 @@ Not in scope: template gallery, per-user/per-resume theme field, education entit
 | 2   | Resume look     | RenderCV **engineeringresumes** only, every generate path.                                                                                          |
 | 3   | Engine          | `rendercv` subprocess → Typst source → `typst compile --pdf-standard ua-1`.                                                                         |
 | 4   | Cover letter    | Same PR. Our Typst, engineeringresumes-family header/fonts, same UA-1 compile. Not a RenderCV letter theme (none exists).                           |
-| 5   | Headline        | Current (`isPresent`) experience `title`, else latest by `fromDate`. Omit if no experiences.                                                        |
+| 5   | Headline        | Among `isPresent` experiences, latest `fromDate`; else latest `fromDate` overall. Omit if none.                                                     |
 | 6   | Photo           | Never. `user.image` stays dashboard-only.                                                                                                           |
 | 7   | Page size       | **A4** (`design.page.size: a4`). Override RenderCV’s US Letter default. MENA + Europe (ISO 216). Cover letter A4 too.                               |
 | 8   | pdfnative       | **Delete** from catalog, api, agent, web, Docker comments.                                                                                          |
@@ -43,6 +43,11 @@ Not in scope: template gallery, per-user/per-resume theme field, education entit
 | 14  | Tests           | **Replace** existing pdfnative unit files with mapper/cover-letter tests. No live engine job in CI unless binaries happen to exist (optional skip). |
 | 15  | Empty portfolio | Still render name + contacts (+ summary if any).                                                                                                    |
 | 16  | Locale          | English only.                                                                                                                                       |
+| 17  | Cover contacts  | Letter input **gains** `contacts` + profile email. Package does not load portfolio. Accept must pass them.                                          |
+| 18  | Summary text    | Always `stripHtml`. Dashboard generate **must pass** `user.summary`. Apply `professionalSummary` overrides when non-empty.                          |
+| 19  | Project stacks  | One highlight: `Stack: a · b`. Not also in `summary`.                                                                                               |
+| 20  | Social networks | Map LinkedIn, GitHub, X, YouTube, Instagram, Telegram, Bluesky, Mastodon only. Omit Discord and unknown (do not fail generate).                     |
+| 21  | Invalid phone   | Omit `cv.phone` if RenderCV would reject; do not fail the PDF.                                                                                      |
 
 ---
 
@@ -83,7 +88,7 @@ No new oRPC. No resume schema migration.
 packages/pdf/
   src/
     index.ts                 # renderResumePdfBytes, renderCoverLetterPdfBytes
-    types.ts                 # ResumePdfInput, CoverLetterPdfInput
+    types.ts                 # ResumePdfInput, CoverLetterPdfInput (contacts + email on letter)
     map-rendercv-yaml.ts     # pure mapper
     headline.ts              # current/latest experience title
     spawn-rendercv.ts
@@ -108,20 +113,20 @@ Pure mapping vs spawn stay separate so unit tests never need binaries.
 | RenderCV             | Source                                                                                                                                                                      |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cv.name`            | `user.name`                                                                                                                                                                 |
-| `cv.headline`        | Present experience `title`, else latest `fromDate`. Omit if none.                                                                                                           |
+| `cv.headline`        | Among `isPresent` experiences, latest `fromDate`; else latest overall. Omit if none.                                                                                        |
 | `cv.email`           | Profile email; extra emails from contacts                                                                                                                                   |
-| `cv.phone`           | Phone contact (E.164 as stored)                                                                                                                                             |
+| `cv.phone`           | Phone contact if valid for RenderCV; **omit** if invalid                                                                                                                    |
 | `cv.location`        | Location contact                                                                                                                                                            |
 | `cv.website`         | Website contact                                                                                                                                                             |
-| `cv.social_networks` | LinkedIn, GitHub, X (and other mapped networks)                                                                                                                             |
+| `cv.social_networks` | LinkedIn, GitHub, X, YouTube, Instagram, Telegram, Bluesky, Mastodon only. Skip Discord and unknown.                                                                        |
 | `cv.photo`           | Always absent                                                                                                                                                               |
 | `design.theme`       | `engineeringresumes`                                                                                                                                                        |
 | `design.page.size`   | `a4`                                                                                                                                                                        |
 | `locale.language`    | `english`                                                                                                                                                                   |
-| Summary section      | `user.summary` if non-empty; apply-package **professionalSummary** overrides when provided                                                                                  |
-| Experience           | Portfolio-included experiences → `company` ← organization, `position` ← title, dates, `highlights` from bullets / HTML extract. Apply-package `bullets` win when non-empty. |
-| Projects             | Included, non-archived → title, highlights from summary/description/override bullets; stack names in entry summary or extra highlights                                      |
-| Skills               | Portfolio stacks grouped by type (existing `groupStacksByType` / `formatStackTypeLabel`)                                                                                    |
+| Summary section      | Plain text: `stripHtml(professionalSummary ?? user.summary)`. Omit if empty. `resume.generate` must pass `user.summary`.                                                    |
+| Experience           | Portfolio-included → `company` ← organization, `position` ← title, dates, `highlights` from bullets / `stripHtml(description)`. Apply-package `bullets` win when non-empty. |
+| Projects             | Included, non-archived → title, highlights from override bullets or `stripHtml` description/summary. Append one highlight `Stack: a · b` when stack names exist.            |
+| Skills               | Portfolio stacks grouped by type. Move `groupStacksByType` from `resume-pdf.ts` into `@tsu-stack/pdf`.                                                                      |
 | Education            | Omitted                                                                                                                                                                     |
 
 Skip any section with zero entries. Contact **display order** follows `sortOrder` as today.
@@ -130,13 +135,13 @@ Typst UA-1 needs a document title and language: set from `cv.name` and `english`
 
 ### Cover letter
 
-Input unchanged: `candidateName`, `body`, optional `companyName`, `roleTitle`, `date`.
+Input: `candidateName`, `body`, optional `companyName`, `roleTitle`, `date`, plus **`contacts` and profile `email`** (same shapes as resume). The package does not fetch portfolio.
 
-- Header: name + one contact line (same contact mapping as resume).
+- Header: name + one contact line (shared contact formatter).
 - Meta: date, company, `Re: {role}` when present.
 - Body: blank-line paragraphs (same split as current `cover-letter-pdf.ts`).
 - No “Cover Letter” H1 banner.
-- A4, engineeringresumes-adjacent type (Source Sans / theme fonts available via `rendercv-fonts` or the same font files Typst uses for the resume).
+- A4. `spawn-typst` must set `TYPST_FONT_PATHS` (or equivalent) so letter fonts match the resume (`rendercv-fonts`). Pin **Typst ≥ 0.14** and **`rendercv[full]`** in Dockerfiles. Debian bookworm-slim is Python 3.11 — images must use 3.12+.
 
 ---
 
@@ -156,12 +161,12 @@ If `rendercv render` cannot stop at Typst source, use the smallest documented fl
 
 Fail closed. No pdfnative fallback.
 
-| Failure                                   | Error                                                               |
-| ----------------------------------------- | ------------------------------------------------------------------- |
-| `rendercv` or `typst` missing on PATH     | `PDF_ENGINE_UNAVAILABLE` (typed oRPC on `resume.generate` / accept) |
-| CLI non-zero, UA-1 reject, timeout (~30s) | `PDF_RENDER_FAILED` — short stderr, no YAML dump to client          |
-| Empty cover body                          | Reject before spawn (Accept already requires body)                  |
-| Thin CV                                   | Success (name + contacts)                                           |
+| Failure                                   | Error                                                                                                                                                    |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rendercv` or `typst` missing on PATH     | `PDF_ENGINE_UNAVAILABLE` on `resume.generate` **and** Accept. Extend `AcceptApplyPackageErrorCode` (API + agent); web Accept `switch` handles new codes. |
+| CLI non-zero, UA-1 reject, timeout (~30s) | `PDF_RENDER_FAILED` — short stderr, no YAML dump to client                                                                                               |
+| Empty cover body                          | Reject before spawn (Accept already requires body)                                                                                                       |
+| Thin CV                                   | Success (name + contacts)                                                                                                                                |
 
 Temp dir per render; `rm -rf` in `finally`. Kill spawn process group on timeout.
 
@@ -192,7 +197,8 @@ Replace, do not pile on:
 
 - `packages/api/src/routers/__tests__/resume-pdf.test.ts` → move assertions into `@tsu-stack/pdf` mapper tests; delete pdfnative `validatePdfUA` / `extractText` usage.
 - Agent duplicate tests if present: same.
-- Cover letter paragraph split + header fields.
+- Cover letter paragraph split + header/contact line.
+- Delete `resume-pdf-weight-preview.test.ts` (pdfnative font preview) if it still exists.
 
 Do **not** add veraPDF, Playwright screenshot, or a required live-engine CI job. If a developer has binaries, an optional skipped test may compile a fixture with `ua-1`.
 
@@ -206,6 +212,7 @@ Existing tests that must keep compiling after the swap are in scope even though 
 - `CONTEXT.md` — **PDF renderer** = `@tsu-stack/pdf` + RenderCV/Typst, not pdfnative.
 - `README.md` stack table.
 - Apply-package spec footnote if it names `buildResumeDocument` / pdfnative.
+- `.agents/resume-pdf-generation.md` if it still documents `@react-pdf/renderer` / pdfnative.
 
 ---
 
