@@ -18,20 +18,21 @@
 
 ## File map
 
-| Path | Role |
-| --- | --- |
-| `packages/pdf/**` | New package: types, mapper, spawn, cover-letter.template.ts, tests |
-| `packages/api` | Import `@tsu-stack/pdf`; pass `user.summary`; typed PDF errors; delete pdfnative helpers |
-| `apps/agent` | Same import; Accept error codes; delete duplicated `mastra/lib/pdf/*` |
-| `apps/server` + `apps/agent` + `apps/web` Dockerfiles | COPY `packages/pdf/package.json`; server+agent also Python 3.12, rendercv[full]==2.8, Typst ≥ 0.14 |
-| `pnpm-workspace.yaml` | Drop pdfnative catalog entries |
-| ADRs / CONTEXT / README / `.agents/resume-pdf-generation.md` | Engine swap |
+| Path                                                         | Role                                                                                               |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `packages/pdf/**`                                            | New package: types, mapper, spawn, cover-letter.template.ts, tests                                 |
+| `packages/api`                                               | Import `@tsu-stack/pdf`; pass `user.summary`; typed PDF errors; delete pdfnative helpers           |
+| `apps/agent`                                                 | Same import; Accept error codes; delete duplicated `mastra/lib/pdf/*`                              |
+| `apps/server` + `apps/agent` + `apps/web` Dockerfiles        | COPY `packages/pdf/package.json`; server+agent also Python 3.12, rendercv[full]==2.8, Typst ≥ 0.14 |
+| `pnpm-workspace.yaml`                                        | Drop pdfnative catalog entries                                                                     |
+| ADRs / CONTEXT / README / `.agents/resume-pdf-generation.md` | Engine swap                                                                                        |
 
 ---
 
 ### Task 1: Scaffold `@tsu-stack/pdf`
 
 **Files:**
+
 - Create: `packages/pdf/package.json`
 - Create: `packages/pdf/tsconfig.json`
 - Create: `packages/pdf/vite.config.ts`
@@ -53,6 +54,7 @@
 ### Task 2: Mapper tests then YAML mapper (TDD)
 
 **Files:**
+
 - Create: `packages/pdf/src/headline.ts`
 - Create: `packages/pdf/src/contacts.ts`
 - Create: `packages/pdf/src/map-rendercv-yaml.ts`
@@ -63,17 +65,17 @@
 
 **Social username table:**
 
-| type | network | username |
-| --- | --- | --- |
-| github | GitHub | path after github.com or handle without `@` |
-| linkedin | LinkedIn | path after linkedin.com/in/ without `@` |
-| x | X (Twitter) or GitHub’s expected `X` literal — match RenderCV schema enum exactly | handle without `@` |
-| youtube | YouTube | **no** leading `@` |
-| instagram | Instagram | handle without `@` |
-| telegram | Telegram | handle without `@` |
-| bluesky | Bluesky | handle without `@` |
-| mastodon | Mastodon | `@user@domain` only; omit otherwise |
-| discord / unknown | omit | |
+| type              | network                                                                           | username                                    |
+| ----------------- | --------------------------------------------------------------------------------- | ------------------------------------------- |
+| github            | GitHub                                                                            | path after github.com or handle without `@` |
+| linkedin          | LinkedIn                                                                          | path after linkedin.com/in/ without `@`     |
+| x                 | X (Twitter) or GitHub’s expected `X` literal — match RenderCV schema enum exactly | handle without `@`                          |
+| youtube           | YouTube                                                                           | **no** leading `@`                          |
+| instagram         | Instagram                                                                         | handle without `@`                          |
+| telegram          | Telegram                                                                          | handle without `@`                          |
+| bluesky           | Bluesky                                                                           | handle without `@`                          |
+| mastodon          | Mastodon                                                                          | `@user@domain` only; omit otherwise         |
+| discord / unknown | omit                                                                              |                                             |
 
 Invalid phone / website: omit field (website must be HttpUrl via existing https prefixing; omit if still invalid). Extra emails: omit if not `@`.
 
@@ -92,11 +94,13 @@ Invalid phone / website: omit field (website must be HttpUrl via existing https 
 ### Task 3: Spawn RenderCV + Typst (resume bytes)
 
 **Files:**
+
 - Create: `packages/pdf/src/spawn.ts`
 - Create: `packages/pdf/src/errors.ts` (`PdfEngineUnavailableError`, `PdfRenderFailedError`)
 - Modify: `packages/pdf/src/index.ts`
 
 Behavior:
+
 1. `mkdtemp`
 2. Write `cv.yaml`
 3. Spawn `rendercv render cv.yaml --dont-generate-pdf`. Locate the generated `.typ`. Never store RenderCV’s PDF.
@@ -117,6 +121,7 @@ Behavior:
 ### Task 4: Cover letter Typst
 
 **Files:**
+
 - Create: `packages/pdf/src/cover-letter.template.ts`
 - Create: `packages/pdf/src/cover-letter.ts`
 - Create: `packages/pdf/src/__tests__/cover-letter.test.ts`
@@ -132,6 +137,7 @@ Behavior:
 ### Task 5: Wire API (`resume.generate` + Accept)
 
 **Files:**
+
 - Modify: `packages/api/src/routers/resume.router.ts` — pass `user.summary`; `.errors({ PDF_ENGINE_UNAVAILABLE, PDF_RENDER_FAILED })`; catch mapper/spawn errors
 - Modify: `packages/api/src/lib/application/accept-apply-package.ts` — import `@tsu-stack/pdf`; pass contacts+email to cover letter; pass `userRow.summary` on `ResumePdfInput` so empty/whitespace `draft.professionalSummary` can fall back; extend `AcceptApplyPackageErrorCode` with `PDF_ENGINE_UNAVAILABLE` | `PDF_RENDER_FAILED`; wrap spawn errors
 - Modify: `packages/api` applications Accept **handler if-chain** to `errors.PDF_ENGINE_UNAVAILABLE()` / `errors.PDF_RENDER_FAILED()` (today unknown codes become `INVALID_DRAFT`)
@@ -155,6 +161,7 @@ Behavior:
 ### Task 6: Wire agent, delete duplicates
 
 **Files:**
+
 - Modify: `apps/agent/src/mastra/lib/accept-apply-package.ts` — same error codes; pass `user.summary` + contacts into `@tsu-stack/pdf`
 - Delete: `apps/agent/src/mastra/lib/pdf/resume-pdf.ts`, `cover-letter-pdf.ts`, `pdfa-latin-font.ts`, `fonts/**`
 - Modify: `apps/agent/package.json` — `@tsu-stack/pdf`, drop pdfnative
@@ -170,6 +177,7 @@ Behavior:
 ### Task 7: Remove pdfnative from catalog and web
 
 **Files:**
+
 - Modify: `pnpm-workspace.yaml` catalog (drop pdfnative, pdfnative-react)
 - Modify: `apps/web/package.json`, `apps/server/package.json` if listed
 - Modify: `apps/web/Dockerfile` comments
@@ -186,12 +194,14 @@ Behavior:
 ### Task 8: Docker — Python 3.12 + Typst + RenderCV
 
 **Files:**
+
 - Modify: `apps/server/Dockerfile` — **build** stage `COPY packages/pdf/package.json packages/pdf/` **before** `vp install --frozen-lockfile` (same pattern as other packages)
 - Modify: `apps/agent/Dockerfile` — same COPY
 - Modify: `apps/web/Dockerfile` — same COPY (web lockfile includes workspace packages even if it does not spawn Typst)
 - Modify: server + agent **runtime** stages: install engines as **root** into `/usr/local/bin` **before** `USER server` / `USER agent`
 
 **Runtime (bookworm-slim is Python 3.11):**
+
 - `curl`, `ca-certificates`
 - Typst ≥ 0.14 from GitHub releases, pin version + **sha256 per `TARGETARCH`** (amd64 + arm64)
 - `uv python install 3.12` then `uv pip install --system 'rendercv[full]==2.8'` (pin exact 2.8.x)
@@ -209,6 +219,7 @@ Behavior:
 ### Task 9: Docs
 
 **Files:**
+
 - Create: `docs/adr/0027-typst-rendercv-resume-pdf.md` (next free ADR number — verify)
 - Modify: `CONTEXT.md` PDF renderer / Tagged PDF
 - Modify: `README.md` stack table
