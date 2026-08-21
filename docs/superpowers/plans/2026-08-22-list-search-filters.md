@@ -173,7 +173,7 @@ Map Cubby operators ↔ `ListQueryOp` / RSQL tokens exactly as the spec table (`
 
 - [ ] **Step 5: Parser/printer + leaves** — implement until tests pass. Do not import Drizzle. Do not reuse portfolio parser.
 
-- [ ] **Step 6:** Merge `ListQueryInputSchema` into existing `ExperienceListPageInputSchema` (and project/stack) via `.extend`. Add `ApplicationListPageInputSchema` = list-query + `cursor` + `limit` + `trackingStatus` (page-implied, still on input for API). Resume `list` input: list-query fields optional.
+- [ ] **Step 6:** Merge `ListQueryInputSchema` into existing `ExperienceListPageInputSchema` (and project/stack) via `.extend`. Add `ApplicationListPageInputSchema` = list-query + `cursor` + `limit` + **`scope: z.enum(["new-jobs", "tracked-jobs"])`** (required). Do **not** take client `trackingStatus` as the list partition (today’s `list` default `"tracked"` would leak CRM into New jobs). Resume `list` input: list-query fields optional.
 
 - [ ] **Step 7:** `vp check` in `packages/core`. Commit:
 
@@ -257,6 +257,8 @@ export const ListSearchSchema = z.object({
 
 - [ ] **Step 4:** `HeaderActions` `sort.reorderDisabled` hides/disables Reorder when true.
 
+- [ ] **Step 4b:** `astToFilterValues`: `outcome=unrestricted=` is **not** a chip; keep other leaves.
+
 - [ ] **Step 5:** `vp check` in `apps/web` and `packages/ui`. Commit:
 
 ```bash
@@ -277,7 +279,7 @@ git commit -m "feat: add list search bar widget"
 - Modify: `apps/web/src/pages/dashboard/stacks/stacks-page.tsx` — `ListSearchBar`; empty state branch; disable reorder when narrowed
 - Modify: `apps/web/src/widgets/items-page/ui/project-info-panel.tsx` — dashboard-only “View skills” `Link` to `/dashboard/skills?filter=projects=in=(id)`
 
-**Compile notes:** `projects=in=` → `EXISTS` on `project_stack`. `includedInPortfolio` → `portfolioEntryId IS NOT NULL`. `q` ILIKE `name` OR `jsonb_array_elements_text(alternative_names)` (column is **jsonb**, not `text[]` — do not `unnest`). Compile in `packages/api` to Drizzle `SQL`; repositories accept `SQL` + sort, they must **not** re-parse RSQL. Disable Cubby `includes_all` on relation chips (`disabledOperators: ["includes_all"]`).
+**Compile notes:** `projects=in=` → `EXISTS` on `project_stack`. `includedInPortfolio` → `portfolioEntryId IS NOT NULL`. `q` on skills: `name ILIKE` **OR** `EXISTS (SELECT 1 FROM jsonb_array_elements_text(alternative_names) AS alias(name) WHERE alias.name ILIKE …)` — wrap the set-returning function in `EXISTS` or skill rows duplicate and keyset/`totalCount` break. Compile in `packages/api` to Drizzle `SQL`; repositories accept `SQL` + sort, they must **not** re-parse RSQL. Disable Cubby `includes_all` on relation chips (`disabledOperators: ["includes_all"]`). Portfolio booleans must not use `is_empty`.
 
 - [ ] **Step 1:** Implement `compile.ts` for `skills` only (other resources can throw “not implemented” until later tasks). Map `ListQueryError` in stacks router.
 
@@ -289,7 +291,7 @@ git commit -m "feat: add list search bar widget"
 
 - [ ] **Step 5:** 400 on bad filter: toast, omit `filter` (catalog rule).
 
-- [ ] **Step 6:** View skills link on project inspect (not public portfolio panel).
+- [ ] **Step 6:** View skills on project inspect (dashboard only, not public panel): `<Link to="/dashboard/skills" search={{ filter: \`projects=in=(${id})\` }} />`. Do **not** put `?filter=`on`to`.
 
 - [ ] **Step 7:** `vp check` in `packages/db`, `packages/api`, `apps/web`. Commit:
 
@@ -345,9 +347,9 @@ git commit -m "feat: filter experiences, projects, and resumes"
 
 **Board cap:** if `totalCount > 200`, show notice; do not paint closed cards.
 
-- [ ] **Step 1:** DB + compile + `listPage`/`listBoard` procedures.
+- [ ] **Step 1:** DB + compile + `listPage`/`listBoard` procedures. Input `scope: "new-jobs" | "tracked-jobs"` (not optional `trackingStatus`). Compile **always** ANDs the partition: new-jobs → `trackingStatus IN ('inbox','dismissed')`; tracked list **and** `listBoard` → `trackingStatus = 'tracked'`. Then apply RSQL chips. Never AND a client `trackingStatus: "inbox"` onto the query (that would make dismissed/all become inbox-only). `listBoard` keeps the tracked partition **and** `outcome IS NULL` after stripping outcome leaves — `outcome IS NULL` alone would include inbox rows. `matchScore DESC NULLS LAST` keyset must encode null scores (or later pages skip/repeat).
 
-- [ ] **Step 2:** New jobs UI (no tabs).
+- [ ] **Step 2:** New jobs UI (no tabs). Compose `FiltersProvider` + `FiltersBar` children (chips + add + **custom** Clear) so default `FilterClearButton` does not turn last-chip-remove into seed. `listingClosed` WHERE uses `job_posting.closedAt` via `postingId`. Sort key `company` → `companyName`. Route loaders use `loaderDeps` on `q`/`filter`/`sort*` so prefetch matches the query key.
 
 - [ ] **Step 3:** Tracked list + board queries.
 
@@ -368,7 +370,8 @@ git commit -m "feat: paginated filtered new and tracked jobs"
 - Modify: `packages/core` — `SearchEntitiesInputSchema` / output
 - Modify: `packages/api` — `search.entities` `protectedProcedure` (new small router or under a `search` key on `appRouter`)
 - Modify: `apps/web/src/shared/lib/command-palette/types.ts` — optional
-- Modify: `use-command-items.ts` — fetch when signed in and `q.trim().length >= 2`
+- Modify: `apps/web/src/widgets/layout/ui/command-palette.tsx` and `use-command-palette.ts` — thread the input `q` into `useCommandItems(q)` (today it takes no query). Fetch `search.entities` when signed in and `q.trim().length >= 2`.
+- Modify: `use-command-items.ts` — merge entity hits
 - Modify: `command-palette.tsx` — pass query into items hook; `useFuzzyFilter` on combined items. Command is Base UI Autocomplete, **not** cmdk: do not assume `filter={null}`. Pre-filter with fuzzy, then disable Autocomplete’s default string filter (pass a pass-through / `always true` filter, or feed already-filtered `items`). Add the six entity labels to `GROUP_ORDER`.
 - Modify: `CommandAction` navigate variant: add `search?: Record<string, string>`. `handleItemClick` must `router.navigate({ to, params, search })`. Do **not** glue `?stackId=` onto `to` — TanStack will not parse it as `validateSearch`.
 
