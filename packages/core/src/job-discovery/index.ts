@@ -6,6 +6,7 @@ export * from "./skills-overlap";
 export * from "./years-cap";
 export * from "./hiring-region";
 export * from "./land-budget";
+export * from "./land-match";
 export * from "./queue";
 export * from "./shelf";
 export * from "./title-packs";

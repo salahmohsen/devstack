@@ -1,6 +1,6 @@
 import { type WorkMode } from "#@/job-preference/types";
 
-import { normalizeHiringRegion } from "./hiring-region";
+import { normalizeHiringRegion, resolveRemoteListingSlug } from "./hiring-region";
 
 export type ZeroDollarCandidate = {
   workMode: WorkMode | null;
@@ -60,10 +60,11 @@ function firstNonBlank(...values: Array<string | null | undefined>): string | nu
 export function applyZeroDollarCandidate(input: ZeroDollarCandidate): ZeroDollarCandidate {
   const blob = [input.location, input.description].filter(Boolean).join("\n");
   const workMode = input.workMode ?? inferWorkModeFromText(blob);
+  const resolved = resolveRemoteListingSlug(input.hiringRegion, input.location);
   const hiringRegion = firstNonBlank(
-    input.hiringRegion,
-    normalizeHiringRegion(input.location),
-    workMode === "remote" ? normalizeHiringRegion(input.description) : null
+    resolved.specificUnknown ? null : resolved.slug,
+    workMode === "remote" ? normalizeHiringRegion(input.description) : null,
+    input.hiringRegion
   );
   const employmentType = firstNonBlank(input.employmentType, inferEmploymentFromText(blob));
   const skills = input.skills.map((skill) => skill.trim()).filter((skill) => skill.length > 0);

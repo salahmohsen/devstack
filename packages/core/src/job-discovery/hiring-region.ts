@@ -52,7 +52,21 @@ export const HIRING_REGION_SYNONYM_TO_SLUG: Readonly<Record<string, string>> = {
   de: "de",
   germany: "de",
   br: "br",
-  brazil: "br"
+  brazil: "br",
+  india: "india",
+  canada: "canada",
+  ireland: "ireland",
+  poland: "poland",
+  australia: "apac",
+  singapore: "apac",
+  malaysia: "apac",
+  taiwan: "apac",
+  "hong kong": "apac",
+  colombia: "latam",
+  peru: "latam",
+  uruguay: "latam",
+  dubai: "mena",
+  uae: "mena"
 };
 
 const CLOSED_SLUGS = new Set<string>([
@@ -71,6 +85,45 @@ const CLOSED_SLUGS = new Set<string>([
   "br",
   ...Object.values(HIRING_REGION_SYNONYM_TO_SLUG)
 ]);
+
+/** Closed remote-region chips. Empty selection still means worldwide listings. */
+export const REMOTE_REGION_SLUGS = [
+  "egypt",
+  "saudi_arabia",
+  "mena",
+  "emea",
+  "eu",
+  "uk",
+  "us",
+  "de",
+  "br",
+  "latam",
+  "africa",
+  "apac"
+] as const;
+
+export type RemoteRegionSlug = (typeof REMOTE_REGION_SLUGS)[number];
+
+export const REMOTE_REGION_LABELS: Record<RemoteRegionSlug, string> = {
+  egypt: "Egypt",
+  saudi_arabia: "Saudi Arabia",
+  mena: "MENA",
+  emea: "EMEA",
+  eu: "EU",
+  uk: "United Kingdom",
+  us: "United States",
+  de: "Germany",
+  br: "Brazil",
+  latam: "LatAm",
+  africa: "Africa",
+  apac: "APAC"
+};
+
+export function remoteRegionSelectOptions(): Array<{ value: RemoteRegionSlug; label: string }> {
+  return REMOTE_REGION_SLUGS.map((value) => {
+    return { value, label: REMOTE_REGION_LABELS[value] };
+  });
+}
 
 /** Multi-word / longer phrases first for containment matching. */
 const SYNONYM_PHRASES: readonly { phrase: string; slug: string }[] = Object.entries(
@@ -136,7 +189,10 @@ export function expandRegionAncestors(slug: string): Set<string> {
   return out;
 }
 
-function regionSetsForTokens(tokens: readonly string[]): {
+function regionSetsForTokens(
+  tokens: readonly string[],
+  expandUser: boolean
+): {
   hasWorldwide: boolean;
   regions: Set<string>;
 } {
@@ -149,11 +205,80 @@ function regionSetsForTokens(tokens: readonly string[]): {
       hasWorldwide = true;
       continue;
     }
-    for (const r of expandRegionAncestors(slug)) {
-      regions.add(r);
+    if (expandUser) {
+      for (const r of expandRegionAncestors(slug)) {
+        regions.add(r);
+      }
+    } else {
+      regions.add(slug);
     }
   }
   return { hasWorldwide, regions };
+}
+
+const REMOTE_PLACE_FILLER =
+  /\b(?:fully|remote|anywhere|worldwide|global|hybrid|only|none|distributed|telecommute|wfh)\b/g;
+
+function locationRemainder(raw: string | null | undefined): string {
+  if (raw == null) return "";
+  return normalizeKey(raw)
+    .replace(REMOTE_PLACE_FILLER, " ")
+    .replace(/[-\s]+/g, " ")
+    .trim();
+}
+
+/** Location is only a remote-anywhere label, not a country. */
+export function isVagueRemotePlace(raw: string | null | undefined): boolean {
+  if (raw == null) return true;
+  const key = normalizeKey(raw);
+  if (key.length === 0) return true;
+  return locationRemainder(raw).length === 0;
+}
+
+function specificRegionSlug(slug: string | null): string | null {
+  if (slug == null || slug === "worldwide") return null;
+  return slug;
+}
+
+/**
+ * Remote listing place: a specific hiring region or location beats worldwide.
+ * Unmapped city/country text is not treated as worldwide.
+ */
+export function resolveRemoteListingSlug(
+  hiringRegion: string | null,
+  location: string | null
+): { slug: string | null; specificUnknown: boolean } {
+  const regionSlug =
+    hiringRegion != null && hiringRegion.trim().length > 0
+      ? normalizeHiringRegion(hiringRegion)
+      : null;
+  const remainder = locationRemainder(location);
+  const locSlug =
+    normalizeHiringRegion(location) ??
+    (remainder.length > 0 ? normalizeHiringRegion(remainder) : null);
+  const specific = specificRegionSlug(regionSlug) ?? specificRegionSlug(locSlug);
+  if (specific != null) return { slug: specific, specificUnknown: false };
+
+  if (isVagueRemotePlace(location)) {
+    if (regionSlug === "worldwide") {
+      return { slug: "worldwide", specificUnknown: false };
+    }
+    if (regionSlug == null) {
+      const statedPlace = location != null && location.trim().length > 0;
+      if (statedPlace) return { slug: "worldwide", specificUnknown: false };
+      return { slug: null, specificUnknown: false };
+    }
+    return { slug: regionSlug, specificUnknown: false };
+  }
+
+  if (remainder.length > 0 && locSlug == null) {
+    return { slug: null, specificUnknown: true };
+  }
+
+  if (regionSlug === "worldwide" || locSlug === "worldwide") {
+    return { slug: "worldwide", specificUnknown: false };
+  }
+  return { slug: regionSlug ?? locSlug, specificUnknown: false };
 }
 
 function resolveListingSlug(
@@ -175,7 +300,21 @@ function resolveListingSlug(
 export type HiringRegionsOverlapOptions = {
   /** Onsite/hybrid must pass `false` so a leftover user worldwide token cannot match. */
   allowUserWorldwide?: boolean;
+  /**
+   * `both` (default): user and listing walk ancestors — remote egypt overlaps emea.
+   * `listing`: only the listing walks up — hybrid london does not match egypt via emea.
+   * `lineage`: one slug is the other or its ancestor — egypt matches MENA, not UK/US.
+   */
+  expand?: "both" | "listing" | "lineage";
 };
+
+/** True when the slugs are the same or one is an ancestor of the other (not siblings). */
+export function regionsShareLineage(userSlug: string, listingSlug: string): boolean {
+  if (userSlug === listingSlug) return true;
+  if (expandRegionAncestors(userSlug).has(listingSlug)) return true;
+  if (expandRegionAncestors(listingSlug).has(userSlug)) return true;
+  return false;
+}
 
 /**
  * True when user location tokens share a country or ancestor region with the listing.
@@ -191,7 +330,18 @@ export function hiringRegionsOverlap(
   if (resolvedListing == null) return false;
   if (resolvedListing === "worldwide") return true;
 
-  const user = regionSetsForTokens(userLocations);
+  if (options?.expand === "lineage") {
+    const user = regionSetsForTokens(userLocations, false);
+    if ((options.allowUserWorldwide ?? false) && user.hasWorldwide) return true;
+    if (user.regions.size === 0) return false;
+    for (const userSlug of user.regions) {
+      if (regionsShareLineage(userSlug, resolvedListing)) return true;
+    }
+    return false;
+  }
+
+  const expandUser = (options?.expand ?? "both") === "both";
+  const user = regionSetsForTokens(userLocations, expandUser);
   if ((options?.allowUserWorldwide ?? false) && user.hasWorldwide) return true;
   if (user.regions.size === 0) return false;
 

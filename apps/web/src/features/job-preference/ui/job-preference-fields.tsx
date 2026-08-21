@@ -29,6 +29,7 @@ import {
   leftoverRemoteRegionsHint,
   salaryCurrencyOptions,
   JOB_PREFERENCE_LEVEL_FLOOR_OPTIONS,
+  JOB_PREFERENCE_REMOTE_REGION_OPTIONS,
   JOB_PREFERENCE_WORK_MODE_OPTIONS,
   JOB_TITLE_PACK_OPTIONS
 } from "@/features/job-preference/lib/job-preference-form";
@@ -145,7 +146,7 @@ export const JobPreferenceFields = withForm({
             {(field) => (
               <field.TagsField
                 label="Locations"
-                description="On-site and hybrid must match these places. Do not add Worldwide here."
+                description="Strict for hybrid and on-site: the job's place must match. Remote jobs do not use this as the office city. If Remote regions is empty, this is where you live so US-only or LatAm-only remotes drop."
                 placeholder="e.g. Cairo, Berlin"
                 maxItems={50}
                 maxItemLength={120}
@@ -169,12 +170,12 @@ export const JobPreferenceFields = withForm({
 
           <form.AppField name="remoteRegions">
             {(field) => (
-              <field.TagsField
+              <field.ComboboxMultipleField
                 label="Remote regions"
-                description="Empty = anywhere remote. Add MENA / EU / US only to restrict."
+                description="Gate for remote jobs. Empty: unrestricted worldwide remotes, plus remotes that hire in your Locations. A filled list is the only remote filter."
                 placeholder="e.g. MENA, EU, US"
-                maxItems={50}
-                maxItemLength={120}
+                emptyMessage="No regions match."
+                items={JOB_PREFERENCE_REMOTE_REGION_OPTIONS}
               />
             )}
           </form.AppField>

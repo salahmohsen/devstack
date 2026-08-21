@@ -15,7 +15,9 @@ import {
   isOpenJobPreference,
   isWorkMode,
   normalizeHiringRegion,
+  normalizeRemoteRegions,
   refineCustomDiscoveryTitle,
+  remoteRegionSelectOptions,
   titlePackOptions,
   type JobTitleId,
   type LevelFloor,
@@ -107,6 +109,8 @@ export const JOB_PREFERENCE_LEVEL_FLOOR_OPTIONS = LEVEL_FLOORS.map((level) => {
   };
 });
 
+export const JOB_PREFERENCE_REMOTE_REGION_OPTIONS = remoteRegionSelectOptions();
+
 const COMMON_SALARY_CURRENCIES = [
   "USD",
   "EUR",
@@ -152,7 +156,7 @@ export function jobPreferenceFormFromQuery(data: JobPreferenceQueryResult): JobP
   return {
     workModes: data.workModes.filter(isWorkMode),
     locations: [...data.locations],
-    remoteRegions: [...(data.remoteRegions ?? [])],
+    remoteRegions: normalizeRemoteRegions(data.remoteRegions ?? []),
     roleKeywords: [...data.roleKeywords],
     excludeKeywords: [...data.excludeKeywords],
     salaryMin: data.salaryMin == null ? "" : String(data.salaryMin),
@@ -220,7 +224,7 @@ export function jobPreferenceInputFromForm(
   return {
     workModes: value.workModes,
     locations: normalizeTags(value.locations, 50, 120),
-    remoteRegions: normalizeTags(value.remoteRegions, 50, 120),
+    remoteRegions: normalizeRemoteRegions(value.remoteRegions),
     roleKeywords: normalizeTags(value.roleKeywords, 50, 120),
     excludeKeywords: normalizeTags(value.excludeKeywords, 50, 120),
     salaryMin: parseOptionalMonthlyAmount(value.salaryMin),

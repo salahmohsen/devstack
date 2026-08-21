@@ -1,7 +1,7 @@
 import { WORK_MODES } from "#@/job-preference/constants";
 import { type WorkMode } from "#@/job-preference/types";
 
-import { hiringRegionsOverlap, normalizeHiringRegion } from "./hiring-region";
+import { hiringRegionsOverlap, resolveRemoteListingSlug } from "./hiring-region";
 
 export type TwoAxisWorkMode = WorkMode | null;
 
@@ -31,10 +31,17 @@ function effectiveWorkModes(workModes: readonly string[]): string[] {
   return [...workModes];
 }
 
+function remoteRegionGate(prefs: TwoAxisPrefs): string[] {
+  if (prefs.remoteRegions.length > 0) return prefs.remoteRegions;
+  return prefs.locations;
+}
+
 /**
- * Hard filter: work mode + hiring region. Unknown mode always drops.
- * Empty / all-three workModes = no mode filter.
- * Empty remoteRegions = worldwide remote. Onsite/hybrid never reads remoteRegions.
+ * Hard filter: work mode + place.
+ * Empty / all-three workModes = no mode filter. Unknown mode always drops.
+ * Remote: Remote regions is the gate. Empty list uses Locations only as "where I live"
+ * so unrestricted/worldwide remotes keep and US/LatAm-only remotes drop. Both empty = any remote.
+ * Hybrid/onsite: Locations are a strict job-place match. Never reads Remote regions.
  */
 export function decideTwoAxis(input: TwoAxisInput): TwoAxisDecision {
   const { workMode, hiringRegion, location, prefs } = input;
@@ -54,7 +61,8 @@ export function decideTwoAxis(input: TwoAxisInput): TwoAxisDecision {
     }
     if (
       !hiringRegionsOverlap(prefs.locations, hiringRegion, location, {
-        allowUserWorldwide: false
+        allowUserWorldwide: false,
+        expand: "listing"
       })
     ) {
       return { action: "drop", reason: "place does not overlap preferred locations" };
@@ -65,14 +73,17 @@ export function decideTwoAxis(input: TwoAxisInput): TwoAxisDecision {
   if (modes.length > 0 && !modes.includes("remote")) {
     return { action: "drop", reason: "work mode remote not preferred" };
   }
-  if (prefs.remoteRegions.length === 0) {
+
+  const remoteGate = remoteRegionGate(prefs);
+  if (remoteGate.length === 0) {
     return { action: "pass", reason: "remote worldwide" };
   }
 
-  const region =
-    hiringRegion != null && hiringRegion.trim().length > 0 ? hiringRegion.trim() : null;
-  const locSlug = normalizeHiringRegion(location);
-  const listingSlug = region != null ? (normalizeHiringRegion(region) ?? locSlug) : locSlug;
+  const listing = resolveRemoteListingSlug(hiringRegion, location);
+  if (listing.specificUnknown) {
+    return { action: "drop", reason: "remote listing place is specific and unknown" };
+  }
+  const listingSlug = listing.slug;
 
   if (listingSlug == null) {
     return { action: "drop", reason: "remote listing region unknown" };
@@ -80,7 +91,11 @@ export function decideTwoAxis(input: TwoAxisInput): TwoAxisDecision {
   if (listingSlug === "worldwide") {
     return { action: "pass", reason: "remote worldwide listing" };
   }
-  if (!hiringRegionsOverlap(prefs.remoteRegions, hiringRegion, location)) {
+  if (
+    !hiringRegionsOverlap(remoteGate, listingSlug, location, {
+      expand: "lineage"
+    })
+  ) {
     return { action: "drop", reason: "remote hiring region does not overlap" };
   }
 

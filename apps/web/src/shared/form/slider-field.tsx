@@ -1,6 +1,6 @@
 "use client";
 
-import  { type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
