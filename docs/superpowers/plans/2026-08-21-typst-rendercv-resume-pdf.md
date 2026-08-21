@@ -23,7 +23,7 @@
 | `packages/pdf/**` | New package: types, mapper, spawn, cover-letter.typ, tests |
 | `packages/api` | Import `@tsu-stack/pdf`; pass `user.summary`; typed PDF errors; delete pdfnative helpers |
 | `apps/agent` | Same import; Accept error codes; delete duplicated `mastra/lib/pdf/*` |
-| `apps/server` + `apps/agent` Dockerfiles | Python 3.12, rendercv[full]==2.8, Typst ≥ 0.14 |
+| `apps/server` + `apps/agent` + `apps/web` Dockerfiles | COPY `packages/pdf/package.json`; server+agent also Python 3.12, rendercv[full]==2.8, Typst ≥ 0.14 |
 | `pnpm-workspace.yaml` | Drop pdfnative catalog entries |
 | ADRs / CONTEXT / README / `.agents/resume-pdf-generation.md` | Engine swap |
 
@@ -38,7 +38,7 @@
 - Create: `packages/pdf/src/index.ts`
 - Create: `packages/pdf/src/types.ts`
 
-- [ ] **Step 1: Create package.json** matching `@tsu-stack/seo` (private, `#@/*` imports, `test:unit`: `vp test run`). Dependencies: `yaml` (npm), `@tsu-stack/core` workspace, `zod` catalog. Dev: tsconfig, vitest via vite-plus, `@types/node`.
+- [ ] **Step 1: Create package.json** matching `@tsu-stack/seo` (private, `#@/*` imports, `test:unit`: `vp test run`). Dependencies: `yaml` (npm), `@tsu-stack/core` workspace, `zod` catalog. Dev: tsconfig, vitest via vite-plus, `@types/node`. **Ship `cover-letter.typ` via `import template from "./cover-letter.typ?raw"`** (or equivalent string embed) so Vite SSR bundle (`ssr.noExternal: [/@tsu-stack/]`) includes it. Do not `fs.readFile` relative to `import.meta.url` for the template.
 
 - [ ] **Step 2: tsconfig** extends `@tsu-stack/tsconfig/tsconfig.base.json` with `#@/*` paths. vite.config.ts `test.include: ["**/__tests__/**/*.test.ts"]`.
 
@@ -57,7 +57,7 @@
 - Create: `packages/pdf/src/contacts.ts`
 - Create: `packages/pdf/src/map-rendercv-yaml.ts`
 - Create: `packages/pdf/src/__tests__/map-rendercv-yaml.test.ts`
-- Move helpers from `packages/api/src/routers/resume-pdf.ts`: `extractBullets`, `stripHtml` (or equivalent), `groupStacksByType`, `filterPortfolioProjectStacks`, `projectStackNames`, `formatStackTypeLabel` import from core if already there.
+- **Copy** helpers from `packages/api/src/routers/resume-pdf.ts` into `packages/pdf` (`extractBullets`, `stripHtml`, `groupStacksByType`, `filterPortfolioProjectStacks`, `projectStackNames`). **Do not delete** `resume-pdf.ts` until Task 5. `formatStackTypeLabel` stays imported from `@tsu-stack/core`.
 
 **RenderCV date fields:** emit `YYYY-MM` / `YYYY` / `present` from stored ISO (`fromDate`/`toDate`/`isPresent`). Do **not** use `formatResumeMonthYear` display strings in YAML.
 
@@ -99,7 +99,7 @@ Invalid phone / website: omit field (website must be HttpUrl via existing https 
 Behavior:
 1. `mkdtemp`
 2. Write `cv.yaml`
-3. Spawn `rendercv render cv.yaml` (or documented “Typst only” flag). Locate generated `.typ` in the output dir. **Do not** upload RenderCV’s own PDF if it is not UA-1.
+3. Spawn `rendercv render cv.yaml --dont-generate-pdf`. Locate the generated `.typ`. Never store RenderCV’s PDF.
 4. Spawn `typst compile --pdf-standard ua-1 --input` as needed so document title/lang are set. If the generated `.typ` already has them, skip inputs.
 5. Read PDF bytes; `rm -rf` in `finally`
 6. Timeout 30s, kill process group
@@ -133,7 +133,10 @@ Behavior:
 
 **Files:**
 - Modify: `packages/api/src/routers/resume.router.ts` — pass `user.summary`; `.errors({ PDF_ENGINE_UNAVAILABLE, PDF_RENDER_FAILED })`; catch mapper/spawn errors
-- Modify: `packages/api/src/lib/application/accept-apply-package.ts` — import `@tsu-stack/pdf`; pass contacts+email to cover letter; extend `AcceptApplyPackageErrorCode` with `PDF_ENGINE_UNAVAILABLE` | `PDF_RENDER_FAILED`; wrap spawn errors
+- Modify: `packages/api/src/lib/application/accept-apply-package.ts` — import `@tsu-stack/pdf`; pass contacts+email to cover letter; pass `userRow.summary` on `ResumePdfInput` so empty/whitespace `draft.professionalSummary` can fall back; extend `AcceptApplyPackageErrorCode` with `PDF_ENGINE_UNAVAILABLE` | `PDF_RENDER_FAILED`; wrap spawn errors
+- Modify: `packages/api` applications Accept **handler if-chain** to `errors.PDF_ENGINE_UNAVAILABLE()` / `errors.PDF_RENDER_FAILED()` (today unknown codes become `INVALID_DRAFT`)
+- Modify: `apps/web/src/features/applications/api/accept-apply-package.mutation.ts` (and resume generate toast) to handle those codes
+- Modify: `ResumePdfInput` mapper to treat trimmed-empty `professionalSummary` as missing (use `user.summary`)
 - Modify: `packages/api/package.json` — depend `@tsu-stack/pdf`, remove pdfnative
 - Delete: `packages/api/src/lib/pdf/**` font helpers, `cover-letter-pdf.ts`, large `resume-pdf.ts` after moving remaining helpers
 - Replace: `packages/api/src/routers/__tests__/resume-pdf.test.ts` — re-export mapper tests or delete and rely on `packages/pdf` tests; remove pdfnative `validatePdfUA`
@@ -152,7 +155,7 @@ Behavior:
 ### Task 6: Wire agent, delete duplicates
 
 **Files:**
-- Modify: `apps/agent/src/mastra/lib/accept-apply-package.ts`
+- Modify: `apps/agent/src/mastra/lib/accept-apply-package.ts` — same error codes; pass `user.summary` + contacts into `@tsu-stack/pdf`
 - Delete: `apps/agent/src/mastra/lib/pdf/resume-pdf.ts`, `cover-letter-pdf.ts`, `pdfa-latin-font.ts`, `fonts/**`
 - Modify: `apps/agent/package.json` — `@tsu-stack/pdf`, drop pdfnative
 
@@ -183,17 +186,17 @@ Behavior:
 ### Task 8: Docker — Python 3.12 + Typst + RenderCV
 
 **Files:**
-- Modify: `apps/server/Dockerfile` runtime stage
-- Modify: `apps/agent/Dockerfile` runtime stage
-- Modify: `scripts/dev.sh` or docs if local generate needs binaries
-- Create: short comment in Dockerfiles pinning versions
+- Modify: `apps/server/Dockerfile` — **build** stage `COPY packages/pdf/package.json packages/pdf/` **before** `vp install --frozen-lockfile` (same pattern as other packages)
+- Modify: `apps/agent/Dockerfile` — same COPY
+- Modify: `apps/web/Dockerfile` — same COPY (web lockfile includes workspace packages even if it does not spawn Typst)
+- Modify: server + agent **runtime** stages: install engines as **root** into `/usr/local/bin` **before** `USER server` / `USER agent`
 
-**Runtime (bookworm-slim is 3.11):**
-- Install `curl`/`ca-certificates`
-- Install Typst CLI ≥ 0.14 from GitHub releases (pin checksum)
-- Install `uv` and `uv python install 3.12` then `uv pip install --system 'rendercv[full]==2.8'` (or pin the current 2.8.x)
-- `USER` must still find `rendercv` and `typst` on PATH (install to `/usr/local/bin`)
-- Set `TYPST_FONT_PATHS` if fonts are not auto-discovered
+**Runtime (bookworm-slim is Python 3.11):**
+- `curl`, `ca-certificates`
+- Typst ≥ 0.14 from GitHub releases, pin version + **sha256 per `TARGETARCH`** (amd64 + arm64)
+- `uv python install 3.12` then `uv pip install --system 'rendercv[full]==2.8'` (pin exact 2.8.x)
+- `TYPST_FONT_PATHS` to `rendercv-fonts` data dir
+- Document local: same pins on PATH for `pnpm run dev`
 
 - [ ] **Step 1: Both Dockerfiles.**
 
