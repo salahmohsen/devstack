@@ -4,6 +4,7 @@ import { type ApplicationSchemaInsert, type ApplicationSchemaSelect } from "@tsu
 
 import { JobSkillTagSchema } from "#@/application/job-skills";
 import { WorkModeSchema } from "#@/job-preference/types";
+import { ListQueryInputSchema } from "#@/list-query/types";
 
 export const ApplicationStageSchema = z.enum([
   "saved",
@@ -171,6 +172,41 @@ export const ApplicationGetOutputSchema = ApplicationOutputSchema.extend({
 export type ApplicationGetOutput = z.infer<typeof ApplicationGetOutputSchema>;
 
 export const ApplicationListOutputSchema = z.array(ApplicationOutputSchema);
+
+/** Default page size for dashboard new/tracked jobs infinite scroll. */
+export const APPLICATIONS_LIST_PAGE_SIZE = 24;
+
+export const ApplicationListScopeSchema = z.enum(["new-jobs", "tracked-jobs"]);
+export type ApplicationListScope = z.infer<typeof ApplicationListScopeSchema>;
+
+/**
+ * Cursor page for dashboard New jobs / Tracked jobs list.
+ * Keep `applications.list` (full array) for hub / pickers.
+ * `scope` is the page partition — not a client trackingStatus filter.
+ */
+export const ApplicationListPageInputSchema = z
+  .object({
+    cursor: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Opaque cursor from previous page; omit/null for first page"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .describe(`Page size (default ${APPLICATIONS_LIST_PAGE_SIZE})`),
+    scope: ApplicationListScopeSchema
+  })
+  .extend(ListQueryInputSchema.shape);
+
+export const ApplicationListPageOutputSchema = z.object({
+  items: z.array(ApplicationOutputSchema),
+  nextCursor: z.string().nullable().describe("Cursor for next page, null if last page"),
+  totalCount: z.number().int().nonnegative().describe("Total matching applications for the user")
+});
 
 export const ApplicationActivityOutputSchema = z.object({
   id: z.string(),
@@ -366,6 +402,8 @@ export const DeleteApplicationsInputSchema = z.object({
 
 export type ApplicationOutput = z.infer<typeof ApplicationOutputSchema>;
 export type ApplicationListOutput = z.infer<typeof ApplicationListOutputSchema>;
+export type ApplicationListPageInput = z.infer<typeof ApplicationListPageInputSchema>;
+export type ApplicationListPageOutput = z.infer<typeof ApplicationListPageOutputSchema>;
 export type CreateApplicationInput = z.infer<typeof CreateApplicationInputSchema>;
 export type UpdateApplicationInput = z.infer<typeof UpdateApplicationInputSchema>;
 export type UpdateStageInput = z.infer<typeof UpdateStageInputSchema>;

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ListQueryInputSchema } from "#@/list-query/types";
 import {
   STACK_ALTERNATIVE_NAME_MAX_LENGTH,
   STACK_ALTERNATIVE_NAMES_MAX,
@@ -66,20 +67,22 @@ export const STACKS_LIST_PAGE_SIZE = 24;
  * Cursor page for dashboard stacks grid.
  * Keep `stacks.list` (full array) for pickers / organize normalize.
  */
-export const StackListPageInputSchema = z.object({
-  cursor: z
-    .string()
-    .nullable()
-    .optional()
-    .describe("Opaque cursor from previous page; omit/null for first page"),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(100)
-    .optional()
-    .describe(`Page size (default ${STACKS_LIST_PAGE_SIZE})`)
-});
+export const StackListPageInputSchema = z
+  .object({
+    cursor: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Opaque cursor from previous page; omit/null for first page"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .describe(`Page size (default ${STACKS_LIST_PAGE_SIZE})`)
+  })
+  .extend(ListQueryInputSchema.shape);
 
 export const StackListPageOutputSchema = z.object({
   items: z.array(StackOutputSchema),
