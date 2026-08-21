@@ -67,8 +67,8 @@ RUN export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
 #
 # Reuse the same BuildKit pnpm store as `vp install` and force long fetch
 # timeouts + prefer-offline. Without the store mount, deploy re-downloads
-# large tarballs (pdfnative ~37MB, optional next peers) and hits pnpm's
-# default ~60s timeout → curl error 23 / TimeoutError on slow hosts.
+# large tarballs (optional next peers) and hits pnpm's default ~60s
+# timeout → curl error 23 / TimeoutError on slow hosts.
 # `--no-optional`: skip optional peers like `next` (TanStack Start, not Next).
 ENV PNPM_FETCH_TIMEOUT=600000 \
     npm_config_fetch_timeout=600000 \

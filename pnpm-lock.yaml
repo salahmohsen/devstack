@@ -354,9 +354,6 @@ catalogs:
     oxlint-tsgolint:
       specifier: 7.0.2001
       version: 7.0.2001
-    pdfnative:
-      specifier: ^1.6.0
-      version: 1.6.0
     pg:
       specifier: ^8.21.0
       version: 8.22.0
@@ -680,9 +677,6 @@ importers:
       ioredis:
         specifier: 'catalog:'
         version: 5.11.1
-      pdfnative:
-        specifier: 'catalog:'
-        version: 1.6.0
       pg:
         specifier: 'catalog:'
         version: 8.22.0
@@ -867,9 +861,6 @@ importers:
       nuqs:
         specifier: 'catalog:'
         version: 2.9.0(@tanstack/react-router@1.170.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
-      pdfnative:
-        specifier: 'catalog:'
-        version: 1.6.0
       pg:
         specifier: 'catalog:'
         version: 8.22.0
@@ -11369,11 +11360,6 @@ packages:
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
-
-  pdfnative@1.6.0:
-    resolution: {integrity: sha512-gzwDxXD8iMLM5tSd86RQwIiX0gh9Oe2IzpYCnOgVzsHqOIPnbOZdiHWRkxZphAXIofEdrqBb5Zr/uhSBiVyD7w==}
-    engines: {node: '>=22'}
-    hasBin: true
 
   peberminta@0.9.0:
     resolution: {integrity: sha512-XIxfHpEuSJbITd1H3EeQwpcZbTLHc+VVr8ANI9t5sit565tsI4/xK3KWTUFE2e6QiangUkh3B0jihzmGnNrRsQ==}
@@ -22997,8 +22983,6 @@ snapshots:
   path-to-regexp@8.4.2: {}
 
   pathe@2.0.3: {}
-
-  pdfnative@1.6.0: {}
 
   peberminta@0.9.0: {}
 
