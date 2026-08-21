@@ -2,6 +2,7 @@ import { PdfEngineUnavailableError } from "#@/errors";
 import { type CoverLetterPdfInput, type ResumePdfInput } from "#@/types";
 
 export { PdfEngineUnavailableError, PdfRenderFailedError, type PdfErrorCode } from "#@/errors";
+export { toRenderCvYaml } from "#@/map-rendercv-yaml";
 export type {
   CoverLetterPdfInput,
   PdfContact,
