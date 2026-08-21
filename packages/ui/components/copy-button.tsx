@@ -20,7 +20,7 @@ type ButtonVariantProps = VariantProps<typeof buttonVariants>;
 
 export type CopyButtonProps = Omit<
   React.ComponentProps<typeof motion.button>,
-  "onClick" | "children" | "value" | "onDrag" | "onDragStart" | "onDragEnd"
+  "children" | "value" | "onDrag" | "onDragStart" | "onDragEnd"
 > & {
   /** Text written to the clipboard. */
   value: string;
@@ -61,6 +61,7 @@ export function CopyButton({
   variant = "outline",
   className,
   disabled,
+  onClick,
   ...buttonProps
 }: CopyButtonProps) {
   const { copied, copy } = useCopyToClipboard({ resetMs, onCopied, onError });
@@ -77,7 +78,7 @@ export function CopyButton({
       title={showLabel ? undefined : displayLabel}
       data-slot="button"
       data-copied={copied ? "" : undefined}
-      layout={!reduceMotion}
+      layout={showLabel && !reduceMotion}
       transition={{ duration: 0.32, ease: CHROME_EASE }}
       className={cn(
         buttonVariants({ size, variant: visualVariant }),
@@ -85,10 +86,11 @@ export function CopyButton({
         showLabel ? undefined : "shrink-0",
         className
       )}
-      onClick={() => {
-        void copy(value);
-      }}
       {...buttonProps}
+      onClick={(event) => {
+        void copy(value);
+        onClick?.(event);
+      }}
     >
       <AnimatePresence mode="sync" initial={false}>
         {glow ? (

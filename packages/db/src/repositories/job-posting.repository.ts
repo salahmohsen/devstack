@@ -1,6 +1,18 @@
-import { and, desc, eq, inArray, isNull, notInArray, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  notExists,
+  notInArray,
+  type InferSelectModel
+} from "drizzle-orm";
 
 import { getDb } from "../index.ts";
+import { application } from "../schema/application.schema.ts";
 import { jobPosting } from "../schema/job-posting.schema.ts";
 
 export type JobPostingEntity = InferSelectModel<typeof jobPosting>;
@@ -24,6 +36,9 @@ export type UpsertJobPostingInput = {
   contentHash: string;
   postedAt: Date | null;
   raw?: unknown;
+  companyId?: string | null;
+  experienceYearsMin?: number | null;
+  companyLogoUrl?: string | null;
 };
 
 export type ListOpenForLandInput = {
@@ -92,7 +107,12 @@ export const jobPostingRepository = {
           postedAt: input.postedAt,
           firstSeenAt: now,
           lastSeenAt: now,
-          raw: input.raw ?? null
+          raw: input.raw ?? null,
+          ...(input.companyId !== undefined ? { companyId: input.companyId } : {}),
+          ...(input.experienceYearsMin !== undefined
+            ? { experienceYearsMin: input.experienceYearsMin }
+            : {}),
+          ...(input.companyLogoUrl !== undefined ? { companyLogoUrl: input.companyLogoUrl } : {})
         })
         .onConflictDoNothing({
           target: [jobPosting.adapterId, jobPosting.externalId]
@@ -110,6 +130,10 @@ export const jobPostingRepository = {
       throw new Error(
         `jobPosting upsert: conflict without existing row adapterId=${input.adapterId} externalId=${input.externalId}`
       );
+    }
+
+    if (current.closedAt != null) {
+      return { row: current, changed: false };
     }
 
     if (current.contentHash === input.contentHash) {
@@ -141,7 +165,12 @@ export const jobPostingRepository = {
         contentHash: input.contentHash,
         postedAt: input.postedAt,
         lastSeenAt: now,
-        ...(input.raw !== undefined ? { raw: input.raw } : {})
+        ...(input.raw !== undefined ? { raw: input.raw } : {}),
+        ...(input.companyId !== undefined ? { companyId: input.companyId } : {}),
+        ...(input.experienceYearsMin !== undefined
+          ? { experienceYearsMin: input.experienceYearsMin }
+          : {}),
+        ...(input.companyLogoUrl !== undefined ? { companyLogoUrl: input.companyLogoUrl } : {})
       })
       .where(eq(jobPosting.id, current.id))
       .returning();
@@ -258,12 +287,38 @@ export const jobPostingRepository = {
     return row ?? null;
   },
 
-  async markClosed(id: string, closedAt: Date): Promise<JobPostingEntity | null> {
+  async markClosed(
+    id: string,
+    closedAt: Date,
+    closedReason: string
+  ): Promise<JobPostingEntity | null> {
     const [row] = await getDb()
       .update(jobPosting)
-      .set({ closedAt })
+      .set({ closedAt, closedReason })
       .where(eq(jobPosting.id, id))
       .returning();
     return row ?? null;
+  },
+
+  /**
+   * Delete pantry rows closed longer than `olderThanMs` that no application
+   * still references. Tracked history keeps `postingId` set-null as a backstop.
+   */
+  async deleteClosedUnreferenced(
+    now = new Date(),
+    olderThanMs = 90 * 24 * 60 * 60 * 1000
+  ): Promise<number> {
+    const cutoff = new Date(now.getTime() - olderThanMs);
+    const referenced = getDb()
+      .select({ id: application.id })
+      .from(application)
+      .where(eq(application.postingId, jobPosting.id));
+    const deleted = await getDb()
+      .delete(jobPosting)
+      .where(
+        and(isNotNull(jobPosting.closedAt), lt(jobPosting.closedAt, cutoff), notExists(referenced))
+      )
+      .returning({ id: jobPosting.id });
+    return deleted.length;
   }
 };

@@ -16,6 +16,7 @@
     "logs": "vp run -r --parallel logs",
     "logs:server": "vp run --filter @tsu-stack/server logs",
     "email:dev": "vp run --filter @tsu-stack/email email:dev",
+    "mastra:studio": "vp run --filter @tsu-stack/agent mastra:studio",
     "logs:web": "vp run --filter @tsu-stack/web logs",
     "prepare": "vp config",
     "deps": "vpx taze@latest -Ilwr",

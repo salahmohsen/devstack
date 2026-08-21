@@ -1,7 +1,12 @@
 import {
+  fetchPublicHtmlAsText,
   fetchPublicHttpStatus,
   inboxLivenessDueAt,
+  isClosedJobListingHtml,
+  isClosedJobListingText,
+  isGoneHttpListingStatus,
   isInboxExpired,
+  isMissingJobListingTitle,
   LIVENESS_REPROBE_AFTER_MS,
   LIVENESS_TICK_BATCH,
   type FetchPublicHttpStatusResult
@@ -14,7 +19,8 @@ import {
   type JobPostingEntity
 } from "@tsu-stack/db";
 
-const GONE_STATUSES = new Set([404, 410]);
+import { runSilenceTick } from "#@/lib/application/silence-tick";
+
 const PROBE_CONCURRENCY = 5;
 const FREEHIRE_JOB_API = (externalId: string) =>
   `https://freehire.me/api/v1/jobs/${encodeURIComponent(externalId)}`;
@@ -43,19 +49,19 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
   let closed = 0;
 
   const probes = await mapPool(targets, PROBE_CONCURRENCY, async (target) => {
-    const gone = await listingIsClosed(target);
-    return { target, gone };
+    const reason = await listingClosedReason(target);
+    return { target, reason };
   });
   await applicationRepository.touchUpdatedAt(
     due.map((row) => row.id),
     now
   );
 
-  for (const { target, gone } of probes) {
-    if (!gone) continue;
+  for (const { target, reason } of probes) {
+    if (!reason) continue;
     closed += 1;
     if (target.postingId) {
-      await jobPostingRepository.markClosed(target.postingId, now);
+      await jobPostingRepository.markClosed(target.postingId, now, reason);
     } else {
       goneUrls.add(target.listingUrl);
     }
@@ -73,6 +79,9 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
     if (!isInboxExpired({ inboxExpiresAt: row.inboxExpiresAt, now })) continue;
     if (await dismissInbox(row, "ttl")) dismissedExpired += 1;
   }
+
+  await jobPostingRepository.deleteClosedUnreferenced(now);
+  await runSilenceTick(now);
 
   return { checked: targets.length, closed, dismissedExpired };
 }
@@ -111,20 +120,31 @@ function uniqueIds(ids: Array<string | null>): string[] {
   return [...new Set(ids.filter((id): id is string => id != null))];
 }
 
-async function listingIsClosed(target: LivenessTarget): Promise<boolean> {
+async function listingClosedReason(target: LivenessTarget): Promise<string | null> {
   const listing = await probeListingUrl(target.listingUrl);
-  if (listing.status != null && GONE_STATUSES.has(listing.status)) return true;
+  if (isGoneHttpListingStatus(listing.status)) return "http_gone";
 
-  if (target.adapterId === "freehire" && target.externalId && !listing.ok) {
-    const api = await fetchPublicHttpStatus(FREEHIRE_JOB_API(target.externalId), { method: "GET" });
-    if (api.status != null && GONE_STATUSES.has(api.status)) return true;
+  // LinkedIn deleted jobs stay HTTP 200 with a multilingual "Page not found" body.
+  const page = await fetchPublicHtmlAsText(target.listingUrl, {
+    includeHtml: true,
+    maxChars: 8_000
+  });
+  if (isGoneHttpListingStatus(page.status)) return "http_gone";
+  if (page.html && isClosedJobListingHtml(page.html)) return "http_gone";
+  if (isClosedJobListingText(page.text) || isMissingJobListingTitle(page.title)) {
+    return "http_gone";
   }
-  return false;
+
+  if (target.adapterId === "freehire" && target.externalId && !listing.ok && !page.ok) {
+    const api = await fetchPublicHttpStatus(FREEHIRE_JOB_API(target.externalId), { method: "GET" });
+    if (isGoneHttpListingStatus(api.status)) return "freehire_missing";
+  }
+  return null;
 }
 
 async function probeListingUrl(url: string): Promise<FetchPublicHttpStatusResult> {
   const head = await fetchPublicHttpStatus(url, { method: "HEAD" });
-  if ((head.status != null && GONE_STATUSES.has(head.status)) || head.ok) return head;
+  if (isGoneHttpListingStatus(head.status) || head.ok) return head;
   return fetchPublicHttpStatus(url, { method: "GET" });
 }
 

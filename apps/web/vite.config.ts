@@ -263,22 +263,24 @@ export default defineConfig({
         /**
          * TanStack Devtools Vite plugin (@tanstack/devtools-vite 0.8).
          *
-         * 0.8 can also bridge isolated server runtimes (Nitro worker) over Vite's
-         * HotChannel, but the dedicated event bus still defaults to :4206.
-         * Two failure modes we hit on this monorepo:
-         * 1) Stale process holds 4206 → next start throws EADDRINUSE and never binds
-         *    :3000 (server/agent still start via `vp run dev`, so it "looks fine").
-         * 2) With the bus enabled, configureServer can stall before Vite listens on
-         *    :3000 (process idle with only :4206 open). Disable the bus for reliable
-         *    local boot; browser Devtools panels still work without server event bus.
-         * scripts/dev.sh frees 3000/4206 on start and stop as a belt-and-suspenders.
+         * Keep `injectSource` on — that is a compile-time JSX transform that
+         * writes `data-tsd-source` (file:line:col) for Go to Source. It does
+         * not use the event bus.
+         *
+         * Event bus still defaults to :4206. Two failure modes we hit here:
+         * 1) Stale process holds 4206 → next start throws EADDRINUSE and never
+         *    binds :3000 (server/agent still start via `vp run dev`, so it
+         *    "looks fine").
+         * 2) With the bus enabled, configureServer can stall before Vite
+         *    listens on :3000. Disable the bus for reliable local boot;
+         *    browser panels still work. scripts/dev.sh frees 3000/4206 on
+         *    start and stop as a belt-and-suspenders.
          */
         devtools({
           eventBusConfig: {
             enabled: false
           },
           consolePiping: { enabled: false },
-          injectSource: { enabled: false },
           enhancedLogs: { enabled: false }
         }),
         mdx(),

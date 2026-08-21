@@ -7,10 +7,12 @@ import {
   defaultJobPreferenceOutput,
   GetSearchBriefOutputSchema,
   JobPreferenceOutputSchema,
+  ResetBoardScoresTodayOutputSchema,
   mergeJobPreference,
   normalizeLocations,
   normalizeRemoteRegions,
   normalizeWorkModes,
+  refineDailyBoardScoreCap,
   refineJobsPerRun,
   UpsertJobPreferenceInputSchema,
   type JobPreference,
@@ -18,7 +20,7 @@ import {
   type LevelFloor,
   type WorkMode
 } from "@tsu-stack/core";
-import { jobPreferenceRepository } from "@tsu-stack/db";
+import { jobPreferenceRepository, userJobAiBudgetRepository } from "@tsu-stack/db";
 import { type StoredLevelFloor, type StoredWorkMode } from "@tsu-stack/db/schema";
 
 import {
@@ -28,8 +30,13 @@ import {
 } from "#@/lib/application/search-brief";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
+function utcDay(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
 function toOutput(
-  row: NonNullable<Awaited<ReturnType<typeof jobPreferenceRepository.findByUserId>>>
+  row: NonNullable<Awaited<ReturnType<typeof jobPreferenceRepository.findByUserId>>>,
+  boardScoresUsedToday: number
 ) {
   return JobPreferenceOutputSchema.parse({
     workModes: row.workModes,
@@ -44,8 +51,10 @@ function toOutput(
     titleId: (row.titleId as JobTitleId | null) ?? null,
     customTitle: row.customTitle ?? null,
     jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
     importFromEmail: row.importFromEmail ?? false,
-    updatedAt: row.updatedAt
+    updatedAt: row.updatedAt,
+    boardScoresUsedToday
   });
 }
 
@@ -65,6 +74,7 @@ function rowToPreference(
     titleId: (row.titleId as JobTitleId | null) ?? null,
     customTitle: row.customTitle ?? null,
     jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
     importFromEmail: row.importFromEmail ?? false
   };
 }
@@ -77,9 +87,15 @@ export const jobPreferenceRouter = {
     })
     .output(JobPreferenceOutputSchema)
     .handler(async ({ context }) => {
-      const row = await jobPreferenceRepository.findByUserId(context.session.user.id);
-      if (!row) return defaultJobPreferenceOutput();
-      return toOutput(row);
+      const userId = context.session.user.id;
+      const [row, boardScoresUsedToday] = await Promise.all([
+        jobPreferenceRepository.findByUserId(userId),
+        userJobAiBudgetRepository.attemptsForDay(userId, utcDay())
+      ]);
+      if (!row) {
+        return { ...defaultJobPreferenceOutput(), boardScoresUsedToday };
+      }
+      return toOutput(row, boardScoresUsedToday);
     }),
 
   upsert: protectedProcedure
@@ -119,11 +135,26 @@ export const jobPreferenceRouter = {
         titleId: merged.titleId,
         customTitle: merged.customTitle,
         jobsPerRun: refineJobsPerRun(merged.jobsPerRun),
+        dailyBoardScoreCap: refineDailyBoardScoreCap(merged.dailyBoardScoreCap),
         importFromEmail: merged.importFromEmail
       });
 
-      await invalidateSearchBrief(userId, input.briefInvalidateSource ?? "settings");
-      return toOutput(row);
+      const [, boardScoresUsedToday] = await Promise.all([
+        invalidateSearchBrief(userId, input.briefInvalidateSource ?? "settings"),
+        userJobAiBudgetRepository.attemptsForDay(userId, utcDay())
+      ]);
+      return toOutput(row, boardScoresUsedToday);
+    }),
+
+  resetBoardScoresToday: protectedProcedure
+    .route({
+      description: "Clear today's board-search score count so Find jobs now can run again",
+      method: "POST"
+    })
+    .output(ResetBoardScoresTodayOutputSchema)
+    .handler(async ({ context }) => {
+      await userJobAiBudgetRepository.resetForDay(context.session.user.id, utcDay());
+      return { boardScoresUsedToday: 0 };
     }),
 
   ensureBrief: protectedProcedure

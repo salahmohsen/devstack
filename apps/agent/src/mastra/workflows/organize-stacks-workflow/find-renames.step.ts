@@ -150,11 +150,18 @@ export const findRenames = createStep({
         label
       });
 
-      const stackList = chunk.map((s) => `- id: ${s.id} | name: "${s.name}"`).join("\n");
+      const stackList = chunk
+        .map((s) => {
+          const aliases = (s.alternativeNames ?? []).join(", ");
+          return aliases
+            ? `- id: ${s.id} | name: "${s.name}" | aliases: ${aliases}`
+            : `- id: ${s.id} | name: "${s.name}"`;
+        })
+        .join("\n");
 
-      const prompt = `Identify stacks with inconsistent or non-canonical names.
+      const prompt = `Identify skills whose display name is not the conventional product name.
 
-Stacks:
+Skills:
 ${stackList}
 
 ${buildCanonicalRenameRulesBlock()}
@@ -166,12 +173,13 @@ Output JSON:
       "stackId": "id",
       "currentName": "current",
       "newName": "canonical",
+      "alternativeNames": ["old name", "abbrev"],
       "reason": "why rename"
     }
   ]
 }
 
-Only suggest renames when the current name is clearly non-canonical. Skip stacks that already have correct names.`;
+Only suggest renames when the current name is clearly non-canonical. Skip skills that already have the conventional name. Always include the current name in alternativeNames when it differs from newName. Keep existing aliases.`;
 
       const chunkStarted = Date.now();
       try {
@@ -231,11 +239,17 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
             nameOwner.delete(oldKey);
           }
           nameOwner.set(key, { id: rename.stackId, name: newName });
+          const aliases = [
+            stack.name,
+            ...(stack.alternativeNames ?? []),
+            ...(rename.alternativeNames ?? [])
+          ];
           renameActions.push({
             stackId: rename.stackId,
             currentName: stack.name,
             newName,
-            reason: rename.reason
+            reason: rename.reason,
+            alternativeNames: aliases
           });
         }
       } catch (error) {

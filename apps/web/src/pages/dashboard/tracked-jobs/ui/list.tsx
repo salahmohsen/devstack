@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
-import { ItemAvatar } from "@/shared/ui/item-avatar";
+import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -66,6 +66,12 @@ function trackedJobTags(app: ApplicationOutput): ListItemTag[] {
     id: "match-score",
     node: <ApplicationMatchScoreBadge matchScore={app.matchScore} />
   });
+  if (app.experienceYearsMin != null) {
+    tags.push({
+      id: "years",
+      node: <JobYearsBadge years={app.experienceYearsMin} />
+    });
+  }
   tags.push({
     id: "apply-method",
     node: <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
@@ -233,12 +239,12 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       tags={trackedJobTags(app)}
                       meta={trackedJobMeta(app)}
                       leading={
-                        <ItemAvatar
-                          name={app.companyName}
+                        <JobIdentityMark
+                          companyName={app.companyName}
+                          logoUrl={app.companyLogoUrl}
                           size={40}
                           selected={selected}
                           className="size-10"
-                          aria-label={app.companyName}
                         />
                       }
                       actions={

@@ -66,7 +66,7 @@ export function FeaturedStacksSection({ username }: { username: string }) {
       id="stacks"
       data-slot="panel"
       className="screen-line-bottom"
-      aria-label="Featured stacks"
+      aria-label="Featured skills"
     >
       <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 overflow-x-clip px-4 py-2.5">
         {groups.map((group, index) => (

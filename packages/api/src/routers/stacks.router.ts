@@ -12,6 +12,7 @@ import {
   StackListPageOutputSchema,
   StackOutputSchema,
   StackUpdateInputSchema,
+  normalizeStackAlternativeNames,
   sanitizeSvg
 } from "@tsu-stack/core";
 import { stackDependencyRepository, stackRepository } from "@tsu-stack/db/repositories";
@@ -127,6 +128,7 @@ export const stacksRouter = {
         healthStatus: stack.healthStatus,
         confidence: stack.confidence,
         sortOrder: stack.sortOrder,
+        alternativeNames: stack.alternativeNames ?? [],
         portfolioEntryId: stack.portfolioEntryId,
         projectCount: projects.length,
         dependencies: deps.map((d) => {
@@ -148,8 +150,17 @@ export const stacksRouter = {
     .output(StackOutputSchema)
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
-      const { includedInPortfolio, isFeatured, name, description, icon, dependencies, projectIds } =
-        input;
+      const {
+        includedInPortfolio,
+        isFeatured,
+        name,
+        description,
+        icon,
+        type,
+        alternativeNames,
+        dependencies,
+        projectIds
+      } = input;
       const existing = await stackRepository.findByNameForUser(userId, name);
       if (existing) {
         throw new ORPCError("CONFLICT", {
@@ -164,6 +175,8 @@ export const stacksRouter = {
           name,
           description: description ?? null,
           icon: icon ?? null,
+          type: type ?? null,
+          alternativeNames: normalizeStackAlternativeNames(alternativeNames, name),
           sortOrder: nextSortOrder,
           isFeatured: isFeatured ?? false
         },
@@ -213,10 +226,23 @@ export const stacksRouter = {
           });
         }
       }
+      const canonicalName =
+        updateData.name ?? (await stackRepository.findByIdForUser(input.id, userId))?.name;
       const updated = await stackRepository.update(
         input.id,
         userId,
-        { ...updateData, ...(isFeatured === undefined ? {} : { isFeatured }) },
+        {
+          ...updateData,
+          ...(isFeatured === undefined ? {} : { isFeatured }),
+          ...(updateData.alternativeNames === undefined
+            ? {}
+            : {
+                alternativeNames: normalizeStackAlternativeNames(
+                  updateData.alternativeNames,
+                  canonicalName
+                )
+              })
+        },
         {
           includedInPortfolio:
             includedInPortfolio === undefined && isFeatured === true ? true : includedInPortfolio,
@@ -341,7 +367,15 @@ export const stacksRouter = {
             id: item.id,
             data: {
               ...updateData,
-              ...(isFeatured === undefined ? {} : { isFeatured })
+              ...(isFeatured === undefined ? {} : { isFeatured }),
+              ...(updateData.alternativeNames === undefined
+                ? {}
+                : {
+                    alternativeNames: normalizeStackAlternativeNames(
+                      updateData.alternativeNames,
+                      updateData.name
+                    )
+                  })
             },
             options: {
               includedInPortfolio:

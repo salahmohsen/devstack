@@ -3,8 +3,8 @@
 import { rectSortingStrategy } from "@dnd-kit/sortable";
 import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { BoxesIcon, FolderKanbanIcon, LayersIcon, Package } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { BoxesIcon, FolderKanbanIcon, LayersIcon, Package, TagsIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -50,17 +50,21 @@ import {
 } from "@/features/stacks";
 
 import {
-  GridSkeleton,
+  ITEMS_GRID_CLASSNAME,
   ItemInfoPanel,
   ItemInfoSection,
   ItemInfoSections,
-  PanelEditButton,
   ItemsEmpty,
+  ItemsGrid,
+  ItemsGridCell,
   ItemsNavProvider,
   PageHeader,
   PageLayout,
+  PanelEditButton,
   isAnyOpened,
-  useItemsNavigation
+  useItemsGridColumnCount,
+  useItemsNavigation,
+  type ItemsNavLayout
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
@@ -81,12 +85,24 @@ import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
-export function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit?: () => void }) {
+export function StackDetailPanel({
+  stack,
+  onEdit,
+  navLayout
+}: {
+  stack: StackOutput;
+  onEdit?: () => void;
+  navLayout?: ItemsNavLayout;
+}) {
   const detailQuery = useQuery({
     ...orpcQueryClient.stacks.get.queryOptions({ input: { id: stack.id } }),
     staleTime: STACKS_LIST_STALE_TIME_MS
   });
-  const item = detailQuery.data ?? stack;
+  const item = {
+    ...stack,
+    ...detailQuery.data,
+    alternativeNames: detailQuery.data?.alternativeNames ?? stack.alternativeNames ?? []
+  };
   const projectCount = Math.max(item.projectCount, item.projects?.length ?? 0);
 
   return (
@@ -115,6 +131,7 @@ export function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit
       actions={onEdit ? <PanelEditButton onClick={onEdit} /> : null}
       updatedAt={item.updatedAt}
       createdAt={item.createdAt}
+      navLayout={navLayout}
     >
       <ItemInfoSections>
         <ItemInfoSection title="Summary" icon={<Package strokeWidth={1.75} />}>
@@ -123,9 +140,21 @@ export function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit
               {item.description}
             </Markdown>
           ) : (
-            <p>No summary yet. Edit this stack to add one.</p>
+            <p>No summary yet. Edit this skill to add one.</p>
           )}
         </ItemInfoSection>
+
+        {(item.alternativeNames ?? []).length > 0 ? (
+          <ItemInfoSection title="Also known as" icon={<TagsIcon strokeWidth={1.75} />}>
+            <div className="flex flex-wrap gap-1.5">
+              {(item.alternativeNames ?? []).map((name) => (
+                <Badge key={name} variant="secondary" size="sm">
+                  {name}
+                </Badge>
+              ))}
+            </div>
+          </ItemInfoSection>
+        ) : null}
 
         {item.dependencies && item.dependencies.length > 0 ? (
           <ItemInfoSection title="Dependencies" icon={<BoxesIcon />}>
@@ -194,12 +223,18 @@ export function StacksPage() {
   const [pendingOrder, setPendingOrder] = useState<StackOutput[] | null>(null);
   const [isLoadingFullListForSort, setIsLoadingFullListForSort] = useState(false);
 
-  const { handleNext, handlePrev } = useItemsNavigation({
+  const gridColumnCount = useItemsGridColumnCount();
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const itemsNav = useItemsNavigation({
     items: stacks,
     openedItem,
     isItemOpen,
     setOpenedItem,
-    setIsItemOpen
+    setIsItemOpen,
+    layout: "grid",
+    columnCount: gridColumnCount,
+    containerRef: gridRef
   });
 
   const isAnyOpen = isAnyOpened(isItemOpen);
@@ -264,7 +299,7 @@ export function StacksPage() {
             await orpcClient.stacks.batchMerge({ items: mergeItems });
           } catch (error) {
             console.debug("[stacks] Batch merge failed:", error);
-            toast.error("Failed to merge some stacks.");
+            toast.error("Failed to merge some skills.");
             applyFailedEarly = true;
           }
         }
@@ -273,11 +308,23 @@ export function StacksPage() {
       if (!applyFailedEarly) {
         // Batch update renames + enrichments + portfolio flags in one map
         const batchItemMap = new Map<string, { id: string; data: Record<string, unknown> }>();
+        const stackById = new Map(stacks.map((stack) => [stack.id, stack]));
 
         for (const action of renameActions) {
           const newName = action.details.newName;
           if (!newName) continue;
-          batchItemMap.set(action.stackId, { id: action.stackId, data: { name: newName } });
+          const current = stackById.get(action.stackId);
+          batchItemMap.set(action.stackId, {
+            id: action.stackId,
+            data: {
+              name: newName,
+              alternativeNames: [
+                ...(current?.alternativeNames ?? []),
+                action.stackName,
+                ...(action.details.alternativeNames ?? [])
+              ]
+            }
+          });
         }
 
         for (const action of enrichActions) {
@@ -471,7 +518,7 @@ export function StacksPage() {
       setPendingOrder(full);
       setIsSort(true);
     } catch {
-      toast.error("Failed to load stacks for sorting.");
+      toast.error("Failed to load skills for sorting.");
     }
     setIsLoadingFullListForSort(false);
   }
@@ -517,7 +564,7 @@ export function StacksPage() {
         setMergeDialogOpen(false);
       },
       onError: () => {
-        toast.error("Failed to merge stacks.");
+        toast.error("Failed to merge skills.");
       }
     })
   );
@@ -586,7 +633,7 @@ export function StacksPage() {
     const failed = results.filter((r) => r.status === "rejected").length;
 
     if (failed === 0) {
-      toast.success(`Deleted ${succeeded} stack(s).`);
+      toast.success(`Deleted ${succeeded} skill(s).`);
       clearSelection();
     } else {
       toast.error(`Deleted ${succeeded}, ${failed} failed.`);
@@ -618,7 +665,7 @@ export function StacksPage() {
     const failed = results.filter((r) => r.status === "rejected").length;
 
     if (failed === 0) {
-      toast.success(`Added ${succeeded} stack(s) to portfolio.`);
+      toast.success(`Added ${succeeded} skill(s) to portfolio.`);
       clearSelection();
     } else {
       toast.error(`Added ${succeeded} to portfolio, ${failed} failed.`);
@@ -628,101 +675,97 @@ export function StacksPage() {
   const emptyState = (
     <ItemsEmpty
       icon={<Package aria-hidden />}
-      title="No stacks configured"
-      description="Add a stack to reuse it across multiple projects."
-      action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Stack" }} />}
+      title="No skills yet"
+      description="Add skills you use — frameworks, tools, CI/CD, or anything else. Detect stacks on a project still finds real dependencies."
+      action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add skill" }} />}
     />
   );
 
   const displayItems = pendingOrder ?? stacks;
 
-  // Viewport breakpoints (not auto-fill): column count stays stable when the
-  // side panel opens and only card width animates — no item reflow/rearrange.
-  const gridClassName =
-    "grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 animate-grid";
+  const gridFooter =
+    totalCount != null && stacks.length > 0 ? (
+      <p className="pb-2 text-center text-xs text-muted-foreground">
+        Showing {stacks.length}
+        {totalCount > stacks.length ? ` of ${totalCount}` : ""} skill
+        {totalCount === 1 ? "" : "s"}
+      </p>
+    ) : null;
+
+  const gridAfter = (
+    <div
+      ref={sentinelRef}
+      className="flex w-full items-center justify-center py-2"
+      aria-hidden={!stacksQuery.hasNextPage}
+    >
+      {stacksQuery.isFetchingNextPage ? <ChaoticPixelsLoader label="Loading more skills" /> : null}
+    </div>
+  );
 
   function renderGrid() {
-    if (stacksQuery.isLoading) return <GridSkeleton count={8} />;
-    if (stacks.length === 0) return emptyState;
-
-    if (!isSort) {
+    if (isSort) {
       return (
-        <>
-          <div className={gridClassName}>
-            {/* @container on cell: stack-item compact/wide queries card width */}
-            {displayItems.map((stack) => (
-              <div key={stack.id} className="@container animate-grid-item min-w-0">
-                <StackItem
-                  stack={stack}
-                  isChecked={Boolean(selectedIds?.[stack.id])}
-                  batchSelectActive={batchSelectActive}
-                  isOpen={Boolean(isItemOpen?.[stack.id])}
-                  onEdit={openDialog}
-                  onOpen={openItem}
-                  onToggleSelect={toggleSelect}
-                  onPrefetch={prefetchStack}
-                />
-              </div>
-            ))}
-          </div>
-          <div
-            ref={sentinelRef}
-            className="flex w-full items-center justify-center py-2"
-            aria-hidden={!stacksQuery.hasNextPage}
-          >
-            {stacksQuery.isFetchingNextPage ? (
-              <ChaoticPixelsLoader label="Loading more stacks" />
-            ) : null}
-          </div>
-          {totalCount != null && stacks.length > 0 ? (
-            <p className="pb-2 text-center text-xs text-muted-foreground">
-              Showing {stacks.length}
-              {totalCount > stacks.length ? ` of ${totalCount}` : ""} stack
-              {totalCount === 1 ? "" : "s"}
-            </p>
-          ) : null}
-        </>
+        <SortableList
+          items={displayItems}
+          onReorder={handleReorder}
+          sortable
+          axis="both"
+          disabled={reorderMutation.isPending}
+          strategy={rectSortingStrategy}
+          containerClassName={ITEMS_GRID_CLASSNAME}
+        >
+          {(stack, dragHandleProps) => (
+            <ItemsGridCell key={stack.id}>
+              <StackItem
+                stack={stack}
+                isChecked={Boolean(selectedIds?.[stack.id])}
+                batchSelectActive={batchSelectActive}
+                isOpen={Boolean(isItemOpen?.[stack.id])}
+                onEdit={openDialog}
+                onOpen={openItem}
+                onToggleSelect={toggleSelect}
+                dragHandleProps={dragHandleProps}
+                isSort
+              />
+            </ItemsGridCell>
+          )}
+        </SortableList>
       );
     }
 
     return (
-      <SortableList
+      <ItemsGrid
         items={displayItems}
-        onReorder={handleReorder}
-        sortable
-        axis="both"
-        disabled={reorderMutation.isPending}
-        strategy={rectSortingStrategy}
-        containerClassName={gridClassName}
-      >
-        {(stack, dragHandleProps) => (
-          <div key={stack.id} className="@container animate-grid-item min-w-0">
-            <StackItem
-              stack={stack}
-              isChecked={Boolean(selectedIds?.[stack.id])}
-              batchSelectActive={batchSelectActive}
-              isOpen={Boolean(isItemOpen?.[stack.id])}
-              onEdit={openDialog}
-              onOpen={openItem}
-              onToggleSelect={toggleSelect}
-              dragHandleProps={dragHandleProps}
-              isSort
-            />
-          </div>
+        isLoading={stacksQuery.isLoading}
+        emptyState={emptyState}
+        containerRef={gridRef}
+        after={gridAfter}
+        footer={gridFooter}
+        renderItem={(stack) => (
+          <StackItem
+            stack={stack}
+            isChecked={Boolean(selectedIds?.[stack.id])}
+            batchSelectActive={batchSelectActive}
+            isOpen={Boolean(isItemOpen?.[stack.id])}
+            onEdit={openDialog}
+            onOpen={openItem}
+            onToggleSelect={toggleSelect}
+            onPrefetch={prefetchStack}
+          />
         )}
-      </SortableList>
+      />
     );
   }
 
   return (
-    <ItemsNavProvider value={{ handleNext, handlePrev }}>
+    <ItemsNavProvider value={{ ...itemsNav, containerRef: gridRef }}>
       <PageLayout>
         <PageHeader
-          title="Stacks"
-          description="Select a stack to inspect its details. Use ← → to move between stacks."
+          title="Skills"
+          description="What you use — broader than a project's stack. Detect stacks on a project for real dependencies."
           actions={
             <HeaderActions
-              add={{ onAdd: () => openDialog(null), label: "Add Stack" }}
+              add={{ onAdd: () => openDialog(null), label: "Add skill" }}
               organize={{
                 isRunning: organizeStatus === "running",
                 currentStep: organizeStepLabel,
@@ -765,7 +808,7 @@ export function StacksPage() {
         <ItemsInspectHost
           open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
-          title="Stack"
+          title="Skill"
           onOpenChange={(next) => {
             if (!next) {
               setOpenedItem(null);
@@ -775,7 +818,9 @@ export function StacksPage() {
         >
           {(item) => {
             if (!item) return null;
-            return <StackDetailPanel stack={item} onEdit={() => openDialog(item.id)} />;
+            return (
+              <StackDetailPanel stack={item} onEdit={() => openDialog(item.id)} navLayout="grid" />
+            );
           }}
         </ItemsInspectHost>
 
@@ -800,9 +845,9 @@ export function StacksPage() {
         >
           <AlertDialogPopup>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete {selectedCount} stack(s)?</AlertDialogTitle>
+              <AlertDialogTitle>Delete {selectedCount} skill(s)?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the selected stacks and remove them from all projects.
+                This will permanently delete the selected skills and remove them from all projects.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

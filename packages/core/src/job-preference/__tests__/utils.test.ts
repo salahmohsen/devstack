@@ -106,6 +106,7 @@ describe("mergeJobPreference", () => {
     expect(d.titleId).toBeNull();
     expect(d.customTitle).toBeNull();
     expect(d.jobsPerRun).toBe(25);
+    expect(d.dailyBoardScoreCap).toBe(50);
     expect(d.importFromEmail).toBe(false);
   });
 
@@ -117,6 +118,14 @@ describe("mergeJobPreference", () => {
     });
     expect(merged.jobsPerRun).toBe(15); // snapped
     expect(merged.importFromEmail).toBe(true);
+  });
+
+  it("merges dailyBoardScoreCap when provided", () => {
+    const merged = mergeJobPreference(defaultJobPreference(), {
+      dailyBoardScoreCap: 47,
+      salaryCurrency: undefined
+    });
+    expect(merged.dailyBoardScoreCap).toBe(50);
   });
 });
 

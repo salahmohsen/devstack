@@ -59,7 +59,9 @@ const KIND_GROUPS: { title: string; kinds: NotificationKind[] }[] = [
       "mail.needs_action",
       "mail.apply_nudge",
       "mail.job_alerts_ready",
-      "application.stage_auto"
+      "application.stage_auto",
+      "application.silence_nudge",
+      "application.ghosted_suggest"
     ]
   },
   {

@@ -25,11 +25,12 @@ function sourceWith(prefs = defaultJobPreference()): SearchBriefSource {
 }
 
 describe("search brief source payload", () => {
-  it("ignores jobsPerRun, minMatchScore, and importFromEmail", () => {
+  it("ignores jobsPerRun, dailyBoardScoreCap, minMatchScore, and importFromEmail", () => {
     const base = sourceWith(defaultJobPreference());
     const ignored = sourceWith({
       ...defaultJobPreference(),
       jobsPerRun: 40,
+      dailyBoardScoreCap: 80,
       minMatchScore: 99,
       importFromEmail: true
     });

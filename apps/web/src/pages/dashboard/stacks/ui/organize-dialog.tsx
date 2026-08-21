@@ -251,9 +251,15 @@ export function OrganizeDialog({
             </div>
           );
         } else if (action.type === "rename") {
+          const aliases = (action.details.alternativeNames ?? []).filter(Boolean);
           summary = `→ ${String(action.details.newName ?? "unknown")}`;
           before = action.stackName;
           after = String(action.details.newName ?? "");
+          if (aliases.length > 0) {
+            details = (
+              <p className="text-xs text-muted-foreground">Also known as: {aliases.join(", ")}</p>
+            );
+          }
         } else {
           const parts: string[] = [];
           if (action.details.newType) {
@@ -521,7 +527,7 @@ export function OrganizeDialog({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogPopup className="sm:max-w-2xl lg:max-w-4xl" showCloseButton={!isPending}>
           <DialogHeader>
-            <DialogTitle>Organize Stacks</DialogTitle>
+            <DialogTitle>Organize skills</DialogTitle>
             <DialogDescription>
               {step === "review"
                 ? "Review AI-proposed merges, renames, and enrichments. Expand a row for before / after."

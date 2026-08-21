@@ -76,6 +76,7 @@ export function ItemAvatar({
   const label = ariaLabel ?? name;
   const showImage = Boolean(trimmedSrc) && failedSrc !== trimmedSrc;
   const faceClassName = "size-full max-h-none max-w-none origin-center scale-[1.28]";
+  const sizedByClass = Boolean(className && /(?:^|\s)(?:[\w-]+:)*size-/.test(className));
 
   return (
     <span
@@ -87,7 +88,7 @@ export function ItemAvatar({
         showImage && "overflow-hidden rounded-lg bg-muted/40",
         className
       )}
-      style={{ width: size, height: size }}
+      style={sizedByClass ? undefined : { width: size, height: size }}
     >
       {showImage ? (
         <img

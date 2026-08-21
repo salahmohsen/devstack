@@ -22,9 +22,19 @@ describe("decideInboxAiKeep", () => {
     expect(decideInboxAiKeep({ passed: true, source: "ai" })).toBe("passed");
   });
 
-  it("does not dismiss when the scorer fell back to heuristic", () => {
-    expect(decideInboxAiKeep({ passed: false, source: "heuristic" })).toBe("heuristic");
-    expect(decideInboxAiKeep({ passed: true, source: "heuristic" })).toBe("heuristic");
+  it("does not dismiss a below-min heuristic that still passed cheap rules", () => {
+    expect(decideInboxAiKeep({ passed: false, source: "heuristic", rulesFailed: false })).toBe(
+      "heuristic"
+    );
+    expect(decideInboxAiKeep({ passed: true, source: "heuristic", rulesFailed: false })).toBe(
+      "heuristic"
+    );
+  });
+
+  it("dismisses a heuristic rules miss (title-keyword / exclude / evidence)", () => {
+    expect(decideInboxAiKeep({ passed: false, source: "heuristic", rulesFailed: true })).toBe(
+      "dismissed"
+    );
   });
 });
 
@@ -49,6 +59,25 @@ describe("decideEvaluateOutcome", () => {
   it("still inserts a keeper when take fails", () => {
     expect(
       decideEvaluateOutcome({ scoreError: false, keep: "passed", takeText: null }).insert
+    ).toEqual({ trackingStatus: "inbox", agentTake: null });
+  });
+
+  it("inserts a heuristic keeper with take when the one try succeeds", () => {
+    expect(
+      decideEvaluateOutcome({
+        scoreError: false,
+        keep: "heuristic",
+        takeText: "Fit is unclear but the stack matches."
+      }).insert
+    ).toEqual({
+      trackingStatus: "inbox",
+      agentTake: "Fit is unclear but the stack matches."
+    });
+  });
+
+  it("still inserts a heuristic keeper when take fails", () => {
+    expect(
+      decideEvaluateOutcome({ scoreError: false, keep: "heuristic", takeText: null }).insert
     ).toEqual({ trackingStatus: "inbox", agentTake: null });
   });
 

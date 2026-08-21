@@ -9,5 +9,6 @@ export * from "#@/stack/package-families";
 export * from "#@/stack/recommend-profile-stacks";
 export * from "#@/stack/stack-type";
 export * from "#@/stack/types";
+export * from "#@/stack/utils";
 export * from "#@/stack/sanitize-svg";
 export * from "#@/stack/stack-aggregation";

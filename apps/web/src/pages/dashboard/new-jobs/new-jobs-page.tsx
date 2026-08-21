@@ -24,9 +24,8 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { toast } from "sonner";
 
 import {
-  APPLICATION_SOURCE_TAG_LABELS,
+  applicationSourceChipLabels,
   type ApplicationOutput,
-  type ApplicationSourceTag,
   isThinJobDescription
 } from "@tsu-stack/core";
 import {
@@ -57,7 +56,7 @@ import {
 } from "@/shared/lib/batch-selection";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
-import { ItemAvatar } from "@/shared/ui/item-avatar";
+import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -133,13 +132,6 @@ const INBOX_TABS = [
   { value: "dismissed" as const, label: "Dismissed" }
 ];
 
-function sourceTagLabel(tag: string): string {
-  if (tag in APPLICATION_SOURCE_TAG_LABELS) {
-    return APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag];
-  }
-  return tag;
-}
-
 function newJobTags(job: ApplicationOutput): ListItemTag[] {
   const tags: ListItemTag[] = [];
   if (job.listingClosed) {
@@ -158,10 +150,19 @@ function newJobTags(job: ApplicationOutput): ListItemTag[] {
       node: <ApplicationMatchScoreBadge matchScore={job.matchScore} />
     });
   }
-  for (const tag of (job.sourceTags ?? []).slice(0, 2)) {
+  if (job.experienceYearsMin != null) {
     tags.push({
-      id: `source-${tag}`,
-      label: sourceTagLabel(tag),
+      id: "years",
+      node: <JobYearsBadge years={job.experienceYearsMin} />
+    });
+  }
+  for (const label of applicationSourceChipLabels({
+    sourceTags: job.sourceTags,
+    sourceLabel: job.sourceLabel
+  }).slice(0, 2)) {
+    tags.push({
+      id: `source-${label}`,
+      label,
       variant: "secondary",
       size: "xs"
     });
@@ -774,12 +775,12 @@ export function NewJobsPage() {
                             tags={newJobTags(job)}
                             meta={newJobMeta(job)}
                             leading={
-                              <ItemAvatar
-                                name={job.companyName}
+                              <JobIdentityMark
+                                companyName={job.companyName}
+                                logoUrl={job.companyLogoUrl}
                                 size={40}
                                 selected={selected}
                                 className="size-10"
-                                aria-label={job.companyName}
                               />
                             }
                             actions={

@@ -3,6 +3,8 @@ import { startTransition, useEffect, useState } from "react";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { type ItemsNavLayout } from "@/widgets/items-page/lib/use-items-navigation";
+
 import { ItemsInfoFooter } from "./items-info-footer";
 
 /** Matches ClipWidth open duration so markdown mounts after the tween. */
@@ -36,6 +38,8 @@ type ItemInfoPanelProps = {
   headerClassName?: string;
   updatedAt?: string | Date | null;
   createdAt?: string | Date | null;
+  /** Inspect footer arrows: list (prev/next) or grid (D-pad). Defaults to page nav context. */
+  navLayout?: ItemsNavLayout;
   className?: string;
   children: React.ReactNode;
 };
@@ -54,6 +58,7 @@ export function ItemInfoPanel({
   headerClassName,
   updatedAt,
   createdAt,
+  navLayout,
   className,
   children
 }: ItemInfoPanelProps) {
@@ -97,7 +102,7 @@ export function ItemInfoPanel({
       <ScrollArea className="min-h-0 flex-1" scrollFade fill>
         <div className={cn("px-6 pb-8", nav && "pt-5", className)}>{children}</div>
       </ScrollArea>
-      <ItemsInfoFooter updatedAt={updatedAt} createdAt={createdAt} />
+      <ItemsInfoFooter updatedAt={updatedAt} createdAt={createdAt} navLayout={navLayout} />
     </div>
   );
 }

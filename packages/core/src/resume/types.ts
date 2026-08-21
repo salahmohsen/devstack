@@ -1,9 +1,15 @@
 import { z } from "zod";
 
-import { type ResumeSchemaSelect } from "@tsu-stack/db/types";
-
 export const ResumeAuthorSchema = z.enum(["admin", "agent"]);
 export type ResumeAuthor = z.infer<typeof ResumeAuthorSchema>;
+
+export const ResumeLinkedJobSchema = z.object({
+  id: z.string(),
+  companyName: z.string(),
+  title: z.string(),
+  companyLogoUrl: z.string().nullable()
+});
+export type ResumeLinkedJob = z.infer<typeof ResumeLinkedJobSchema>;
 
 export const ResumeOutputSchema = z.object({
   id: z.string(),
@@ -13,8 +19,9 @@ export const ResumeOutputSchema = z.object({
   r2Key: z.string(),
   default: z.boolean(),
   createdAt: z.date(),
-  updatedAt: z.date()
-}) satisfies z.ZodType<Omit<ResumeSchemaSelect, "userId">>;
+  updatedAt: z.date(),
+  jobs: z.array(ResumeLinkedJobSchema)
+});
 
 export type ResumeOutput = z.infer<typeof ResumeOutputSchema>;
 

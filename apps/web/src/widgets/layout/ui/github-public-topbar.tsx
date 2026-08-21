@@ -9,7 +9,6 @@ import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/qu
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { IconRotate } from "@tsu-stack/ui/components/icon-motion";
-import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd";
 import {
   Menu,
   MenuGroup,
@@ -24,17 +23,17 @@ import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { setCommandPaletteOpen } from "@/shared/lib/command-palette/open-state";
-import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 import {
-  publicPortfolioHomeLocation,
-  publicReposListLocation,
-  usePublicSurface
-} from "@/shared/lib/public-surface";
+  registerCommandHandler,
+  setCommandEnabled,
+  useCommandBinding,
+  type CommandId
+} from "@/shared/lib/commands";
 import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
-import { useGlobalShortcuts } from "@/shared/lib/use-global-shortcuts";
+import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 import { PrimaryAppMenuLink } from "@/shared/ui/primary-app-menu-link";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
@@ -45,7 +44,17 @@ import { NotificationsBell } from "@/widgets/layout/ui/notifications-bell";
 import { PublicScopeNav } from "@/widgets/layout/ui/public-scope-nav";
 import { SoundMuteButton } from "@/widgets/layout/ui/sound-mute-button";
 
-const MAX_TAB_SHORTCUTS = 9;
+const TAB_SELECT_COMMANDS = [
+  "tabs.select-1",
+  "tabs.select-2",
+  "tabs.select-3",
+  "tabs.select-4",
+  "tabs.select-5",
+  "tabs.select-6",
+  "tabs.select-7",
+  "tabs.select-8",
+  "tabs.select-9"
+] as const satisfies readonly CommandId[];
 
 export function Topbar() {
   const router = useRouter();
@@ -73,7 +82,6 @@ export function Topbar() {
 
   // Prefer session user's profile for GitHub chrome; never a global site owner.
   const sessionUsername = sessionUsernameFromUser(admin) ?? undefined;
-  const ownSurface = usePublicSurface(sessionUsername ?? "");
   const setupStatus = sessionUsername
     ? queryClient.getQueryData(getGithubSetupStatusQueryOptions(sessionUsername).queryKey)
     : undefined;
@@ -149,73 +157,20 @@ export function Topbar() {
     void routerRef.current.navigate({ to: tab.url as never });
   }
 
-  function getNeighborTab(tab: { id: string; url: string } | undefined) {
-    if (!tab) return undefined;
-    const index = openTabs.findIndex((item) => item.id === tab.id);
-    if (index === -1) return undefined;
-    return openTabs[index + 1] ?? openTabs[index - 1];
-  }
+  const paletteToggleBinding = useCommandBinding("palette.toggle");
 
-  useGlobalShortcuts([
-    ...Array.from({ length: Math.min(openTabs.length, MAX_TAB_SHORTCUTS) }, (_, index) => {
-      return {
-        shortcut: { code: `Digit${index + 1}`, shift: true },
-        enabled: openTabs.length > index,
-        onTrigger: () => {
-          navigateToTab(openTabs[index]);
-        }
-      };
-    }),
-    {
-      // Match command palette: D F (proFile — P is Projects)
-      shortcut: [{ key: "d" }, { key: "f" }],
-      enabled: Boolean(sessionUsername),
-      onTrigger: () => {
-        if (!sessionUsername) return;
-        // Host-aware: custom domain → `/`; path primary → `/$username`.
-        const loc = publicPortfolioHomeLocation(ownSurface);
-        void navigateRef.current(
-          "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
-        );
-      }
-    },
-    {
-      // Match command palette: D R (Repositories)
-      shortcut: [{ key: "d" }, { key: "r" }],
-      enabled: Boolean(sessionUsername),
-      onTrigger: () => {
-        if (!sessionUsername) return;
-        const loc = publicReposListLocation(ownSurface);
-        void navigateRef.current(
-          "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
-        );
-      }
-    },
-    {
-      // Match command palette: D D (Dashboard)
-      shortcut: [{ key: "d" }, { key: "d" }],
-      enabled: Boolean(admin),
-      onTrigger: () => {
-        // Primary host only — dashboard is not served on custom portfolio domains.
-        window.location.assign(primaryAppUrl("/dashboard"));
-      }
-    },
-    {
-      shortcut: { key: "w", shift: true },
-      enabled: openTabs.length > 0,
-      onTrigger: () => {
+  useEffect(() => {
+    const unsubs = [
+      registerCommandHandler("tabs.close", () => {
         const currentPath = routerRef.current.state.location.pathname;
         const currentTab = openTabs.find((tab) => tab.url === currentPath);
         if (!currentTab) return;
-        const nextTab = getNeighborTab(currentTab);
+        const index = openTabs.findIndex((item) => item.id === currentTab.id);
+        const nextTab = index === -1 ? undefined : (openTabs[index + 1] ?? openTabs[index - 1]);
         removeTab(currentTab.id);
         void routerRef.current.navigate({ to: nextTab?.url ?? ("/" as never) });
-      }
-    },
-    {
-      shortcut: { key: "ArrowLeft", shift: true },
-      enabled: openTabs.length > 1,
-      onTrigger: () => {
+      }),
+      registerCommandHandler("tabs.prev", () => {
         const currentIndex = openTabs.findIndex(
           (tab) => tab.url === routerRef.current.state.location.pathname
         );
@@ -224,20 +179,41 @@ export function Topbar() {
             ? openTabs.length - 1
             : (currentIndex - 1 + openTabs.length) % openTabs.length;
         navigateToTab(openTabs[nextIndex]);
-      }
-    },
-    {
-      shortcut: { key: "ArrowRight", shift: true },
-      enabled: openTabs.length > 1,
-      onTrigger: () => {
+      }),
+      registerCommandHandler("tabs.next", () => {
         const currentIndex = openTabs.findIndex(
           (tab) => tab.url === routerRef.current.state.location.pathname
         );
         const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % openTabs.length;
         navigateToTab(openTabs[nextIndex]);
-      }
+      }),
+      ...TAB_SELECT_COMMANDS.map((id, index) =>
+        registerCommandHandler(id, () => {
+          navigateToTab(openTabs[index]);
+        })
+      )
+    ];
+    return () => {
+      for (const unsub of unsubs) unsub();
+    };
+  }, [openTabs]);
+
+  useEffect(() => {
+    setCommandEnabled("tabs.close", openTabs.length > 0);
+    setCommandEnabled("tabs.prev", openTabs.length > 1);
+    setCommandEnabled("tabs.next", openTabs.length > 1);
+    for (const [index, id] of TAB_SELECT_COMMANDS.entries()) {
+      setCommandEnabled(id, openTabs.length > index);
     }
-  ]);
+    return () => {
+      setCommandEnabled("tabs.close", false);
+      setCommandEnabled("tabs.prev", false);
+      setCommandEnabled("tabs.next", false);
+      for (const id of TAB_SELECT_COMMANDS) {
+        setCommandEnabled(id, false);
+      }
+    };
+  }, [openTabs.length]);
 
   const accountControl = admin ? (
     <Menu>
@@ -347,10 +323,7 @@ export function Topbar() {
           aria-label="Search"
         >
           <SearchIcon />
-          <KbdGroup>
-            <Kbd>⌘</Kbd>
-            <Kbd>K</Kbd>
-          </KbdGroup>
+          <HotkeyKbd binding={paletteToggleBinding} className="ms-0" />
         </Button>
 
         {admin && pathname.includes("dashboard") ? (

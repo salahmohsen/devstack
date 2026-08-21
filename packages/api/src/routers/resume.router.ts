@@ -3,17 +3,21 @@ import { ORPCError } from "@orpc/server";
 import {
   DeleteInputSchema,
   DeleteResponseSchema,
+  formatGeneralResumeFilename,
   PublicUsernameInputSchema,
   ResumeListOutputSchema,
   ResumeOutputSchema,
-  SetDefaultInputSchema
+  SetDefaultInputSchema,
+  type ResumeLinkedJob,
+  type ResumeOutput
 } from "@tsu-stack/core";
-import { contactRepository, userRepository } from "@tsu-stack/db";
+import { applicationRepository, contactRepository, userRepository } from "@tsu-stack/db";
 import {
   experienceRepository,
   projectRepository,
   resumeRepository,
-  stackRepository
+  stackRepository,
+  type ResumeEntity
 } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
@@ -40,23 +44,73 @@ async function fetchPortfolioData(userId: string) {
   };
 }
 
-function slugifyName(name: string): string {
-  const slug = name
-    .normalize("NFKD")
-    .replace(/[^\w\s-]/g, "")
-    .trim()
-    .replace(/[\s_-]+/g, "")
-    .slice(0, 40);
-  return slug || "Resume";
+function toResumeOutput(row: ResumeEntity, jobs: ResumeLinkedJob[]): ResumeOutput {
+  return {
+    id: row.id,
+    prompt: row.prompt,
+    author: row.author,
+    filename: row.filename,
+    r2Key: row.r2Key,
+    default: row.default,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    jobs
+  };
 }
 
-function formatFilename(profileName: string): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  const stamp = `${now.getTime().toString(36)}`;
-  return `${slugifyName(profileName)}_Resume_${y}-${m}-${d}_${stamp}.pdf`;
+function jobFromApp(app: {
+  id: string;
+  companyName: string;
+  title: string;
+  companyLogoUrl: string | null;
+}): ResumeLinkedJob {
+  return {
+    id: app.id,
+    companyName: app.companyName,
+    title: app.title,
+    companyLogoUrl: app.companyLogoUrl
+  };
+}
+
+function applyPackageAppId(prompt: string | null): string | null {
+  const match = prompt?.match(/^apply-package:(.+)$/);
+  const id = match?.[1]?.trim();
+  return id && id.length > 0 ? id : null;
+}
+
+async function withLinkedJobs(userId: string, rows: ResumeEntity[]): Promise<ResumeOutput[]> {
+  const links = await applicationRepository.listLinkedByResumeIds(
+    userId,
+    rows.map((row) => row.id)
+  );
+  const byResume = new Map<string, ResumeLinkedJob[]>();
+  const pushJob = (resumeId: string, job: ResumeLinkedJob) => {
+    const list = byResume.get(resumeId) ?? [];
+    if (list.some((item) => item.id === job.id)) return;
+    list.push(job);
+    byResume.set(resumeId, list);
+  };
+  for (const link of links) {
+    if (!link.resumeId) continue;
+    pushJob(link.resumeId, jobFromApp(link));
+  }
+
+  const promptIds = [
+    ...new Set(
+      rows.map((row) => applyPackageAppId(row.prompt)).filter((id): id is string => id != null)
+    )
+  ];
+  if (promptIds.length > 0) {
+    const fromPrompt = await applicationRepository.findByIdsForUser(userId, promptIds);
+    const appById = new Map(fromPrompt.map((app) => [app.id, app]));
+    for (const row of rows) {
+      const appId = applyPackageAppId(row.prompt);
+      const app = appId ? appById.get(appId) : undefined;
+      if (app) pushJob(row.id, jobFromApp(app));
+    }
+  }
+
+  return rows.map((row) => toResumeOutput(row, byResume.get(row.id) ?? []));
 }
 
 export const resumeRouter = {
@@ -68,7 +122,8 @@ export const resumeRouter = {
     .output(ResumeListOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
-      return resumeRepository.findAllByUserId(userId);
+      const rows = await resumeRepository.findAllByUserId(userId);
+      return withLinkedJobs(userId, rows);
     }),
   get: protectedProcedure
     .route({
@@ -79,7 +134,10 @@ export const resumeRouter = {
     .output(ResumeOutputSchema.optional())
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
-      return (await resumeRepository.findByIdForUser(input.id, userId)) ?? undefined;
+      const row = await resumeRepository.findByIdForUser(input.id, userId);
+      if (!row) return undefined;
+      const [mapped] = await withLinkedJobs(userId, [row]);
+      return mapped;
     }),
   getDefault: publicProcedure
     .route({
@@ -103,7 +161,8 @@ export const resumeRouter = {
         throw errors.NOT_FOUND();
       }
       // Query clients cannot store `undefined`. No default resume is `null`.
-      return (await resumeRepository.findDefaultByUserId(resolved.userId)) ?? null;
+      const row = await resumeRepository.findDefaultByUserId(resolved.userId);
+      return row ? toResumeOutput(row, []) : null;
     }),
   setDefault: protectedProcedure
     .route({
@@ -115,7 +174,9 @@ export const resumeRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const updated = await resumeRepository.setDefault(input.id, userId);
-      return updated ?? undefined;
+      if (!updated) return undefined;
+      const [mapped] = await withLinkedJobs(userId, [updated]);
+      return mapped;
     }),
   generate: protectedProcedure
     .route({
@@ -136,8 +197,8 @@ export const resumeRouter = {
         email: userRow.email
       };
 
-      const filename = formatFilename(profile.name);
-      const r2Key = `${userId}/resumes/${filename}`;
+      const filename = formatGeneralResumeFilename({ candidateName: profile.name });
+      const r2Key = `${userId}/resumes/${crypto.randomUUID()}.pdf`;
 
       const bytes = await renderResumePdfBytes({ portfolio, profile });
 
@@ -153,7 +214,7 @@ export const resumeRouter = {
         r2Key
       });
 
-      return created;
+      return toResumeOutput(created, []);
     }),
   delete: protectedProcedure
     .route({

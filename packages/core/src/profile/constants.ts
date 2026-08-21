@@ -17,6 +17,7 @@ export const RESERVED_USERNAME_PATHS = [
   "applications",
   "resumes",
   "stacks",
+  "skills",
   "projects",
   "experiences",
   "onboarding",

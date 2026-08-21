@@ -20,7 +20,9 @@ import {
 } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import {
   consumeHubCreateIntent,
+  consumeHubInterviewRehearsal,
   getHubCreateIntent,
+  getHubInterviewRehearsal,
   hubCreateInterviewText,
   subscribeHubCreateIntent
 } from "@/features/agent-hub/lib/hub-assistant-open";
@@ -52,6 +54,11 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     subscribeHubCreateIntent,
     getHubCreateIntent,
     getHubCreateIntent
+  );
+  const pendingInterview = React.useSyncExternalStore(
+    subscribeHubCreateIntent,
+    getHubInterviewRehearsal,
+    getHubInterviewRehearsal
   );
 
   const [historyReady, setHistoryReady] = React.useState(false);
@@ -131,6 +138,16 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     if (!kind) return;
     void sendMessage({ text: hubCreateInterviewText(kind) });
   }, [ensureHistory, historyReady, pendingCreateKind, sendMessage, status]);
+
+  React.useEffect(() => {
+    if (!pendingInterview) return;
+    ensureHistory();
+    if (!historyReady) return;
+    if (status === "submitted" || status === "streaming") return;
+    const text = consumeHubInterviewRehearsal();
+    if (!text) return;
+    void sendMessage({ text });
+  }, [ensureHistory, historyReady, pendingInterview, sendMessage, status]);
 
   React.useEffect(() => {
     if (status !== "submitted" && status !== "streaming") return;

@@ -41,6 +41,7 @@ export const jobPreference = pgTable(
     titleId: text("title_id"),
     customTitle: text("custom_title"),
     jobsPerRun: integer("jobs_per_run").notNull().default(25),
+    dailyBoardScoreCap: integer("daily_board_score_cap").notNull().default(50),
     importFromEmail: boolean("import_from_email").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })

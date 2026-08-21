@@ -47,6 +47,12 @@ describe("normalizeFreehireJob", () => {
     expect(row?.externalId).toBe(fixture.data[0].public_slug);
   });
 
+  it("maps company_slug and enrichment.experience_years_min", () => {
+    const row = normalizeFreehireJob(fixture.data[0]);
+    expect(row?.companySlug).toBe("acme");
+    expect(row?.experienceYearsMin).toBe(5);
+  });
+
   it("maps Ashby workplaceType, LatAm location, and FullTime", () => {
     const row = normalizeFreehireJob(ashbyShapedRaw);
     expect(row?.workMode).toBe("remote");
@@ -54,6 +60,11 @@ describe("normalizeFreehireJob", () => {
     expect(row?.employmentType).toBe("full_time");
     expect(row?.location).toBe("LatAm");
     expect(row?.sourcePlatform).toBe("ashby");
+    const { workplaceType, ...withoutWorkplace } = ashbyShapedRaw;
+    void workplaceType;
+    expect(
+      normalizeFreehireJob({ ...withoutWorkplace, location: "Palo Alto - Hybrid" })?.workMode
+    ).toBe("hybrid");
   });
 
   it("still maps freehire work_mode and Remote — EU location", () => {
@@ -74,7 +85,14 @@ describe("normalizeHimalayasJob", () => {
     expect(row?.externalId).toBe("globex-frontend-1");
     expect(row?.location).toBe("United States");
     expect(row?.skills).toEqual([]);
-    expect(row?.workMode).toBeNull();
+    expect(row?.workMode).toBe("remote");
+    expect(row?.hiringRegion).toBe("us");
+    const worldwide = normalizeHimalayasJob({
+      ...himalayasFixture.jobs[0],
+      locationRestrictions: []
+    });
+    expect(worldwide?.workMode).toBe("remote");
+    expect(worldwide?.hiringRegion).toBe("worldwide");
   });
 });
 
@@ -85,6 +103,14 @@ describe("normalizeArbeitnowJob", () => {
     expect(row?.workMode).toBe("remote");
     expect(row?.sourcePlatform).toBe("arbeitnow");
     expect(row?.salaryMin).toBeNull();
+    expect(
+      normalizeArbeitnowJob({ ...arbeitnowFixture.data[0], remote: false, location: "Berlin" })
+        ?.workMode
+    ).toBe("onsite");
+    expect(
+      normalizeArbeitnowJob({ ...arbeitnowFixture.data[0], remote: false, location: "Remote" })
+        ?.workMode
+    ).toBe("remote");
   });
 });
 

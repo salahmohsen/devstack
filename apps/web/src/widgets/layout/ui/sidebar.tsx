@@ -22,7 +22,7 @@ const DashboardItems = [
   { href: "/dashboard/onboarding", label: "Onboarding" },
   { href: "/dashboard/experiences", label: "Experiences" },
   { href: "/dashboard/projects", label: "Projects" },
-  { href: "/dashboard/stacks", label: "Stacks" },
+  { href: "/dashboard/skills", label: "Skills" },
   { href: "/dashboard/resumes", label: "Resumes" },
   { href: "/dashboard/new-jobs", label: "New jobs" },
   { href: "/dashboard/tracked-jobs", label: "Tracked jobs" },

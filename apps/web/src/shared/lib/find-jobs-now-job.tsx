@@ -270,8 +270,9 @@ async function runFindJobsNow(
         ingestTriggered: false,
         seats: data.seats
       });
-      toast.message("Daily AI scoring budget used up", {
-        description: "Try again tomorrow, or raise N in Settings → Jobs to lift the hidden 2×N cap."
+      toast.message("Board search scoring is used up for today", {
+        description:
+          "Find jobs now can run again tomorrow. Job-alert emails are not part of this limit."
       });
       return data;
     }

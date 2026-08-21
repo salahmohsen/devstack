@@ -22,3 +22,17 @@ export const SPRING_PRESS = {
   damping: 30,
   mass: 0.6
 } as const;
+
+/** Dragged handles and fills (sliders) — critically damped `useSpring`. */
+export const SPRING_GLIDE = {
+  stiffness: 700,
+  damping: 50,
+  mass: 0.5
+} as const;
+
+/** Cursor-follow tilt / glare (`useSpring` on pointer). */
+export const SPRING_MOUSE = {
+  stiffness: 400,
+  damping: 40,
+  mass: 0.5
+} as const;

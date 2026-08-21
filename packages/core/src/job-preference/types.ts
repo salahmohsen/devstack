@@ -1,10 +1,14 @@
 import { z } from "zod";
 
 import {
+  DEFAULT_DAILY_BOARD_SCORE_CAP,
   DEFAULT_JOBS_PER_RUN,
   JobTitleIdSchema,
+  MAX_DAILY_BOARD_SCORE_CAP,
   MAX_JOBS_PER_RUN,
+  MIN_DAILY_BOARD_SCORE_CAP,
   MIN_JOBS_PER_RUN,
+  refineDailyBoardScoreCap,
   refineJobsPerRun
 } from "#@/job-discovery/constants";
 import { refineCustomDiscoveryTitle } from "#@/job-discovery/title-packs";
@@ -33,6 +37,13 @@ const jobsPerRunField = z
   .max(MAX_JOBS_PER_RUN)
   .transform(refineJobsPerRun);
 
+const dailyBoardScoreCapField = z
+  .number()
+  .int()
+  .min(MIN_DAILY_BOARD_SCORE_CAP)
+  .max(MAX_DAILY_BOARD_SCORE_CAP)
+  .transform(refineDailyBoardScoreCap);
+
 const customTitleField = z.string().trim().max(120).nullable();
 
 /**
@@ -55,6 +66,7 @@ export const JobPreferenceFieldsSchema = z.object({
   titleId: JobTitleIdSchema.nullable(),
   customTitle: customTitleField,
   jobsPerRun: jobsPerRunField,
+  dailyBoardScoreCap: dailyBoardScoreCapField,
   importFromEmail: z.boolean()
 });
 export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
@@ -76,14 +88,22 @@ export const JobPreferenceSchema = z.object({
   titleId: JobTitleIdSchema.nullable().default(null),
   customTitle: customTitleField.default(null),
   jobsPerRun: jobsPerRunField.default(DEFAULT_JOBS_PER_RUN),
+  dailyBoardScoreCap: dailyBoardScoreCapField.default(DEFAULT_DAILY_BOARD_SCORE_CAP),
   importFromEmail: z.boolean().default(false)
 });
 
 /** API get/upsert response. */
 export const JobPreferenceOutputSchema = JobPreferenceFieldsSchema.extend({
-  updatedAt: z.coerce.date().nullable()
+  updatedAt: z.coerce.date().nullable(),
+  /** Board-search AI scores already consumed this UTC day. Not a form field. */
+  boardScoresUsedToday: z.number().int().nonnegative()
 });
 export type JobPreferenceOutput = z.infer<typeof JobPreferenceOutputSchema>;
+
+export const ResetBoardScoresTodayOutputSchema = z.object({
+  boardScoresUsedToday: z.literal(0)
+});
+export type ResetBoardScoresTodayOutput = z.infer<typeof ResetBoardScoresTodayOutputSchema>;
 
 /** Partial upsert — omitted fields keep existing (or product defaults on first write). */
 export const UpsertJobPreferenceInputSchema = z
@@ -110,6 +130,7 @@ export const UpsertJobPreferenceInputSchema = z
     titleId: JobTitleIdSchema.nullable().optional(),
     customTitle: customTitleField.optional(),
     jobsPerRun: jobsPerRunField.optional(),
+    dailyBoardScoreCap: dailyBoardScoreCapField.optional(),
     importFromEmail: z.boolean().optional()
   })
   .superRefine(refineCustomDiscoveryTitle);

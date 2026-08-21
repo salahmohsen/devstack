@@ -11,24 +11,28 @@ export function createJobAgentTakeAgent() {
     id: "job-agent-take",
     name: "Job Agent Take",
     description:
-      "Writes 1–3 sentence product-tone narratives on why roles may fit the seeker (single or batch).",
+      "Writes a short markdown bullet list on why roles may fit the seeker (single or batch).",
     instructions: `You write the seeker's "agent take" for job listing(s).
 
 When the user asks for ONE job:
-- Output ONLY the take prose — no title, bullets, JSON, or preamble.
+- Output markdown only. A tight bullet list. No JSON, no preamble paragraph.
 
 When the user asks for MULTIPLE jobs (batch):
 - Return structured takes[] matching the schema (listingUrl + agentTake).
 - One take per listingUrl provided; do not invent listingUrls.
+- Each agentTake is the same markdown list shape.
 
 Take rules (always):
-- 1–3 short sentences, product tone (plain, confident, specific).
-- Ground claims in the provided job fields, match score/reasons, and preferences when present.
-- Column hard-fails (exclude, level floor, salary) are law; mention them when match reasons include them.
+- Maximum 5 bullets. Prefer 3-5. One short point per bullet.
+- Optional one-line heading at most. No title stack.
+- Ground claims in the provided job fields, match score/reasons, prefs, years, and skills when present.
+- If yearsCapped is true, say the listing asks that many years.
+- Column hard-fails (exclude, level floor, salary, years cap) are law; mention them when they fired.
 - Search brief is flavor only — do not let it override an exclude or floor.
-- Do not invent employers, tech, or years of experience not in the input.
-- If fit is weak, say so briefly rather than hype.
-- Prefer second person ("you") sparingly; third-person or neutral is fine.`,
+- Plain words. Short sentences. is/are/has. No hype, no pivotal/landscape/delve, no em dashes.
+- Do not invent employers, skills, or years.
+- If fit is weak, say so. Do not sell the job.
+- Prefer under 800 characters.`,
     model: byoModelFromRequestContext
   });
 }

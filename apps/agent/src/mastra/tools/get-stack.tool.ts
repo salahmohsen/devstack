@@ -12,7 +12,7 @@ import { createDb, runWithDb, stackRepository } from "@tsu-stack/db";
 export const getStackTool = createTool({
   id: "get-stack",
   description:
-    "Fetch one stack by id (name, type, summary, linked project titles) for the current user only.",
+    "Fetch one skill by id (name, type, summary, linked project titles) for the current user only.",
   inputSchema: z.object({
     stackId: z.string().min(1).describe("Stack id from listStacks. Required.")
     // Intentionally no userId — tenant is requestContext only.
@@ -26,6 +26,7 @@ export const getStackTool = createTool({
         type: z.string().nullable(),
         confidence: z.string().nullable(),
         summary: z.string().nullable(),
+        alternativeNames: z.array(z.string()),
         projects: z.array(
           z.object({
             id: z.string(),
@@ -53,6 +54,7 @@ export const getStackTool = createTool({
         confidence: row.confidence ?? null,
         // Short text only — omit large description bodies.
         summary: row.description ? row.description.slice(0, 400) : null,
+        alternativeNames: row.alternativeNames ?? [],
         projects: (row.projects ?? [])
           .map((ps) => {
             const p = ps.project;

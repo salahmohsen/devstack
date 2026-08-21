@@ -833,7 +833,7 @@ export const agentRouter = {
    */
   organizeStacks: protectedProcedure
     .route({
-      description: "Organize stacks — merge duplicates, rename, enrich metadata",
+      description: "Organize skills — merge duplicates, rename, enrich metadata",
       method: "POST"
     })
     .input(z.object({}))
@@ -855,6 +855,7 @@ export const agentRouter = {
             icon: stack.icon,
             projectCount: stack.projectCount ?? 0,
             npmPackages: (stack.dependencies ?? []).map((d) => d.npmPackage),
+            alternativeNames: stack.alternativeNames ?? [],
             isFeatured: Boolean(stack.isFeatured),
             includedInPortfolio: Boolean(stack.portfolioEntryId)
           };

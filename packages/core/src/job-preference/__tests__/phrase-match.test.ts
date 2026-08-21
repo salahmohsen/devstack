@@ -8,7 +8,13 @@ describe("matchesKeywordPhrase §6.3", () => {
     ["Senior React Native Engineer", "react", false],
     ["Senior React Engineer", "react", true],
     ["React.js Developer", "react", true],
-    ["PHP Engineer", "php", true]
+    ["PHP Engineer", "php", true],
+    ["Front End Angular Engineer", "frontend", true],
+    ["Frontend Engineer", "front-end", true],
+    ["Senior Front-End Developer", "frontend", true],
+    ["Backend Engineer", "back end", true],
+    ["Full Stack Engineer", "fullstack", true],
+    ["Graphic Designer", "frontend", false]
   ] as const)("%s vs keyword %s → %s", (haystack, keyword, expected) => {
     expect(matchesKeywordPhrase(haystack, keyword)).toBe(expected);
   });

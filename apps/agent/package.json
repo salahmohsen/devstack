@@ -17,6 +17,7 @@
     "rebuild:core-cache": "pnpm exec esbuild ../../packages/core/src/index.ts --bundle --format=esm --platform=node --packages=external --outfile=../../packages/core/node_modules/.cache/@tsu-stack__core.mjs --sourcemap",
     "rebuild:db-cache": "pnpm exec esbuild ../../packages/db/src/index.ts --bundle --format=esm --platform=node --packages=external --outfile=../../packages/db/node_modules/.cache/@tsu-stack__db.mjs --sourcemap",
     "dev": "pnpm run rebuild:core-cache && pnpm run rebuild:db-cache && PORT=4111 dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
+    "mastra:studio": "mastra studio --port 4112 --server-port 4111 --env ../../packages/env/.env",
     "build": "IS_BUILD=true mastra build",
     "start": "node .mastra/output/index.mjs",
     "check": "vp check",

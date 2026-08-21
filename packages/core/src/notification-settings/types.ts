@@ -6,6 +6,8 @@ export const NotificationKindSchema = z.enum([
   "mail.apply_nudge",
   "mail.job_alerts_ready",
   "application.stage_auto",
+  "application.silence_nudge",
+  "application.ghosted_suggest",
   "workflow.finished",
   "security.new_device_otp"
 ]);
@@ -23,6 +25,8 @@ export const NotificationChannelPrefsSchema = z.object({
   "mail.apply_nudge": NotificationChannelToggleSchema,
   "mail.job_alerts_ready": NotificationChannelToggleSchema,
   "application.stage_auto": NotificationChannelToggleSchema,
+  "application.silence_nudge": NotificationChannelToggleSchema,
+  "application.ghosted_suggest": NotificationChannelToggleSchema,
   "workflow.finished": NotificationChannelToggleSchema,
   "security.new_device_otp": NotificationChannelToggleSchema
 });

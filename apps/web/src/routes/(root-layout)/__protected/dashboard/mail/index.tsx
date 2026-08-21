@@ -5,10 +5,18 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
  * `/dashboard/mail/$category` (default: applications).
  */
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/mail/")({
-  beforeLoad: () => {
+  validateSearch: (raw: Record<string, unknown>): { message?: string } => {
+    const message = raw.message;
+    if (typeof message === "string" && message.length > 0) {
+      return { message };
+    }
+    return {};
+  },
+  beforeLoad: ({ search }) => {
     throw redirect({
       to: "/dashboard/mail/$category",
-      params: { category: "applications" }
+      params: { category: "applications" },
+      search: search.message ? { message: search.message } : {}
     });
   }
 });

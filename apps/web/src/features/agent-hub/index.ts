@@ -15,6 +15,7 @@ export {
   getHubCreateIntent,
   hubCreateInterviewText,
   requestHubCreateInterview,
+  requestHubInterviewRehearsal,
   requestOpenHubAssistant,
   subscribeHubAssistantOpen,
   subscribeHubCreateIntent

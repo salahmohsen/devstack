@@ -4,7 +4,7 @@ import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack
 
 export const jobPreferenceQueryKeys = {
   current() {
-    return orpcQueryClient.jobPreference.get.key();
+    return orpcQueryClient.jobPreference.get.key({ type: "query" });
   }
 };
 

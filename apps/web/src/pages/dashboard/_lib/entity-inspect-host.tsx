@@ -94,12 +94,12 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
         <ItemsInspectHost
           open
           item={{ id: request.id }}
-          title="Stack"
+          title="Skill"
           onOpenChange={(open) => {
             if (!open) close();
           }}
         >
-          {() => <p className="px-6 py-8 text-sm text-muted-foreground">Stack not found.</p>}
+          {() => <p className="px-6 py-8 text-sm text-muted-foreground">Skill not found.</p>}
         </ItemsInspectHost>
       );
     }
@@ -107,7 +107,7 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
       <ItemsInspectHost
         open
         item={stack}
-        title="Stack"
+        title="Skill"
         onOpenChange={(open) => {
           if (!open) close();
         }}

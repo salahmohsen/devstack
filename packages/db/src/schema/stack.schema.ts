@@ -3,6 +3,7 @@ import {
   index,
   integer,
   json,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -12,8 +13,9 @@ import {
 import { user } from "./auth.schema.ts";
 import { portfolioEntry } from "./portfolio-entry.schema.ts";
 
+/** Tenant skill catalog. Product UI: Skills. Project tech stays on `project_stack`. */
 export const stack = pgTable(
-  "stack",
+  "skill",
   {
     id: text("id").primaryKey(),
     userId: text("user_id")
@@ -31,6 +33,7 @@ export const stack = pgTable(
     confidence: text("confidence"),
     sortOrder: integer("sort_order").notNull().default(0),
     isFeatured: boolean("is_featured").notNull().default(false),
+    alternativeNames: jsonb("alternative_names").$type<string[]>().notNull().default([]),
     portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
       onDelete: "set null"
     }),
@@ -41,8 +44,8 @@ export const stack = pgTable(
       .$onUpdate(() => new Date())
   },
   (table) => [
-    uniqueIndex("stack_user_id_name_unique_idx").on(table.userId, table.name),
-    index("stack_user_id_sort_order_idx").on(table.userId, table.sortOrder),
-    index("stack_portfolio_entry_id_idx").on(table.portfolioEntryId)
+    uniqueIndex("skill_user_id_name_unique_idx").on(table.userId, table.name),
+    index("skill_user_id_sort_order_idx").on(table.userId, table.sortOrder),
+    index("skill_portfolio_entry_id_idx").on(table.portfolioEntryId)
   ]
 );

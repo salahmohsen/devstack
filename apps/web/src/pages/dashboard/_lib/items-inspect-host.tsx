@@ -1,9 +1,11 @@
 "use client";
 
+import { useCallback } from "react";
+
 import { useIsClient, useMediaQuery } from "@/shared/lib/use-media-query";
 
 import { ItemsInfoSheet } from "@/widgets/items-page";
-import { ItemsInfoPanel } from "@/widgets/layout";
+import { ItemsInfoPanel, useSidePanelClose } from "@/widgets/layout";
 
 type ItemsInspectHostProps<T> = {
   open: boolean;
@@ -27,6 +29,11 @@ export function ItemsInspectHost<T>({
 }: ItemsInspectHostProps<T>) {
   const ready = useIsClient();
   const isXl = useMediaQuery("(min-width: 1280px)");
+  useSidePanelClose(
+    useCallback(() => {
+      onOpenChange?.(false);
+    }, [onOpenChange])
+  );
 
   if (!open || !item) return null;
 

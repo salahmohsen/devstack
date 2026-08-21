@@ -65,6 +65,7 @@ export const mailMessage = pgTable(
     index("mail_message_user_id_idx").on(table.userId),
     index("mail_message_user_id_received_at_idx").on(table.userId, table.receivedAt),
     index("mail_message_user_id_purpose_idx").on(table.userId, table.purpose),
+    index("mail_message_application_id_idx").on(table.applicationId),
     // Partial unique: only when provider_message_id is set (manual rows may omit it).
     uniqueIndex("mail_message_user_provider_msg_uidx")
       .on(table.userId, table.provider, table.providerMessageId)

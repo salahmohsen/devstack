@@ -85,6 +85,19 @@ const unstatedAdapterListing = {
 };
 
 describe("hydrate fills survive re-ingest", () => {
+  it("does not include company slug, years, or logo in the catalog hash", () => {
+    const withCompany = {
+      ...unstatedAdapterListing,
+      companySlug: "acme",
+      experienceYearsMin: 5,
+      companyLogoUrl: "https://example.com/logo.png"
+    };
+    expect(listingContentHash(withCompany)).toBe(listingContentHash(unstatedAdapterListing));
+    const input = toUpsertInput(withCompany);
+    expect(input.experienceYearsMin).toBe(5);
+    expect(input.companyLogoUrl).toBe("https://example.com/logo.png");
+  });
+
   it("does not clobber a stated JSON-LD fill on a second upsert of the same adapter payload", () => {
     const adapterHash = listingContentHash(unstatedAdapterListing);
     const first = toUpsertInput(unstatedAdapterListing);

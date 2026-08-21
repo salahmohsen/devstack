@@ -128,6 +128,7 @@ export function jobPreferencesEqual(left: JobPreference, right: JobPreference): 
     left.levelFloor === right.levelFloor &&
     left.minMatchScore === right.minMatchScore &&
     left.jobsPerRun === right.jobsPerRun &&
+    left.dailyBoardScoreCap === right.dailyBoardScoreCap &&
     left.importFromEmail === right.importFromEmail &&
     sameStringList(left.workModes, right.workModes) &&
     sameStringList(left.locations, right.locations) &&
