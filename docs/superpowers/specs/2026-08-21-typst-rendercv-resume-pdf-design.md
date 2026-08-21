@@ -1,7 +1,7 @@
 # Typst + RenderCV engineeringresumes PDF generation — Design
 
 **Date:** 2026-08-21  
-**Status:** Draft (awaiting spec review)  
+**Status:** Approved (spec review)  
 **Goal:** Replace `pdfnative` resume and cover-letter generation with RenderCV’s **engineeringresumes** theme (Typst, A4, PDF/UA-1), with no user-facing template UI.
 
 **Related:**
