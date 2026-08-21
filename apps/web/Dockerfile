@@ -27,6 +27,7 @@ COPY --chown=vp:vp packages/email/package.json packages/email/
 COPY --chown=vp:vp packages/env/package.json packages/env/
 COPY --chown=vp:vp packages/github/package.json packages/github/
 COPY --chown=vp:vp packages/logger/package.json packages/logger/
+COPY --chown=vp:vp packages/pdf/package.json packages/pdf/
 COPY --chown=vp:vp packages/seo/package.json packages/seo/
 COPY --chown=vp:vp packages/ui/package.json packages/ui/
 COPY --chown=vp:vp tools/tsconfig/package.json tools/tsconfig/
@@ -67,8 +68,8 @@ RUN export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
 #
 # Reuse the same BuildKit pnpm store as `vp install` and force long fetch
 # timeouts + prefer-offline. Without the store mount, deploy re-downloads
-# large tarballs (pdfnative ~37MB, optional next peers) and hits pnpm's
-# default ~60s timeout → curl error 23 / TimeoutError on slow hosts.
+# large tarballs (optional next peers) and hits pnpm's default ~60s
+# timeout → curl error 23 / TimeoutError on slow hosts.
 # `--no-optional`: skip optional peers like `next` (TanStack Start, not Next).
 ENV PNPM_FETCH_TIMEOUT=600000 \
     npm_config_fetch_timeout=600000 \

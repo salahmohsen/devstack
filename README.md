@@ -107,7 +107,7 @@ Specs:
 | Realtime         | Socket.IO (+ optional Redis adapter) for GitHub signal fan-out                |
 | Mail egress      | Resend (BYO, optional)                                                        |
 | Mail ingress     | Gmail sync / Resend / manual                                                  |
-| PDF              | pdfnative (resume generation)                                                 |
+| PDF              | `@tsu-stack/pdf` + RenderCV/Typst (engineeringresumes, A4, PDF/UA-1)          |
 | Storage          | S3-compatible (MinIO local)                                                   |
 | UI               | `@tsu-stack/ui` / coss / Base UI primitives                                   |
 | Logging          | `@tsu-stack/logger` + evlog                                                   |

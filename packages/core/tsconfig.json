@@ -1,5 +1,6 @@
 {
-  "extends": "@tsu-stack/tsconfig/tsconfig.base.json",
+  // Relative path so Vite/oxc can load this config when other packages import core source.
+  "extends": "../../tools/tsconfig/tsconfig.base.json",
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022", "ES2023.Array"],
     "paths": {

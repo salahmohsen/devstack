@@ -49,6 +49,14 @@ export function useAcceptApplyPackageMutation() {
             case "NOT_FOUND":
               toast.error(error.message || "Application not found.");
               return;
+            case "PDF_ENGINE_UNAVAILABLE":
+              toast.error(
+                error.message || "PDF engine is unavailable (rendercv or typst missing on PATH)."
+              );
+              return;
+            case "PDF_RENDER_FAILED":
+              toast.error(error.message || "Failed to render resume or cover letter PDF.");
+              return;
           }
         }
 

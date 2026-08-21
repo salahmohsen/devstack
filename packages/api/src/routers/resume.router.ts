@@ -19,6 +19,11 @@ import {
   stackRepository,
   type ResumeEntity
 } from "@tsu-stack/db/repositories";
+import {
+  PdfEngineUnavailableError,
+  PdfRenderFailedError,
+  renderResumePdfBytes
+} from "@tsu-stack/pdf";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
@@ -28,7 +33,6 @@ import {
   toProjectOutput,
   toStackOutput
 } from "#@/routers/portfolio.mappers";
-import { renderResumePdfBytes } from "#@/routers/resume-pdf";
 
 async function fetchPortfolioData(userId: string) {
   const experiences = await experienceRepository.findOptedInByUserId(userId);
@@ -184,7 +188,15 @@ export const resumeRouter = {
       method: "POST"
     })
     .output(ResumeOutputSchema)
-    .handler(async ({ context }) => {
+    .errors({
+      PDF_ENGINE_UNAVAILABLE: {
+        message: "PDF engine is unavailable (rendercv or typst missing on PATH)"
+      },
+      PDF_RENDER_FAILED: {
+        message: "PDF render failed"
+      }
+    })
+    .handler(async ({ context, errors }) => {
       const userId = context.session.user.id;
       const portfolio = await fetchPortfolioData(userId);
       const userRow = await userRepository.findById(userId);
@@ -200,7 +212,22 @@ export const resumeRouter = {
       const filename = formatGeneralResumeFilename({ candidateName: profile.name });
       const r2Key = `${userId}/resumes/${crypto.randomUUID()}.pdf`;
 
-      const bytes = await renderResumePdfBytes({ portfolio, profile });
+      let bytes: Uint8Array;
+      try {
+        bytes = await renderResumePdfBytes({
+          portfolio,
+          profile,
+          summary: userRow.summary ?? ""
+        });
+      } catch (error) {
+        if (error instanceof PdfEngineUnavailableError) {
+          throw errors.PDF_ENGINE_UNAVAILABLE({ message: error.message });
+        }
+        if (error instanceof PdfRenderFailedError) {
+          throw errors.PDF_RENDER_FAILED({ message: error.message });
+        }
+        throw errors.PDF_RENDER_FAILED();
+      }
 
       await context.mediaBucket.put(r2Key, bytes.slice().buffer as ArrayBuffer, {
         httpMetadata: { contentType: "application/pdf" }

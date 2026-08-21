@@ -192,9 +192,9 @@ export default defineConfig({
   ssr: {
     // Keep workspace packages in the SSR graph so edits invalidate + restart.
     noExternal: [/@tsu-stack/, /@noble/],
-    external: ["pg", "pg-native", "ioredis", "bullmq", "pdfnative"]
+    external: ["pg", "pg-native", "ioredis", "bullmq"]
   },
   optimizeDeps: {
-    exclude: ["pg", "pg-native", "ioredis", "bullmq", "pdfnative"]
+    exclude: ["pg", "pg-native", "ioredis", "bullmq"]
   }
 });
