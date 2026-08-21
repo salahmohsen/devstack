@@ -17,6 +17,49 @@
 
 ---
 
+## 2026-08-21 — Worldwide hiring region must not hide a specific place
+
+- **Trigger:** Find-now accuracy loop. India/Canada/Poland remotes landed while hunt locations were Egypt/Cairo
+- **Finding:** `hiringRegion: worldwide` used to win over `location: India`. A specific place on the listing beats worldwide. Vague `Remote` / `Global` still counts as worldwide
+- **Finding:** Empty remote regions still means worldwide listings, plus lineage overlap with **locations**. Filled remote regions is the only remote gate
+- **Finding:** vite-node on `:5200` does not always reload `@tsu-stack/core`. Restart the API process after two-axis changes before Find now
+- **Finding:** Heuristic keepers can still sit in New below min match (`65` vs `70`) when the scorer falls back. That is a separate class from the region gate
+- **User preference:** Validate with a live Find now, then swap the whole hunt (backend + US) so the gate is not Egypt-hardcoded
+- **Evidence class:** Core two-axis unit; live findNow Egypt inbox ExeQut/Flatgigs/Trivelta; US swap inbox trmlabs/jobgether US, no Egypt rows
+
+## 2026-08-21 — Years-capped New jobs look like they failed the min-match bar
+
+- **Trigger:** Validate New vs Dismissed against Settings hunt on tunnel-backed local stack
+- **Finding:** Empty `remoteRegions` is worldwide remote. Settings **Locations** (egypt/Cairo) only filter hybrid/onsite. A New pile full of US/India/LatAm remotes is two-axis law, not a leak
+- **Finding:** Display score `min(ai, 65)` from the years cap can sit in New under the min-match slider. Land used the uncapped score. Persist `experienceYearsMin` or the years badge is missing and the take will say “65% failed your 85% bar”
+- **Finding:** Agent take must not treat a years-capped display score as a min-match fail. Years lower the badge; they do not hide the job
+- **Finding:** Dismissed `via: low_match` reasons still invent location/salary hard-fails on remote worldwide. Pile placement can still be correct if the stored score is actually below min match
+- **Finding:** `scripts/dev.sh` port kill does not clear Mastra `apps/agent/.mastra/dev.lock`. Stale PID makes agent self-heal loop until `kill -9` + lock delete
+- **User preference:** Validate against local `localhost:3000` Settings → Jobs, not Neon
+- **Evidence class:** Chrome Settings + New 20 + Dismissed 17; oRPC list scores; HTTPie/jobgether takes cite 5y vs 3y with `experienceYearsMin` null; all dismissed scores < 85
+
+## 2026-08-21 — Server owns match pass/fail; heuristic keep is not a rules-fail keep
+
+- **Trigger:** Harden land/dismiss after false dismissals (AI `passed: false` at score 100) and junk keepers (heuristic parse fallback)
+- **Finding:** Structured `passed` is not law. Derive pass from `score >= minMatchScore` after real column hard-fails. The model invents location/level kills. Two-axis already ran
+- **Finding:** Heuristic fallback must not use minMatchScore as a cheap gate, and must still dismiss **rules** misses (exclude, level, no title keyword, open-prefs no evidence). `rulesFailed` is that split
+- **Finding:** Onsite/hybrid place overlap must expand the **listing** only. Expanding both sides makes egypt match london via `emea`. Remote still expands both (egypt overlaps emea)
+- **Finding:** `frontend` / `front-end` / `front end` are one keyword. Cheap packs already seeded `front-end`; harvest used stored `frontend` and missed "Front End …" titles
+- **Finding:** Cheap and harvest must share `effectiveRoleKeywords` (title pack seeds ∪ stored keywords) so the two scores cannot disagree on the same title
+- **User preference:** Do not special-case one hunt's min, locations, or stack. Same land laws for every tenant
+- **Evidence class:** Core 101 + API 16 unit; dry-run hybrid London drop / Cairo pass / score 100 pass; unauth `:4111/chat` 401. Existing inbox/dismissed rows are stale until the next evaluate/Find now
+
+## 2026-08-21 — Land/dismiss must not trust AI `passed` or keep heuristic below min match
+
+- **Trigger:** Validate New jobs vs Dismissed against hunt prefs (remote+hybrid, Egypt/Cairo, min match 85, React/TS/Next) on local Docker Postgres
+- **Finding:** Hub data lives on local Docker `personal_hub` (`127.0.0.1:5432`). Neon MCP / `portfolio-db` is leftover from the old portfolio and is not this product. Do not query Neon for jobs
+- **Finding:** `decideInboxAiKeep` never dismisses `source: heuristic`. Parse/HTTP fallback then parks Angular 15% and other cheap 65s in New jobs while the AI bar is 85
+- **Finding:** The AI scorer can return `score: 100` and `passed: false` by inventing location/level hard-fails. Land uses `passed`, so a 100% Engineering Manager is dismissed as `via: low_match`
+- **Finding:** Empty `remoteRegions` means worldwide remote, so US/LatAm/India remotes land. The scorer then fights two-axis with invented country hard-fails. Prompt already says not to hard-fail location; the model still does
+- **Finding:** Hybrid London overlaps Egypt through `egypt → mena → emea` and `uk → emea`. Onsite/hybrid overlap must be the place, not the EMEA ancestor used for remote
+- **User preference:** Jobs validation against local `localhost:3000`, not Neon
+- **Evidence class:** Local oRPC `applications.list` inbox 12 / dismissed 25; Chrome New jobs shows Greenfly 15%; Dismissed shows jobgether Engineering Manager 100%; server log `[db] pool ready → 127.0.0.1:5432`
+
 ## 2026-08-20 — Job-info mail links must deep-link the message, not the mail index
 
 - **Trigger:** Jobs hardening harness; click a linked mail on tracked-job inspect
