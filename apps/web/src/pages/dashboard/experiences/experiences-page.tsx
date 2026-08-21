@@ -1,6 +1,7 @@
 "use client";
 
 import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,6 +29,7 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
+import { omitSearchKey } from "@/shared/lib/list-inspect-search";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ItemAvatar } from "@/shared/ui/item-avatar";
@@ -59,6 +61,8 @@ import {
 import { ExperienceForm } from "./experience-form";
 import { ExperienceInfoPanel } from "./experience-info-panel";
 
+const experiencesRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/experiences/");
+
 function formatRange(fromDate: string | null, toDate: string | null): string {
   if (!fromDate) return "Ongoing";
   const start = safeFormat(fromDate, "MMM yyyy");
@@ -88,6 +92,9 @@ export function ExperiencesPage() {
   const [pendingOrder, setPendingOrder] = useState<ExperienceOutput[] | null>(null);
   const [isLoadingFullListForSort, setIsLoadingFullListForSort] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const search = experiencesRouteApi.useSearch();
+  const deepLinkExperienceId = search.experienceId;
 
   const experiencesQuery = useListExperiencesPageInfiniteQuery();
   const visibleExperiences = useMemo(
@@ -95,6 +102,58 @@ export function ExperiencesPage() {
     [experiencesQuery.data]
   );
   const totalCount = experiencesQuery.data?.pages[0]?.totalCount;
+
+  // Open inspect when arriving with ?experienceId= (palette / deep link).
+  useEffect(() => {
+    if (!deepLinkExperienceId) return;
+
+    const fromList = visibleExperiences.find(
+      (experience) => experience.id === deepLinkExperienceId
+    );
+    if (fromList) {
+      setOpenedItem(fromList);
+      setIsItemOpen({ [fromList.id]: true });
+      void navigate({
+        to: "/dashboard/experiences",
+        search: omitSearchKey(search, "experienceId"),
+        replace: true
+      });
+      return;
+    }
+
+    if (experiencesQuery.isLoading) return;
+
+    let cancelled = false;
+    void queryClient
+      .fetchQuery(
+        orpcQueryClient.experiences.get.queryOptions({ input: { id: deepLinkExperienceId } })
+      )
+      .then((experience) => {
+        if (cancelled) return;
+        if (experience) {
+          setOpenedItem(experience);
+          setIsItemOpen({ [experience.id]: true });
+        }
+        void navigate({
+          to: "/dashboard/experiences",
+          search: omitSearchKey(search, "experienceId"),
+          replace: true
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    deepLinkExperienceId,
+    visibleExperiences,
+    experiencesQuery.isLoading,
+    queryClient,
+    search,
+    setOpenedItem,
+    setIsItemOpen,
+    navigate
+  ]);
 
   const { sentinelRef } = useInfiniteScroll({
     hasNextPage: experiencesQuery.hasNextPage,

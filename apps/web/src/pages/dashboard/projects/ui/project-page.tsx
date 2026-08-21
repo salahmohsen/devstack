@@ -34,6 +34,7 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
+import { omitSearchKey } from "@/shared/lib/list-inspect-search";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -73,7 +74,8 @@ export function ProjectsPage() {
   const projectsQuery = useListProjectsPageInfiniteQuery();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { projectId: deepLinkProjectId } = projectsRouteApi.useSearch();
+  const search = projectsRouteApi.useSearch();
+  const deepLinkProjectId = search.projectId;
 
   const {
     openedItem,
@@ -98,7 +100,11 @@ export function ProjectsPage() {
     if (fromList) {
       setOpenedItem(fromList);
       setIsItemOpen({ [fromList.id]: true });
-      void navigate({ to: "/dashboard/projects", search: {}, replace: true });
+      void navigate({
+        to: "/dashboard/projects",
+        search: omitSearchKey(search, "projectId"),
+        replace: true
+      });
       return;
     }
 
@@ -113,7 +119,11 @@ export function ProjectsPage() {
           setOpenedItem(project);
           setIsItemOpen({ [project.id]: true });
         }
-        void navigate({ to: "/dashboard/projects", search: {}, replace: true });
+        void navigate({
+          to: "/dashboard/projects",
+          search: omitSearchKey(search, "projectId"),
+          replace: true
+        });
       });
 
     return () => {
@@ -124,6 +134,7 @@ export function ProjectsPage() {
     projects,
     projectsQuery.isLoading,
     queryClient,
+    search,
     setOpenedItem,
     setIsItemOpen,
     navigate

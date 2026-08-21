@@ -1,6 +1,7 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import {
   BanIcon,
   BookmarkPlusIcon,
@@ -23,6 +24,7 @@ import {
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   applicationSourceChipLabels,
   type ApplicationOutput,
@@ -54,6 +56,7 @@ import {
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { omitSearchKey } from "@/shared/lib/list-inspect-search";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
@@ -185,6 +188,7 @@ function hasUsableJobDescription(job: ApplicationOutput): boolean {
 
 const newJobMenuSlots = createListItemMenuSlots({ stopPropagation: true });
 const newJobContextSlots = createListItemContextSlots();
+const newJobsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/new-jobs/");
 
 function NewJobOverflowMenuItems({
   slots,
@@ -435,6 +439,10 @@ function NewJobRowActions({
 }
 
 export function NewJobsPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const search = newJobsRouteApi.useSearch();
+  const deepLinkApplicationId = search.applicationId;
   const [filter, setFilter] = useState<InboxFilter>("inbox");
   const [viewItem, setViewItem] = useState<ApplicationOutput | null>(null);
   useSidePanelClose(useCallback(() => setViewItem(null), []));
@@ -507,6 +515,52 @@ export function NewJobsPage() {
     if (item) expandDashboardSidePanel();
     setViewItem(item);
   }, []);
+
+  // Hub / palette lands here with ?applicationId= — open the inspect panel.
+  useEffect(() => {
+    if (!deepLinkApplicationId) return;
+
+    const fromList = jobs.find((job) => job.id === deepLinkApplicationId);
+    if (fromList) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from inspect search param
+      setOpenedItem(fromList);
+      void navigate({
+        to: "/dashboard/new-jobs",
+        search: omitSearchKey(search, "applicationId"),
+        replace: true
+      });
+      return;
+    }
+
+    if (listQuery.isLoading) return;
+
+    let cancelled = false;
+    void queryClient
+      .fetchQuery(
+        orpcQueryClient.applications.get.queryOptions({ input: { id: deepLinkApplicationId } })
+      )
+      .then((row) => {
+        if (cancelled) return;
+        if (row) setOpenedItem(row);
+        void navigate({
+          to: "/dashboard/new-jobs",
+          search: omitSearchKey(search, "applicationId"),
+          replace: true
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    deepLinkApplicationId,
+    jobs,
+    listQuery.isLoading,
+    navigate,
+    queryClient,
+    search,
+    setOpenedItem
+  ]);
 
   const setIsItemOpen = useCallback(
     (open: Record<string, boolean> | null) => {

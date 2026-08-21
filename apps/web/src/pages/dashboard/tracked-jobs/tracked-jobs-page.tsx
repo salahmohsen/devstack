@@ -10,6 +10,7 @@ import { type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
+import { omitSearchKey } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
@@ -87,7 +88,8 @@ export function TrackedJobsPage() {
   const { view, setView } = useApplicationsView();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { applicationId: deepLinkApplicationId } = trackedJobsRouteApi.useSearch();
+  const search = trackedJobsRouteApi.useSearch();
+  const deepLinkApplicationId = search.applicationId;
   /** Tracked jobs only — pipeline CRM. */
   const listQuery = useListApplicationsQuery("tracked");
   // Hub tool invalidation lives on HubChatProvider (dashboard layout).
@@ -134,7 +136,11 @@ export function TrackedJobsPage() {
     const fromList = applications.find((application) => application.id === deepLinkApplicationId);
     if (fromList) {
       showView(fromList);
-      void navigate({ to: "/dashboard/tracked-jobs", search: {}, replace: true });
+      void navigate({
+        to: "/dashboard/tracked-jobs",
+        search: omitSearchKey(search, "applicationId"),
+        replace: true
+      });
       return;
     }
 
@@ -148,13 +154,25 @@ export function TrackedJobsPage() {
       .then((row) => {
         if (cancelled) return;
         if (row) showView(row);
-        void navigate({ to: "/dashboard/tracked-jobs", search: {}, replace: true });
+        void navigate({
+          to: "/dashboard/tracked-jobs",
+          search: omitSearchKey(search, "applicationId"),
+          replace: true
+        });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [applications, deepLinkApplicationId, listQuery.isLoading, navigate, queryClient, showView]);
+  }, [
+    applications,
+    deepLinkApplicationId,
+    listQuery.isLoading,
+    navigate,
+    queryClient,
+    search,
+    showView
+  ]);
 
   // Prefer live list row so stage/outcome/edit/package changes refresh the side panel.
   const liveViewItem = useMemo(() => {

@@ -2,7 +2,7 @@
 
 import { rectSortingStrategy } from "@dnd-kit/sortable";
 import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { BoxesIcon, FolderKanbanIcon, LayersIcon, Package, TagsIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
+import { omitSearchKey } from "@/shared/lib/list-inspect-search";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -83,6 +84,8 @@ import {
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
+
+const skillsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/skills/");
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
 export function StackDetailPanel({
@@ -201,6 +204,9 @@ export function StackDetailPanel({
 
 export function StacksPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const search = skillsRouteApi.useSearch();
+  const deepLinkStackId = search.stackId;
   const stacksQuery = useListStacksPageInfiniteQuery();
 
   const {
@@ -217,6 +223,54 @@ export function StacksPage() {
 
   const stacks = useMemo(() => flattenStacksPages(stacksQuery.data), [stacksQuery.data]);
   const totalCount = stacksQuery.data?.pages[0]?.totalCount;
+
+  // Open inspect when arriving with ?stackId= (palette / deep link).
+  useEffect(() => {
+    if (!deepLinkStackId) return;
+
+    const fromList = stacks.find((stack) => stack.id === deepLinkStackId);
+    if (fromList) {
+      setOpenedItem(fromList);
+      setIsItemOpen({ [fromList.id]: true });
+      void navigate({
+        to: "/dashboard/skills",
+        search: omitSearchKey(search, "stackId"),
+        replace: true
+      });
+      return;
+    }
+
+    if (stacksQuery.isLoading) return;
+
+    let cancelled = false;
+    void queryClient
+      .fetchQuery(orpcQueryClient.stacks.get.queryOptions({ input: { id: deepLinkStackId } }))
+      .then((stack) => {
+        if (cancelled) return;
+        if (stack) {
+          setOpenedItem(stack);
+          setIsItemOpen({ [stack.id]: true });
+        }
+        void navigate({
+          to: "/dashboard/skills",
+          search: omitSearchKey(search, "stackId"),
+          replace: true
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    deepLinkStackId,
+    stacks,
+    stacksQuery.isLoading,
+    queryClient,
+    search,
+    setOpenedItem,
+    setIsItemOpen,
+    navigate
+  ]);
 
   // ── Sort state (declared early so infinite scroll can disable during sort)
   const [isSort, setIsSort] = useState(false);

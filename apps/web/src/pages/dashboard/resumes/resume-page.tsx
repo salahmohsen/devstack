@@ -25,6 +25,7 @@ import {
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { omitSearchKey } from "@/shared/lib/list-inspect-search";
 import { toastAiError } from "@/shared/lib/toast-ai-error";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
@@ -70,7 +71,8 @@ export function ResumesPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { resumeId: deepLinkResumeId } = resumesRouteApi.useSearch();
+  const search = resumesRouteApi.useSearch();
+  const deepLinkResumeId = search.resumeId;
 
   const resumesQuery = useQuery(orpcQueryClient.resume.list.queryOptions());
   const visibleResumes = useMemo(() => resumesQuery.data ?? [], [resumesQuery.data]);
@@ -84,13 +86,14 @@ export function ResumesPage() {
     setIsItemOpen({ [resume.id]: true });
     void navigate({
       to: "/dashboard/resumes",
-      search: {},
+      search: omitSearchKey(search, "resumeId"),
       replace: true
     });
   }, [
     deepLinkResumeId,
     visibleResumes,
     resumesQuery.isLoading,
+    search,
     setOpenedItem,
     setIsItemOpen,
     navigate
