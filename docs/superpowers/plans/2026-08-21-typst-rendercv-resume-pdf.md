@@ -20,7 +20,7 @@
 
 | Path | Role |
 | --- | --- |
-| `packages/pdf/**` | New package: types, mapper, spawn, cover-letter.typ, tests |
+| `packages/pdf/**` | New package: types, mapper, spawn, cover-letter.template.ts, tests |
 | `packages/api` | Import `@tsu-stack/pdf`; pass `user.summary`; typed PDF errors; delete pdfnative helpers |
 | `apps/agent` | Same import; Accept error codes; delete duplicated `mastra/lib/pdf/*` |
 | `apps/server` + `apps/agent` + `apps/web` Dockerfiles | COPY `packages/pdf/package.json`; server+agent also Python 3.12, rendercv[full]==2.8, Typst ≥ 0.14 |
@@ -38,11 +38,11 @@
 - Create: `packages/pdf/src/index.ts`
 - Create: `packages/pdf/src/types.ts`
 
-- [ ] **Step 1: Create package.json** matching `@tsu-stack/seo` (private, `#@/*` imports, `test:unit`: `vp test run`). Dependencies: `yaml` (npm), `@tsu-stack/core` workspace, `zod` catalog. Dev: tsconfig, vitest via vite-plus, `@types/node`. **Ship `cover-letter.typ` via `import template from "./cover-letter.typ?raw"`** (or equivalent string embed) so Vite SSR bundle (`ssr.noExternal: [/@tsu-stack/]`) includes it. Do not `fs.readFile` relative to `import.meta.url` for the template.
+- [ ] **Step 1: Create package.json** matching `@tsu-stack/seo` (private, `#@/*` imports, `test:unit`: `vp test run`). Dependencies: `yaml` (npm), `@tsu-stack/core` workspace, `zod` catalog. Dev: tsconfig, vitest via vite-plus, `@types/node`. **Ship the cover letter as a TypeScript string** (`cover-letter.template.ts` exporting the Typst source). Do **not** use Vite `?raw` (Mastra/Node agent will not resolve it) and do **not** `fs.readFile` via `import.meta.url`. Keep `@tsu-stack/pdf` inside `ssr.noExternal` (`/@tsu-stack/`).
 
 - [ ] **Step 2: tsconfig** extends `@tsu-stack/tsconfig/tsconfig.base.json` with `#@/*` paths. vite.config.ts `test.include: ["**/__tests__/**/*.test.ts"]`.
 
-- [ ] **Step 3: Export empty `renderResumePdfBytes` / `renderCoverLetterPdfBytes` stubs that throw `PDF_ENGINE_UNAVAILABLE` so dependents can compile incrementally.** Types: `ResumePdfInput` (portfolio/profile/professionalSummary as in spec), `CoverLetterPdfInput` (+ contacts + email).
+- [ ] **Step 3: Export empty `renderResumePdfBytes` / `renderCoverLetterPdfBytes` stubs that throw `PDF_ENGINE_UNAVAILABLE` so dependents can compile incrementally.** Types: `ResumePdfInput` with `portfolio`, `profile`, `summary` (`user.summary`), optional `professionalSummary`; `CoverLetterPdfInput` (+ contacts + email). Mapper uses trimmed-non-empty `professionalSummary` else `summary`.
 
 - [ ] **Step 4: `vp install` from repo root; `vp check` in `packages/pdf`.**
 
@@ -117,7 +117,7 @@ Behavior:
 ### Task 4: Cover letter Typst
 
 **Files:**
-- Create: `packages/pdf/src/cover-letter.typ`
+- Create: `packages/pdf/src/cover-letter.template.ts`
 - Create: `packages/pdf/src/cover-letter.ts`
 - Create: `packages/pdf/src/__tests__/cover-letter.test.ts`
 
@@ -138,7 +138,7 @@ Behavior:
 - Modify: `apps/web/src/features/applications/api/accept-apply-package.mutation.ts` (and resume generate toast) to handle those codes
 - Modify: `ResumePdfInput` mapper to treat trimmed-empty `professionalSummary` as missing (use `user.summary`)
 - Modify: `packages/api/package.json` — depend `@tsu-stack/pdf`, remove pdfnative
-- Delete: `packages/api/src/lib/pdf/**` font helpers, `cover-letter-pdf.ts`, large `resume-pdf.ts` after moving remaining helpers
+- Delete: `packages/api/src/lib/pdf/**` font helpers, `packages/api/src/lib/application/cover-letter-pdf.ts`, large `resume-pdf.ts` after moving remaining helpers
 - Replace: `packages/api/src/routers/__tests__/resume-pdf.test.ts` — re-export mapper tests or delete and rely on `packages/pdf` tests; remove pdfnative `validatePdfUA`
 - Delete: `packages/api/src/routers/__tests__/resume-pdf-weight-preview.test.ts`
 - Modify: apply-package router `.errors` if Accept surfaces codes to the client
@@ -198,7 +198,7 @@ Behavior:
 - `TYPST_FONT_PATHS` to `rendercv-fonts` data dir
 - Document local: same pins on PATH for `pnpm run dev`
 
-- [ ] **Step 1: Both Dockerfiles.**
+- [ ] **Step 1: COPY `packages/pdf/package.json` in server, agent, **and web** Dockerfiles before `vp install`. Python/Typst/rendercv only on server+agent runtime, as root, before `USER`. Symlink `rendercv`/`typst` to `/usr/local/bin` (uv tool/venv does not do this by itself).`
 
 - [ ] **Step 2: Document local: `uv pip install 'rendercv[full]==2.8'` and Typst 0.14 on PATH for `pnpm run dev`.**
 
