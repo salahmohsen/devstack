@@ -146,7 +146,11 @@ async function runDailyIngest(): Promise<Record<string, unknown>> {
   for (const queryKey of keys) {
     // Re-read remaining each query — do not snapshot the day's budget once.
     const remotiveCallsLeft = await getRemotiveCallsLeft();
-    const result = await ingestQuery({ queryKey, remotiveCallsLeft });
+    const result = await ingestQuery({
+      queryKey,
+      remotiveCallsLeft,
+      searchDepth: "full"
+    });
     queryUpserted += result.upserted;
     remotiveUsed += result.remotiveUsed;
   }

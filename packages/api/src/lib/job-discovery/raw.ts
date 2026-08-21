@@ -1,5 +1,6 @@
 import {
   canonicalizeJobUrl,
+  inferWorkModeFromText,
   normalizeHiringRegion,
   normalizeStatedEmploymentType,
   normalizeStatedWorkMode,
@@ -22,6 +23,24 @@ export function asNonEmptyString(value: unknown): string | null {
 
 export function asFiniteNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** Boards send 0 for unstated pay. Never store that as a real salary. */
+export function asStatedSalary(value: unknown): number | null {
+  const n = asFiniteNumber(value);
+  return n != null && n > 0 ? n : null;
+}
+
+/** First stated work mode, then location text (`Remote`, `Hybrid`, `On-site`). */
+export function statedWorkMode(
+  values: readonly unknown[],
+  location?: string | null
+): WorkMode | null {
+  for (const value of values) {
+    const mode = normalizeStatedWorkMode(value);
+    if (mode) return mode;
+  }
+  return inferWorkModeFromText(location);
 }
 
 export function asStringList(value: unknown): string[] {

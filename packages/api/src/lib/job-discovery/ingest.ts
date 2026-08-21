@@ -11,8 +11,7 @@ import {
   type JobSourceAdapter,
   type JobTitleId,
   type JobTitlePackId,
-  type NormalizedListing,
-  type WorkMode
+  type NormalizedListing
 } from "@tsu-stack/core";
 import { jobCompanyRepository, jobPostingRepository } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -25,7 +24,11 @@ import { asFiniteNumber, asNonEmptyString, asRecord } from "#@/lib/job-discovery
 const SEARCH_PAGE_SIZE = 50;
 const SEARCH_MAX_PAGES = 3;
 const FEED_MAX_PAGES = 3;
+/** Arbeitnow is mixed remote/onsite (~175/page). A few extra pages fill the shared shelf. */
+const ARBEITNOW_FEED_PAGES = 12;
 const SEARCH_UPSERT_CAP = 80;
+/** Frontend ATS alone is ~5.5k rows (50/page). Do not apply the 80-hit search cap. */
+const FREEHIRE_SEARCH_PAGES = 120;
 const REMOTIVE_DAILY_CAP = 4;
 const REMOTIVE_TTL_SECONDS = 48 * 60 * 60;
 const MAX_SEARCH_Q_CHARS = 80;
@@ -237,10 +240,15 @@ export async function fetchFreehireCompanyProfile(slug: string): Promise<{
   }
 }
 
-async function resolveCompanyForListing(listing: NormalizedListing): Promise<{
-  companyId: string | null;
-  companyLogoUrl: string | null;
-}> {
+type ResolvedCompany = { companyId: string | null; companyLogoUrl: string | null };
+
+const companyResolveCache = new Map<string, Promise<ResolvedCompany>>();
+
+function clearCompanyResolveCache(): void {
+  companyResolveCache.clear();
+}
+
+async function resolveCompanyForListing(listing: NormalizedListing): Promise<ResolvedCompany> {
   const fromListing = listing.companySlug?.trim();
   const slug =
     fromListing && fromListing.length > 0 ? fromListing : companySlugFromName(listing.companyName);
@@ -248,6 +256,18 @@ async function resolveCompanyForListing(listing: NormalizedListing): Promise<{
     return { companyId: null, companyLogoUrl: listing.companyLogoUrl ?? null };
   }
 
+  const cached = companyResolveCache.get(slug);
+  if (cached) return cached;
+
+  const pending = resolveCompanyForListingUncached(listing, slug);
+  companyResolveCache.set(slug, pending);
+  return pending;
+}
+
+async function resolveCompanyForListingUncached(
+  listing: NormalizedListing,
+  slug: string
+): Promise<ResolvedCompany> {
   let logoUrl = listing.companyLogoUrl ?? null;
   let name = listing.companyName;
   let website: string | null | undefined;
@@ -340,14 +360,28 @@ async function upsertListings(listings: NormalizedListing[]): Promise<number> {
   return upserted;
 }
 
-function pageCap(adapter: JobSourceAdapter): number {
+type SearchDepth = "shallow" | "full";
+
+function pageCap(adapter: JobSourceAdapter, depth: SearchDepth = "shallow"): number {
   if (adapter.id === "remoteok" || adapter.id === "remotive") return 1;
+  if (adapter.id === "arbeitnow") return ARBEITNOW_FEED_PAGES;
+  if (adapter.id === "freehire") {
+    return depth === "full" ? FREEHIRE_SEARCH_PAGES : SEARCH_MAX_PAGES;
+  }
   return adapter.capabilities.includes("feed") ? FEED_MAX_PAGES : SEARCH_MAX_PAGES;
+}
+
+function searchStopAt(
+  adapter: JobSourceAdapter,
+  depth: SearchDepth = "shallow"
+): number | undefined {
+  if (adapter.id === "freehire" && depth === "full") return undefined;
+  return SEARCH_UPSERT_CAP;
 }
 
 async function ingestAdapter(
   adapter: JobSourceAdapter,
-  input: { q?: string; workMode?: WorkMode | null },
+  input: { q?: string },
   opts: { maxPages: number; stopAt?: number }
 ): Promise<number> {
   let upserted = 0;
@@ -357,7 +391,6 @@ async function ingestAdapter(
       try {
         listings = await adapter.fetch({
           q: input.q,
-          workMode: input.workMode,
           page,
           limit: SEARCH_PAGE_SIZE
         });
@@ -376,17 +409,20 @@ async function ingestAdapter(
 
 export async function ingestQuery(input: {
   queryKey: string;
-  workMode?: WorkMode | null;
   remotiveCallsLeft: number;
   adapters?: Partial<Record<JobAdapterId, JobSourceAdapter>>;
+  /** `full` pages Freehire through the query (cron / backfill). Find jobs stays shallow. */
+  searchDepth?: SearchDepth;
 }): Promise<{ upserted: number; remotiveUsed: number }> {
   const q = searchQueryFromKey(input.queryKey);
   if (!q) return { upserted: 0, remotiveUsed: 0 };
 
+  const depth = input.searchDepth ?? "shallow";
   const adapters = resolveAdapters(input.adapters);
   let upserted = 0;
   let remotiveUsed = 0;
-  const fetchInput = { q, workMode: input.workMode ?? null };
+  const fetchInput = { q };
+  clearCompanyResolveCache();
 
   const searchAdapters = adapters.filter((adapter) => adapter.capabilities.includes("search"));
   const remotive = searchAdapters.find((adapter) => adapter.id === "remotive");
@@ -395,8 +431,8 @@ export async function ingestQuery(input: {
   const parallelCounts = await Promise.all(
     parallelSearch.map((adapter) =>
       ingestAdapter(adapter, fetchInput, {
-        maxPages: pageCap(adapter),
-        stopAt: SEARCH_UPSERT_CAP
+        maxPages: pageCap(adapter, depth),
+        stopAt: searchStopAt(adapter, depth)
       })
     )
   );
@@ -407,8 +443,8 @@ export async function ingestQuery(input: {
     if (reserved) {
       remotiveUsed += 1;
       upserted += await ingestAdapter(remotive, fetchInput, {
-        maxPages: pageCap(remotive),
-        stopAt: SEARCH_UPSERT_CAP
+        maxPages: pageCap(remotive, depth),
+        stopAt: searchStopAt(remotive, depth)
       });
     }
   }
@@ -417,6 +453,7 @@ export async function ingestQuery(input: {
 }
 
 export async function ingestFeeds(): Promise<{ upserted: number }> {
+  clearCompanyResolveCache();
   const feeds = resolveAdapters().filter((adapter) => adapter.capabilities.includes("feed"));
   const counts = await Promise.all(
     feeds.map((adapter) => ingestAdapter(adapter, {}, { maxPages: pageCap(adapter) }))
@@ -428,7 +465,6 @@ export async function ingestForUserQuery(prefs: JobPreference): Promise<{ upsert
   const queryKey = ingestQueryKey(prefs);
   if (!queryKey) return { upserted: 0 };
   const remotiveCallsLeft = await getRemotiveCallsLeft();
-  const workMode = prefs.workModes.length === 1 ? prefs.workModes[0] : null;
-  const result = await ingestQuery({ queryKey, workMode, remotiveCallsLeft });
+  const result = await ingestQuery({ queryKey, remotiveCallsLeft });
   return { upserted: result.upserted };
 }
