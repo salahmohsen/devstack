@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess, type SpawnOptions } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess, type SpawnOptions } from "node:child_process";
 import { mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, extname, join } from "node:path";
@@ -27,11 +27,15 @@ export type SpawnFn = (
   options: SpawnOptions
 ) => ChildProcess;
 
-export type RenderResumePdfOptions = {
+export type RenderPdfOptions = {
   spawn?: SpawnFn;
   env?: NodeJS.ProcessEnv;
   timeoutMs?: number;
 };
+
+export type RenderResumePdfOptions = RenderPdfOptions;
+
+export const TYPST_COMPILE_ARGV = ["compile", "--pdf-standard", "ua-1"] as const;
 
 const STDERR_CAP = 8_192;
 const STDERR_MESSAGE_MAX = 800;
@@ -40,8 +44,42 @@ function isEnoent(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
-function typstStringLiteral(value: string): string {
+export function typstStringLiteral(value: string): string {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, " ")}"`;
+}
+
+let cachedRenderCvFontsDir: string | null | undefined;
+
+/** `rendercv_fonts.package_folder_path` via python; undefined if the package is not installed. */
+function discoverRenderCvFontsDir(): string | undefined {
+  if (cachedRenderCvFontsDir !== undefined) return cachedRenderCvFontsDir ?? undefined;
+  const script = "import rendercv_fonts; print(rendercv_fonts.package_folder_path)";
+  for (const bin of ["python3", "python"] as const) {
+    try {
+      const result = spawnSync(bin, ["-c", script], {
+        encoding: "utf8",
+        timeout: 5_000,
+        windowsHide: true
+      });
+      const dir = result.stdout?.trim();
+      if (result.status === 0 && dir) {
+        cachedRenderCvFontsDir = dir;
+        return dir;
+      }
+    } catch {
+      // try the next interpreter
+    }
+  }
+  cachedRenderCvFontsDir = null;
+  return undefined;
+}
+
+/** Keep an existing TYPST_FONT_PATHS; otherwise point Typst at rendercv-fonts when discoverable. */
+export function resolveTypstFontEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  if (env.TYPST_FONT_PATHS?.trim()) return env;
+  const fontsDir = discoverRenderCvFontsDir();
+  if (!fontsDir) return env;
+  return { ...env, TYPST_FONT_PATHS: fontsDir };
 }
 
 /** Drop YAML dumps and cap length so errors never echo the CV. */
@@ -80,7 +118,7 @@ function collectStream(
   stream.on("data", onChunk);
 }
 
-async function runTimedCommand(
+export async function runTimedCommand(
   command: string,
   args: readonly string[],
   options: {
@@ -218,7 +256,20 @@ export function ensureUa1DocumentMetadata(source: string, title: string): string
   return lines.length === 0 ? source : `${lines.join("\n")}\n${source}`;
 }
 
-function rethrowRenderError(error: unknown): never {
+export async function compileTypstUa1(
+  typPath: string,
+  pdfPath: string,
+  options: {
+    cwd: string;
+    timeoutMs: number;
+    env: NodeJS.ProcessEnv;
+    spawnFn: SpawnFn;
+  }
+): Promise<void> {
+  await runTimedCommand("typst", [...TYPST_COMPILE_ARGV, typPath, pdfPath], options);
+}
+
+export function rethrowRenderError(error: unknown): never {
   if (error instanceof PdfEngineUnavailableError || error instanceof PdfRenderFailedError) {
     throw error;
   }
@@ -232,7 +283,7 @@ export async function renderResumePdfBytes(
 ): Promise<Uint8Array> {
   const timeoutMs = options.timeoutMs ?? PDF_RENDER_TIMEOUT_MS;
   const spawnFn = options.spawn ?? spawn;
-  const env = { ...process.env, ...options.env };
+  const env = resolveTypstFontEnv({ ...process.env, ...options.env });
   const tmp = await mkdtemp(join(tmpdir(), "resume-pdf-"));
 
   try {
@@ -257,7 +308,7 @@ export async function renderResumePdfBytes(
     }
 
     const pdfPath = join(dirname(typPath), `${basename(typPath, extname(typPath))}.pdf`);
-    await runTimedCommand("typst", ["compile", "--pdf-standard", "ua-1", typPath, pdfPath], {
+    await compileTypstUa1(typPath, pdfPath, {
       cwd: tmp,
       timeoutMs,
       env,
