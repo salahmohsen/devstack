@@ -1,7 +1,7 @@
 # List search, filters, and command-palette find — design
 
 **Date:** 2026-08-22  
-**Status:** Grill locked (session 2026-08-22). Ready for an implementation plan.  
+**Status:** Grill locked (session 2026-08-22). Spec review approved. Ready for an implementation plan.  
 **Goal:** Search + facet chips + display sort on the six dashboard lists, URL-shareable via RSQL, plus authenticated entity jumps in the command palette. One query contract in `@tsu-stack/core`. Cubby Filters as the chip bar (AND-only in v1).
 
 **Related**
@@ -18,7 +18,7 @@
 
 **Not this spec:** writing code. Implementation plan comes after this file. Nested AND/OR **group UI**, ReUI Filters as the bar, `react-rsql-query-builder`, fuzzy Postgres, mail list filters, public portfolio RSQL.
 
-**Amends:** New jobs **New / Dismissed** tabs and Tracked jobs **open / closed / all** local filter become **seeded removable Cubby chips** on the same bar as other facets. Page identity (`inbox|dismissed` vs `tracked`) does not move into a cross-page Status chip.
+**Amends:** New jobs **New / Dismissed** tabs and Tracked jobs **open / closed / all** local **list** filter become **seeded removable Cubby chips** on the same bar as other facets. Page identity (`inbox|dismissed` vs `tracked`) does not move into a cross-page Status chip. Tracked **board** stays open-only (`outcome IS NULL`); that is unchanged from today (`isApplicationOpen`). Closed / all-tracked are **list** (and URL) only.
 
 ---
 
@@ -38,7 +38,9 @@
 
 **Partition.** Jobs page identity: New jobs allowlists `inbox|dismissed` only; Tracked allowlists `tracked` only.
 
-**Seeded chip.** Default leaf mounted on first paint (inbox on New jobs, open on Tracked). In the URL. Removable.
+**Seeded chip.** Default leaf for a jobs page (inbox on New jobs, open on Tracked). Removable. See [Jobs URL seeds](#jobs-url-seeds) for omitted vs explicit `filter`.
+
+**Narrowed.** `q` nonempty, **or** `filter` is present and is **not** exactly the page seed RSQL. Seed-only (or omitted `filter` on jobs) is **not** narrowed.
 
 ---
 
@@ -116,7 +118,7 @@ Palette is a **separate** `search.entities` path. It does not read `filter`.
 ### `packages/ui`
 
 - `npx shadcn@latest add @cubby-ui/filters` and `@cubby-ui/use-fuzzy-filter`.
-- Remap Cubby Button, Combobox, Badge, Input, DropdownMenu → existing `@tsu-stack/ui` primitives. Lucide, not Hugeicons.
+- Remap Cubby Button, ButtonGroup, Combobox, Badge, Input, NumberField, DropdownMenu, Kbd → existing `@tsu-stack/ui` primitives. Lucide, not Hugeicons.
 - Export `Filters`, `createFilter`, types, `useFuzzyFilter`.
 
 ### `packages/core`
@@ -126,22 +128,25 @@ Palette is a **separate** `search.entities` path. It does not read `filter`.
 - `filterValuesToAst` / `astToFilterValues` (AND of leaves). Incomplete leaves omitted.
 - Operator map (Cubby → RSQL):
 
-| Cubby            | RSQL                          | SQL (typical)                                 |
-| ---------------- | ----------------------------- | --------------------------------------------- |
-| `is` / `eq`      | `==`                          | `=`                                           |
-| `is_not` / `neq` | `!=`                          | `<>`                                          |
-| `is_any_of`      | `=in=`                        | `IN (...)`                                    |
-| `is_not_any_of`  | `=out=`                       | `NOT IN`                                      |
-| `contains`       | `=ilike=`                     | `ILIKE '%' \|\| val \|\| '%'`                 |
-| `not_contains`   | `=nilike=`                    | `NOT ILIKE`                                   |
-| `starts_with`    | `=istart=`                    | `ILIKE val \|\| '%'`                          |
-| `ends_with`      | `=iend=`                      | `ILIKE '%' \|\| val`                          |
-| `gt` / `lt`      | `>` / `<`                     | same                                          |
-| `between`        | two comparisons `>=` and `<=` | AND of bounds (omit null bound)               |
-| `is_empty`       | `==null`                      | `IS NULL` or `NOT EXISTS` for relation fields |
-| `is_not_empty`   | `!=null`                      | `IS NOT NULL` / `EXISTS`                      |
+| Cubby                       | RSQL                                      | SQL (typical)                                  |
+| --------------------------- | ----------------------------------------- | ---------------------------------------------- |
+| `is` / `eq`                 | `==`                                      | `=`                                            |
+| `is_not` / `neq`            | `!=`                                      | `<>`                                           |
+| `is_any_of`                 | `=in=`                                    | `IN (...)`                                     |
+| `is_not_any_of`             | `=out=`                                   | `NOT IN`                                       |
+| `contains`                  | `=ilike=`                                 | `ILIKE '%' \|\| val \|\| '%'`                  |
+| `not_contains`              | `=nilike=`                                | `NOT ILIKE`                                    |
+| `starts_with`               | `=istart=`                                | `ILIKE val \|\| '%'`                           |
+| `ends_with`                 | `=iend=`                                  | `ILIKE '%' \|\| val`                           |
+| `gt` / `lt`                 | `>` / `<`                                 | same                                           |
+| `between`                   | `=between=(min,max)` (one leaf, two args) | `col >= min AND col <= max`; drop a null bound |
+| `is_empty`                  | `==null`                                  | `IS NULL` or `NOT EXISTS` for relation fields  |
+| `is_not_empty`              | `!=null`                                  | `IS NOT NULL` / `EXISTS`                       |
+| (Tracked sentinel, no chip) | `outcome=unrestricted=`                   | no outcome predicate                           |
 
 Unknown field or op → parse error (400). Do not implement `includes_all` in v1.
+
+**`between` round-trip:** one Cubby range chip ↔ one `=between=` leaf. Parser maps `=between=` with two args to that chip. One-sided range prints `>=` or `<=` only; parsing `matchScore>=x` (no matching `<=` on the same field) reconstitutes a between chip with `max: null` (and the reverse for `<=`). Do **not** split a two-bound range into two chips.
 
 ### `apps/web`
 
@@ -160,12 +165,12 @@ Unknown field or op → parse error (400). Do not implement `includes_all` in v1
 
 **URL (source of truth)**
 
-| Param                | Rule                                        |
-| -------------------- | ------------------------------------------- |
-| `q`                  | Trimmed; omit when empty                    |
-| `filter`             | RSQL of complete leaves; omit when none     |
-| `sortBy` / `sortDir` | Omit when page default                      |
-| inspect id           | Existing names + `experienceId` / `stackId` |
+| Param                | Rule                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| `q`                  | Trimmed; omit when empty                                                                               |
+| `filter`             | RSQL of complete leaves. Catalogs/resumes: omit when none. Jobs: see [Jobs URL seeds](#jobs-url-seeds) |
+| `sortBy` / `sortDir` | Omit when page default                                                                                 |
+| inspect id           | Existing names + `experienceId` / `stackId`                                                            |
 
 Opening inspect **preserves** `q` / `filter` / sort. Strip **only** the inspect id when closing if that is current behavior; never `search: {}`.
 
@@ -173,14 +178,16 @@ Opening inspect **preserves** `q` / `filter` / sort. Strip **only** the inspect 
 
 - `q` debounced **300ms**, `navigate` replace.
 - Chip changes: drop incomplete leaves; AST → RSQL.
-- Seeded jobs chips are complete leaves on first paint (URL includes them).
-- Sort writes `sortBy` / `sortDir` only.
+- Seeded jobs chips follow [Jobs URL seeds](#jobs-url-seeds).
+- Sort writes `sortBy` / `sortDir` only. Picking a sort key sets `sortDir` (`desc` for dates/score/`fromDate`/`year`/`updatedAt`/`createdAt`/`matchScore`; `asc` for `title`/`name`/`company`/`stage`). Catalogs expose a **Default** sort option that **omits** `sortBy`/`sortDir` (back to `sortOrder`).
+- Cursor pages: keyset includes the **active** `sortBy` column(s) plus `id` (today’s `(sortOrder, title/name, id)` is only the default catalog cursor). Changing sort resets the cursor.
 
 **URL → server**
 
 - `listPage` input: `{ cursor, limit, q, filter, sortBy, sortDir }` plus jobs **implicit** `trackingStatus` from the **page** (Tracked always `tracked`; New jobs always `inbox|dismissed` via chip or default).
 - Any change to `q` / `filter` / sort **resets** infinite query (new key, cursor `null`).
-- Tracked board: same input, **no cursor**, `limit = 200`. If `totalCount > 200`, board shows a cap notice; list view still pages.
+- Tracked **list**: URL query as-is (Open seed, outcome chip, or all-tracked).
+- Tracked **board**: same `q` / non-outcome chips / sort, **plus always** `outcome IS NULL`. No cursor, `limit = 200`. Closed cards never appear on the board. If open match count > 200, cap notice on board; list still pages.
 - Palette does not send `filter`.
 
 **Compile**
@@ -200,21 +207,63 @@ Enabled only when `q` is empty **and** there are no chips. After clearing jobs s
 
 ## v1 fields
 
-| Page         | `q` columns                          | Chips                                                                                                   | Default sort (unfiltered / no display sort) | Sort-by options                               |
-| ------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------- |
-| Experiences  | `title`, `organization`              | **In portfolio**                                                                                        | `sortOrder`                                 | `fromDate`, `title`, `updatedAt`              |
-| Projects     | `title`                              | **In portfolio**, **Skills** (`is any of`)                                                              | `sortOrder`                                 | `year`, `title`, `updatedAt`                  |
-| Skills       | `name`, `alternativeNames`           | **Type**, **In portfolio**, **Featured**, **Projects** (`is any of`)                                    | `sortOrder`                                 | `name`, `projectCount`, `updatedAt`           |
-| Resumes      | `filename`, linked job title/company | **Tied to a job** (`is empty` = general)                                                                | `updatedAt` desc                            | `updatedAt`, `createdAt`                      |
-| New jobs     | `title`, `company`                   | Seeded **Tracking is inbox**; also `dismissed`; **source**; **listing closed**; **match score** (range) | `matchScore` desc, then `updatedAt`         | `matchScore`, `updatedAt`, `company`          |
-| Tracked jobs | `title`, `company`                   | Seeded **Open** (`outcome is empty`); **stage**; **outcome**; **source**; **match score**               | `updatedAt` desc                            | `updatedAt`, `stage`, `matchScore`, `company` |
+| Page         | `q` columns                          | Chips                                                                                                                                    | Default sort (unfiltered / no display sort) | Sort-by options                               |
+| ------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------- |
+| Experiences  | `title`, `organization`              | **In portfolio**                                                                                                                         | `sortOrder`                                 | `fromDate`, `title`, `updatedAt`              |
+| Projects     | `title`                              | **In portfolio**, **Skills** (`is any of`)                                                                                               | `sortOrder`                                 | `year`, `title`, `updatedAt`                  |
+| Skills       | `name`, `alternativeNames`           | **Type**, **In portfolio**, **Featured**, **Projects** (`is any of`)                                                                     | `sortOrder`                                 | `name`, `projectCount`, `updatedAt`           |
+| Resumes      | `filename`, linked job title/company | **Tied to a job** (`is empty` = general)                                                                                                 | `updatedAt` desc                            | `updatedAt`, `createdAt`                      |
+| New jobs     | `title`, `company`                   | Seeded **Tracking is inbox**; also `dismissed`; **source tags** (`sourceTags`, `is any of`); **listing closed**; **match score** (range) | `matchScore` desc, then `updatedAt`         | `matchScore`, `updatedAt`, `company`          |
+| Tracked jobs | `title`, `company`                   | Seeded **Open** (`outcome is empty`); **stage**; **outcome**; **source tags**; **match score**                                           | `updatedAt` desc                            | `updatedAt`, `stage`, `matchScore`, `company` |
 
 **Out of v1:** experience date range chip, work mode/location, `includes all` projects, resume author, mail, Featured as a jobs field.
 
-**Jobs seeds (RSQL)**
+### Jobs URL seeds
 
-- New jobs: `trackingStatus==inbox`. Allowlist `trackingStatus` ∈ `{inbox, dismissed}` only. Remove chip → both. Invalid: `tracked`.
-- Tracked: `outcome==null` (Open). Allowlist stages/outcomes for **tracked** rows only. Remove chip → all tracked. Implicit procedure input `trackingStatus: "tracked"`.
+Jobs pages **must** distinguish seed vs “page-scoped all.” Catalogs omit `filter` when there are no chips.
+
+| URL                                            | New jobs                                                                                               | Tracked jobs                                           |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| `filter` **omitted**                           | Treat as seed: `trackingStatus==inbox`. After mount, `replace` the URL to write that RSQL (shareable). | Treat as seed: `outcome==null` (Open). Same `replace`. |
+| `filter=trackingStatus==inbox`                 | New (inbox)                                                                                            | invalid (400)                                          |
+| `filter=trackingStatus==dismissed`             | Dismissed                                                                                              | invalid                                                |
+| `filter=trackingStatus=in=(inbox,dismissed)`   | Page-scoped **all** (chip removed)                                                                     | invalid                                                |
+| `filter=outcome==null`                         | invalid                                                                                                | Open                                                   |
+| `filter` present, **no** `trackingStatus` leaf | 400                                                                                                    | —                                                      |
+| `filter=outcome=unrestricted=`                 | 400                                                                                                    | All tracked (list); board still open-only              |
+| `filter=outcome=in=(rejected,…)`               | 400                                                                                                    | Closed subset (**list** only)                          |
+| `filter` present, **no** `outcome` leaf        | —                                                                                                      | 400                                                    |
+
+**Lock**
+
+1. **Omitted `filter` param** = seed (inbox / open). Client `replace`s to the seed RSQL so the URL is shareable.
+2. **New jobs** `filter` **always** includes a `trackingStatus` leaf once written. Missing that leaf → 400. Remove seed → `trackingStatus=in=(inbox,dismissed)` (never omit the param).
+3. **Tracked all-tracked** (Open chip removed, no closed outcome) **always** prints `outcome=unrestricted=` (SQL: no outcome predicate), including next to other leaves (`outcome=unrestricted=;stage==interview`). That sentinel is Tracked-only. The bar shows no Outcome chip. A present `filter` **without** `outcome` on Tracked → 400 (do not overload “missing outcome”).
+4. Cubby Clear on jobs: intercept `setFilters([])` → write **seed** RSQL, not an empty param.
+
+Tracking chip options may show inbox/dismissed **counts** (existing count procedures).
+
+**Board:** ignore `outcome=unrestricted=` and any closed outcome chip; always `outcome IS NULL`. List honors the URL.
+
+### Jobs field ids
+
+- `trackingStatus` — New jobs only.
+- `outcome`, `stage` — Tracked only.
+- `sourceTags` — `application.sourceTags` (enum `mail`, `hub`, `manual`, `discovery`, `linkedin`, …). **Not** legacy `application.source`.
+- `listingClosed` — boolean select.
+- `matchScore` — number, `eq` / `gt` / `lt` / `between`.
+- `company` as sort key = `companyName` column.
+
+### Catalog / resume field ids
+
+| RSQL / chip id        | Pages                         | Cubby type                  | Notes                                |
+| --------------------- | ----------------------------- | --------------------------- | ------------------------------------ |
+| `includedInPortfolio` | experiences, projects, skills | select boolean              | `==true` / `==false`                 |
+| `isFeatured`          | skills                        | select boolean              |                                      |
+| `type`                | skills                        | select                      | stack type enum                      |
+| `projects`            | skills                        | multiselect                 | ids; `=in=` → `EXISTS project_stack` |
+| `stacks`              | projects                      | multiselect                 | ids; same join                       |
+| `tiedToJob`           | resumes                       | `is_empty` / `is_not_empty` | SQL: no linked job vs has linked job |
 
 **Relation chips**
 
@@ -244,20 +293,20 @@ Enabled only when `q` is empty **and** there are no chips. After clearing jobs s
 
 **Fail closed**
 
-- Bad RSQL / unknown field/op / partition violation → oRPC 400. Client toasts, **drops `filter`** from the URL, does not run an unscoped list.
+- Bad RSQL / unknown field/op / partition violation → oRPC 400. Client toasts, does not run an unscoped list. Catalogs/resumes: **omit** `filter`. Jobs: write **seed** RSQL (not omit).
 - Palette on guest: never requested.
 
 **Empty**
 
-- Unfiltered empty catalog: keep today’s “Add …” empty states.
-- Filtered/q no matches: “No {noun} match” + **Clear filters**. Clear restores `q` empty, chips empty, **then re-seeds jobs defaults**.
+- **Not narrowed** (no `q`, and `filter` omitted or exactly the page seed): today’s “Add …” / empty inbox / empty open board. **Not** “No matches + Clear.”
+- **Narrowed** and zero rows: “No {noun} match” + **Clear filters**. Clear sets `q` empty and jobs **re-seed** (seed RSQL, not omit-then-hope). Catalogs/resumes: omit `filter`.
 - Board over cap: notice on board only.
 
 **Incomplete chips:** `is empty` / `is not empty` are complete. Empty arrays, `""`, `null` scalars stay local only.
 
 **Verification**
 
-- Unit tests in `packages/core` (`src/**/__tests__/*.test.ts`): print/parse round-trip; allowlist reject; `between` / `==null` / `=in=`; relation-field compile fixtures if the compiler is pure enough to test without DB.
+- Unit tests in `packages/core` (`src/**/__tests__/*.test.ts`): print/parse round-trip; allowlist reject; `=between=` two-arg chip; `==null`; `=in=`; `outcome=unrestricted=`; relation-field compile fixtures if the compiler is pure enough to test without DB.
 - No new e2e unless asked.
 - Manual: six pages; URL share; inspect id + filters together; project → skills; palette signed-in vs guest; reorder disabled while filtered; New jobs cannot chip `tracked`; board cap copy.
 
@@ -280,12 +329,14 @@ Enabled only when `q` is empty **and** there are no chips. After clearing jobs s
 
 Suggested order:
 
-1. Core AST + RSQL print/parse + allowlists + unit tests.
-2. Cubby install + remap in `packages/ui`.
-3. Adapter + `ListSearchBar` + `validateSearch` on one catalog page (Skills) including Projects chip + jump from project.
-4. Experiences, projects, resumes.
-5. Applications `listPage` + New jobs / Tracked list + seeds + board second query.
-6. `search.entities` + palette groups + `useFuzzyFilter`.
-7. Fix inspect navigation so it does not wipe list search params; add `experienceId` / `stackId` / New jobs `applicationId`.
+1. Stop inspect `search: {}` on projects/resumes/tracked (preserve `q`/`filter`/sort). Add `experienceId` / `stackId` / New jobs `applicationId` as needed.
+2. Core AST + RSQL print/parse + allowlists + unit tests (including jobs seed/all URL cases).
+3. Cubby install + remap in `packages/ui`.
+4. Adapter + `ListSearchBar` + `validateSearch` on Skills (Projects chip + project jump).
+5. Experiences, projects, resumes.
+6. Applications `listPage` + New jobs / Tracked list + URL seeds + board query (`outcome IS NULL`).
+7. `search.entities` + palette groups + `useFuzzyFilter`.
+
+**Compile notes (do not invent columns):** `sourceTags=in=` is `text[]` overlap (`&&` / `unnest`), not scalar `IN`. `listingClosed` follows today’s `job_posting.closedAt` via `postingId`. `includedInPortfolio` is `portfolioEntryId IS NOT NULL`. Keep `applications.list` for hub/pickers; dashboard jobs add `listPage` + the open-only board query. Default `matchScore` sort is `DESC NULLS LAST`.
 
 Hub/AI surfaces are unchanged except they may call `listPage` with `q` later; not required in v1. After dashboard UI ships, run [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) only if hub tools grow a “filter my skills” path in the same change; **this slice is list chrome**, not a new agent tool — skip the harness unless the plan adds hub tools.
