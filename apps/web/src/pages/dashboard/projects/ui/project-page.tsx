@@ -34,7 +34,8 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
-import { omitSearchKey } from "@/shared/lib/list-inspect-search";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -96,45 +97,46 @@ export function ProjectsPage() {
   useEffect(() => {
     if (!deepLinkProjectId) return;
 
-    const fromList = projects.find((project) => project.id === deepLinkProjectId);
-    if (fromList) {
-      setOpenedItem(fromList);
-      setIsItemOpen({ [fromList.id]: true });
-      void navigate({
-        to: "/dashboard/projects",
-        search: omitSearchKey(search, "projectId"),
-        replace: true
-      });
-      return;
-    }
-
-    if (projectsQuery.isLoading) return;
-
     let cancelled = false;
-    void queryClient
-      .fetchQuery(orpcQueryClient.projects.get.queryOptions({ input: { id: deepLinkProjectId } }))
-      .then((project) => {
+    let cancelFlush: (() => void) | undefined;
+
+    const openAndStrip = (project: ProjectOutput | null | undefined) => {
+      cancelFlush = scheduleAfterLayoutClose(() => {
         if (cancelled) return;
         if (project) {
+          expandDashboardSidePanel();
           setOpenedItem(project);
           setIsItemOpen({ [project.id]: true });
         }
         void navigate({
           to: "/dashboard/projects",
-          search: omitSearchKey(search, "projectId"),
+          search: (prev) => omitSearchKey(prev, "projectId"),
           replace: true
         });
       });
+    };
+
+    const fromList = projects.find((project) => project.id === deepLinkProjectId);
+    if (fromList) {
+      openAndStrip(fromList);
+    } else if (!projectsQuery.isLoading) {
+      void queryClient
+        .fetchQuery(orpcQueryClient.projects.get.queryOptions({ input: { id: deepLinkProjectId } }))
+        .then((project) => {
+          if (cancelled) return;
+          openAndStrip(project);
+        });
+    }
 
     return () => {
       cancelled = true;
+      cancelFlush?.();
     };
   }, [
     deepLinkProjectId,
     projects,
     projectsQuery.isLoading,
     queryClient,
-    search,
     setOpenedItem,
     setIsItemOpen,
     navigate

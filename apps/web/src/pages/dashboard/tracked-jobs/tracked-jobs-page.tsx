@@ -10,7 +10,7 @@ import { type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
-import { omitSearchKey } from "@/shared/lib/list-inspect-search";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
@@ -133,46 +133,40 @@ export function TrackedJobsPage() {
   useEffect(() => {
     if (!deepLinkApplicationId) return;
 
-    const fromList = applications.find((application) => application.id === deepLinkApplicationId);
-    if (fromList) {
-      showView(fromList);
-      void navigate({
-        to: "/dashboard/tracked-jobs",
-        search: omitSearchKey(search, "applicationId"),
-        replace: true
-      });
-      return;
-    }
-
-    if (listQuery.isLoading) return;
-
     let cancelled = false;
-    void queryClient
-      .fetchQuery(
-        orpcQueryClient.applications.get.queryOptions({ input: { id: deepLinkApplicationId } })
-      )
-      .then((row) => {
+    let cancelFlush: (() => void) | undefined;
+
+    const openAndStrip = (row: ApplicationOutput | null | undefined) => {
+      cancelFlush = scheduleAfterLayoutClose(() => {
         if (cancelled) return;
         if (row) showView(row);
         void navigate({
           to: "/dashboard/tracked-jobs",
-          search: omitSearchKey(search, "applicationId"),
+          search: (prev) => omitSearchKey(prev, "applicationId"),
           replace: true
         });
       });
+    };
+
+    const fromList = applications.find((application) => application.id === deepLinkApplicationId);
+    if (fromList) {
+      openAndStrip(fromList);
+    } else if (!listQuery.isLoading) {
+      void queryClient
+        .fetchQuery(
+          orpcQueryClient.applications.get.queryOptions({ input: { id: deepLinkApplicationId } })
+        )
+        .then((row) => {
+          if (cancelled) return;
+          openAndStrip(row);
+        });
+    }
 
     return () => {
       cancelled = true;
+      cancelFlush?.();
     };
-  }, [
-    applications,
-    deepLinkApplicationId,
-    listQuery.isLoading,
-    navigate,
-    queryClient,
-    search,
-    showView
-  ]);
+  }, [applications, deepLinkApplicationId, listQuery.isLoading, navigate, queryClient, showView]);
 
   // Prefer live list row so stage/outcome/edit/package changes refresh the side panel.
   const liveViewItem = useMemo(() => {

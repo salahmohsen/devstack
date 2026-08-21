@@ -25,7 +25,8 @@ import {
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
-import { omitSearchKey } from "@/shared/lib/list-inspect-search";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { toastAiError } from "@/shared/lib/toast-ai-error";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
@@ -82,18 +83,20 @@ export function ResumesPage() {
     if (!deepLinkResumeId || resumesQuery.isLoading) return;
     const resume = visibleResumes.find((r) => r.id === deepLinkResumeId);
     if (!resume) return;
-    setOpenedItem(resume);
-    setIsItemOpen({ [resume.id]: true });
-    void navigate({
-      to: "/dashboard/resumes",
-      search: omitSearchKey(search, "resumeId"),
-      replace: true
+    return scheduleAfterLayoutClose(() => {
+      expandDashboardSidePanel();
+      setOpenedItem(resume);
+      setIsItemOpen({ [resume.id]: true });
+      void navigate({
+        to: "/dashboard/resumes",
+        search: (prev) => omitSearchKey(prev, "resumeId"),
+        replace: true
+      });
     });
   }, [
     deepLinkResumeId,
     visibleResumes,
     resumesQuery.isLoading,
-    search,
     setOpenedItem,
     setIsItemOpen,
     navigate

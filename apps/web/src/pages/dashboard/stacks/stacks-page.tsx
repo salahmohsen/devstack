@@ -33,7 +33,8 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
-import { omitSearchKey } from "@/shared/lib/list-inspect-search";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -228,45 +229,46 @@ export function StacksPage() {
   useEffect(() => {
     if (!deepLinkStackId) return;
 
-    const fromList = stacks.find((stack) => stack.id === deepLinkStackId);
-    if (fromList) {
-      setOpenedItem(fromList);
-      setIsItemOpen({ [fromList.id]: true });
-      void navigate({
-        to: "/dashboard/skills",
-        search: omitSearchKey(search, "stackId"),
-        replace: true
-      });
-      return;
-    }
-
-    if (stacksQuery.isLoading) return;
-
     let cancelled = false;
-    void queryClient
-      .fetchQuery(orpcQueryClient.stacks.get.queryOptions({ input: { id: deepLinkStackId } }))
-      .then((stack) => {
+    let cancelFlush: (() => void) | undefined;
+
+    const openAndStrip = (stack: StackOutput | null | undefined) => {
+      cancelFlush = scheduleAfterLayoutClose(() => {
         if (cancelled) return;
         if (stack) {
+          expandDashboardSidePanel();
           setOpenedItem(stack);
           setIsItemOpen({ [stack.id]: true });
         }
         void navigate({
           to: "/dashboard/skills",
-          search: omitSearchKey(search, "stackId"),
+          search: (prev) => omitSearchKey(prev, "stackId"),
           replace: true
         });
       });
+    };
+
+    const fromList = stacks.find((s) => s.id === deepLinkStackId);
+    if (fromList) {
+      openAndStrip(fromList);
+    } else if (!stacksQuery.isLoading) {
+      void queryClient
+        .fetchQuery(orpcQueryClient.stacks.get.queryOptions({ input: { id: deepLinkStackId } }))
+        .then((stack) => {
+          if (cancelled) return;
+          openAndStrip(stack);
+        });
+    }
 
     return () => {
       cancelled = true;
+      cancelFlush?.();
     };
   }, [
     deepLinkStackId,
     stacks,
     stacksQuery.isLoading,
     queryClient,
-    search,
     setOpenedItem,
     setIsItemOpen,
     navigate

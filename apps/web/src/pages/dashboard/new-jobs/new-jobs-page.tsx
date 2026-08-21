@@ -56,7 +56,7 @@ import {
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
-import { omitSearchKey } from "@/shared/lib/list-inspect-search";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
@@ -520,47 +520,40 @@ export function NewJobsPage() {
   useEffect(() => {
     if (!deepLinkApplicationId) return;
 
-    const fromList = jobs.find((job) => job.id === deepLinkApplicationId);
-    if (fromList) {
-      // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from inspect search param
-      setOpenedItem(fromList);
-      void navigate({
-        to: "/dashboard/new-jobs",
-        search: omitSearchKey(search, "applicationId"),
-        replace: true
-      });
-      return;
-    }
-
-    if (listQuery.isLoading) return;
-
     let cancelled = false;
-    void queryClient
-      .fetchQuery(
-        orpcQueryClient.applications.get.queryOptions({ input: { id: deepLinkApplicationId } })
-      )
-      .then((row) => {
+    let cancelFlush: (() => void) | undefined;
+
+    const openAndStrip = (row: ApplicationOutput | null | undefined) => {
+      cancelFlush = scheduleAfterLayoutClose(() => {
         if (cancelled) return;
         if (row) setOpenedItem(row);
         void navigate({
           to: "/dashboard/new-jobs",
-          search: omitSearchKey(search, "applicationId"),
+          search: (prev) => omitSearchKey(prev, "applicationId"),
           replace: true
         });
       });
+    };
+
+    const fromList = jobs.find((job) => job.id === deepLinkApplicationId);
+    if (fromList) {
+      openAndStrip(fromList);
+    } else if (!listQuery.isLoading) {
+      void queryClient
+        .fetchQuery(
+          orpcQueryClient.applications.get.queryOptions({ input: { id: deepLinkApplicationId } })
+        )
+        .then((row) => {
+          if (cancelled) return;
+          openAndStrip(row);
+        });
+    }
 
     return () => {
       cancelled = true;
+      cancelFlush?.();
     };
-  }, [
-    deepLinkApplicationId,
-    jobs,
-    listQuery.isLoading,
-    navigate,
-    queryClient,
-    search,
-    setOpenedItem
-  ]);
+  }, [deepLinkApplicationId, jobs, listQuery.isLoading, navigate, queryClient, setOpenedItem]);
 
   const setIsItemOpen = useCallback(
     (open: Record<string, boolean> | null) => {

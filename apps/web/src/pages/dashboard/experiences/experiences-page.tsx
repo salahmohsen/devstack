@@ -29,7 +29,8 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
-import { omitSearchKey } from "@/shared/lib/list-inspect-search";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ItemAvatar } from "@/shared/ui/item-avatar";
@@ -107,49 +108,50 @@ export function ExperiencesPage() {
   useEffect(() => {
     if (!deepLinkExperienceId) return;
 
-    const fromList = visibleExperiences.find(
-      (experience) => experience.id === deepLinkExperienceId
-    );
-    if (fromList) {
-      setOpenedItem(fromList);
-      setIsItemOpen({ [fromList.id]: true });
-      void navigate({
-        to: "/dashboard/experiences",
-        search: omitSearchKey(search, "experienceId"),
-        replace: true
-      });
-      return;
-    }
-
-    if (experiencesQuery.isLoading) return;
-
     let cancelled = false;
-    void queryClient
-      .fetchQuery(
-        orpcQueryClient.experiences.get.queryOptions({ input: { id: deepLinkExperienceId } })
-      )
-      .then((experience) => {
+    let cancelFlush: (() => void) | undefined;
+
+    const openAndStrip = (experience: ExperienceOutput | null | undefined) => {
+      cancelFlush = scheduleAfterLayoutClose(() => {
         if (cancelled) return;
         if (experience) {
+          expandDashboardSidePanel();
           setOpenedItem(experience);
           setIsItemOpen({ [experience.id]: true });
         }
         void navigate({
           to: "/dashboard/experiences",
-          search: omitSearchKey(search, "experienceId"),
+          search: (prev) => omitSearchKey(prev, "experienceId"),
           replace: true
         });
       });
+    };
+
+    const fromList = visibleExperiences.find(
+      (experience) => experience.id === deepLinkExperienceId
+    );
+    if (fromList) {
+      openAndStrip(fromList);
+    } else if (!experiencesQuery.isLoading) {
+      void queryClient
+        .fetchQuery(
+          orpcQueryClient.experiences.get.queryOptions({ input: { id: deepLinkExperienceId } })
+        )
+        .then((experience) => {
+          if (cancelled) return;
+          openAndStrip(experience);
+        });
+    }
 
     return () => {
       cancelled = true;
+      cancelFlush?.();
     };
   }, [
     deepLinkExperienceId,
     visibleExperiences,
     experiencesQuery.isLoading,
     queryClient,
-    search,
     setOpenedItem,
     setIsItemOpen,
     navigate
