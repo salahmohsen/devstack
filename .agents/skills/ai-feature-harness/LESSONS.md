@@ -17,6 +17,19 @@
 
 ---
 
+## 2026-08-21 — Resume PDF generate/Accept: prove this binary, then engines on its PATH
+
+- **Trigger:** Typst/RenderCV resume PDF harness (dashboard generate + apply-package Accept)
+- **Finding:** A listener on `:5200` is not this worktree. Probe `resume.generate` / `applications.acceptApplyPackage` for `PDF_ENGINE_UNAVAILABLE` (defined error) before treating a 200 as the feature. Main-checkout `vite-node` and a worktree watcher can race; `EADDRINUSE` means the winner’s PATH is the one that will spawn `rendercv`/`typst`
+- **Finding:** Do not run worktree `scripts/dev.sh` when infra may be shared. `docker compose -f docker-compose.infra.yml up -d` plus package `dev` scripts. Killing a compose-attached parent can `compose down` postgres/redis/minio
+- **Finding:** Spawn uses the **API process** PATH, not the agent shell. `typst` in `~/.local/bin` is not enough if `rendercv` lives only in a venv the server never inherited. Symlink both binaries onto a dir already on the server PATH (or restart `pnpm --filter @tsu-stack/server dev` with that PATH) before the happy-path generate
+- **Finding:** Homebrew `typst` is 0.15.x; pin 0.14.2 from the GitHub tarball. `rendercv[full]==2.8` installed on host Python 3.14. Local engines are not npm deps
+- **Finding:** Fail-closed first: unauth generate/Accept 401; engines missing → `PDF_ENGINE_UNAVAILABLE` 500 defined. Then generate/Accept 200. Proof is MinIO bytes: `%PDF-1.7`, `/MarkInfo` + `/StructTreeRoot`, `pdfuaid:part` 1, A4 MediaBox `595.28×841.89`, pypdf extractable name/summary/experience (resume) and name + `Re:` + body (cover). Structure tags Summary/Experience/Projects/Skills are the engineeringresumes family
+- **Finding:** The optional live `renderResumePdfBytes` unit uses `Salah "Mohsen"` for Typst-escape tests. RenderCV 2.8 writes `name: "Salah "Mohsen""` and Typst UA-1 exits 1. Dashboard names without embedded `"` compile. Do not treat a skipIf live-compile RED as “engines missing” when generate already stored a tagged PDF
+- **Finding:** Accept with no stored draft is `NO_DRAFT` (defined), unknown id `NOT_FOUND`. Agent Accept shares `@tsu-stack/pdf` but is not proven by API 200
+- **User preference:** Do not fake a pass when engines or the session cannot start; document the blocker
+- **Evidence class:** oRPC `PDF_ENGINE_UNAVAILABLE` then generate 200 + Accept 200; Playwright `/dashboard/resumes` Generate New Resume; MinIO PDFs pypdf text + UA-1 XMP; `packages/pdf` 31 pass / 1 live-compile quote fail
+
 ## 2026-08-21 — Worldwide hiring region must not hide a specific place
 
 - **Trigger:** Find-now accuracy loop. India/Canada/Poland remotes landed while hunt locations were Egypt/Cairo

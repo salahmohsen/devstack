@@ -1,7 +1,19 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
-import { acceptApplyPackage } from "#@/mastra/lib/accept-apply-package";
+import {
+  acceptApplyPackage,
+  type AcceptApplyPackageErrorCode
+} from "#@/mastra/lib/accept-apply-package";
+
+const ACCEPT_APPLY_PACKAGE_MESSAGES: Record<AcceptApplyPackageErrorCode, string> = {
+  NOT_FOUND: "Application not found",
+  NO_DRAFT: "No apply package draft to accept — prepare a package first",
+  INVALID_DRAFT: "Apply package draft is invalid — regenerate the package",
+  STORAGE_NOT_CONFIGURED: "Media storage is not configured",
+  PDF_ENGINE_UNAVAILABLE: "PDF engine is unavailable (rendercv or typst missing on PATH)",
+  PDF_RENDER_FAILED: "Failed to render resume or cover letter PDF"
+};
 
 /**
  * Materialize PDFs from apply package draft. Requires HITL approval.
@@ -31,7 +43,7 @@ export const acceptApplyPackageTool = createTool({
         ok: false,
         applicationId,
         code: result.code,
-        message: result.message
+        message: result.message ?? ACCEPT_APPLY_PACKAGE_MESSAGES[result.code]
       };
     }
     return { ok: true, applicationId: result.application.id };

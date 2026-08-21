@@ -9,7 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./utils": "./src/utils/index.ts",
-    "./profile": "./src/profile/index.ts"
+    "./profile": "./src/profile/index.ts",
+    "./stack/stack-type": "./src/stack/stack-type.ts"
   },
   "scripts": {
     "test:unit": "vp test run"

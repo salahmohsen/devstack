@@ -327,19 +327,18 @@ _Avoid_: `narrative` (different scope, different layer), `caseStudy`,
 ## Output
 
 **PDF renderer**:
-The library that compiles portfolio data into a PDF byte stream
-server-side. `pdfnative` core (no React wrapper), migrated from
-`pdfnative-react`. Runs in the Hono server (`apps/server`). The
-renderer is a pure engine concern — it has no knowledge of resume
-semantics, only document structure (headings, paragraphs, lists, tables).
-_Avoid_: PDF engine, document generator.
+`@tsu-stack/pdf` — maps portfolio/profile to RenderCV **engineeringresumes**
+YAML, spawns `rendercv` → Typst, then `typst compile --pdf-standard ua-1`
+for A4 PDF/UA-1 bytes. Cover letters use a vendored Typst string in the
+same family. Shared by Hono `resume.generate` and the agent accept path.
+Fail closed when binaries are missing (no pdfnative fallback).
+_Avoid_: PDF engine, document generator, pdfnative, @react-pdf/renderer.
 
 **Tagged PDF**:
-A PDF with a `/StructTreeRoot` structure tree that assigns semantic
-roles (`/H1`, `/P`, `/Table`, `/L`) to content. Required for reliable
-ATS text extraction and screen-reader accessibility. Enabled via
-`tagged: true` on the pdfnative `<Document>` component, which also
-activates PDF/A-2b compliance.
+A PDF with a structure tree for reliable ATS extraction and screen-reader
+accessibility. Resume/cover output is PDF/UA-1 via
+`typst compile --pdf-standard ua-1` (not pdfnative `tagged: true` /
+PDF/A-2b).
 _Avoid_: Accessible PDF, structured PDF.
 
 **Resume builder**:
