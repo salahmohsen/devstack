@@ -31,7 +31,7 @@
 | Path                                                     | Role                                                                                                     |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `packages/core/src/list-query/*`                         | AST, RSQL, allowlists, leaf adapter, URL helpers, `ListQueryInputSchema`                                 |
-| `packages/core/src/__tests__/list-query/*.test.ts`       | Print/parse/allowlist/seed tests                                                                         |
+| `packages/core/src/list-query/__tests__/rsql.test.ts`    | Print/parse/allowlist/seed tests                                                                         |
 | `packages/db` repositories                               | `findPageByUserId` gains query opts; applications `findPageByUserId`                                     |
 | `packages/api/src/lib/list-query/compile.ts`             | AST → Drizzle `SQL` per resource                                                                         |
 | `packages/api` routers                                   | Extend `listPage` / resume `list`; `applications.listPage` + `applications.listBoard`; `search.entities` |
@@ -53,7 +53,7 @@
 - Modify: `apps/web/src/pages/dashboard/resumes/resume-page.tsx`
 - Modify: `apps/web/src/pages/dashboard/tracked-jobs/tracked-jobs-page.tsx`
 - Modify: `apps/web/src/routes/(root-layout)/__protected/dashboard/experiences/index.tsx`
-- Modify: `apps/web/src/routes/(root-layout)/__protected/dashboard/stacks/index.tsx` (skills)
+- Modify: `apps/web/src/routes/(root-layout)/__protected/dashboard/skills/index.tsx` (live Skills route; `stacks/index.tsx` only redirects — do **not** put `validateSearch` there)
 - Modify: `apps/web/src/routes/(root-layout)/__protected/dashboard/new-jobs/index.tsx`
 - Modify: matching pages if they navigate with `search: {}`
 
@@ -75,7 +75,7 @@ export function omitSearchKey<T extends Record<string, unknown>>(search: T, key:
 - [ ] **Step 3:** Add optional inspect ids to route `validateSearch` (string, omit if empty):
 
   - experiences: `experienceId`
-  - skills (`stacks` route): `stackId`
+  - skills (`/dashboard/skills` route file `skills/index.tsx`): `stackId`
   - new-jobs: `applicationId`
 
   Keep existing `projectId` / `resumeId` / tracked `applicationId`. Do **not** add `q`/`filter` yet.
@@ -206,6 +206,8 @@ If the registry URL fails, copy from https://www.cubby-ui.dev/docs/components/fi
 
 - [ ] **Step 4:** Export filters from a barrel `packages/ui/components/filters/index.ts`.
 
+- [ ] **Step 4b:** After `shadcn add`, delete vendored Cubby copies of button/combobox/hugeicons (`registryDependencies`). Keep `filters/*` + `use-fuzzy-filter`. Button sizes: map Cubby `icon_sm` / `icon_lg` to this repo’s `icon-sm` / `icon-lg`. This repo’s Button has no `leadingIcon` — use children / `render`.
+
 - [ ] **Step 5:** `vp check` in `packages/ui`. Commit:
 
 ```bash
@@ -233,13 +235,25 @@ export const ListSearchSchema = z.object({
   q: z.string().optional(),
   filter: z.string().optional(),
   sortBy: z.string().optional(),
-  sortDir: z.enum(["asc", "desc"]).optional()
+  sortDir: z.enum(["asc", "desc"]).optional(),
+  // Inspect ids — keep on the same schema so later validateSearch does not strip Task 1 keys
+  projectId: z.string().optional(),
+  resumeId: z.string().optional(),
+  applicationId: z.string().optional(),
+  experienceId: z.string().optional(),
+  stackId: z.string().optional()
 });
 ```
 
 - [ ] **Step 2:** `ListSearchBar` — search `Input` (debounce 300ms via `useDebouncedValue`), `<Filters>` from `@tsu-stack/ui/components/filters`, native/`Select` sort. `allowDuplicateFields={false}`. Incomplete chips stay in local Cubby state until complete, then parent writes RSQL via `printRsql(filterValuesToAst(leaves), resource)`.
 
-- [ ] **Step 3:** Jobs seed helpers in `list-search.ts`: `NEW_JOBS_SEED = "trackingStatus==inbox"`, `TRACKED_SEED = "outcome==null"`, `NEW_JOBS_ALL = "trackingStatus=in=(inbox,dismissed)"`, `TRACKED_ALL = "outcome=unrestricted="`. `resolveJobsFilterParam({ page, filter })` implements spec lock (omit → seed; Clear → seed).
+- [ ] **Step 3:** Jobs seed helpers in `list-search.ts`: `NEW_JOBS_SEED = "trackingStatus==inbox"`, `TRACKED_SEED = "outcome==null"`, `NEW_JOBS_ALL = "trackingStatus=in=(inbox,dismissed)"`, `TRACKED_ALL = "outcome=unrestricted="`. `resolveJobsFilterParam({ page, filter })` implements omit → seed.
+
+  **Clear vs remove-last-chip (required):** Cubby Clear and removing the last chip both yield `[]`. Do **not** treat every `[]` as seed.
+
+  - **Remove last chip / `onValueChange([])` from chips:** write page-scoped **all** (`NEW_JOBS_ALL` / `TRACKED_ALL`).
+  - **Clear control:** do not use default `FilterClearButton` on jobs. Custom Clear calls `onClear` → write **seed** RSQL (and drop `q`).
+  - Catalogs: `[]` omits `filter`.
 
 - [ ] **Step 4:** `HeaderActions` `sort.reorderDisabled` hides/disables Reorder when true.
 
@@ -259,11 +273,11 @@ git commit -m "feat: add list search bar widget"
 - Create: `packages/api/src/lib/list-query/compile.ts` — `compileListQuery({ resource, userId, ast, q })` → `SQL | undefined`
 - Modify: `packages/api/src/routers/stacks.router.ts` — parse `filter` with skills allowlist; `ListQueryError` → oRPC 400
 - Modify: `apps/web/src/pages/dashboard/stacks/api/list-stacks-page.query.ts` — pass search into infinite `input`
-- Modify: `apps/web/src/routes/.../dashboard/stacks/index.tsx` — `validateSearch` with list search + `stackId`
+- Modify: `apps/web/src/routes/(root-layout)/__protected/dashboard/skills/index.tsx` — `validateSearch` with list search + `stackId` (not the stacks redirect)
 - Modify: `apps/web/src/pages/dashboard/stacks/stacks-page.tsx` — `ListSearchBar`; empty state branch; disable reorder when narrowed
 - Modify: `apps/web/src/widgets/items-page/ui/project-info-panel.tsx` — dashboard-only “View skills” `Link` to `/dashboard/skills?filter=projects=in=(id)`
 
-**Compile notes:** `projects=in=` → `EXISTS` on `project_stack`. `includedInPortfolio` → `portfolioEntryId IS NOT NULL`. `q` ILIKE `name` OR unnest `alternativeNames`.
+**Compile notes:** `projects=in=` → `EXISTS` on `project_stack`. `includedInPortfolio` → `portfolioEntryId IS NOT NULL`. `q` ILIKE `name` OR `jsonb_array_elements_text(alternative_names)` (column is **jsonb**, not `text[]` — do not `unnest`). Compile in `packages/api` to Drizzle `SQL`; repositories accept `SQL` + sort, they must **not** re-parse RSQL. Disable Cubby `includes_all` on relation chips (`disabledOperators: ["includes_all"]`).
 
 - [ ] **Step 1:** Implement `compile.ts` for `skills` only (other resources can throw “not implemented” until later tasks). Map `ListQueryError` in stacks router.
 
@@ -296,7 +310,9 @@ git commit -m "feat: filter and search skills list"
 - Projects Skills chip options: `stacks.list`
 - Experiences: no inspect jump required beyond task 1 `experienceId`
 
-- [ ] **Step 1:** Compile + repos + routers for the three resources. Resume stays full `list` with where/sort (no cursor).
+- [ ] **Step 1:** Compile + repos + routers for the three resources. Resume stays full `list` with where/sort (no cursor). Resume `q` / `tiedToJob` must use the same linked-job definition as `withLinkedJobs` (`application.resumeId` **and** apply-package prompt ids), not `resumeId` alone.
+
+- [ ] **Step 1b:** Same UX as Skills: 400 → omit `filter`; narrowed empty + Clear; reorder disabled when narrowed; catalog **Default** sort omits `sortBy`/`sortDir`. Default `sortDir`: desc for dates/score/`fromDate`/`year`/`updatedAt`; asc for `title`/`name`.
 
 - [ ] **Step 2:** Wire three pages. Projects inverse `stacks=in=`. Resume `tiedToJob` `is_empty`.
 
@@ -315,7 +331,8 @@ git commit -m "feat: filter experiences, projects, and resumes"
 - Modify: `packages/db/src/repositories/application.repository.ts` — `findPageByUserId`, `findBoardByUserId` (cap 200, always `outcome IS NULL` extra AND)
 - Modify: `packages/core/src/application/types.ts` — page schemas, board output
 - Modify: `packages/api/src/routers/applications.router.ts` — `listPage`, `listBoard`; keep `list` for hub/pickers
-- Modify: `compile.ts` — jobs; `sourceTags` as `text[]` overlap; `listingClosed` via `job_posting.closedAt` / existing listingClosed helper; `matchScore` `DESC NULLS LAST`
+- Modify: `compile.ts` — jobs; `sourceTags` as `text[]` overlap; `listingClosed` via `job_posting.closedAt` / existing listingClosed helper; `matchScore` `DESC NULLS LAST`. **Board compile:** strip **all `outcome` leaves** (including `unrestricted`) from the AST, then AND `outcome IS NULL`. Do not `AND` URL outcome with `IS NULL` (that empties the board on closed/all-tracked). Other chips + `q` + sort still apply.
+- Modify: every applications mutation invalidation (`applicationsQueryKeys.list`, hub tools, new-jobs/tracked pages) — also invalidate `listPage` infinite keys and `listBoard` keys. Keep `applications.list` for hub/pickers.
 - Modify: `apps/web/src/features/applications` query wrappers
 - Modify: `new-jobs-page.tsx` — drop inbox/dismissed **tabs**; seed chip; `listPage` infinite; counts on tracking options
 - Modify: `tracked-jobs-page.tsx`, `ui/list.tsx`, `ui/board.tsx` — drop `listFilter` store; list uses `listPage`; board uses `listBoard` with same `q`/`filter`/`sort` (server still forces open)
@@ -352,9 +369,10 @@ git commit -m "feat: paginated filtered new and tracked jobs"
 - Modify: `packages/api` — `search.entities` `protectedProcedure` (new small router or under a `search` key on `appRouter`)
 - Modify: `apps/web/src/shared/lib/command-palette/types.ts` — optional
 - Modify: `use-command-items.ts` — fetch when signed in and `q.trim().length >= 2`
-- Modify: `command-palette.tsx` — pass query into items hook; `useFuzzyFilter` on combined items; Command `filter={null}` (or equivalent so we don’t double-filter). Groups: Experiences, Projects, Skills, Resumes, New jobs, Tracked jobs. `authRequired` already filters static nav.
+- Modify: `command-palette.tsx` — pass query into items hook; `useFuzzyFilter` on combined items. Command is Base UI Autocomplete, **not** cmdk: do not assume `filter={null}`. Pre-filter with fuzzy, then disable Autocomplete’s default string filter (pass a pass-through / `always true` filter, or feed already-filtered `items`). Add the six entity labels to `GROUP_ORDER`.
+- Modify: `CommandAction` navigate variant: add `search?: Record<string, string>`. `handleItemClick` must `router.navigate({ to, params, search })`. Do **not** glue `?stackId=` onto `to` — TanStack will not parse it as `validateSearch`.
 
-**Search:** cap 8 per type. `inbox_job` = inbox+dismissed. `tracked_job` = tracked. `href` uses inspect search params (`/dashboard/skills?stackId=`, etc.). Guest never calls.
+**Search:** cap 8 per type. `inbox_job` = inbox+dismissed. `tracked_job` = tracked. Navigate with `to: "/dashboard/skills"` and `search: { stackId }` (etc.). Guest never calls.
 
 - [ ] **Step 1:** Procedure + compile `q` ILIKE per type (no RSQL).
 
