@@ -22,6 +22,7 @@ import {
   MailNotifierExtractSchema,
   mergeJobListingExtract,
   normalizeAgentTakeText,
+  resolveMatchLandDecision,
   scoreJobAgainstPreference,
   shouldPassAllHarvestJobs,
   type HarvestedJob,
@@ -494,12 +495,15 @@ const scoreJobsAgainstPreferenceAi = createStep({
           });
           continue;
         }
-        const score = Math.max(0, Math.min(100, Math.round(hit.score)));
-        const passed = passAll ? true : hit.passed && score >= minScore;
+        const land = resolveMatchLandDecision({
+          minScore,
+          passAll,
+          aiScore: hit.score
+        });
         scored.push({
           ...job,
-          matchScore: score,
-          matchPassed: passed,
+          matchScore: land.score,
+          matchPassed: land.passed,
           matchReasons: [
             ...(hit.reasons?.length ? hit.reasons : ["ai_match"]),
             ...(passAll ? ["open_preference_profile"] : [])

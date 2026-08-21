@@ -80,14 +80,18 @@ const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
 };
 
 /**
- * Soft AI failure (heuristic fallback) must not auto-dismiss.
- * minMatchScore is the AI bar; cheap already passed at land.
+ * Soft AI failure (heuristic fallback) must not treat minMatchScore as a cheap
+ * gate. Real rules misses (exclude, level, title-keyword, open-prefs evidence)
+ * still dismiss so a parse fallback cannot park junk in New jobs.
  */
 export function decideInboxAiKeep(match: {
   passed: boolean;
   source: "ai" | "heuristic";
+  rulesFailed?: boolean;
 }): "passed" | "dismissed" | "heuristic" {
-  if (match.source === "heuristic") return "heuristic";
+  if (match.source === "heuristic") {
+    return match.rulesFailed ? "dismissed" : "heuristic";
+  }
   return match.passed ? "passed" : "dismissed";
 }
 

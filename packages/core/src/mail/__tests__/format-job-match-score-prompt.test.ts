@@ -49,5 +49,7 @@ describe("formatJobMatchScorePrompt", () => {
     expect(prompt).toContain("Column hard-fails are law");
     expect(prompt).toContain("flavor only");
     expect(prompt).toContain("land/evaluate");
+    expect(prompt).toContain("location is ranking-neutral here");
+    expect(prompt).toContain("server derives passed from score");
   });
 });

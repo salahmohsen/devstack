@@ -491,6 +491,45 @@ describe("scoreJobAgainstPreference", () => {
     );
     expect(r.passed).toBe(false);
     expect(r.reasons).toContain("no role keyword in title");
+    expect(r.rulesFailed).toBe(true);
+  });
+
+  it("title-hits Front End when the stored keyword is frontend", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Front End Angular Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/35",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      { ...defaultJobPreference(), roleKeywords: ["frontend"], minMatchScore: 40 }
+    );
+    expect(r.rulesFailed).toBe(false);
+    expect(r.reasons.join(" ")).toMatch(/title keywords/i);
+  });
+
+  it("marks a below-min title hit as not a rules fail", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Senior Frontend Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/36",
+        applyUrl: null,
+        applyMethod: "unknown",
+        workMode: "remote",
+        source: "linkedin"
+      },
+      {
+        ...defaultJobPreference(),
+        roleKeywords: ["frontend"],
+        workModes: ["remote"],
+        minMatchScore: 99
+      }
+    );
+    expect(r.passed).toBe(false);
+    expect(r.rulesFailed).toBe(false);
   });
 
   it("title-hits Senior React Engineer and React.js Developer on role keyword react", () => {
