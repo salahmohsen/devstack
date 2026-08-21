@@ -4,8 +4,11 @@ import { type PropsWithChildren, useEffect } from "react";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area.js";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { registerCommandHandler, setCommandEnabled } from "@/shared/lib/commands";
 import { useMediaQuery } from "@/shared/lib/use-media-query";
 import { IntersectionProvider } from "@/shared/providers/intersection.provider";
+import { CommandHotkeys } from "@/shared/ui/command-hotkeys";
+import { ShortcutCheatsheet } from "@/shared/ui/shortcut-cheatsheet";
 
 import { ClipWidth } from "@/widgets/layout/ui/clip-width";
 import { DashboardMobileNavProvider } from "@/widgets/layout/ui/dashboard-mobile-nav";
@@ -35,6 +38,28 @@ export function RootLayout({ children }: PropsWithChildren) {
   useEffect(() => {
     sidePanel.close();
   }, [pathname, sidePanel.close]);
+
+  useEffect(
+    () =>
+      registerCommandHandler("panel.close", () => {
+        if (
+          document.querySelector(
+            "[data-slot=dialog-popup], [data-slot=alert-dialog-popup], [data-slot=sheet-popup]"
+          )
+        ) {
+          return;
+        }
+        sidePanel.close();
+      }),
+    [sidePanel.close]
+  );
+
+  useEffect(() => {
+    setCommandEnabled("panel.close", sidePanel.inspectOpen);
+    return () => {
+      setCommandEnabled("panel.close", false);
+    };
+  }, [sidePanel.inspectOpen]);
   const isDashboard = pathname.startsWith("/dashboard");
   // Public repos list inspects portfolio projects with the same chrome as dashboard.
   const isPublicReposList = /(?:^|\/)repos\/?$/.test(pathname);
@@ -141,7 +166,9 @@ export function RootLayout({ children }: PropsWithChildren) {
         <DashboardBottomBar />
         <MobileNav />
         <GitHubAccessDialog />
+        <CommandHotkeys />
         <CommandPalette />
+        <ShortcutCheatsheet />
       </div>
     </DashboardMobileNavProvider>
   );

@@ -16,7 +16,6 @@
     "db": "dotenvx run -f ../env/.env -- drizzle-kit",
     "auth:generate": "dotenvx run -f ../env/.env -- npx auth@1.7.0-rc.1 generate --config ../auth/src/index.ts --output ./src/schema/auth.schema.ts --yes",
     "db:generate": "pnpm run db generate",
-    "db:setup": "vpx neon-new@latest --env ../../packages/env/.env --key DATABASE_URL --ref github:salahmohsen/portfolio --yes",
     "test:unit": "vp test run"
   },
   "dependencies": {

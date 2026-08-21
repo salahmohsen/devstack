@@ -17,17 +17,19 @@ export function useSendOutreachMutation() {
       onSuccess: async (data) => {
         queryClient.setQueryData<ApplicationListOutput>(applicationsQueryKeys.list(), (prev) => {
           if (!prev) return prev;
-          return prev.map((row) => (row.id === data.id ? data : row));
+          return prev.map((row) => (row.id === data.id ? { ...row, ...data } : row));
         });
-        queryClient.setQueryData(applicationsQueryKeys.get(data.id), data);
         await queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() });
         await queryClient.invalidateQueries({
           queryKey: applicationsQueryKeys.get(data.id)
         });
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.mail.list.key({ type: "query" })
+        });
         toast.success(
           data.stage === "applied"
             ? "Outreach sent — stage moved to Applied."
-            : "Outreach email sent with resume attached."
+            : "Outreach email sent with attachments."
         );
       },
       onError: (error) => {

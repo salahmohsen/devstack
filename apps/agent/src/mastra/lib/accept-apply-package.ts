@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import {
   ApplyPackageDraftSchema,
+  formatTailoredCoverFilename,
+  formatTailoredResumeFilename,
   type AcceptApplyPackageInput,
   type ApplyPackageDraft
 } from "@tsu-stack/core";
@@ -33,31 +35,6 @@ export type AcceptApplyPackageResult =
   | { ok: false; code: AcceptApplyPackageErrorCode; message?: string };
 
 const emailSchema = z.string().email();
-
-function slugPart(value: string): string {
-  const slug = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-  return slug || "item";
-}
-
-function formatResumeFilename(companyName: string, title: string): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `Resume_${slugPart(companyName)}_${slugPart(title)}_${y}-${m}-${d}.pdf`;
-}
-
-function formatCoverFilename(companyName: string, title: string): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `CoverLetter_${slugPart(companyName)}_${slugPart(title)}_${y}-${m}-${d}.pdf`;
-}
 
 function resolveDraft(
   input: AcceptApplyPackageInput,
@@ -234,8 +211,12 @@ export async function acceptApplyPackage(input: {
       email: userRow.email
     };
 
-    const resumeFilename = formatResumeFilename(app.companyName, app.title);
-    const resumeR2Key = `${input.userId}/resumes/${resumeFilename}`;
+    const resumeFilename = formatTailoredResumeFilename({
+      candidateName: profile.name,
+      companyName: app.companyName,
+      roleTitle: app.title
+    });
+    const resumeR2Key = `${input.userId}/resumes/${crypto.randomUUID()}.pdf`;
 
     const resumeBytes = await renderResumePdfBytes({
       portfolio,
@@ -257,7 +238,11 @@ export async function acceptApplyPackage(input: {
 
     const previousCoverKey = app.coverLetterR2Key;
     const coverUuid = crypto.randomUUID();
-    const coverFilename = formatCoverFilename(app.companyName, app.title);
+    const coverFilename = formatTailoredCoverFilename({
+      candidateName: profile.name,
+      companyName: app.companyName,
+      roleTitle: app.title
+    });
     const coverR2Key = `${input.userId}/cover-letters/${app.id}-${coverUuid}.pdf`;
 
     const coverBytes = await buildCoverLetterPdfBytes({

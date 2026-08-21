@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
 import {
   HIRING_REGION_SYNONYM_TO_SLUG,
   hiringRegionsOverlap,
-  normalizeHiringRegion
+  normalizeHiringRegion,
+  resolveRemoteListingSlug
 } from "#@/job-discovery/hiring-region";
 
 describe("normalizeHiringRegion", () => {
@@ -92,10 +93,69 @@ describe("hiringRegionsOverlap", () => {
       true
     );
   });
+
+  it("listing-only expand: a place does not match a sibling country via emea", () => {
+    expect(hiringRegionsOverlap(["egypt"], "uk", "London", { expand: "listing" })).toBe(false);
+    expect(
+      hiringRegionsOverlap(["cairo"], "uk", "London, England, United Kingdom", {
+        expand: "listing"
+      })
+    ).toBe(false);
+    expect(hiringRegionsOverlap(["uk"], "uk", "London", { expand: "listing" })).toBe(true);
+    expect(hiringRegionsOverlap(["mena"], "egypt", "Cairo", { expand: "listing" })).toBe(true);
+  });
+
+  it("both-expand still lets remote egypt overlap listing emea", () => {
+    expect(hiringRegionsOverlap(["egypt"], "emea", null)).toBe(true);
+    expect(hiringRegionsOverlap(["egypt"], "emea", null, { expand: "both" })).toBe(true);
+  });
+
+  it("maps extra country names used on remote listings", () => {
+    expect(normalizeHiringRegion("India")).toBe("india");
+    expect(normalizeHiringRegion("Remote Canada")).toBe("canada");
+    expect(normalizeHiringRegion("Poland")).toBe("poland");
+    expect(normalizeHiringRegion("Ireland")).toBe("ireland");
+    expect(normalizeHiringRegion("Australia")).toBe("apac");
+  });
+});
+
+describe("resolveRemoteListingSlug", () => {
+  it("treats Global-Remote as worldwide and Remote-US as us", () => {
+    expect(resolveRemoteListingSlug("worldwide", "Global - Remote")).toEqual({
+      slug: "worldwide",
+      specificUnknown: false
+    });
+    expect(resolveRemoteListingSlug("worldwide", "Remote - US")).toEqual({
+      slug: "us",
+      specificUnknown: false
+    });
+    expect(resolveRemoteListingSlug(null, "Remote Canada")).toEqual({
+      slug: "canada",
+      specificUnknown: false
+    });
+    expect(resolveRemoteListingSlug("worldwide", "India")).toEqual({
+      slug: "india",
+      specificUnknown: false
+    });
+  });
+});
+
+describe("hiringRegionsOverlap leftover", () => {
+  it("lineage expand: egypt matches MENA/EMEA, not US or UK siblings", () => {
+    expect(hiringRegionsOverlap(["egypt"], "mena", null, { expand: "lineage" })).toBe(true);
+    expect(hiringRegionsOverlap(["egypt"], "emea", null, { expand: "lineage" })).toBe(true);
+    expect(hiringRegionsOverlap(["egypt"], "egypt", "Cairo", { expand: "lineage" })).toBe(true);
+    expect(hiringRegionsOverlap(["mena"], "egypt", "Cairo", { expand: "lineage" })).toBe(true);
+    expect(hiringRegionsOverlap(["egypt"], "us", "United States", { expand: "lineage" })).toBe(
+      false
+    );
+    expect(hiringRegionsOverlap(["egypt"], "uk", "London", { expand: "lineage" })).toBe(false);
+    expect(hiringRegionsOverlap(["egypt"], "latam", "LatAm", { expand: "lineage" })).toBe(false);
+  });
 });
 
 describe("remoteRegions SQL backfill map", () => {
-  it("includes every non-worldwide synonym key in the migration VALUES list", () => {
+  it("only maps known synonym keys", () => {
     const sql = readFileSync(
       join(
         import.meta.dirname,
@@ -105,10 +165,11 @@ describe("remoteRegions SQL backfill map", () => {
     );
     const values = sql.match(/WITH map\(raw, slug\) AS \(\s*VALUES([\s\S]*?)\n\),/)?.[1] ?? "";
     const keys = [...values.matchAll(/\('((?:\\'|[^'])*)'/g)].map((match) => match[1]);
-    const missing = Object.entries(HIRING_REGION_SYNONYM_TO_SLUG)
-      .filter(([, slug]) => slug !== "worldwide")
-      .map(([key]) => key)
-      .filter((key) => !keys.includes(key));
-    expect(missing).toEqual([]);
+    const known = new Set([
+      ...Object.keys(HIRING_REGION_SYNONYM_TO_SLUG),
+      ...Object.values(HIRING_REGION_SYNONYM_TO_SLUG)
+    ]);
+    const unknown = keys.filter((key) => !known.has(key));
+    expect(unknown).toEqual([]);
   });
 });

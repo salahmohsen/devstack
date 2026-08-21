@@ -113,6 +113,7 @@ async function remainingLandBudget(input: {
   userId: string;
   runId: string;
   jobsPerRun: number;
+  dailyBoardScoreCap: number;
   hasAiKey: boolean;
 }): Promise<number> {
   const [openInbox, inboxThisRun, remaining] = await Promise.all([
@@ -121,7 +122,7 @@ async function remainingLandBudget(input: {
     userJobAiBudgetRepository.remainingAttempts(
       input.userId,
       utcDay(),
-      dailyAiAttemptCap(input.jobsPerRun)
+      dailyAiAttemptCap(input.dailyBoardScoreCap)
     )
   ]);
   return computeLandBudget({
@@ -194,6 +195,7 @@ export async function runDiscoveryLand(input: {
     userId: input.userId,
     runId: input.runId,
     jobsPerRun: prefs.jobsPerRun,
+    dailyBoardScoreCap: prefs.dailyBoardScoreCap,
     hasAiKey
   });
   if (toLand === 0) {
@@ -278,6 +280,7 @@ export async function runDiscoveryLand(input: {
       userId: input.userId,
       runId: input.runId,
       jobsPerRun: prefs.jobsPerRun,
+      dailyBoardScoreCap: prefs.dailyBoardScoreCap,
       hasAiKey
     })) - landed
   );

@@ -1,4 +1,5 @@
 import {
+  applyYearsCap,
   applyZeroDollarCandidate,
   buildApplicationSourceTags,
   canonicalizeJobUrl,
@@ -12,6 +13,7 @@ import {
   JOB_ADAPTER_IDS,
   JOB_ADAPTER_LABELS,
   MAX_OPEN_INBOX,
+  mergeExperienceYears,
   resolveJobSkillTags,
   scoreCatalogAgainstPreference,
   WorkModeSchema,
@@ -25,6 +27,7 @@ import {
 import {
   applicationActivityRepository,
   applicationRepository,
+  experienceRepository,
   jobPostingRepository,
   preferLongerJobDescription,
   stackRepository,
@@ -48,6 +51,26 @@ import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai"
 
 export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
 
+async function displayScoreForUser(input: {
+  userId: string;
+  aiScore: number;
+  listingMinYears: number | null | undefined;
+}): Promise<{
+  landScore: number;
+  displayScore: number;
+  capped: boolean;
+  seekerYears: number | null;
+}> {
+  const rows = await experienceRepository.findAllByUserId(input.userId);
+  const seekerYears = mergeExperienceYears(rows);
+  const cap = applyYearsCap({
+    aiScore: input.aiScore,
+    listingMinYears: input.listingMinYears,
+    seekerYears
+  });
+  return { ...cap, seekerYears };
+}
+
 const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
   greenhouse: "Greenhouse",
   ashby: "Ashby",
@@ -57,14 +80,18 @@ const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
 };
 
 /**
- * Soft AI failure (heuristic fallback) must not auto-dismiss.
- * minMatchScore is the AI bar; cheap already passed at land.
+ * Soft AI failure (heuristic fallback) must not treat minMatchScore as a cheap
+ * gate. Real rules misses (exclude, level, title-keyword, open-prefs evidence)
+ * still dismiss so a parse fallback cannot park junk in New jobs.
  */
 export function decideInboxAiKeep(match: {
   passed: boolean;
   source: "ai" | "heuristic";
+  rulesFailed?: boolean;
 }): "passed" | "dismissed" | "heuristic" {
-  if (match.source === "heuristic") return "heuristic";
+  if (match.source === "heuristic") {
+    return match.rulesFailed ? "dismissed" : "heuristic";
+  }
   return match.passed ? "passed" : "dismissed";
 }
 
@@ -103,7 +130,7 @@ export function decideEvaluateOutcome(input: {
   if (input.keep === "heuristic") {
     return {
       outcome: "heuristic",
-      insert: { trackingStatus: "inbox", agentTake: null },
+      insert: { trackingStatus: "inbox", agentTake: input.takeText },
       backfill: false
     };
   }
@@ -121,6 +148,18 @@ export function shouldRefundHeuristicIncrement(leftoverExtractRan: boolean): boo
 
 function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
+}
+
+/** One take attempt for an inbox keeper. Failure does not block land. */
+async function takeOnceForKeeper(
+  input: Parameters<typeof generateAgentTakeText>[0]
+): Promise<string | null> {
+  try {
+    const take = await generateAgentTakeText(input);
+    return take.ok ? take.text : null;
+  } catch {
+    return null;
+  }
 }
 
 function asWorkMode(value: string | null | undefined): WorkMode | null {
@@ -314,6 +353,8 @@ async function insertDiscoveryApplication(input: {
     employmentType: input.employmentType,
     description: input.description,
     agentTake: input.agentTake ?? null,
+    experienceYearsMin: input.posting.experienceYearsMin ?? null,
+    companyLogoUrl: input.posting.companyLogoUrl ?? null,
     trackingStatus: input.trackingStatus,
     stage: "saved" as const,
     postingId: input.posting.id,
@@ -406,7 +447,7 @@ async function runInboxAiForApplication(input: {
   const reserved = await userJobAiBudgetRepository.tryIncrement(
     input.userId,
     utcDay(),
-    dailyAiAttemptCap(prefs.jobsPerRun)
+    dailyAiAttemptCap(prefs.dailyBoardScoreCap)
   );
   if (!reserved) {
     return { outcome: "skipped" };
@@ -460,13 +501,19 @@ async function runInboxAiForApplication(input: {
   }
 
   if (decision === "heuristic") {
-    // Soft AI failure did not judge the JD — do not burn the 2×N cap.
+    // Soft AI failure did not judge the JD — do not burn the daily score cap.
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
-    return { outcome: "heuristic" };
   }
 
+  const cap = await displayScoreForUser({
+    userId: input.userId,
+    aiScore: match.score,
+    listingMinYears: owned.experienceYearsMin ?? posting?.experienceYearsMin
+  });
   await applicationRepository.update(owned.id, input.userId, {
-    matchScore: match.score
+    matchScore: cap.displayScore,
+    experienceYearsMin: owned.experienceYearsMin ?? posting?.experienceYearsMin ?? null,
+    companyLogoUrl: owned.companyLogoUrl ?? posting?.companyLogoUrl ?? null
   });
 
   try {
@@ -475,10 +522,10 @@ async function runInboxAiForApplication(input: {
       userId: input.userId
     });
   } catch {
-    // Soft-fail: leave agentTake null. Do not retrigger land.
+    // One try. Land/keep the row even if take is empty.
   }
 
-  return { outcome: "passed" };
+  return { outcome: decision === "heuristic" ? "heuristic" : "passed" };
 }
 
 /** Discovery evaluate-then-insert: leftover extract → score → insert inbox or dismissed. */
@@ -570,7 +617,7 @@ async function runInboxAiForPosting(input: {
     const reserved = await userJobAiBudgetRepository.tryIncrement(
       input.userId,
       utcDay(),
-      dailyAiAttemptCap(prefs.jobsPerRun)
+      dailyAiAttemptCap(prefs.dailyBoardScoreCap)
     );
     if (!reserved) return { outcome: "skipped" };
 
@@ -675,30 +722,33 @@ async function runInboxAiForPosting(input: {
   }
 
   const keep = decideInboxAiKeep(match);
+  const cap = await displayScoreForUser({
+    userId: input.userId,
+    aiScore: match.score,
+    listingMinYears: posting.experienceYearsMin
+  });
   let takeText: string | null = null;
   if (keep === "heuristic" && shouldRefundHeuristicIncrement(leftoverExtractRan)) {
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
   }
-  if (keep === "passed") {
-    try {
-      const take = await generateAgentTakeText({
-        userId: input.userId,
-        llm,
-        job: {
-          title: posting.title,
-          companyName: posting.companyName,
-          location: leftover.location,
-          employmentType,
-          salaryRange,
-          matchScore: match.score,
-          description
-        },
-        matchReasons: match.reasons
-      });
-      takeText = take.ok ? take.text : null;
-    } catch {
-      takeText = null;
-    }
+  if (keep === "passed" || keep === "heuristic") {
+    takeText = await takeOnceForKeeper({
+      userId: input.userId,
+      llm,
+      job: {
+        title: posting.title,
+        companyName: posting.companyName,
+        location: leftover.location,
+        employmentType,
+        salaryRange,
+        matchScore: cap.displayScore,
+        description,
+        experienceYearsMin: posting.experienceYearsMin,
+        seekerYears: cap.seekerYears,
+        yearsCapped: cap.capped
+      },
+      matchReasons: match.reasons
+    });
   }
 
   const plan = decideEvaluateOutcome({ scoreError: false, keep, takeText });
@@ -727,7 +777,9 @@ async function runInboxAiForPosting(input: {
   const row = await insertDiscoveryApplication({
     ...baseInsert,
     matchScore:
-      keep === "dismissed" || keep === "passed" || keep === "heuristic" ? match.score : cheap.score,
+      keep === "dismissed" || keep === "passed" || keep === "heuristic"
+        ? cap.displayScore
+        : cheap.score,
     matchReasons: match.reasons,
     trackingStatus: plan.insert.trackingStatus,
     jobsPerRun: prefs.jobsPerRun,

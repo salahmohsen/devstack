@@ -17,9 +17,12 @@ export function useAcceptApplyPackageMutation() {
       onSuccess: async (data) => {
         queryClient.setQueryData<ApplicationListOutput>(applicationsQueryKeys.list(), (prev) => {
           if (!prev) return prev;
-          return prev.map((row) => (row.id === data.id ? data : row));
+          return prev.map((row) => (row.id === data.id ? { ...row, ...data } : row));
         });
-        queryClient.setQueryData(applicationsQueryKeys.get(data.id), data);
+        queryClient.setQueryData(applicationsQueryKeys.get(data.id), (prev) => {
+          if (!prev) return prev;
+          return { ...prev, ...data };
+        });
         await queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() });
         await queryClient.invalidateQueries({
           queryKey: applicationsQueryKeys.get(data.id)

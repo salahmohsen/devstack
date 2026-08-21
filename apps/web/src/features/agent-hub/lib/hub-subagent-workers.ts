@@ -25,7 +25,7 @@ const WORKER_LABELS: Record<string, string> = {
   crmapplicationmatcher: "Application match",
   crmstageadvisor: "Stage advisor",
   detectstacksworkflow: "Detect stacks",
-  organizestacksworkflow: "Organize stacks",
+  organizestacksworkflow: "Organize skills",
   resumeimportworkflow: "Resume import",
   mailprocessworkflow: "Process mail",
   mailclassifyworkflow: "Classify mail",

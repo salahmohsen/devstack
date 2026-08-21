@@ -12,6 +12,8 @@ export const NOTIFICATION_KINDS = [
   "mail.apply_nudge",
   "mail.job_alerts_ready",
   "application.stage_auto",
+  "application.silence_nudge",
+  "application.ghosted_suggest",
   "workflow.finished",
   "security.new_device_otp"
 ] as const satisfies readonly NotificationKind[];
@@ -22,6 +24,8 @@ export const NOTIFICATION_KIND_LABELS: Record<NotificationKind, string> = {
   "mail.apply_nudge": "Apply nudge",
   "mail.job_alerts_ready": "Job alerts ready",
   "application.stage_auto": "Application stage auto-updated",
+  "application.silence_nudge": "Quiet tracked job",
+  "application.ghosted_suggest": "Suggest mark ghosted",
   "workflow.finished": "Workflow finished",
   "security.new_device_otp": "New device security code"
 };
@@ -34,6 +38,10 @@ export const NOTIFICATION_KIND_DESCRIPTIONS: Record<NotificationKind, string> = 
   "mail.job_alerts_ready":
     "When a job-alert digest creates matched applications (batched; not per-link crawl).",
   "application.stage_auto": "When CRM stage changes from mail classify.",
+  "application.silence_nudge":
+    "When a tracked job has had no stage change and no linked mail for 7 days.",
+  "application.ghosted_suggest":
+    "When a tracked job has been quiet for 14 days. Suggests Ghosted; does not set it.",
   "workflow.finished": "When a long-running AI workflow completes.",
   "security.new_device_otp": "One-time codes for new device trust (recommended on email)."
 };
@@ -46,6 +54,8 @@ export function defaultNotificationChannelPrefs(): NotificationChannelPrefs {
     "mail.apply_nudge": { app: true, email: false },
     "mail.job_alerts_ready": { app: true, email: false },
     "application.stage_auto": { app: true, email: false },
+    "application.silence_nudge": { app: true, email: false },
+    "application.ghosted_suggest": { app: true, email: false },
     "workflow.finished": { app: true, email: false },
     "security.new_device_otp": { app: true, email: true }
   };

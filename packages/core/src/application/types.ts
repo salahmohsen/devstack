@@ -56,7 +56,9 @@ export const ApplicationActivityKindSchema = z.enum([
   "note",
   "stage_changed",
   "outcome_set",
-  "package_generated"
+  "package_generated",
+  "silence_nudged",
+  "ghosted_suggested"
 ]);
 export type ApplicationActivityKind = z.infer<typeof ApplicationActivityKindSchema>;
 
@@ -103,6 +105,9 @@ export const ApplicationOutputSchema = z.object({
   applyUrl: z.string().nullable(),
   applyMethod: ApplicationApplyMethodSchema,
   matchScore: z.number().int().min(0).max(100).nullable(),
+  /** Denorm from posting at land; stable after catalog close. */
+  experienceYearsMin: z.number().int().nullable(),
+  companyLogoUrl: z.string().nullable(),
   source: ApplicationSourceSchema.nullable(),
   /** Free-text when platform is `other` (e.g. "Jack & Jill"). */
   sourceLabel: z.string().nullable(),
@@ -133,6 +138,8 @@ export const ApplicationOutputSchema = z.object({
   /** Structured draft JSON; validated at generate/accept, not on every list read. */
   applyPackageDraft: z.unknown().nullable(),
   applyPackageDraftedAt: z.coerce.date().nullable(),
+  fitAnalysis: z.unknown().nullable(),
+  fitAnalysisPackageHash: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   /** Computed from job_posting.closedAt join — not a DB column on application. */
@@ -146,6 +153,22 @@ export const ApplicationOutputSchema = z.object({
     listingClosed: boolean;
   }
 >;
+
+export const ApplicationLinkedMailSchema = z.object({
+  id: z.string(),
+  subject: z.string(),
+  fromName: z.string(),
+  fromEmail: z.string(),
+  receivedAt: z.coerce.date(),
+  labels: z.array(z.string())
+});
+export type ApplicationLinkedMail = z.infer<typeof ApplicationLinkedMailSchema>;
+
+export const ApplicationGetOutputSchema = ApplicationOutputSchema.extend({
+  linkedMails: z.array(ApplicationLinkedMailSchema).default([]),
+  silencePhase: z.enum(["quiet", "nudge7", "suggestGhost14"]).optional()
+});
+export type ApplicationGetOutput = z.infer<typeof ApplicationGetOutputSchema>;
 
 export const ApplicationListOutputSchema = z.array(ApplicationOutputSchema);
 

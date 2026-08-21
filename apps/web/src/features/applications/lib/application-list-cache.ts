@@ -17,8 +17,11 @@ export function patchApplicationInLists(queryClient: QueryClient, data: Applicat
   for (const status of LIST_STATUSES) {
     queryClient.setQueryData<ApplicationListOutput>(applicationsQueryKeys.list(status), (prev) => {
       if (!prev) return prev;
-      return prev.map((row) => (row.id === data.id ? data : row));
+      return prev.map((row) => (row.id === data.id ? { ...row, ...data } : row));
     });
   }
-  queryClient.setQueryData(applicationsQueryKeys.get(data.id), data);
+  queryClient.setQueryData(applicationsQueryKeys.get(data.id), (prev) => {
+    if (!prev) return prev;
+    return { ...prev, ...data };
+  });
 }

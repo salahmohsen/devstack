@@ -16,7 +16,7 @@ export const AI_FEATURE_LABELS: Record<AiFeature, string> = {
   classify: "Mail classify",
   reply: "Mail reply",
   resumeImport: "Resume import",
-  stacks: "Stacks",
+  stacks: "Skills",
   hubChat: "Hub chat",
   scorer: "Scorers",
   applyPackage: "Apply package"

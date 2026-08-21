@@ -15,7 +15,9 @@ export const applicationActivityKindEnum = pgEnum("application_activity_kind", [
   "note",
   "stage_changed",
   "outcome_set",
-  "package_generated"
+  "package_generated",
+  "silence_nudged",
+  "ghosted_suggested"
 ]);
 
 export const applicationActivity = pgTable(

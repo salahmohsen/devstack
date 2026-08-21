@@ -46,11 +46,34 @@ export type StackListRow = {
   confidence: string | null;
   sortOrder: number;
   isFeatured: boolean;
+  alternativeNames: string[];
   portfolioEntryId: string | null;
   updatedAt: Date;
   createdAt: Date;
   projectCount: number;
 };
+
+const ALTERNATIVE_NAMES_MAX = 20;
+
+function mergeAlternativeNames(
+  survivorName: string,
+  survivorNames: string[] | null | undefined,
+  victimName: string,
+  victimNames: string[] | null | undefined
+): string[] {
+  const skip = new Set<string>([survivorName.trim().toLowerCase()].filter(Boolean));
+  const out: string[] = [];
+  for (const raw of [...(survivorNames ?? []), victimName, ...(victimNames ?? [])]) {
+    const name = raw.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (skip.has(key)) continue;
+    skip.add(key);
+    out.push(name);
+    if (out.length >= ALTERNATIVE_NAMES_MAX) break;
+  }
+  return out;
+}
 
 function projectCountSubquery() {
   return getDb()
@@ -108,6 +131,7 @@ export const stackRepository = {
         confidence: stack.confidence,
         sortOrder: stack.sortOrder,
         isFeatured: stack.isFeatured,
+        alternativeNames: stack.alternativeNames,
         portfolioEntryId: stack.portfolioEntryId,
         updatedAt: stack.updatedAt,
         createdAt: stack.createdAt,
@@ -164,6 +188,7 @@ export const stackRepository = {
           confidence: stack.confidence,
           sortOrder: stack.sortOrder,
           isFeatured: stack.isFeatured,
+          alternativeNames: stack.alternativeNames,
           portfolioEntryId: stack.portfolioEntryId,
           updatedAt: stack.updatedAt,
           createdAt: stack.createdAt,
@@ -358,6 +383,7 @@ export const stackRepository = {
         confidence: input.confidence ?? null,
         sortOrder: input.sortOrder ?? 0,
         isFeatured: input.isFeatured ?? false,
+        alternativeNames: input.alternativeNames ?? [],
         portfolioEntryId: pid
       });
 
@@ -622,6 +648,19 @@ export const stackRepository = {
 
       if (!survivor) throw new Error("Survivor stack not found");
       if (!victim) throw new Error("Victim stack not found");
+
+      const mergedNames = mergeAlternativeNames(
+        survivor.name,
+        survivor.alternativeNames,
+        victim.name,
+        victim.alternativeNames
+      );
+      if (mergedNames.length > 0) {
+        await tx
+          .update(stack)
+          .set({ alternativeNames: mergedNames })
+          .where(and(eq(stack.id, survivorId), eq(stack.userId, userId)));
+      }
 
       // Move project_stack links from victim → survivor (skip duplicates)
       const victimLinks = await tx

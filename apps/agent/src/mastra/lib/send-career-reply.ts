@@ -5,6 +5,7 @@ import { openSecret } from "#@/mastra/lib/open-secret";
 export type SendCareerReplyAttachment = {
   filename: string;
   content: Buffer | Uint8Array | string;
+  contentType?: string;
 };
 
 export type SendCareerReplyInput = {
@@ -98,7 +99,8 @@ export async function sendCareerReply(
       ? input.attachments.map((a) => {
           return {
             filename: a.filename,
-            content: toBase64Content(a.content)
+            content: toBase64Content(a.content),
+            ...(a.contentType ? { content_type: a.contentType } : {})
           };
         })
       : undefined;

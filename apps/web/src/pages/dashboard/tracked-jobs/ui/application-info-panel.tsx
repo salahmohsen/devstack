@@ -1,16 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import {
   AlignLeftIcon,
   Building2Icon,
-  CopyIcon,
-  DownloadIcon,
   ExternalLinkIcon,
-  EyeIcon,
   FileTextIcon,
   HistoryIcon,
   InfoIcon,
+  LayersIcon,
   MailIcon,
   MapPinIcon,
   PackageIcon,
@@ -18,20 +17,21 @@ import {
   SparklesIcon,
   StickyNoteIcon
 } from "lucide-react";
-import { Fragment, useState } from "react";
-import { toast } from "sonner";
+import { useState, type ReactNode } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   APPLICATION_APPLY_METHOD_LABELS,
   APPLICATION_SOURCE_LABELS,
-  APPLICATION_SOURCE_TAG_LABELS,
+  applicationSourceChipLabels,
   assessAgentTakeReadiness,
+  mailHubCategorySlugForLabels,
+  mergeExperienceYears,
+  sanitizeFitAnalysis,
   EMPLOYMENT_TYPE_LABELS,
   HIRING_URGENCY_LABELS,
   WORK_MODE_LABELS,
   type ApplicationOutput,
-  type ApplicationSourceTag,
   type JobSkillTag
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
@@ -43,29 +43,30 @@ import {
   DialogPopup,
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
-import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 
-import { ITEM_AVATAR_EYEBROW_CLASSNAME, ItemAvatar } from "@/shared/ui/item-avatar";
+import { ITEM_AVATAR_EYEBROW_CLASSNAME } from "@/shared/ui/item-avatar";
+import {
+  AgentTakeMarkdown,
+  JobIdentityMark,
+  JobSkillsMatch,
+  JobYearsBadge,
+  listingSkillNames,
+  yearsRequirementNote
+} from "@/shared/ui/job-card-marks";
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
+import { requestHubInterviewRehearsal } from "@/features/agent-hub";
 import {
   ApplicationActivitySection,
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
-  actionsFor,
-  coverLetterDownloadUrl,
-  formatCoverLetterCopy,
-  formatOutreachCopy,
-  materialsFor,
   resumeDownloadUrl,
   useRegenerateAgentTakeMutation,
-  writeClipboardText,
-  type ApplicationMaterialKind,
-  type MaterialActionId
+  useSetOutcomeMutation
 } from "@/features/applications";
 
 import {
@@ -75,9 +76,11 @@ import {
   PanelEditButton
 } from "@/widgets/items-page";
 
-import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
-import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
+import {
+  ApplicationKitMaterials,
+  ApplyPackagePanelActions
+} from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";
@@ -202,127 +205,11 @@ function JobDescriptionBody({ value }: { value: string }) {
   );
 }
 
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 text-sm">
       <dt className="shrink-0 pt-0.5 text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-right text-foreground">{children}</dd>
-    </div>
-  );
-}
-
-async function copyText(label: string, value: string | null) {
-  if (!value) {
-    toast.error(`Nothing to copy for ${label}`);
-    return;
-  }
-  const ok = await writeClipboardText(value);
-  if (ok) toast.success("Copied");
-  else toast.error("Could not copy");
-}
-
-function triggerDownload(href: string) {
-  const a = document.createElement("a");
-  a.href = href;
-  a.download = "";
-  a.rel = "noreferrer";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-function runPanelMaterialAction(
-  app: ApplicationOutput,
-  kind: ApplicationMaterialKind,
-  actionId: MaterialActionId,
-  openMaterialPreview: (applicationId: string, kind: ApplicationMaterialKind) => void
-) {
-  if (actionId === "preview") {
-    openMaterialPreview(app.id, kind);
-    return;
-  }
-  if (actionId === "download") {
-    if (kind === "resume" && app.resumeId) {
-      triggerDownload(resumeDownloadUrl(app.resumeId));
-      return;
-    }
-    if (kind === "cover-letter" && app.coverLetterR2Key) {
-      triggerDownload(coverLetterDownloadUrl(app.id));
-      return;
-    }
-    toast.error("Download unavailable");
-    return;
-  }
-  if (actionId === "copy") {
-    if (kind === "cover-letter") {
-      void copyText("cover letter", formatCoverLetterCopy(app));
-      return;
-    }
-    if (kind === "outreach") {
-      void copyText("outreach email", formatOutreachCopy(app));
-    }
-  }
-}
-
-function MaterialsActionCards({ item }: { item: ApplicationOutput }) {
-  const { openMaterialPreview } = useApplicationStore();
-
-  return (
-    <div className="space-y-2.5">
-      {materialsFor(item).map((material) => {
-        const actions = actionsFor(material.kind, item);
-        const Icon = material.kind === "outreach" ? MailIcon : FileTextIcon;
-        return (
-          <div
-            key={material.kind}
-            className="rounded-xl border border-border/80 bg-muted/20 p-3 dark:bg-muted/10"
-          >
-            <div className="mb-2.5 flex items-center gap-2.5">
-              <span className="inline-flex size-8 items-center justify-center rounded-lg bg-muted/60">
-                <Icon className="size-4" strokeWidth={1.75} aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{material.label}</p>
-                <p className="text-xs text-muted-foreground">{material.meta}</p>
-              </div>
-            </div>
-            <Group aria-label={`${material.label} actions`}>
-              {actions.map((action, index) => (
-                <Fragment key={action.id}>
-                  {index > 0 ? <GroupSeparator /> : null}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="active:scale-[0.96]"
-                    onClick={() =>
-                      runPanelMaterialAction(item, material.kind, action.id, openMaterialPreview)
-                    }
-                  >
-                    {action.id === "preview" ? <EyeIcon className="size-3.5" aria-hidden /> : null}
-                    {action.id === "download" ? (
-                      <DownloadIcon className="size-3.5" aria-hidden />
-                    ) : null}
-                    {action.id === "copy" ? <CopyIcon className="size-3.5" aria-hidden /> : null}
-                    {action.label}
-                  </Button>
-                </Fragment>
-              ))}
-            </Group>
-          </div>
-        );
-      })}
-
-      {item.recruiterEmail || item.outreachSentAt ? (
-        <dl className="space-y-2.5 pt-1">
-          {item.recruiterEmail ? (
-            <DetailRow label="Recruiter">{item.recruiterEmail}</DetailRow>
-          ) : null}
-          {item.outreachSentAt ? (
-            <DetailRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</DetailRow>
-          ) : null}
-        </dl>
-      ) : null}
     </div>
   );
 }
@@ -345,7 +232,14 @@ export function ApplicationInfoPanel({
 }: ApplicationInfoPanelProps) {
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const regenerateTake = useRegenerateAgentTakeMutation();
+  const setOutcome = useSetOutcomeMutation();
   const isDiscovery = variant === "discovery";
+  const detailQuery = useQuery({
+    ...orpcQueryClient.applications.get.queryOptions({ input: { id: item.id } }),
+    enabled: Boolean(item.id)
+  });
+  const linkedMails = detailQuery.data?.linkedMails ?? [];
+  const silencePhase = detailQuery.data?.silencePhase;
 
   const customSourceLabel = item.sourceLabel?.trim();
   const enumSourceLabel =
@@ -354,6 +248,19 @@ export function ApplicationInfoPanel({
       : null;
   const sourceDisplay =
     customSourceLabel && customSourceLabel.length > 0 ? customSourceLabel : enumSourceLabel;
+
+  const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
+  const jobSkills = listingSkillNames(item.requiredSkills, item.preferredSkills);
+  const stackNames = (stacksQuery.data ?? []).map((stack) => stack.name);
+  const seekerYears = mergeExperienceYears(experiencesQuery.data ?? []);
+  const showSkillsMatch =
+    stacksQuery.isSuccess &&
+    (jobSkills.length > 0 ||
+      yearsRequirementNote({
+        listingMinYears: item.experienceYearsMin,
+        seekerYears
+      }) != null);
 
   const resumesQuery = useQuery({
     ...orpcQueryClient.resume.list.queryOptions(),
@@ -374,12 +281,12 @@ export function ApplicationInfoPanel({
     <>
       <ItemInfoPanel
         eyebrow={
-          <ItemAvatar
-            name={item.companyName}
+          <JobIdentityMark
+            companyName={item.companyName}
+            logoUrl={item.companyLogoUrl}
             size={48}
             selected
             className="size-12"
-            aria-label={item.companyName}
           />
         }
         eyebrowClassName={ITEM_AVATAR_EYEBROW_CLASSNAME}
@@ -418,6 +325,7 @@ export function ApplicationInfoPanel({
                   <span className="shrink-0">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</span>
                 </>
               ) : null}
+              <JobYearsBadge years={item.experienceYearsMin} />
               {item.listingClosed ? (
                 <Badge
                   variant="secondary"
@@ -444,11 +352,12 @@ export function ApplicationInfoPanel({
               {!isDiscovery && item.hiringUrgency !== "unknown" ? (
                 <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
               ) : null}
-              {(item.sourceTags ?? []).map((tag) => (
-                <Badge key={tag} variant="secondary" size="sm">
-                  {tag in APPLICATION_SOURCE_TAG_LABELS
-                    ? APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag]
-                    : tag}
+              {applicationSourceChipLabels({
+                sourceTags: item.sourceTags,
+                sourceLabel: item.sourceLabel
+              }).map((label) => (
+                <Badge key={label} variant="secondary" size="sm">
+                  {label}
                 </Badge>
               ))}
             </span>
@@ -485,15 +394,62 @@ export function ApplicationInfoPanel({
         createdAt={item.createdAt}
       >
         <ItemInfoSections>
-          {!isDiscovery ? (
-            <ItemInfoSection title="Apply package" icon={<PackageIcon />}>
-              <ApplyPackagePanelActions app={item} />
+          {showSkillsMatch ? (
+            <ItemInfoSection title="Skills" icon={<LayersIcon />}>
+              <JobSkillsMatch
+                jobSkills={jobSkills}
+                stackNames={stackNames}
+                listingMinYears={item.experienceYearsMin}
+                seekerYears={seekerYears}
+              />
             </ItemInfoSection>
           ) : null}
 
+          {!isDiscovery ? (
+            <ItemInfoSection title="Application kit" icon={<PackageIcon />}>
+              <div className="space-y-3">
+                <ApplyPackagePanelActions app={item} />
+                {hasMaterials ? <ApplicationKitMaterials app={item} /> : null}
+                {item.recruiterEmail || item.outreachSentAt ? (
+                  <dl className="space-y-2.5">
+                    {item.recruiterEmail ? (
+                      <DetailRow label="Recruiter">{item.recruiterEmail}</DetailRow>
+                    ) : null}
+                    {item.outreachSentAt ? (
+                      <DetailRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</DetailRow>
+                    ) : null}
+                  </dl>
+                ) : null}
+              </div>
+            </ItemInfoSection>
+          ) : null}
+
+          {!isDiscovery && item.fitAnalysis
+            ? (() => {
+                const report = sanitizeFitAnalysis(item.fitAnalysis);
+                if (!report) return null;
+                return (
+                  <ItemInfoSection title="Resume vs this JD" icon={<FileTextIcon />}>
+                    <p className="text-sm">
+                      Overall {report.displayOverall}
+                      {report.capped ? " (years cap on the number you see)" : ""}
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {report.dimensions.map((dim) => (
+                        <li key={dim.key}>
+                          {dim.key}: {dim.score}
+                          {dim.comment ? `: ${dim.comment}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </ItemInfoSection>
+                );
+              })()
+            : null}
+
           <ItemInfoSection title="Agent's take" icon={<SparklesIcon />}>
             {takeReady.ok && item.agentTake?.trim() ? (
-              <p className="text-foreground">{item.agentTake}</p>
+              <AgentTakeMarkdown text={item.agentTake} />
             ) : (
               <p className="italic">
                 {takeReady.ok
@@ -526,9 +482,62 @@ export function ApplicationInfoPanel({
             </Button>
           </ItemInfoSection>
 
-          {!isDiscovery && hasMaterials ? (
-            <ItemInfoSection title="Materials" icon={<FileTextIcon />}>
-              <MaterialsActionCards item={item} />
+          {!isDiscovery && item.trackingStatus === "tracked" ? (
+            <ItemInfoSection title="Interview" icon={<SparklesIcon />}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  requestHubInterviewRehearsal({
+                    applicationId: item.id,
+                    title: item.title,
+                    companyName: item.companyName
+                  });
+                }}
+              >
+                Practice interview
+              </Button>
+            </ItemInfoSection>
+          ) : null}
+
+          {!isDiscovery ? (
+            <ItemInfoSection title="Mail" icon={<MailIcon />}>
+              {silencePhase === "suggestGhost14" && item.outcome == null ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mb-3"
+                  loading={setOutcome.isPending}
+                  onClick={() => {
+                    void setOutcome.mutateAsync({ id: item.id, outcome: "ghosted" });
+                  }}
+                >
+                  Mark ghosted
+                </Button>
+              ) : null}
+              {linkedMails.length === 0 ? (
+                <p className="italic">No mail linked yet.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {linkedMails.map((mail) => (
+                    <li key={mail.id}>
+                      <Link
+                        to="/dashboard/mail/$category"
+                        params={{ category: mailHubCategorySlugForLabels(mail.labels) }}
+                        search={{ message: mail.id }}
+                        className="text-sm font-medium text-foreground underline-offset-2 hover:underline"
+                      >
+                        {mail.subject.trim() || "(no subject)"}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                        {mail.fromName || mail.fromEmail}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </ItemInfoSection>
           ) : null}
 

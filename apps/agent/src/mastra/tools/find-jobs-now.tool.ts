@@ -10,7 +10,7 @@ import { FindJobsNowOutputSchema } from "@tsu-stack/core";
 export const findJobsNowTool = createTool({
   id: "find-jobs-now",
   description:
-    "Queue Find jobs now (same ingest/land/inbox/caps as the header button). Client enqueues and returns { enqueued, seats, reason } immediately — do not wait for land. After the result, tell the user search is queued (or the reason). Call listNewJobs / proposeNewJobsTriage only if the inbox is already non-empty. Do not auto-triage an empty inbox.",
+    "Queue Find jobs now (same ingest/land/inbox as the header button). Client enqueues and returns { enqueued, seats, reason } immediately — do not wait for land. After the result, tell the user search is queued (or the reason). reason=ai_budget means board-search scoring is used up for today; job-alert email harvest is not blocked — do not tell them to change a Settings slider. Call listNewJobs / proposeNewJobsTriage only if the inbox is already non-empty. Do not auto-triage an empty inbox.",
   inputSchema: z.object({}).describe("No arguments. Tenant is the session user."),
   outputSchema: FindJobsNowOutputSchema
 });

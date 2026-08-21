@@ -11,10 +11,18 @@ export type {
   ItemsUIState,
   ItemsUIStore
 } from "@/widgets/items-page/lib/items-ui.types";
-export { useItemsNavigation } from "@/widgets/items-page/lib/use-items-navigation";
+export {
+  useItemsNavigation,
+  type ItemsNavLayout
+} from "@/widgets/items-page/lib/use-items-navigation";
 export { useItemsTabUrlSync } from "@/widgets/items-page/lib/use-items-tab-url-sync";
 
 // UI
+export { ItemGridCard } from "@/widgets/items-page/ui/item-grid-card";
+export type {
+  ItemGridCardProps,
+  ItemGridDragHandleProps
+} from "@/widgets/items-page/ui/item-grid-card";
 export { GridSkeleton, ListSkeleton } from "@/widgets/items-page/ui/item-skeleton";
 export { ItemsEmpty } from "@/widgets/items-page/ui/items-empty";
 export { ItemsFilterButton } from "@/widgets/items-page/ui/items-filter-button";
@@ -36,6 +44,13 @@ export {
 } from "@/widgets/items-page/ui/project-info-panel";
 export { ItemsInfoFooter } from "@/widgets/items-page/ui/items-info-footer";
 export { ItemsInfoSheet } from "@/widgets/items-page/ui/items-info-sheet";
+export {
+  ITEMS_GRID_CELL_CLASSNAME,
+  ITEMS_GRID_CLASSNAME,
+  ItemsGrid,
+  ItemsGridCell,
+  useItemsGridColumnCount
+} from "@/widgets/items-page/ui/items-grid";
 export { ItemsList } from "@/widgets/items-page/ui/items-list";
 export { PageHeader } from "@/widgets/items-page/ui/page-header";
 export { PageLayout } from "@/widgets/items-page/ui/page-layout";

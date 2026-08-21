@@ -37,6 +37,15 @@ describe("scoreCatalogAgainstPreference", () => {
     expect(r.score).toBe(0);
   });
 
+  it("title-hits Front End when the frontend pack seeds front-end", () => {
+    const r = scoreCatalogAgainstPreference(
+      { ...listing, title: "Front End Angular Engineer" },
+      prefs
+    );
+    expect(r.passed).toBe(true);
+    expect(r.reasons.join(" ")).toMatch(/title keywords/i);
+  });
+
   it("fails without a title keyword hit", () => {
     const r = scoreCatalogAgainstPreference({ ...listing, title: "Staff Nurse" }, prefs);
     expect(r.passed).toBe(false);

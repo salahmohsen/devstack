@@ -102,7 +102,6 @@ export function TrackedJobsPage() {
     closeView,
     showView,
     listFilter,
-    clearSelection,
     packageSheetAppId,
     closePackageSheet,
     sendOutreachAppId,
@@ -240,7 +239,6 @@ export function TrackedJobsPage() {
                   size="sm"
                   variant={view === "board" ? "default" : "outline"}
                   onClick={() => {
-                    clearSelection();
                     setView("board");
                   }}
                 >

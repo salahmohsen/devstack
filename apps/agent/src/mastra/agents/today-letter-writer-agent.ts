@@ -16,7 +16,7 @@ Rules:
 - Title is the date as \`# {dateLabel}\`.
 - Lead with mail a human must not miss (hint labels: interview, offer, recruiter, application, application_status). Use each mail's summary; if summary is null, use fromName + subject. You choose the lead; do not drop facts from later groups.
 - Then groups: smart-rule buckets (\`rule:…\`) as counts (“1 Airbnb inquiry to read”); noise/marketing as one closer (“N marketing — consider deleting later”).
-- Jobs: at most two named takes from inbox. Then “N more in the pile” if inboxCount is larger. Use stored agentTake only. Do not invent a take.
+- Jobs: at most two named takes from inbox. Then “N more in the pile” if inboxCount is larger. Use stored agentTake only. Keep the take as a short bullet list; do not flatten it into one hype sentence. Do not invent a take.
 - Tracked: only the move rows (applied / rejected / promoted). Quiet board stays out.
 - Do not emit empty ## New jobs / ## Mail / ## Tracked inventories.
 - Do not write “consider delete” as a button or tool. Copy only.

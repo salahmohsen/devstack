@@ -19,6 +19,7 @@ import {
   stripListingChromeFromText,
   type ListingPageExtract
 } from "#@/common/extract-job-listing-page";
+import { effectiveRoleKeywords } from "#@/job-discovery/title-packs";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
 import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
 import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
@@ -221,7 +222,13 @@ export const JobMatchScoreResultSchema = z.object({
   passed: z.boolean(),
   reasons: z.array(z.string())
 });
-export type JobMatchScoreResult = z.infer<typeof JobMatchScoreResultSchema>;
+export type JobMatchScoreResult = z.infer<typeof JobMatchScoreResultSchema> & {
+  /**
+   * Column / title-keyword / open-prefs evidence miss.
+   * Distinct from `passed: false` when the score is only under minMatchScore.
+   */
+  rulesFailed: boolean;
+};
 
 /** Harvested job + AI preference match (workflow output). */
 export const ScoredHarvestedJobSchema = HarvestedJobObjectSchema.extend({
@@ -962,13 +969,66 @@ const CLOSED_LISTING_MARKERS = [
   "no longer accepting applicants"
 ] as const;
 
+/** LinkedIn (and similar) 404 bodies — not a bare "page not found" (real JDs mention 404s). */
+const GONE_PAGE_PHRASES = [
+  "uh oh, we can't seem to find the page you're looking for",
+  "we can't seem to find the page you're looking for",
+  "try going back to the previous page or see our help center"
+] as const;
+
+/** One heading is weak; two+ translations is LinkedIn's deleted-job chrome. */
+const GONE_PAGE_HEADINGS = [
+  "page not found",
+  "seite nicht gefunden",
+  "siden blev ikke fundet",
+  "página no encontrada",
+  "pagina non trovata",
+  "page introuvable",
+  "pagina niet gevonden",
+  "لم يتم العثور على الصفحة"
+] as const;
+
+function foldListingPageText(text: string): string {
+  return text.toLowerCase().replace(/[\u2018\u2019\u201A\u201B]/g, "'");
+}
+
+/** Deleted listing SPA that still returns HTTP 200 (LinkedIn multilingual 404). */
+export function isGonePublicListingPage(text: string): boolean {
+  if (!text || text.length < 20) return false;
+  const folded = foldListingPageText(text);
+  if (GONE_PAGE_PHRASES.some((phrase) => folded.includes(phrase))) return true;
+  let headings = 0;
+  for (const heading of GONE_PAGE_HEADINGS) {
+    if (folded.includes(heading) || text.includes(heading)) {
+      headings += 1;
+      if (headings >= 2) return true;
+    }
+  }
+  return false;
+}
+
+export function isGoneHttpListingStatus(status: number | null | undefined): boolean {
+  return status === 404 || status === 410;
+}
+
+/** Page `<title>` is the 404 document, not a role. */
+export function isMissingJobListingTitle(title: string | null | undefined): boolean {
+  const head =
+    title
+      ?.trim()
+      .split(/[|/—–-]/)[0]
+      ?.trim()
+      .toLowerCase() ?? "";
+  return head === "page not found" || head === "seite nicht gefunden";
+}
+
 /**
- * True when HTML (LinkedIn guest, etc.) marks the listing as closed/expired.
+ * True when HTML (LinkedIn guest, etc.) marks the listing as closed/expired/deleted.
  */
 export function isClosedJobListingHtml(html: string): boolean {
   if (!html || html.length < 20) return false;
-  const lower = html.toLowerCase();
-  return CLOSED_LISTING_MARKERS.some((m) => lower.includes(m));
+  const lower = foldListingPageText(html);
+  return CLOSED_LISTING_MARKERS.some((m) => lower.includes(m)) || isGonePublicListingPage(html);
 }
 
 /**
@@ -977,8 +1037,11 @@ export function isClosedJobListingHtml(html: string): boolean {
  */
 export function isClosedJobListingText(text: string): boolean {
   if (!text || text.length < 10) return false;
-  const lower = text.toLowerCase();
-  return CLOSED_LISTING_MARKERS.some((m) => !m.startsWith("closed-job") && lower.includes(m));
+  const lower = foldListingPageText(text);
+  return (
+    CLOSED_LISTING_MARKERS.some((m) => !m.startsWith("closed-job") && lower.includes(m)) ||
+    isGonePublicListingPage(text)
+  );
 }
 
 /**
@@ -1439,6 +1502,7 @@ export type ScoreJobPreferenceInput = Pick<
   JobPreference,
   "workModes" | "locations" | "roleKeywords" | "excludeKeywords" | "minMatchScore"
 > & {
+  titleId?: JobPreference["titleId"];
   remoteRegions?: readonly string[] | null;
   salaryMin?: number | null;
   salaryCurrency?: string | null;
@@ -1471,7 +1535,7 @@ export function scoreJobAgainstPreference(
     .toLowerCase();
 
   if (isGarbageJobTitle(job.title) || isGarbageCompany(job.companyName)) {
-    return { score: 0, passed: false, reasons: ["invalid title/company"] };
+    return { score: 0, passed: false, reasons: ["invalid title/company"], rulesFailed: true };
   }
 
   const hard = applyPreferenceHardFails(
@@ -1488,17 +1552,26 @@ export function scoreJobAgainstPreference(
     p
   );
   if (hard.failed) {
-    return { score: 0, passed: false, reasons: hard.reasons };
+    return { score: 0, passed: false, reasons: hard.reasons, rulesFailed: true };
   }
 
-  if (p.roleKeywords.length > 0) {
+  const roleKeywords = effectiveRoleKeywords({
+    titleId: p.titleId ?? null,
+    roleKeywords: p.roleKeywords
+  });
+  if (roleKeywords.length > 0) {
     // Title-only — never score from fetched HTML description noise
-    const titleHits = p.roleKeywords.filter((k) => matchesKeywordPhrase(job.title, k));
+    const titleHits = roleKeywords.filter((k) => matchesKeywordPhrase(job.title, k));
     if (titleHits.length > 0) {
       score += Math.min(40, 15 + titleHits.length * 10);
       reasons.push(`title keywords: ${titleHits.slice(0, 3).join(", ")}`);
     } else {
-      return { score: 15, passed: false, reasons: ["no role keyword in title"] };
+      return {
+        score: 15,
+        passed: false,
+        reasons: ["no role keyword in title"],
+        rulesFailed: true
+      };
     }
   }
 
@@ -1541,7 +1614,8 @@ export function scoreJobAgainstPreference(
       return {
         score: Math.min(applied.score, 25),
         passed: false,
-        reasons: [...applied.reasons, "no profile evidence fit"]
+        reasons: [...applied.reasons, "no profile evidence fit"],
+        rulesFailed: true
       };
     }
   }
@@ -1551,7 +1625,8 @@ export function scoreJobAgainstPreference(
   return {
     score,
     passed: score >= min,
-    reasons
+    reasons,
+    rulesFailed: false
   };
 }
 
@@ -1570,7 +1645,7 @@ export function formatJobMatchScorePrompt(input: {
     ("searchBriefMarkdown" in input.prefs ? (input.prefs.searchBriefMarkdown ?? null) : null);
   return `Score these jobs for the seeker.
 
-Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity: "react" is not "react native". Search brief is narrative flavor only and cannot pass a column hard-fail. Two-axis (workModes / locations / remoteRegions) is a land/evaluate gate — do not hard-fail harvest or inbox solely for unknown work mode or location.
+Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity: "react" is not "react native". Search brief is narrative flavor only and cannot pass a column hard-fail. Two-axis (workModes / locations / remoteRegions) is a land/evaluate gate — do not hard-fail harvest or inbox solely for unknown work mode or location. Do not lower score for hiring region, country, or city; location is ranking-neutral here. The server derives passed from score >= minMatchScore after column hard-fails — never set passed false when score is already at or above the bar.
 
 JobPreference (JSON):
 ${JSON.stringify(

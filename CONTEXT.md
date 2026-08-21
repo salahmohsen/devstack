@@ -1,7 +1,7 @@
 # Portfolio Context
 
-A glossary of terms specific to the portfolio's evidence, output, stack, and
-cache-invalidation layers. General programming terms (workflow, tool, vector,
+A glossary of terms specific to the portfolio's evidence, output, skills,
+and cache-invalidation layers. General programming terms (workflow, tool, vector,
 etc.) do not belong here even if the project uses them heavily.
 
 ## Multi-user tenancy
@@ -39,7 +39,7 @@ hostname.
 _Avoid_: “main domain” without distinguishing path vs Host routing.
 
 **Tenant `userId`**:
-Every private domain row (experience, project, stack, resume, portfolio entry,
+Every private domain row (experience, project, skill, resume, portfolio entry,
 etc.) is scoped by the Better Auth user id. Public RPCs resolve Host and/or
 `username` → `userId` then load only that tenant’s opted-in evidence.
 _Avoid_: `ownerId`, “admin user” as the sole portfolio owner, unscoped `findAll()`.
@@ -104,6 +104,23 @@ Per-application hiring pressure: `unknown | immediate | soon | flexible`.
 Not the tenant’s job preference.
 _Avoid_: conflating with job preference.
 
+**Job posting** (`job_posting`):
+Shared pantry row for one public listing (adapter + external id). No
+`userId`. Many tenants may land the same posting onto their own
+application. HTTP/ATS fields only; never a personal match score.
+_Avoid_: duplicating the full JD per user; putting `matchScore` on the pantry.
+
+**Job company** (`job_company`):
+Shared employer record keyed by slug. Name, optional logo URL, website,
+profile. Postings point here. Years required are _not_ a company field.
+_Avoid_: treating companyName strings as identity; storing years on the company.
+
+**Years required**:
+Minimum years the _role_ asks for (`experienceYearsMin` on the posting).
+Shown as a badge. Caps personal `matchScore`. Does not hide the job from
+New jobs.
+_Avoid_: dropping listings that ask for more years than the profile.
+
 ## Job search
 
 **Job preference**:
@@ -124,9 +141,15 @@ The lowest IC seniority the tenant will consider: `junior | mid | senior |
 staff`. Roles below it are out.
 _Avoid_: hiring urgency, application stage, title pack.
 
+**Agent take**:
+Short markdown on an application explaining fit. At most five concise
+bullets. Humanizer voice (plain, no hype, no invented facts). Written at
+land / harvest / regenerate. Not a paragraph.
+_Avoid_: 1–3 sentence blurbs; selling the job; JSON.
+
 **Search brief**:
 A per-tenant generated markdown document for AI layers. One artifact: opening
-and skills paragraphs describe who the seeker is (from experiences, stacks,
+and skills paragraphs describe who the seeker is (from experiences, skills,
 projects, profile); lists restate job preference. Settings fields are source
 of truth. Persisted per tenant next to job preference (markdown plus that
 hash). Any successful write to job preference or evidence (Settings, hub
@@ -161,7 +184,7 @@ not re-register `open-entity-form` as a model tool. Spec:
 _Avoid_: career-coach clone; a second identity markdown file.
 
 **Entity inspect panel**:
-Dashboard **view** for applications, experiences, projects, and stacks uses
+Dashboard **view** for applications, experiences, projects, and skills uses
 the inspect side panel (inset Sheet below `xl`). Shared shell; kind-specific
 body. Inspect stays view-only until the user hits Edit. List `+` and inspect
 Edit remount the original form sheets. Hub hosts (inspect / form / Today)
@@ -250,7 +273,7 @@ _Avoid_: Webhook dedup, idempotency cache.
 
 **Portfolio entry**:
 A row in `portfolio_entry` representing one evidence item
-(experience, project, stack, or contact) that the **tenant user** has
+(experience, project, skill (`skill` row), or contact) that the **tenant user** has
 opted to expose on their public portfolio surface and to AI agents.
 Scoped by `userId`. Acts as a visibility gate — the row's existence,
 not a boolean column on the entity, is what makes the item visible. The
@@ -282,7 +305,7 @@ _Avoid_: Search query, RSQL where, filter DSL.
 The dashboard-side UI element that calls `portfolio.toggle` to add or
 remove a `portfolio_entry` row for the entity being edited. Replaces
 the old per-entity `enable_ai` switch. The `enable_ai` field is gone
-from `experience`, `project`, and `stack`; toggling inclusion is a
+from `experience`, `project`, and `stack` (skills catalog); toggling inclusion is a
 separate action from editing the entity.
 _Avoid_: AI switch, include flag, visibility switch.
 
@@ -360,7 +383,7 @@ _Avoid_: Uploaded resume record, media_asset resume, global resumes/ prefix.
 
 **Resume import draft**:
 The structured, client-held proposal produced by the resume-import
-workflow (profile, experiences, projects, stacks with selection and
+workflow (profile, experiences, projects, skills with selection and
 portfolio inclusion defaults) before transactional Apply. Not persisted
 server-side in v1.
 _Avoid_: Import job, pending onboarding entity, server draft row.
@@ -372,71 +395,82 @@ transactional apply into profile/evidence (with portfolio entries for
 selected rows). Distinct from resume builder (generate).
 _Avoid_: Resume parse service, CV sync, reverse resume builder.
 
-## Stacks
+## Skills and stacks
 
-**Stack**:
-A named technology choice tracked in the `stack` table. Represents a
-framework, language, library, tool, or service used across projects.
-Linked to projects via the `project_stack` join table. Each stack has a
-display `name` (customizable by the user), an optional `npmPackage`
-(the raw npm package name for deduplication and auto-detection), a
-`type` category, and an optional `icon`.
-_Avoid_: Tech, technology, skill, dependency.
+**Skill** (`skill` table; dashboard **Skills** at `/dashboard/skills`):
+A named technology or practice the seeker claims — framework, language,
+library, tool, **or** something that is not a code dependency (CI/CD,
+process, platform). Broader than a project's real stack. Display `name`
+(customizable), optional `npmPackage` (for detect-stacks dedup), `type`,
+optional `icon`, optional `alternativeNames` (other labels for the same
+skill, shown as tags). Linked to projects via `project_stack` when that skill
+is used on a project. A skill may exist with no project and no npm
+package. Product UI says **Skills**, not Stacks, for this catalog.
+_Avoid_: calling the catalog “stacks” in product copy; requiring every
+skill to be an npm dependency; storing npm packages as alternative names
+(those live on `stack_dependency`).
 
-**Stack type**:
-The `type` column on `stack`. One of `"framework" | "language" |
+**Stack** (on a project):
+The project's actual tech — typically dependencies from linked repos.
+Shown on the project form as **Stack**. Detect-stacks writes here.
+_Avoid_: using “stack” for the tenant-wide Skills catalog.
+
+**Skill type**:
+The `type` column on `skill`. One of `"framework" | "language" |
 "database" | "ui" | "auth" | "deployment" | "testing" | "ai" |
-"tooling" | "storage" | "other"`. Categorizes the stack for
+"tooling" | "storage" | "other"`. Categorizes a skill for
 filtering and display grouping. Assigned by the LLM during
-auto-detection, editable by the user.
+detect-stacks, editable by the user.
 _Avoid_: Category, kind, group.
 
 **npm package**:
-The `npm_package` column on `stack`. The raw npm package name as it
+The `npm_package` column on `stack_dependency`. The raw npm package name as it
 appears in `package.json` (e.g., `"react"`, `"@tanstack/react-query"`).
-Nullable — not every stack has an npm package (e.g., "REST API", "Docker").
-Dedup and alias matching are **per tenant** (`userId`). Stack display
+Nullable — skills such as CI/CD or “REST API” have none.
+Dedup and alias matching are **per tenant** (`userId`). Skill display
 `name` is unique per `(userId, name)`.
 _Avoid_: Package name, npm name, dependency name as a global unique.
 
 **Detect-stacks workflow**:
 A Mastra workflow (`detect-stacks-workflow`) that scans GitHub
-repositories' `package.json` files to auto-detect tech stacks.
-Triggered from the Project Form's "Detect Stacks" button. Four steps:
+repositories' `package.json` files to auto-detect a **project's** tech
+stack (real dependencies). Triggered from the Project Form's
+“Detect stacks” button — keep that name. Four steps:
 fetch-repo-package-jsons → extract-dependencies →
 categorize-with-llm → deduplicate-and-format. Streams step progress
 to the UI via oRPC for real-time `ShimmeringText` feedback. Includes
 10 enhancements: auto-icon mapping, health metadata, confidence
 scoring, stack aliases, usage frequency, stack diff, batch detection,
 language aggregation, auto-descriptions, and portfolio tech section.
-_Avoid_: Stack scanner, dependency detector, auto-stack.
+May create or attach **skill** rows for detected packages.
+_Avoid_: renaming Detect stacks to Detect skills; Stack scanner;
+dependency detector; auto-stack.
 
 **Stack alias**:
 A row in `stack_alias` mapping an alternative npm package name to an
-existing stack. Prevents duplicate stacks when multiple npm packages
+existing skill. Prevents duplicate skills when multiple npm packages
 represent the same technology (e.g., `react` and `react-dom` both
-map to the "React" stack). Checked alongside `stack.npm_package`
-during deduplication. Scoped with the parent stack’s tenant.
+map to the "React" skill). Checked alongside `stack.npm_package`
+during detect-stacks deduplication. Scoped with the parent skill’s tenant.
 _Avoid_: Package alias, alternative name, npm alias.
 
 **Stack health**:
 Cached npm registry metadata stored in `stack.health_status`: whether
 the package is deprecated, its weekly download count, and last publish
 date. Refreshed on each detect-stacks scan. Displayed as badges in
-the review dialog and on stack cards.
+the review dialog and on skill cards.
 _Avoid_: Package health, npm status, dependency health.
 
 **Stack confidence**:
 The LLM's confidence level (`high | medium | low`) in its type
-categorization of a dependency. Stored in `stack.confidence`. Low-
-confidence items get a warning badge in the review dialog to surface
-potential misclassifications.
+categorization of a **detected dependency**. Stored in `stack.confidence`. Low-
+confidence items get a warning badge in the detect-stacks review dialog.
 _Avoid_: Classification confidence, categorization certainty.
 
 **Stack scan**:
 A row in `project_stack_scan` recording one detect-stacks workflow
 execution for a project: the timestamp, detected npm package names,
-and resulting stack IDs. Used to compute stack diffs on re-scan
+and resulting skill IDs. Used to compute stack diffs on re-scan
 (new/unchanged/removed packages).
 _Avoid_: Detection scan, package scan, dependency scan.
 

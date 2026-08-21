@@ -3,14 +3,14 @@
 /**
  * Domain-agnostic AI change review UI.
  *
- * UX borrowed from Neon BranchDiff (downloaded to /tmp/neon-branch-diff for reference):
+ * Change-review UX (header counts, search/filter, expandable before/after):
  * - header with from → to + kind counts
  * - search + kind filter
  * - expandable rows with before / after panels
  * - kind carried by symbol + label, not color alone
  *
- * Not a drop-in of BranchDiff (Neon schema/row domain + Neon tokens). Use this for
- * any AI-proposed catalog change (organize stacks, resume import, apply package, …).
+ * Use this for any AI-proposed catalog change (organize stacks, resume import,
+ * apply package, …).
  */
 
 import { ArrowRightIcon, ChevronDownIcon, SearchIcon } from "lucide-react";

@@ -25,12 +25,6 @@
       "skillPath": "assistant-ui/skills/markdown/SKILL.md",
       "computedHash": "1ec28d7895066a4b60f56ec8d101f16d4272f31c92f13421c71cfadcab35b91f"
     },
-    "neon-postgres": {
-      "source": "neondatabase/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/neon-postgres/SKILL.md",
-      "computedHash": "3c53df29c959dc0a7f724ff8620063b20fabd2b1fa702ec97e3f17e6a23d5a1c"
-    },
     "observability": {
       "source": "assistant-ui/skills",
       "sourceType": "github",

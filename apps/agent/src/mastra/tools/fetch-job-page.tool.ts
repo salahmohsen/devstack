@@ -6,6 +6,10 @@ import {
   extractPublicJobListingFromHtmlAsync,
   fetchPublicHtmlAsText,
   formatJobPageTextForLlm,
+  isClosedJobListingHtml,
+  isClosedJobListingText,
+  isGoneHttpListingStatus,
+  isMissingJobListingTitle,
   type PublicJobListingExtract
 } from "@tsu-stack/core";
 
@@ -41,10 +45,19 @@ export async function fetchJobPageContent(url: string): Promise<FetchJobPageResu
   const emptyPlaceholder =
     result.status != null && (!result.error || result.error.startsWith("HTTP "));
 
-  const extract =
+  let extract: PublicJobListingExtract | null =
     result.html && result.html.length > 200
       ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? listingUrl)
       : null;
+
+  const listingGone =
+    isGoneHttpListingStatus(result.status) ||
+    isMissingJobListingTitle(result.title) ||
+    (result.html ? isClosedJobListingHtml(result.html) : false) ||
+    isClosedJobListingText(result.text);
+  if (listingGone) {
+    extract = { ...extract, listingClosed: true };
+  }
 
   const rawText =
     result.text.length > 0

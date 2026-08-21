@@ -68,7 +68,17 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         to: r.mailMessage.applicationId
       })
     },
+    jobCompany: {
+      postings: r.many.jobPosting({
+        from: r.jobCompany.id,
+        to: r.jobPosting.companyId
+      })
+    },
     jobPosting: {
+      company: r.one.jobCompany({
+        from: r.jobPosting.companyId,
+        to: r.jobCompany.id
+      }),
       applications: r.many.application({
         from: r.jobPosting.id,
         to: r.application.postingId

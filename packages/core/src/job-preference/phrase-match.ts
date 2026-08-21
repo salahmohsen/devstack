@@ -37,15 +37,44 @@ function isCompoundPrefixOccupancy(
   return false;
 }
 
+/**
+ * Hyphen/space spellings of the same role word. `normalizePhraseText` already
+ * turns "front-end" into "front end"; "frontend" is still one token.
+ */
+const JOINED_SPELLINGS: Readonly<Record<string, readonly string[]>> = {
+  frontend: ["frontend", "front end"],
+  backend: ["backend", "back end"],
+  fullstack: ["fullstack", "full stack"]
+};
+
+function needleVariants(keyword: string): string[][] {
+  const primary = tokenizePhrase(keyword);
+  if (primary.length === 0) return [];
+  const spellings = JOINED_SPELLINGS[primary.join("")];
+  if (!spellings) return [primary];
+  const seen = new Set<string>();
+  const variants: string[][] = [];
+  for (const spelling of spellings) {
+    const tokens = tokenizePhrase(spelling);
+    const key = tokens.join("\0");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    variants.push(tokens);
+  }
+  return variants;
+}
+
 export function matchesKeywordPhrase(haystack: string, keyword: string): boolean {
-  const needle = tokenizePhrase(keyword);
-  if (needle.length === 0) return false;
+  const needles = needleVariants(keyword);
+  if (needles.length === 0) return false;
   const tokens = tokenizePhrase(haystack);
-  if (tokens.length < needle.length) return false;
-  for (let i = 0; i <= tokens.length - needle.length; i += 1) {
-    if (!spanEquals(tokens, i, needle)) continue;
-    if (isCompoundPrefixOccupancy(tokens, i, needle)) continue;
-    return true;
+  for (const needle of needles) {
+    if (tokens.length < needle.length) continue;
+    for (let i = 0; i <= tokens.length - needle.length; i += 1) {
+      if (!spanEquals(tokens, i, needle)) continue;
+      if (isCompoundPrefixOccupancy(tokens, i, needle)) continue;
+      return true;
+    }
   }
   return false;
 }

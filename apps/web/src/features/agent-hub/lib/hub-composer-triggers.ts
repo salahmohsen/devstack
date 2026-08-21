@@ -31,7 +31,7 @@ export const HUB_TOOL_MENTIONS: readonly HubToolMention[] = [
   {
     id: "skills",
     label: "Skills",
-    description: "Stacks and tools on file",
+    description: "Skills and tools on file",
     insertText: "show me my skills list",
     icon: "Wrench"
   },

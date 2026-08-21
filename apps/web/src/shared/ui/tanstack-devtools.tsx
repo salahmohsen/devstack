@@ -1,6 +1,7 @@
 import { a11yDevtoolsPlugin } from "@tanstack/devtools-a11y/react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { FormDevtoolsPanel } from "@tanstack/react-form-devtools";
+import { hotkeysDevtoolsPlugin } from "@tanstack/react-hotkeys-devtools";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
@@ -21,6 +22,7 @@ export function AppTanStackDevtools() {
           name: "TanStack Form",
           render: <FormDevtoolsPanel />
         },
+        hotkeysDevtoolsPlugin(),
         a11yDevtoolsPlugin()
       ]}
     />

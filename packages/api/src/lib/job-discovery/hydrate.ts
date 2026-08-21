@@ -263,7 +263,7 @@ export async function hydratePostingIfNeeded(postingId: string): Promise<Hydrate
 
     let listingClosed = posting.closedAt != null;
     if (extract.listingClosed) {
-      await jobPostingRepository.markClosed(posting.id, new Date()).catch(() => null);
+      await jobPostingRepository.markClosed(posting.id, new Date(), "http_gone").catch(() => null);
       listingClosed = true;
     }
 

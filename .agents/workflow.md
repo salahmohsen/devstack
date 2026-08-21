@@ -43,19 +43,18 @@ For end-to-end feature implementation order across `packages/db`, `packages/core
 
 1. Edit schemas in `packages/db/src/schema/`
 2. Run `vp run db:generate` to create migration files
-3. **Check `DATABASE_URL`** — dev database setup is Neon-backed via `vp run db:setup` when no dev database exists. If `DATABASE_URL` points at a production/main database, **stop and warn the user**.
-4. Run `vp run db:migrate` to apply. Features will silently fail without applied migrations.
+3. **Check `DATABASE_URL`** — local/dev Postgres comes from `docker-compose.infra.yml` (started by `pnpm run dev` / `pnpm dev:infra`) or Dokploy `devhub-infra`. Point `packages/env/.env` at local Docker, not production. If `DATABASE_URL` points at production, **stop and warn the user**.
+4. Run `vp run db:migrate` to apply (or let `pnpm run dev` migrate on startup). Features will silently fail without applied migrations.
 
 ## Other Commands
 
-| Command              | Purpose                                                     |
-| -------------------- | ----------------------------------------------------------- |
-| `vp run db:setup`    | Create the initial dev Neon `DATABASE_URL` when none exists |
-| `vp run db:generate` | Generate migration files                                    |
-| `vp run db:migrate`  | Apply migrations                                            |
-| `vp run db:studio`   | Open Drizzle Studio                                         |
+| Command              | Purpose                  |
+| -------------------- | ------------------------ |
+| `vp run db:generate` | Generate migration files |
+| `vp run db:migrate`  | Apply migrations         |
+| `vp run db:studio`   | Open Drizzle Studio      |
 
-`vp run db:setup` is for first-time dev setup only. It wraps `vpx neon-new@latest --env ../../packages/env/.env --key DATABASE_URL --ref github:salahmohsen/portfolio --yes` from `packages/db` to provision or select a Neon-backed dev database and write `DATABASE_URL`.
+`pnpm run dev` / `pnpm run dev:tunnel` already start local infra and run `drizzle-kit migrate` via `scripts/dev.sh`. Use `vp run db:migrate` when you need migrations without booting the apps.
 
 ## UI Components And shadcn
 

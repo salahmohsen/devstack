@@ -8,6 +8,7 @@ export * from "./experience.schema.ts";
 export * from "./github-cache.schema.ts";
 export * from "./github-config.schema.ts";
 export * from "./invite.schema.ts";
+export * from "./job-company.schema.ts";
 export * from "./job-preference.schema.ts";
 export * from "./job-posting.schema.ts";
 export * from "./mail-crm-apply.schema.ts";

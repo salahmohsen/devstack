@@ -144,6 +144,10 @@ export const DEFAULT_JOBS_PER_RUN = 25;
 export const MIN_JOBS_PER_RUN = 15;
 export const MAX_JOBS_PER_RUN = 40;
 export const JOBS_PER_RUN_STEP = 5;
+export const DEFAULT_DAILY_BOARD_SCORE_CAP = 50;
+export const MIN_DAILY_BOARD_SCORE_CAP = 20;
+export const MAX_DAILY_BOARD_SCORE_CAP = 100;
+export const DAILY_BOARD_SCORE_CAP_STEP = 10;
 export const MAX_OPEN_INBOX = 50;
 export const INBOX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const LIVENESS_AFTER_MS = Math.floor(INBOX_TTL_MS / 2); // ~3.5d
@@ -160,6 +164,17 @@ export function refineJobsPerRun(n: number): number {
   return Math.min(MAX_JOBS_PER_RUN, Math.max(MIN_JOBS_PER_RUN, snapped));
 }
 
-export function dailyAiAttemptCap(jobsPerRun: number): number {
-  return 2 * jobsPerRun;
+/** Snap to 20/30/…/100 (nearest step, clamped). */
+export function refineDailyBoardScoreCap(n: number): number {
+  const clamped = Math.min(MAX_DAILY_BOARD_SCORE_CAP, Math.max(MIN_DAILY_BOARD_SCORE_CAP, n));
+  const stepsFromMin = Math.round(
+    (clamped - MIN_DAILY_BOARD_SCORE_CAP) / DAILY_BOARD_SCORE_CAP_STEP
+  );
+  const snapped = MIN_DAILY_BOARD_SCORE_CAP + stepsFromMin * DAILY_BOARD_SCORE_CAP_STEP;
+  return Math.min(MAX_DAILY_BOARD_SCORE_CAP, Math.max(MIN_DAILY_BOARD_SCORE_CAP, snapped));
+}
+
+/** Daily board-score attempts. Value comes from Jobs settings, not 2× jobsPerRun. */
+export function dailyAiAttemptCap(dailyBoardScoreCap: number): number {
+  return refineDailyBoardScoreCap(dailyBoardScoreCap);
 }

@@ -1,5 +1,6 @@
 import geistMonoLatin from "@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2?url";
 import geistVariableLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
+import { HotkeysProvider } from "@tanstack/react-hotkeys";
 import { type QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
@@ -13,6 +14,7 @@ import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { ThemeProvider } from "@tsu-stack/ui/components/theme-switcher";
 import { TooltipProvider } from "@tsu-stack/ui/components/tooltip";
 
+import { COMMAND_SEQUENCE_TIMEOUT_MS } from "@/shared/lib/commands";
 import { generateAppSeo } from "@/shared/lib/seo";
 import { ProgressProvider } from "@/shared/providers/progress.provider";
 import appCss from "@/shared/styles/app.css?url";
@@ -97,22 +99,38 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body suppressHydrationWarning>
         {/* We place the progress provider here otherwise we will get "Cannot render a <style> outside the main document" error */}
         <ThemeProvider attribute="class" defaultTheme="dark">
-          <TooltipProvider>
-            <ProgressProvider>
-              <NuqsAdapter>
-                <CuelumeProvider />
-                {children}
-                <AppToaster />
-                <AiJobIslandHost />
-              </NuqsAdapter>
-              {import.meta.env.DEV ? (
-                <Suspense fallback={null}>
-                  <AppTanStackDevtools />
-                </Suspense>
-              ) : null}
-              <Scripts />
-            </ProgressProvider>
-          </TooltipProvider>
+          <HotkeysProvider
+            defaultOptions={{
+              hotkey: {
+                preventDefault: true,
+                stopPropagation: true,
+                conflictBehavior: "replace"
+              },
+              hotkeySequence: {
+                timeout: COMMAND_SEQUENCE_TIMEOUT_MS,
+                preventDefault: true,
+                stopPropagation: true,
+                conflictBehavior: "replace"
+              }
+            }}
+          >
+            <TooltipProvider>
+              <ProgressProvider>
+                <NuqsAdapter>
+                  <CuelumeProvider />
+                  {children}
+                  <AppToaster />
+                  <AiJobIslandHost />
+                </NuqsAdapter>
+                {import.meta.env.DEV ? (
+                  <Suspense fallback={null}>
+                    <AppTanStackDevtools />
+                  </Suspense>
+                ) : null}
+                <Scripts />
+              </ProgressProvider>
+            </TooltipProvider>
+          </HotkeysProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -34,6 +34,7 @@ export const listStacksTool = createTool({
         projectCount: z.number().int(),
         inPortfolio: z.boolean(),
         featured: z.boolean(),
+        alternativeNames: z.array(z.string()),
         summary: z.string().nullable()
       })
     )
@@ -56,6 +57,7 @@ export const listStacksTool = createTool({
           projectCount: r.projectCount ?? 0,
           inPortfolio: Boolean(r.portfolioEntryId),
           featured: Boolean(r.isFeatured),
+          alternativeNames: r.alternativeNames ?? [],
           // Short text only — omit large description bodies.
           summary: r.description ? r.description.slice(0, 200) : null
         };

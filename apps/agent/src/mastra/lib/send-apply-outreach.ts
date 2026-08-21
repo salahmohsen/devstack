@@ -4,6 +4,7 @@ import {
   applicationActivityRepository,
   applicationRepository,
   createDb,
+  mailMessageRepository,
   resumeRepository,
   runWithDb,
   type ApplicationEntity
@@ -31,6 +32,11 @@ function nonEmpty(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed || trimmed.length === 0) return null;
   return trimmed;
+}
+
+function pdfFilename(name: string | null | undefined, fallback: string): string {
+  const base = nonEmpty(name) ?? fallback;
+  return base.toLowerCase().endsWith(".pdf") ? base : `${base}.pdf`;
 }
 
 /**
@@ -105,20 +111,54 @@ export async function sendApplyOutreach(input: {
     }
 
     const resumeBytes = new Uint8Array(await new Response(object.body).arrayBuffer());
-    const resumeFilename =
-      nonEmpty(resume.filename) ?? `Resume_${app.companyName.replace(/\s+/g, "_")}.pdf`;
+    const resumeFilename = pdfFilename(
+      resume.filename,
+      `Resume_${app.companyName.replace(/\s+/g, "_")}.pdf`
+    );
+
+    const sendAttachments: Array<{
+      filename: string;
+      content: Uint8Array;
+      contentType: string;
+      storageKey: string | null;
+    }> = [
+      {
+        filename: resumeFilename,
+        content: resumeBytes,
+        contentType: "application/pdf",
+        storageKey: resume.r2Key
+      }
+    ];
+
+    const coverKey = nonEmpty(app.coverLetterR2Key);
+    if (coverKey) {
+      const coverObject = await mediaBucket.get(coverKey);
+      if (coverObject?.body) {
+        const coverBytes = new Uint8Array(await new Response(coverObject.body).arrayBuffer());
+        sendAttachments.push({
+          filename: pdfFilename(
+            app.coverLetterFilename,
+            `Cover_letter_${app.companyName.replace(/\s+/g, "_")}.pdf`
+          ),
+          content: coverBytes,
+          contentType: "application/pdf",
+          storageKey: coverKey
+        });
+      }
+    }
 
     const sent = await sendCareerReply({
       userId: input.userId,
       to,
       subject,
       bodyText: body,
-      attachments: [
-        {
-          filename: resumeFilename.endsWith(".pdf") ? resumeFilename : `${resumeFilename}.pdf`,
-          content: resumeBytes
-        }
-      ]
+      attachments: sendAttachments.map((file) => {
+        return {
+          filename: file.filename,
+          content: file.content,
+          contentType: file.contentType
+        };
+      })
     });
 
     if (!sent.ok) {
@@ -130,6 +170,44 @@ export async function sendApplyOutreach(input: {
       }
       return { ok: false, code: "SEND_FAILED" as const, message: sent.message };
     }
+
+    const preview = body.replace(/\s+/g, " ").trim().slice(0, 180);
+    const now = new Date();
+    await mailMessageRepository
+      .create({
+        userId: input.userId,
+        provider: "resend",
+        providerMessageId: sent.providerMessageId,
+        fromName: "",
+        fromEmail: sent.from,
+        toEmail: to,
+        subject,
+        preview,
+        summary: `Sent application to ${to}`,
+        bodyText: body,
+        bodyHtml: null,
+        receivedAt: now,
+        unread: false,
+        purpose: "career",
+        labels: ["application"],
+        applicationId: app.id,
+        classifiedAt: now
+      })
+      .then(async (message) => {
+        for (const file of sendAttachments) {
+          await mailMessageRepository.createAttachment({
+            messageId: message.id,
+            userId: input.userId,
+            filename: file.filename,
+            contentType: file.contentType,
+            sizeBytes: file.content.byteLength,
+            storageKey: file.storageKey
+          });
+        }
+      })
+      .catch(() => {
+        // Send already succeeded — inbox filing must not fail the apply.
+      });
 
     const updated = await applicationRepository.update(app.id, input.userId, {
       outreachSentAt: new Date(),

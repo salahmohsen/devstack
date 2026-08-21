@@ -1,4 +1,9 @@
-import { DEFAULT_JOBS_PER_RUN, refineJobsPerRun } from "#@/job-discovery/constants";
+import {
+  DEFAULT_DAILY_BOARD_SCORE_CAP,
+  DEFAULT_JOBS_PER_RUN,
+  refineDailyBoardScoreCap,
+  refineJobsPerRun
+} from "#@/job-discovery/constants";
 import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
 
 import { DEFAULT_IMPORT_FROM_EMAIL, DEFAULT_MIN_MATCH_SCORE, WORK_MODES } from "./constants";
@@ -26,6 +31,7 @@ export function defaultJobPreference(): JobPreference {
     titleId: null,
     customTitle: null,
     jobsPerRun: DEFAULT_JOBS_PER_RUN,
+    dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
     importFromEmail: DEFAULT_IMPORT_FROM_EMAIL
   };
 }
@@ -58,7 +64,8 @@ export function isOpenJobPreference(prefs: {
 export function defaultJobPreferenceOutput(): JobPreferenceOutput {
   return {
     ...defaultJobPreference(),
-    updatedAt: null
+    updatedAt: null,
+    boardScoresUsedToday: 0
   };
 }
 
@@ -87,6 +94,10 @@ export function mergeJobPreference(
     customTitle: patch.customTitle !== undefined ? patch.customTitle : current.customTitle,
     jobsPerRun:
       patch.jobsPerRun !== undefined ? refineJobsPerRun(patch.jobsPerRun) : current.jobsPerRun,
+    dailyBoardScoreCap:
+      patch.dailyBoardScoreCap !== undefined
+        ? refineDailyBoardScoreCap(patch.dailyBoardScoreCap)
+        : current.dailyBoardScoreCap,
     importFromEmail: patch.importFromEmail ?? current.importFromEmail
   };
 }

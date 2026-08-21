@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  DEFAULT_DAILY_BOARD_SCORE_CAP,
   DEFAULT_IMPORT_FROM_EMAIL,
   DEFAULT_JOBS_PER_RUN,
   DEFAULT_MIN_MATCH_SCORE,
@@ -14,7 +15,9 @@ import {
   isOpenJobPreference,
   isWorkMode,
   normalizeHiringRegion,
+  normalizeRemoteRegions,
   refineCustomDiscoveryTitle,
+  remoteRegionSelectOptions,
   titlePackOptions,
   type JobTitleId,
   type LevelFloor,
@@ -50,6 +53,7 @@ export type JobPreferenceFormState = {
   titleId: JobTitleId | "";
   customTitle: string;
   jobsPerRun: number;
+  dailyBoardScoreCap: number;
   importFromEmail: boolean;
 };
 
@@ -61,6 +65,7 @@ export const JobPreferenceFormSchema = JobPreferenceFieldsSchema.pick({
   excludeKeywords: true,
   minMatchScore: true,
   jobsPerRun: true,
+  dailyBoardScoreCap: true,
   importFromEmail: true
 })
   .extend({
@@ -104,6 +109,8 @@ export const JOB_PREFERENCE_LEVEL_FLOOR_OPTIONS = LEVEL_FLOORS.map((level) => {
   };
 });
 
+export const JOB_PREFERENCE_REMOTE_REGION_OPTIONS = remoteRegionSelectOptions();
+
 const COMMON_SALARY_CURRENCIES = [
   "USD",
   "EUR",
@@ -141,6 +148,7 @@ export const emptyJobPreferenceForm: JobPreferenceFormState = {
   titleId: "",
   customTitle: "",
   jobsPerRun: DEFAULT_JOBS_PER_RUN,
+  dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
   importFromEmail: DEFAULT_IMPORT_FROM_EMAIL
 };
 
@@ -148,7 +156,7 @@ export function jobPreferenceFormFromQuery(data: JobPreferenceQueryResult): JobP
   return {
     workModes: data.workModes.filter(isWorkMode),
     locations: [...data.locations],
-    remoteRegions: [...(data.remoteRegions ?? [])],
+    remoteRegions: normalizeRemoteRegions(data.remoteRegions ?? []),
     roleKeywords: [...data.roleKeywords],
     excludeKeywords: [...data.excludeKeywords],
     salaryMin: data.salaryMin == null ? "" : String(data.salaryMin),
@@ -158,6 +166,7 @@ export function jobPreferenceFormFromQuery(data: JobPreferenceQueryResult): JobP
     titleId: data.titleId ?? "",
     customTitle: data.customTitle ?? "",
     jobsPerRun: data.jobsPerRun,
+    dailyBoardScoreCap: data.dailyBoardScoreCap ?? DEFAULT_DAILY_BOARD_SCORE_CAP,
     importFromEmail: data.importFromEmail
   };
 }
@@ -215,7 +224,7 @@ export function jobPreferenceInputFromForm(
   return {
     workModes: value.workModes,
     locations: normalizeTags(value.locations, 50, 120),
-    remoteRegions: normalizeTags(value.remoteRegions, 50, 120),
+    remoteRegions: normalizeRemoteRegions(value.remoteRegions),
     roleKeywords: normalizeTags(value.roleKeywords, 50, 120),
     excludeKeywords: normalizeTags(value.excludeKeywords, 50, 120),
     salaryMin: parseOptionalMonthlyAmount(value.salaryMin),
@@ -225,6 +234,7 @@ export function jobPreferenceInputFromForm(
     titleId,
     customTitle: titleId === "custom" && customTitle.length > 0 ? customTitle : null,
     jobsPerRun: value.jobsPerRun,
+    dailyBoardScoreCap: value.dailyBoardScoreCap,
     importFromEmail: value.importFromEmail
   };
 }

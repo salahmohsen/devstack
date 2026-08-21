@@ -275,6 +275,7 @@ export const mailMessageRepository = {
         toEmail: input.toEmail ?? null,
         subject: input.subject ?? "",
         preview: input.preview ?? "",
+        summary: input.summary ?? null,
         bodyText: input.bodyText ?? "",
         bodyHtml: input.bodyHtml ?? null,
         receivedAt: input.receivedAt ?? new Date(),
@@ -378,6 +379,19 @@ export const mailMessageRepository = {
       .where(and(eq(mailMessage.id, id), eq(mailMessage.userId, userId)))
       .returning();
     return updated ?? null;
+  },
+
+  async listByApplicationId(
+    applicationId: string,
+    userId: string,
+    limit = 50
+  ): Promise<MailMessageEntity[]> {
+    return getDb()
+      .select()
+      .from(mailMessage)
+      .where(and(eq(mailMessage.userId, userId), eq(mailMessage.applicationId, applicationId)))
+      .orderBy(desc(mailMessage.receivedAt), desc(mailMessage.id))
+      .limit(limit);
   },
 
   /** Link (or clear) a Career Inbox message to an Applications CRM row. */

@@ -116,7 +116,7 @@ export function DraftProjectFields({
             label="Stacks"
             description="Link extracted stacks (names). You can also type new names."
             placeholder="Select stacks..."
-            emptyMessage="No stacks in draft. Add stacks in the Stacks tab first."
+            emptyMessage="No skills in draft. Add skills in the Skills tab first."
           />
         )}
       </form.AppField>

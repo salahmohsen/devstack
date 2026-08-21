@@ -69,6 +69,17 @@ export const MailListCategorySchema = z.union([
 ]);
 export type MailListCategory = z.infer<typeof MailListCategorySchema>;
 
+export const MailAssignApplicationInputSchema = z.object({
+  mailId: z.string().min(1),
+  applicationId: z.string().min(1)
+});
+export type MailAssignApplicationInput = z.infer<typeof MailAssignApplicationInputSchema>;
+
+export const MailUnassignApplicationInputSchema = z.object({
+  mailId: z.string().min(1)
+});
+export type MailUnassignApplicationInput = z.infer<typeof MailUnassignApplicationInputSchema>;
+
 export const MailListInputSchema = z.object({
   category: MailListCategorySchema.default("all"),
   /** When true, include purpose=system_notification rows (default: exclude). */

@@ -19,6 +19,7 @@ import {
   jobPreferenceFormFromQuery,
   jobPreferenceInputFromForm,
   useGetJobPreferenceQuery,
+  useResetBoardScoresTodayMutation,
   useUpsertJobPreferenceMutation,
   type JobPreferenceQueryResult
 } from "@/features/job-preference";
@@ -76,6 +77,7 @@ export function JobSettings() {
 
 function JobSettingsForm({ data }: { data: JobPreferenceQueryResult }) {
   const upsert = useUpsertJobPreferenceMutation();
+  const resetBoardScores = useResetBoardScoresTodayMutation();
   const serverValues = useMemo(() => jobPreferenceFormFromQuery(data), [data]);
   const [flashSubmitted, setFlashSubmitted] = useState(false);
   const [failedKey, setFailedKey] = useState<string | null>(null);
@@ -165,6 +167,18 @@ function JobSettingsForm({ data }: { data: JobPreferenceQueryResult }) {
           <JobPreferenceFields
             form={form}
             emptyHint="Used to find and rank jobs from public boards. Email import is optional."
+            boardScoresUsedToday={data.boardScoresUsedToday ?? 0}
+            resetBoardScoresPending={resetBoardScores.isPending}
+            onResetBoardScoresToday={() => {
+              resetBoardScores.mutate(undefined, {
+                onSuccess: () => {
+                  toast.success("Today's count is cleared.");
+                },
+                onError: () => {
+                  toast.error("Could not clear today's count.");
+                }
+              });
+            }}
           />
         </Form>
       </SettingsFrame>

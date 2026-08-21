@@ -91,12 +91,10 @@ export function useCommandItems(): CommandItem[] {
   if (username) {
     dynamicItems.push({
       id: "nav:profile",
-      label: "Go to Profile",
+      label: "Profile",
       group: "Pages",
       icon: UserCircle,
       keywords: ["user", "me", "profile", username],
-      // P taken by Projects → proFile
-      shortcut: ["D", "F"],
       action: {
         type: "navigate",
         to: `/${username}`
@@ -104,11 +102,10 @@ export function useCommandItems(): CommandItem[] {
     });
     dynamicItems.push({
       id: "nav:repos",
-      label: "Go to Repositories",
+      label: "Repositories",
       group: "Pages",
       icon: Archive,
       keywords: ["repos", "code", "github", "repositories", username],
-      shortcut: ["D", "R"],
       action: {
         type: "navigate",
         to: `/${username}/repos`
@@ -118,11 +115,10 @@ export function useCommandItems(): CommandItem[] {
     // Guest without a resolved profile — still expose path-mode repos list if on primary host root.
     dynamicItems.push({
       id: "nav:repos",
-      label: "Go to Repositories",
+      label: "Repositories",
       group: "Pages",
       icon: Archive,
       keywords: ["repos", "code", "github", "repositories"],
-      shortcut: ["D", "R"],
       action: {
         type: "navigate",
         to: "/repos"

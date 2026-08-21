@@ -46,6 +46,11 @@ export {
   type UpsertJobPreferenceData
 } from "./job-preference.repository.ts";
 export {
+  jobCompanyRepository,
+  type JobCompanyEntity,
+  type UpsertJobCompanyBySlugInput
+} from "./job-company.repository.ts";
+export {
   jobPostingRepository,
   preferCatalogSkills,
   preferLongerJobDescription,
@@ -115,7 +120,7 @@ export {
 } from "./user-notification-settings.repository.ts";
 export { projectRepository } from "./project.repository.ts";
 export { projectStackScanRepository } from "./project-stack-scan.repository.ts";
-export { resumeRepository } from "./resume.repository.ts";
+export { resumeRepository, type ResumeEntity } from "./resume.repository.ts";
 export { stackDependencyRepository } from "./stack-dependency.repository.ts";
 export { stackRepository, type UpdateStackData } from "./stack.repository.ts";
 export { userRepository } from "./user.repository.ts";

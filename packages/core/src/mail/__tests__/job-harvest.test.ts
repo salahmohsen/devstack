@@ -21,6 +21,8 @@ import {
   inferSourceLabelFromUrl,
   isClosedJobListingHtml,
   isClosedJobListingText,
+  isGonePublicListingPage,
+  isMissingJobListingTitle,
   isValidHarvestedJob,
   mergeJobListingExtract,
   normalizeHarvestApplyMethod,
@@ -489,6 +491,45 @@ describe("scoreJobAgainstPreference", () => {
     );
     expect(r.passed).toBe(false);
     expect(r.reasons).toContain("no role keyword in title");
+    expect(r.rulesFailed).toBe(true);
+  });
+
+  it("title-hits Front End when the stored keyword is frontend", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Front End Angular Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/35",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      { ...defaultJobPreference(), roleKeywords: ["frontend"], minMatchScore: 40 }
+    );
+    expect(r.rulesFailed).toBe(false);
+    expect(r.reasons.join(" ")).toMatch(/title keywords/i);
+  });
+
+  it("marks a below-min title hit as not a rules fail", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Senior Frontend Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/36",
+        applyUrl: null,
+        applyMethod: "unknown",
+        workMode: "remote",
+        source: "linkedin"
+      },
+      {
+        ...defaultJobPreference(),
+        roleKeywords: ["frontend"],
+        workModes: ["remote"],
+        minMatchScore: 99
+      }
+    );
+    expect(r.passed).toBe(false);
+    expect(r.rulesFailed).toBe(false);
   });
 
   it("title-hits Senior React Engineer and React.js Developer on role keyword react", () => {
@@ -863,6 +904,34 @@ describe("LinkedIn guest page extract", () => {
     expect(isClosedJobListingText("No longer accepting applications")).toBe(true);
     expect(isClosedJobListingText("This job has expired on Indeed")).toBe(true);
     expect(isClosedJobListingText("Great team, remote role, apply today")).toBe(false);
+  });
+
+  it("detects LinkedIn multilingual deleted-job 404 body", () => {
+    const text = `選擇語言
+
+لم يتم العثور على الصفحة
+
+عفواً، لم نتمكن من العثور على الصفحة التي تبحث عنها. برجاء المحاولة مرة أخرى للصفحة السابقة أو الانتقال لـ مركز المساعدة للمزيد من المعلومات
+
+Siden blev ikke fundet
+
+Seite nicht gefunden
+
+Page not found
+
+Uh oh, we can’t seem to find the page you’re looking for. Try going back to the previous page or see our Help Center for more information`;
+    expect(isGonePublicListingPage(text)).toBe(true);
+    expect(isClosedJobListingText(text)).toBe(true);
+    expect(isClosedJobListingHtml(`<html><body>${text}</body></html>`)).toBe(true);
+    expect(isMissingJobListingTitle("Page not found | LinkedIn")).toBe(true);
+  });
+
+  it("does not treat a real JD that mentions 404 as deleted", () => {
+    const jd =
+      "Build the careers site. Handle page not found errors in the SPA with a friendly empty state.";
+    expect(isGonePublicListingPage(jd)).toBe(false);
+    expect(isClosedJobListingText(jd)).toBe(false);
+    expect(isMissingJobListingTitle("Frontend Engineer")).toBe(false);
   });
 });
 

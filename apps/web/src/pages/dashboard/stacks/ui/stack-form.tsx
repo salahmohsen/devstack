@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   sanitizeSvg,
+  STACK_ALTERNATIVE_NAME_MAX_LENGTH,
+  STACK_ALTERNATIVE_NAMES_MAX,
   StackCreateInputSchema,
   StackUpdateInputSchema,
   type StackOutput
@@ -66,12 +68,12 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
-        toast.success("Stack created.");
+        toast.success("Skill created.");
         onSaved?.(created.id);
         onOpenChange(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to create stack.");
+        toast.error(error.message || "Failed to create skill.");
       }
     })
   );
@@ -89,12 +91,12 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
-        toast.success("Stack updated.");
+        toast.success("Skill updated.");
         onSaved?.(updated?.id ?? id!);
         onOpenChange(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to update stack.");
+        toast.error(error.message || "Failed to update skill.");
       }
     })
   );
@@ -109,6 +111,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
       type: stack?.type ?? "",
       includedInPortfolio: !!stack?.portfolioEntryId,
       isFeatured: !!stack?.isFeatured,
+      alternativeNames: stack?.alternativeNames ?? [],
       dependencies: (stack?.dependencies ?? []).map((d) => {
         return {
           npmPackage: d.npmPackage,
@@ -132,6 +135,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             type: value.type || null,
             includedInPortfolio: value.includedInPortfolio,
             isFeatured: value.isFeatured,
+            alternativeNames: value.alternativeNames,
             dependencies: value.dependencies,
             projectIds: value.projectIds
           }
@@ -144,6 +148,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
           type: value.type || null,
           includedInPortfolio: value.includedInPortfolio,
           isFeatured: value.isFeatured,
+          alternativeNames: value.alternativeNames,
           dependencies: value.dependencies,
           projectIds: value.projectIds
         });
@@ -163,6 +168,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
         type: stack.type ?? "",
         includedInPortfolio: !!stack.portfolioEntryId,
         isFeatured: !!stack.isFeatured,
+        alternativeNames: stack.alternativeNames ?? [],
         dependencies: stack.dependencies.map((d) => {
           return {
             npmPackage: d.npmPackage,
@@ -180,6 +186,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
         type: "",
         includedInPortfolio: false,
         isFeatured: false,
+        alternativeNames: [],
         dependencies: [],
         projectIds: []
       });
@@ -192,7 +199,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
     isEdit && stackQuery.isLoading && !stack ? (
       <AiLoader />
     ) : isEdit && !stackQuery.isLoading && !stack ? (
-      <div className="py-8 text-center text-muted-foreground">Stack not found.</div>
+      <div className="py-8 text-center text-muted-foreground">Skill not found.</div>
     ) : (
       <Form
         className="contents"
@@ -207,12 +214,21 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => <field.InputField label="Name" placeholder="e.g. React" />}
           </form.AppField>
 
+          <form.AppField name="alternativeNames">
+            {(field) => (
+              <field.TagsField
+                label="Alternative names"
+                description="Other names for this skill (React.js, ReactJS). Helps matching and search."
+                placeholder="Type a name and press Enter"
+                maxItems={STACK_ALTERNATIVE_NAMES_MAX}
+                maxItemLength={STACK_ALTERNATIVE_NAME_MAX_LENGTH}
+              />
+            )}
+          </form.AppField>
+
           <form.AppField name="icon">
             {(field) => (
-              <field.IconifyField
-                label="Stack Icon"
-                description="Search for an icon from Iconify."
-              />
+              <field.IconifyField label="Icon" description="Search for an icon from Iconify." />
             )}
           </form.AppField>
 
@@ -220,7 +236,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => (
               <field.RichTextField
                 label="Description"
-                placeholder="Brief description of the stack"
+                placeholder="Brief description of the skill"
               />
             )}
           </form.AppField>
@@ -229,7 +245,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => (
               <field.DropdownField
                 label="Type"
-                description="Categorize this stack."
+                description="Categorize this skill."
                 placeholder="Select type..."
                 items={[
                   { value: "framework", label: "Framework" },
@@ -253,7 +269,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => (
               <field.NpmPackageField
                 label="Dependencies"
-                description="Search and add npm packages used by this stack."
+                description="Optional npm packages for detect-stacks matching."
               />
             )}
           </form.AppField>
@@ -262,7 +278,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => (
               <field.ComboboxMultipleField
                 label="Projects"
-                description="Link projects that use this stack."
+                description="Link projects that use this skill."
                 placeholder="Search projects..."
                 emptyMessage="No projects found."
                 items={(projectsQuery.data ?? []).map((p) => {
@@ -280,7 +296,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => (
               <field.SwitchField
                 label="In portfolio"
-                description="Include this stack in your public portfolio."
+                description="Include this skill in your public portfolio."
               />
             )}
           </form.AppField>
@@ -289,7 +305,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => (
               <field.SwitchField
                 label="Featured"
-                description="Highlight this stack on your public profile (also adds it to the portfolio)."
+                description="Highlight this skill on your public profile (also adds it to the portfolio)."
               />
             )}
           </form.AppField>
@@ -302,11 +318,11 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
       open={open}
       onOpenChange={onOpenChange}
       isDirty={isDirty}
-      title={isEdit ? "Edit Stack" : "New Stack"}
+      title={isEdit ? "Edit skill" : "New skill"}
       description={
         isEdit
-          ? "Update the name or icon. Changes apply to every project using this stack."
-          : "Add a shared tech stack that can be attached to any project."
+          ? "Changes apply everywhere this skill is used."
+          : "Add a skill you use — not only npm packages. Attach it to a project when it belongs on that stack."
       }
       updatedAt={stack?.updatedAt}
       createdAt={stack?.createdAt}

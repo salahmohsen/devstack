@@ -12,7 +12,7 @@ import { createDb, jobPreferenceRepository, runWithDb } from "@tsu-stack/db";
 export const getJobPreferencesTool = createTool({
   id: "get-job-preferences",
   description:
-    "Fetch what the user is looking for (job preferences). workModes is a multi-select array (remote|hybrid|onsite; empty = any mode). Also returns locations (onsite/hybrid), remoteRegions (empty = worldwide remote), level floor, role/exclude keywords, salary floor, min match score. Use for 'what jobs do I want', fit questions, or JD propose. If role keywords are empty, also call listExperiences + listStacks + listProjects — New jobs are filtered by that profile, not only this row.",
+    "Fetch what the user is looking for (job preferences). workModes is a multi-select array (remote|hybrid|onsite; empty = any mode). locations are a strict place match for hybrid/onsite only. remoteRegions gates remotes: empty = unrestricted worldwide remotes plus remotes that hire in the user's locations (US-only/LatAm-only drop if they live in Egypt); filled list is the only remote filter. Also level floor, role/exclude keywords, salary floor, min match score. Use for 'what jobs do I want', fit questions, or JD propose. If role keywords are empty, also call listExperiences + listStacks + listProjects — New jobs are filtered by that profile, not only this row.",
   inputSchema: z
     .object({})
     .describe("No arguments. Tenant is the session user — do not pass userId."),
@@ -34,6 +34,7 @@ export const getJobPreferencesTool = createTool({
         titleId: z.string().nullable(),
         customTitle: z.string().nullable(),
         jobsPerRun: z.number().int(),
+        dailyBoardScoreCap: z.number().int(),
         importFromEmail: z.boolean()
       })
       .nullable()
@@ -63,6 +64,7 @@ export const getJobPreferencesTool = createTool({
         titleId: row.titleId ?? null,
         customTitle: row.customTitle ?? null,
         jobsPerRun: row.jobsPerRun ?? 25,
+        dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
         importFromEmail: row.importFromEmail ?? false
       }
     };

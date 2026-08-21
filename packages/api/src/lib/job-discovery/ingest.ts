@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 
 import {
+  companySlugFromName,
   ingestQueryKey,
   JOB_ADAPTER_IDS,
   JOB_TITLE_PACK_IDS,
@@ -10,19 +11,24 @@ import {
   type JobSourceAdapter,
   type JobTitleId,
   type JobTitlePackId,
-  type NormalizedListing,
-  type WorkMode
+  type NormalizedListing
 } from "@tsu-stack/core";
-import { jobPostingRepository } from "@tsu-stack/db";
+import { jobCompanyRepository, jobPostingRepository } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { jobSourceAdapters } from "#@/lib/job-discovery/adapters/registry";
 import { listingContentHash } from "#@/lib/job-discovery/content-hash";
+import { fetchJson } from "#@/lib/job-discovery/fetch-json";
+import { asFiniteNumber, asNonEmptyString, asRecord } from "#@/lib/job-discovery/raw";
 
 const SEARCH_PAGE_SIZE = 50;
 const SEARCH_MAX_PAGES = 3;
 const FEED_MAX_PAGES = 3;
+/** Arbeitnow is mixed remote/onsite (~175/page). A few extra pages fill the shared shelf. */
+const ARBEITNOW_FEED_PAGES = 12;
 const SEARCH_UPSERT_CAP = 80;
+/** Frontend ATS alone is ~5.5k rows (50/page). Do not apply the 80-hit search cap. */
+const FREEHIRE_SEARCH_PAGES = 120;
 const REMOTIVE_DAILY_CAP = 4;
 const REMOTIVE_TTL_SECONDS = 48 * 60 * 60;
 const MAX_SEARCH_Q_CHARS = 80;
@@ -157,6 +163,158 @@ function resolveAdapters(
   return JOB_ADAPTER_IDS.map((id) => jobSourceAdapters[id]);
 }
 
+const COMPANY_HYDRATE_TIMEOUT_MS = 8_000;
+
+function freehireCompanyUrl(slug: string): string {
+  return `https://freehire.me/api/v1/companies/${encodeURIComponent(slug)}`;
+}
+
+function asPgInt(value: unknown): number | null {
+  const direct = asFiniteNumber(value);
+  if (direct != null) return Math.trunc(direct);
+  const rec = asRecord(value);
+  if (!rec) return null;
+  return asFiniteNumber(rec.Int32 ?? rec.int32 ?? rec.Int64);
+}
+
+function firstString(values: unknown): string | null {
+  if (!Array.isArray(values)) return asNonEmptyString(values);
+  for (const item of values) {
+    const text = asNonEmptyString(item);
+    if (text) return text;
+  }
+  return null;
+}
+
+function websiteFromDomain(domain: string | null): string | null {
+  if (!domain) return null;
+  if (/^https?:\/\//i.test(domain)) return domain;
+  return `https://${domain}`;
+}
+
+/** Stated Freehire company fields only. Errors/timeouts return null. */
+export async function fetchFreehireCompanyProfile(slug: string): Promise<{
+  name: string;
+  logoUrl: string | null;
+  website: string | null;
+  tagline: string | null;
+  employeeCount: number | null;
+  companySize: string | null;
+  companyType: string | null;
+  hqCountry: string | null;
+  profile: Record<string, unknown>;
+} | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), COMPANY_HYDRATE_TIMEOUT_MS);
+  try {
+    const body = await fetchJson(freehireCompanyUrl(slug), { signal: controller.signal });
+    const root = asRecord(body);
+    const company = asRecord(root?.company) ?? root;
+    if (!company) return null;
+    const name = asNonEmptyString(company.name);
+    if (!name) return null;
+    const info = asRecord(company.company_info) ?? {};
+    const logoUrl =
+      asNonEmptyString(info.logo) ??
+      asNonEmptyString(info.logo_url) ??
+      asNonEmptyString(company.logo_url) ??
+      asNonEmptyString(company.logo);
+    const website = websiteFromDomain(
+      firstString(company.domains) ?? asNonEmptyString(company.website)
+    );
+    return {
+      name,
+      logoUrl,
+      website,
+      tagline: asNonEmptyString(company.tagline),
+      employeeCount: asPgInt(company.employee_count),
+      companySize: firstString(company.company_sizes),
+      companyType: firstString(company.company_types),
+      hqCountry: asNonEmptyString(company.hq_country),
+      profile: company
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+type ResolvedCompany = { companyId: string | null; companyLogoUrl: string | null };
+
+const companyResolveCache = new Map<string, Promise<ResolvedCompany>>();
+
+function clearCompanyResolveCache(): void {
+  companyResolveCache.clear();
+}
+
+async function resolveCompanyForListing(listing: NormalizedListing): Promise<ResolvedCompany> {
+  const fromListing = listing.companySlug?.trim();
+  const slug =
+    fromListing && fromListing.length > 0 ? fromListing : companySlugFromName(listing.companyName);
+  if (!slug) {
+    return { companyId: null, companyLogoUrl: listing.companyLogoUrl ?? null };
+  }
+
+  const cached = companyResolveCache.get(slug);
+  if (cached) return cached;
+
+  const pending = resolveCompanyForListingUncached(listing, slug);
+  companyResolveCache.set(slug, pending);
+  return pending;
+}
+
+async function resolveCompanyForListingUncached(
+  listing: NormalizedListing,
+  slug: string
+): Promise<ResolvedCompany> {
+  let logoUrl = listing.companyLogoUrl ?? null;
+  let name = listing.companyName;
+  let website: string | null | undefined;
+  let tagline: string | null | undefined;
+  let employeeCount: number | null | undefined;
+  let companySize: string | null | undefined;
+  let companyType: string | null | undefined;
+  let hqCountry: string | null | undefined;
+  let profile: Record<string, unknown> | undefined;
+
+  if (listing.adapterId === "freehire" && listing.companySlug) {
+    const hydrated = await fetchFreehireCompanyProfile(listing.companySlug);
+    if (hydrated) {
+      name = hydrated.name;
+      logoUrl = listing.companyLogoUrl ?? hydrated.logoUrl;
+      website = hydrated.website;
+      tagline = hydrated.tagline;
+      employeeCount = hydrated.employeeCount;
+      companySize = hydrated.companySize;
+      companyType = hydrated.companyType;
+      hqCountry = hydrated.hqCountry;
+      profile = hydrated.profile;
+    }
+  }
+
+  try {
+    const company = await jobCompanyRepository.upsertBySlug({
+      slug,
+      name,
+      logoUrl,
+      website,
+      tagline,
+      employeeCount,
+      companySize,
+      companyType,
+      hqCountry,
+      profile
+    });
+    return {
+      companyId: company.id,
+      companyLogoUrl: listing.companyLogoUrl ?? company.logoUrl ?? logoUrl
+    };
+  } catch {
+    return { companyId: null, companyLogoUrl: listing.companyLogoUrl ?? logoUrl };
+  }
+}
+
 /** Omit unstated workMode/location so a later upsert cannot wipe hydrate fills. */
 export function toUpsertInput(listing: NormalizedListing) {
   return {
@@ -176,7 +334,11 @@ export function toUpsertInput(listing: NormalizedListing) {
     description: listing.description,
     sourcePlatform: listing.sourcePlatform,
     contentHash: listingContentHash(listing),
-    postedAt: listing.postedAt
+    postedAt: listing.postedAt,
+    ...(listing.experienceYearsMin != null
+      ? { experienceYearsMin: listing.experienceYearsMin }
+      : {}),
+    ...(listing.companyLogoUrl != null ? { companyLogoUrl: listing.companyLogoUrl } : {})
   };
 }
 
@@ -184,7 +346,12 @@ async function upsertListings(listings: NormalizedListing[]): Promise<number> {
   let upserted = 0;
   for (const listing of listings) {
     try {
-      await jobPostingRepository.upsert(toUpsertInput(listing));
+      const company = await resolveCompanyForListing(listing);
+      await jobPostingRepository.upsert({
+        ...toUpsertInput(listing),
+        ...(company.companyId ? { companyId: company.companyId } : {}),
+        ...(company.companyLogoUrl ? { companyLogoUrl: company.companyLogoUrl } : {})
+      });
       upserted += 1;
     } catch {
       // one bad row must not abort the page
@@ -193,14 +360,28 @@ async function upsertListings(listings: NormalizedListing[]): Promise<number> {
   return upserted;
 }
 
-function pageCap(adapter: JobSourceAdapter): number {
+type SearchDepth = "shallow" | "full";
+
+function pageCap(adapter: JobSourceAdapter, depth: SearchDepth = "shallow"): number {
   if (adapter.id === "remoteok" || adapter.id === "remotive") return 1;
+  if (adapter.id === "arbeitnow") return ARBEITNOW_FEED_PAGES;
+  if (adapter.id === "freehire") {
+    return depth === "full" ? FREEHIRE_SEARCH_PAGES : SEARCH_MAX_PAGES;
+  }
   return adapter.capabilities.includes("feed") ? FEED_MAX_PAGES : SEARCH_MAX_PAGES;
+}
+
+function searchStopAt(
+  adapter: JobSourceAdapter,
+  depth: SearchDepth = "shallow"
+): number | undefined {
+  if (adapter.id === "freehire" && depth === "full") return undefined;
+  return SEARCH_UPSERT_CAP;
 }
 
 async function ingestAdapter(
   adapter: JobSourceAdapter,
-  input: { q?: string; workMode?: WorkMode | null },
+  input: { q?: string },
   opts: { maxPages: number; stopAt?: number }
 ): Promise<number> {
   let upserted = 0;
@@ -210,7 +391,6 @@ async function ingestAdapter(
       try {
         listings = await adapter.fetch({
           q: input.q,
-          workMode: input.workMode,
           page,
           limit: SEARCH_PAGE_SIZE
         });
@@ -229,17 +409,20 @@ async function ingestAdapter(
 
 export async function ingestQuery(input: {
   queryKey: string;
-  workMode?: WorkMode | null;
   remotiveCallsLeft: number;
   adapters?: Partial<Record<JobAdapterId, JobSourceAdapter>>;
+  /** `full` pages Freehire through the query (cron / backfill). Find jobs stays shallow. */
+  searchDepth?: SearchDepth;
 }): Promise<{ upserted: number; remotiveUsed: number }> {
   const q = searchQueryFromKey(input.queryKey);
   if (!q) return { upserted: 0, remotiveUsed: 0 };
 
+  const depth = input.searchDepth ?? "shallow";
   const adapters = resolveAdapters(input.adapters);
   let upserted = 0;
   let remotiveUsed = 0;
-  const fetchInput = { q, workMode: input.workMode ?? null };
+  const fetchInput = { q };
+  clearCompanyResolveCache();
 
   const searchAdapters = adapters.filter((adapter) => adapter.capabilities.includes("search"));
   const remotive = searchAdapters.find((adapter) => adapter.id === "remotive");
@@ -248,8 +431,8 @@ export async function ingestQuery(input: {
   const parallelCounts = await Promise.all(
     parallelSearch.map((adapter) =>
       ingestAdapter(adapter, fetchInput, {
-        maxPages: pageCap(adapter),
-        stopAt: SEARCH_UPSERT_CAP
+        maxPages: pageCap(adapter, depth),
+        stopAt: searchStopAt(adapter, depth)
       })
     )
   );
@@ -260,8 +443,8 @@ export async function ingestQuery(input: {
     if (reserved) {
       remotiveUsed += 1;
       upserted += await ingestAdapter(remotive, fetchInput, {
-        maxPages: pageCap(remotive),
-        stopAt: SEARCH_UPSERT_CAP
+        maxPages: pageCap(remotive, depth),
+        stopAt: searchStopAt(remotive, depth)
       });
     }
   }
@@ -270,6 +453,7 @@ export async function ingestQuery(input: {
 }
 
 export async function ingestFeeds(): Promise<{ upserted: number }> {
+  clearCompanyResolveCache();
   const feeds = resolveAdapters().filter((adapter) => adapter.capabilities.includes("feed"));
   const counts = await Promise.all(
     feeds.map((adapter) => ingestAdapter(adapter, {}, { maxPages: pageCap(adapter) }))
@@ -281,7 +465,6 @@ export async function ingestForUserQuery(prefs: JobPreference): Promise<{ upsert
   const queryKey = ingestQueryKey(prefs);
   if (!queryKey) return { upserted: 0 };
   const remotiveCallsLeft = await getRemotiveCallsLeft();
-  const workMode = prefs.workModes.length === 1 ? prefs.workModes[0] : null;
-  const result = await ingestQuery({ queryKey, workMode, remotiveCallsLeft });
+  const result = await ingestQuery({ queryKey, remotiveCallsLeft });
   return { upserted: result.upserted };
 }

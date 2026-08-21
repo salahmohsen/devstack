@@ -2,13 +2,16 @@
 
 import {
   ChevronDownIcon,
+  DownloadIcon,
+  EyeIcon,
+  FilePenIcon,
   FileTextIcon,
   MailIcon,
   PackageIcon,
   RefreshCwIcon,
   SparklesIcon
 } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { type ApplicationOutput, isApplicationOpen } from "@tsu-stack/core";
@@ -23,6 +26,7 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Dialog,
   DialogDescription,
@@ -40,6 +44,15 @@ import {
   MenuSubTrigger,
   MenuTrigger
 } from "@tsu-stack/ui/components/menu";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipProvider,
+  TooltipTrigger
+} from "@tsu-stack/ui/components/tooltip";
+import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { TiltCard } from "@/shared/ui/motion/tilt-card";
 
 import {
   APPLICATION_PRIMARY_ACTION_LABELS,
@@ -523,7 +536,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
   return (
     <div className={className}>
       {segments.length > 0 ? (
-        <Group aria-label="Apply package actions" className="w-full max-w-full items-stretch">
+        <Group aria-label="Application kit actions" className="w-full max-w-full items-stretch">
           {segments.map((segment, index) => (
             <Fragment key={index}>
               {index > 0 ? <GroupSeparator className="bg-primary/72" /> : null}
@@ -626,5 +639,126 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function copyValueFor(kind: ApplicationMaterialKind, app: ApplicationOutput): string {
+  if (kind === "cover-letter") return formatCoverLetterCopy(app) ?? "";
+  if (kind === "outreach") return formatOutreachCopy(app) ?? "";
+  return "";
+}
+
+function materialIcon(kind: ApplicationMaterialKind) {
+  if (kind === "outreach") return MailIcon;
+  if (kind === "cover-letter") return FilePenIcon;
+  return FileTextIcon;
+}
+
+function KitIconButton({
+  label,
+  onClick,
+  children
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            aria-label={label}
+            className="min-w-0 flex-1 active:scale-[0.96]"
+            onClick={onClick}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipPopup>{label}</TooltipPopup>
+    </Tooltip>
+  );
+}
+
+/** Compact wrap of tilt cards for resume / cover letter / outreach. */
+export function ApplicationKitMaterials({ app }: { app: ApplicationOutput }) {
+  const { openMaterialPreview } = useApplicationStore();
+  const materials = useMemo(() => materialsFor(app), [app]);
+  if (materials.length === 0) return null;
+
+  return (
+    <TooltipProvider>
+      <div className="flex flex-wrap gap-2">
+        {materials.map((material) => {
+          const actions = actionsFor(material.kind, app);
+          const Icon = materialIcon(material.kind);
+          const copyValue = copyValueFor(material.kind, app);
+          return (
+            <TiltCard
+              key={material.kind}
+              max={12}
+              className={cn(
+                "min-w-31 flex-1 basis-31 bg-muted/25 p-2 dark:bg-muted/10",
+                "shadow-[0_0_0_1px_oklch(0_0_0/0.06),0_1px_2px_-1px_oklch(0_0_0/0.06)]",
+                "dark:shadow-[0_0_0_1px_oklch(1_0_0/0.08)]"
+              )}
+            >
+              <div className="mb-2 flex min-w-0 items-center gap-2">
+                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-background/80 text-muted-foreground">
+                  <Icon className="size-3.5" strokeWidth={2} aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-foreground">{material.label}</p>
+                  <p className="truncate text-[10px] leading-tight text-muted-foreground">
+                    {material.meta}
+                  </p>
+                </div>
+              </div>
+              <Group aria-label={`${material.label} actions`} className="w-full">
+                {actions.map((action, index) => (
+                  <Fragment key={action.id}>
+                    {index > 0 ? <GroupSeparator /> : null}
+                    {action.id === "copy" ? (
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <CopyButton
+                              value={copyValue}
+                              label={action.label}
+                              size="icon-sm"
+                              variant="outline"
+                              iconSize={14}
+                              className="min-w-0 flex-1 active:scale-[0.96]"
+                            />
+                          }
+                        />
+                        <TooltipPopup>{action.label}</TooltipPopup>
+                      </Tooltip>
+                    ) : (
+                      <KitIconButton
+                        label={action.label}
+                        onClick={() =>
+                          runMaterialAction(app, material.kind, action.id, openMaterialPreview)
+                        }
+                      >
+                        {action.id === "preview" ? (
+                          <EyeIcon className="size-3.5" strokeWidth={2} aria-hidden />
+                        ) : (
+                          <DownloadIcon className="size-3.5" strokeWidth={2} aria-hidden />
+                        )}
+                      </KitIconButton>
+                    )}
+                  </Fragment>
+                ))}
+              </Group>
+            </TiltCard>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 }

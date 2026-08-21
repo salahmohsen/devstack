@@ -2,12 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import { DownloadIcon, FileTextIcon } from "lucide-react";
+import { Building2Icon, FileTextIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ResumeAuthor } from "@tsu-stack/core";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,68 +17,43 @@ import {
   AlertDialogPopup,
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
-import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 
 import {
   areAllVisibleSelected,
   isBatchSelectActive,
-  isIdSelected,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { toastAiError } from "@/shared/lib/toast-ai-error";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ITEM_AVATAR_EYEBROW_CLASSNAME, ItemAvatar } from "@/shared/ui/item-avatar";
-import { ListItemContent, type ListItemTag } from "@/shared/ui/list-item-content";
+import { JobIdentityMark } from "@/shared/ui/job-card-marks";
 
 import {
   ItemInfoPanel,
   ItemsEmpty,
+  ItemsGrid,
   ItemsNavProvider,
-  ListSkeleton,
   PageHeader,
   PageLayout,
-  PanelDeleteButton,
   isAnyOpened,
+  useItemsGridColumnCount,
   useItemsNavigation
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
+import {
+  primaryResumeJob,
+  resumeAvatarSeed,
+  resumeCardTitle
+} from "@/pages/dashboard/resumes/_lib/resume-identity";
 import { useResumeStore } from "@/pages/dashboard/resumes/_lib/resume.slice";
+import { ResumeActionGroup } from "@/pages/dashboard/resumes/ui/resume-action-group";
+import { ResumeItem, ResumeTypeBadges } from "@/pages/dashboard/resumes/ui/resume-item";
 
 const resumesRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/resumes/");
-
-function resumeTags(author: ResumeAuthor, isDefault: boolean): ListItemTag[] {
-  const tags: ListItemTag[] = [
-    {
-      id: "author",
-      node: (
-        <Badge variant="secondary" size="sm">
-          {author}
-        </Badge>
-      )
-    }
-  ];
-  if (isDefault) {
-    tags.push({
-      id: "default",
-      node: <Badge size="sm">Default</Badge>
-    });
-  }
-  return tags;
-}
-
-function ResumeTypeBadges({ author, isDefault }: { author: ResumeAuthor; isDefault: boolean }) {
-  return (
-    <>
-      <Badge variant="secondary" size="sm">
-        {author}
-      </Badge>
-      {isDefault ? <Badge size="sm">Default</Badge> : null}
-    </>
-  );
-}
 
 export function ResumesPage() {
   const {
@@ -151,18 +125,25 @@ export function ResumesPage() {
     setIsGenerating(false);
   }
 
-  const containerRef = useRef<HTMLUListElement | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const gridColumnCount = useItemsGridColumnCount();
 
-  const { handleNext, handlePrev } = useItemsNavigation({
+  const itemsNav = useItemsNavigation({
     items: visibleResumes,
     openedItem,
     isItemOpen,
     setOpenedItem,
     setIsItemOpen,
-    containerRef
+    layout: "grid",
+    columnCount: gridColumnCount,
+    containerRef: gridRef
   });
 
   const isAnyOpen = isAnyOpened(isItemOpen);
+  const inspectItem = useMemo(() => {
+    if (!openedItem) return null;
+    return visibleResumes.find((resume) => resume.id === openedItem.id) ?? openedItem;
+  }, [openedItem, visibleResumes]);
 
   const [batchAction, setBatchAction] = useState<"delete" | null>(null);
   const selectedIdList = selectedIdsFromState(selectedIds);
@@ -173,7 +154,8 @@ export function ResumesPage() {
   const isDeleting = batchAction === "delete";
 
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
-  const [panelDeleteOpen, setPanelDeleteOpen] = useState(false);
+  const [deleteResumeId, setDeleteResumeId] = useState<string | null>(null);
+  const deleteTarget = visibleResumes.find((resume) => resume.id === deleteResumeId) ?? null;
 
   async function handleBatchDelete() {
     setBatchAction("delete");
@@ -221,68 +203,12 @@ export function ResumesPage() {
     />
   );
 
-  function renderList() {
-    if (resumesQuery.isLoading) return <ListSkeleton />;
-    if (visibleResumes.length === 0) return emptyState;
-
-    return (
-      <ul ref={containerRef} className="flex flex-col gap-2">
-        {visibleResumes.map((resume) => {
-          const selected = isItemOpen?.[resume.id] ?? false;
-          return (
-            <ListItemContent
-              key={resume.id}
-              title={resume.filename}
-              selected={selected}
-              onSelect={() => openItem(resume.id, resume)}
-              isBatchSelected={isIdSelected(selectedIds, resume.id)}
-              batchSelectActive={batchSelectActive}
-              onToggleSelect={() => toggleSelect(resume.id)}
-              onView={() => window.open(`/api/resume/download/?id=${resume.id}&view=1`, "_blank")}
-              onDelete={() => {
-                deleteMutation.mutate(
-                  { ids: [resume.id] },
-                  {
-                    onSuccess: () => {
-                      toast.success("Resume deleted.");
-                      if (openedItem?.id === resume.id) {
-                        setOpenedItem(null);
-                        setIsItemOpen(null);
-                      }
-                    }
-                  }
-                );
-              }}
-              isDeleting={
-                deleteMutation.isPending &&
-                Boolean(deleteMutation.variables?.ids.includes(resume.id))
-              }
-              deleteTitle="Delete this resume?"
-              deleteDescription="This will permanently delete this resume PDF."
-              tagsPlacement="after"
-              tags={resumeTags(resume.author, resume.default)}
-              leading={
-                <ItemAvatar
-                  name={resume.filename}
-                  size={40}
-                  selected={selected}
-                  className="size-10"
-                  aria-label={resume.filename}
-                />
-              }
-            />
-          );
-        })}
-      </ul>
-    );
-  }
-
   return (
-    <ItemsNavProvider value={{ handleNext, handlePrev }}>
+    <ItemsNavProvider value={{ ...itemsNav, containerRef: gridRef }}>
       <PageLayout>
         <PageHeader
           title="Resumes"
-          description="Generate and manage your resume PDFs."
+          description="PDFs tailored to jobs you apply to, plus a general resume."
           actions={
             <HeaderActions
               add={{
@@ -304,11 +230,44 @@ export function ResumesPage() {
           onClearSelection={clearSelection}
         />
 
-        {renderList()}
+        <ItemsGrid
+          items={visibleResumes}
+          isLoading={resumesQuery.isLoading}
+          emptyState={emptyState}
+          containerRef={gridRef}
+          renderItem={(resume) => (
+            <ResumeItem
+              resume={resume}
+              isChecked={Boolean(selectedIds?.[resume.id])}
+              batchSelectActive={batchSelectActive}
+              isOpen={Boolean(isItemOpen?.[resume.id])}
+              onOpen={openItem}
+              onToggleSelect={toggleSelect}
+              onDelete={(id) => {
+                deleteMutation.mutate(
+                  { ids: [id] },
+                  {
+                    onSuccess: () => {
+                      toast.success("Resume deleted.");
+                      if (openedItem?.id === id) {
+                        setOpenedItem(null);
+                        setIsItemOpen(null);
+                      }
+                    }
+                  }
+                );
+              }}
+              isDeleting={
+                deleteMutation.isPending &&
+                Boolean(deleteMutation.variables?.ids.includes(resume.id))
+              }
+            />
+          )}
+        />
 
         <ItemsInspectHost
           open={isAnyOpen}
-          item={openedItem}
+          item={inspectItem}
           title="Resume"
           onOpenChange={(next) => {
             if (!next) {
@@ -319,58 +278,74 @@ export function ResumesPage() {
         >
           {(item) => {
             if (!item) return null;
+            const job = primaryResumeJob(item);
+            const title = resumeCardTitle(item);
             return (
               <ItemInfoPanel
                 eyebrow={
-                  <ItemAvatar
-                    name={item.filename}
-                    size={48}
-                    selected
-                    className="size-12"
-                    aria-label={item.filename}
-                  />
+                  job ? (
+                    <JobIdentityMark
+                      companyName={job.companyName}
+                      logoUrl={job.companyLogoUrl}
+                      size={48}
+                      selected
+                      className="size-12"
+                    />
+                  ) : (
+                    <ItemAvatar
+                      name={resumeAvatarSeed(item)}
+                      size={48}
+                      selected
+                      className="size-12"
+                      aria-label={title}
+                    />
+                  )
                 }
                 eyebrowClassName={ITEM_AVATAR_EYEBROW_CLASSNAME}
-                title={item.filename}
+                title={title}
                 description={
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    <ResumeTypeBadges author={item.author} isDefault={item.default} />
-                  </span>
+                  <div className="space-y-2.5">
+                    {job ? (
+                      <p className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+                        <span className="inline-flex max-w-full min-w-0 items-center gap-1.5">
+                          <Building2Icon
+                            className="size-3.5 shrink-0 text-muted-foreground"
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                          <TruncatedText>{job.companyName}</TruncatedText>
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Not tied to a tracked job.</p>
+                    )}
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <ResumeTypeBadges author={item.author} isDefault={item.default} />
+                    </span>
+                    <p className="truncate text-xs text-muted-foreground" title={item.filename}>
+                      {item.filename}
+                    </p>
+                  </div>
                 }
                 actions={
-                  <>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      render={
-                        <a
-                          href={`/api/resume/download/?id=${item.id}`}
-                          download
-                          aria-label={`Download ${item.filename}`}
-                        />
-                      }
-                    >
-                      <DownloadIcon strokeWidth={2} />
-                      Download
-                    </Button>
-                    <PanelDeleteButton
-                      loading={
-                        deleteMutation.isPending &&
-                        Boolean(deleteMutation.variables?.ids.includes(item.id))
-                      }
-                      onClick={() => setPanelDeleteOpen(true)}
-                    />
-                  </>
+                  <ResumeActionGroup
+                    resume={item}
+                    onDelete={() => setDeleteResumeId(item.id)}
+                    isDeleting={
+                      deleteMutation.isPending &&
+                      Boolean(deleteMutation.variables?.ids.includes(item.id))
+                    }
+                  />
                 }
                 updatedAt={item.updatedAt}
                 createdAt={item.createdAt}
+                navLayout="grid"
               >
                 <embed
                   src={`/api/resume/download/?id=${item.id}&view=1`}
                   type="application/pdf"
                   className="min-h-150 w-full overflow-hidden rounded-xl border border-border/50 bg-muted/20"
-                  title={item.filename}
+                  title={title}
                 />
               </ItemInfoPanel>
             );
@@ -378,16 +353,16 @@ export function ResumesPage() {
         </ItemsInspectHost>
 
         <AlertDialog
-          open={panelDeleteOpen && openedItem != null}
+          open={deleteResumeId != null}
           onOpenChange={(open) => {
             if (!open && deleteMutation.isPending) return;
-            setPanelDeleteOpen(open);
+            if (!open) setDeleteResumeId(null);
           }}
         >
           <AlertDialogPopup>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                Delete{openedItem ? ` “${openedItem.filename}”` : " this resume"}?
+                Delete{deleteTarget ? ` “${resumeCardTitle(deleteTarget)}”` : " this resume"}?
               </AlertDialogTitle>
               <AlertDialogDescription>
                 This will permanently delete this resume PDF.
@@ -399,16 +374,18 @@ export function ResumesPage() {
                 variant="destructive"
                 loading={deleteMutation.isPending}
                 onClick={() => {
-                  if (!openedItem) return;
-                  const id = openedItem.id;
+                  if (!deleteResumeId) return;
+                  const id = deleteResumeId;
                   deleteMutation.mutate(
                     { ids: [id] },
                     {
                       onSuccess: () => {
                         toast.success("Resume deleted.");
-                        setPanelDeleteOpen(false);
-                        setOpenedItem(null);
-                        setIsItemOpen(null);
+                        setDeleteResumeId(null);
+                        if (openedItem?.id === id) {
+                          setOpenedItem(null);
+                          setIsItemOpen(null);
+                        }
                       }
                     }
                   );

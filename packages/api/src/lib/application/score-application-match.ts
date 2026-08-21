@@ -2,6 +2,7 @@ import {
   AiJobMatchBatchSchema,
   applyPreferenceHardFails,
   formatJobMatchScorePrompt,
+  resolveMatchLandDecision,
   SCORER_JOB_DESCRIPTION_CHARS,
   scoreJobAgainstPreference,
   shouldPassAllHarvestJobs,
@@ -27,6 +28,7 @@ export type ApplicationMatchScoreResult = {
   passed: boolean;
   reasons: string[];
   source: "ai" | "heuristic";
+  rulesFailed: boolean;
 };
 
 function toHarvestedJob(job: {
@@ -111,7 +113,8 @@ export async function scoreApplicationMatch(input: {
       score: 0,
       passed: false,
       reasons: hard.reasons,
-      source: "heuristic"
+      source: "heuristic",
+      rulesFailed: true
     };
   }
 
@@ -122,7 +125,8 @@ export async function scoreApplicationMatch(input: {
       score: heuristic.score,
       passed: passAll ? true : heuristic.passed,
       reasons: [...heuristic.reasons, "heuristic_only"],
-      source: "heuristic"
+      source: "heuristic",
+      rulesFailed: heuristic.rulesFailed
     };
   }
 
@@ -196,7 +200,8 @@ export async function scoreApplicationMatch(input: {
         score: heuristic.score,
         passed: passAll ? true : heuristic.passed,
         reasons: [...heuristic.reasons, "ai_scorer_http_fallback"],
-        source: "heuristic"
+        source: "heuristic",
+        rulesFailed: heuristic.rulesFailed
       };
     }
 
@@ -214,7 +219,8 @@ export async function scoreApplicationMatch(input: {
         score: heuristic.score,
         passed: passAll ? true : heuristic.passed,
         reasons: [...heuristic.reasons, "ai_scorer_parse_fallback"],
-        source: "heuristic"
+        source: "heuristic",
+        rulesFailed: heuristic.rulesFailed
       };
     }
 
@@ -223,24 +229,29 @@ export async function scoreApplicationMatch(input: {
         (m) => m.listingUrl.toLowerCase() === input.job.listingUrl.toLowerCase()
       ) ?? batch.data.matches[0]!;
 
-    const score = Math.max(0, Math.min(100, Math.round(hit.score)));
-    const passed = passAll ? true : hit.passed && score >= minScore;
+    const land = resolveMatchLandDecision({
+      minScore,
+      passAll,
+      aiScore: hit.score
+    });
 
     return {
-      score,
-      passed,
+      score: land.score,
+      passed: land.passed,
       reasons: [
         ...(hit.reasons?.length ? hit.reasons : ["ai_match"]),
         ...(passAll ? ["open_preference_profile"] : [])
       ],
-      source: "ai"
+      source: "ai",
+      rulesFailed: false
     };
   } catch {
     return {
       score: heuristic.score,
       passed: passAll ? true : heuristic.passed,
       reasons: [...heuristic.reasons, "ai_scorer_error_fallback"],
-      source: "heuristic"
+      source: "heuristic",
+      rulesFailed: heuristic.rulesFailed
     };
   }
 }

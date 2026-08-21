@@ -1,4 +1,8 @@
+import { z } from "zod";
+
 import {
+  MailAssignApplicationInputSchema,
+  MailUnassignApplicationInputSchema,
   CreateAiCorrectionInputSchema,
   CreateAiCorrectionOutputSchema,
   MailCrmApplySummarySchema,
@@ -15,7 +19,11 @@ import {
   UndoMailCrmApplyInputSchema,
   UndoMailCrmApplyOutputSchema
 } from "@tsu-stack/core";
-import { mailCrmApplyRepository, mailMessageRepository } from "@tsu-stack/db/repositories";
+import {
+  applicationRepository,
+  mailCrmApplyRepository,
+  mailMessageRepository
+} from "@tsu-stack/db/repositories";
 
 import { createAiCorrectionFromMail } from "#@/lib/mail/create-ai-correction";
 import { generateMailReply } from "#@/lib/mail/generate-mail-reply";
@@ -122,6 +130,49 @@ export const mailRouter = {
       });
       if (!row) throw errors.NOT_FOUND();
       return toDetail(row, userId);
+    }),
+
+  assignApplication: protectedProcedure
+    .route({
+      description: "Link a Career Inbox message to a job application the user owns",
+      method: "POST"
+    })
+    .input(MailAssignApplicationInputSchema)
+    .output(z.object({ ok: z.literal(true) }))
+    .errors({
+      NOT_FOUND: { message: "Mail or application not found", status: 404 }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const [mail, app] = await Promise.all([
+        mailMessageRepository.findByIdForUser(input.mailId, userId),
+        applicationRepository.findByIdForUser(input.applicationId, userId)
+      ]);
+      if (!mail || !app) throw errors.NOT_FOUND();
+      const updated = await mailMessageRepository.setApplicationId(
+        input.mailId,
+        userId,
+        input.applicationId
+      );
+      if (!updated) throw errors.NOT_FOUND();
+      return { ok: true as const };
+    }),
+
+  unassignApplication: protectedProcedure
+    .route({
+      description: "Clear the job application link on a Career Inbox message",
+      method: "POST"
+    })
+    .input(MailUnassignApplicationInputSchema)
+    .output(z.object({ ok: z.literal(true) }))
+    .errors({
+      NOT_FOUND: { message: "Mail message not found", status: 404 }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const updated = await mailMessageRepository.setApplicationId(input.mailId, userId, null);
+      if (!updated) throw errors.NOT_FOUND();
+      return { ok: true as const };
     }),
 
   undoCrmApply: protectedProcedure

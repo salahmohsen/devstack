@@ -30,7 +30,7 @@ export const relations = { ...appRelationPart, ...authRelations };
 /**
  * Prefer discrete POSTGRES_* fields in Docker when POSTGRES_HOST is set
  * (avoids URL-encoding footguns with passwords containing + / =).
- * Fall back to DATABASE_URL for local / Neon.
+ * Fall back to DATABASE_URL for local docker-compose / Dokploy Postgres.
  *
  * Local `vp run dev` often has credentials only in DATABASE_URL pointing at
  * Docker-mapped localhost. Never default host to the compose service name
