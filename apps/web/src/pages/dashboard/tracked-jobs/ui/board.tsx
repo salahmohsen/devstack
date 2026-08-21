@@ -36,6 +36,7 @@ import {
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
   ContextMenu,
   ContextMenuPopup,
@@ -45,6 +46,8 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
+import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
 
 import {
@@ -52,6 +55,7 @@ import {
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
   getApplicationPrimaryAction,
+  useDeleteApplicationsMutation,
   useUpdateStageMutation
 } from "@/features/applications";
 
@@ -83,16 +87,28 @@ function ApplicationCard({
   isOverlay?: boolean;
   disabled?: boolean;
 }) {
-  const { openView, viewItem } = useApplicationStore();
+  const { openView, viewItem, selectedIds, toggleSelect } = useApplicationStore();
+  const batchSelectActive = isBatchSelectActive(selectedIds);
+  const isBatchSelected = selectedIds.includes(app.id);
+  const dragDisabled = Boolean(disabled) || batchSelectActive;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: app.id,
     data: { stage: app.stage, app },
-    disabled
+    disabled: dragDisabled
   });
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
   // Animate only while this card is the open side-panel selection (better-ui: motion restraint).
   const avatarAnimated = viewItem?.id === app.id;
+
+  function handleActivate() {
+    if (isOverlay || isDragging) return;
+    if (batchSelectActive) {
+      toggleSelect(app.id);
+      return;
+    }
+    openView(app);
+  }
 
   const cardBody = (
     <div
@@ -101,62 +117,87 @@ function ApplicationCard({
         isDragging && "opacity-40",
         isOverlay && "rotate-1 opacity-100 shadow-md",
         disabled && "pointer-events-none opacity-60",
-        avatarAnimated && "border-primary/40"
+        (avatarAnimated || isBatchSelected) && "border-primary/40"
       )}
     >
-      <div className="flex items-start justify-between gap-1.5">
-        <button
-          type="button"
-          className="flex min-w-0 flex-1 cursor-grab items-center gap-2 text-left active:cursor-grabbing"
-          {...listeners}
-          {...attributes}
-          onClick={() => {
-            if (!isDragging) openView(app);
-          }}
-        >
-          <JobIdentityMark
-            companyName={app.companyName}
-            logoUrl={app.companyLogoUrl}
-            size={40}
-            selected={avatarAnimated}
-            className="size-10"
-          />
-          <span className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{app.companyName}</div>
-            <div className="truncate text-xs text-muted-foreground">{app.title}</div>
-            {app.experienceYearsMin != null ? (
-              <div className="mt-1">
-                <JobYearsBadge years={app.experienceYearsMin} />
-              </div>
-            ) : null}
-          </span>
-        </button>
-      </div>
-      {(app.listingClosed ||
-        app.matchScore != null ||
-        app.applyMethod !== "unknown" ||
-        app.hiringUrgency !== "unknown") && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {app.listingClosed ? (
-            <Badge
-              variant="secondary"
-              size="xs"
-              className="font-normal tracking-normal text-muted-foreground normal-case"
-              title="This posting is no longer on the board."
-            >
-              Listing closed
-            </Badge>
-          ) : null}
-          <ApplicationMatchScoreBadge matchScore={app.matchScore} />
-          <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
-          {app.hiringUrgency !== "unknown" ? (
-            <Badge variant="secondary" size="xs">
-              {HIRING_URGENCY_LABELS[app.hiringUrgency]}
-            </Badge>
-          ) : null}
+      <div className="flex items-start gap-1.5">
+        {!isOverlay && batchSelectActive ? (
+          <div
+            data-batch-select
+            role="presentation"
+            className="flex items-center self-start pt-0.5"
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+            onMouseDown={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <Checkbox
+              checked={isBatchSelected}
+              onCheckedChange={() => {
+                toggleSelect(app.id);
+              }}
+              aria-label={`Select ${app.title}`}
+            />
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            className={cn(
+              "flex w-full min-w-0 items-center gap-2 text-left",
+              batchSelectActive || dragDisabled
+                ? "cursor-pointer"
+                : "cursor-grab active:cursor-grabbing"
+            )}
+            {...(dragDisabled ? {} : listeners)}
+            {...(dragDisabled ? {} : attributes)}
+            aria-pressed={batchSelectActive ? isBatchSelected : avatarAnimated}
+            onClick={handleActivate}
+          >
+            <JobIdentityMark
+              companyName={app.companyName}
+              logoUrl={app.companyLogoUrl}
+              size={40}
+              selected={avatarAnimated || isBatchSelected}
+              className="size-10"
+            />
+            <span className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium">{app.companyName}</div>
+              <div className="truncate text-xs text-muted-foreground">{app.title}</div>
+              {app.experienceYearsMin != null ? (
+                <div className="mt-1">
+                  <JobYearsBadge years={app.experienceYearsMin} />
+                </div>
+              ) : null}
+            </span>
+          </button>
+          {(app.listingClosed ||
+            app.matchScore != null ||
+            app.applyMethod !== "unknown" ||
+            app.hiringUrgency !== "unknown") && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {app.listingClosed ? (
+                <Badge
+                  variant="secondary"
+                  size="xs"
+                  className="font-normal tracking-normal text-muted-foreground normal-case"
+                  title="This posting is no longer on the board."
+                >
+                  Listing closed
+                </Badge>
+              ) : null}
+              <ApplicationMatchScoreBadge matchScore={app.matchScore} />
+              <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
+              {app.hiringUrgency !== "unknown" ? (
+                <Badge variant="secondary" size="xs">
+                  {HIRING_URGENCY_LABELS[app.hiringUrgency]}
+                </Badge>
+              ) : null}
+            </div>
+          )}
+          {!isOverlay ? <ApplicationActionGroup app={app} variant="board" /> : null}
         </div>
-      )}
-      {!isOverlay ? <ApplicationActionGroup app={app} variant="board" /> : null}
+      </div>
     </div>
   );
 
@@ -233,7 +274,17 @@ function StageColumn({
 
 export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
   const updateStage = useUpdateStageMutation();
-  const { markStageInFlight: markInFlight, openCreate, openImportJdSheet } = useApplicationStore();
+  const deleteMutation = useDeleteApplicationsMutation();
+  const {
+    markStageInFlight: markInFlight,
+    openCreate,
+    openImportJdSheet,
+    selectedIds,
+    selectAll,
+    clearSelection,
+    viewItem,
+    closeView
+  } = useApplicationStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<string | null>(null);
 
@@ -241,6 +292,18 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
     () => applications.filter((a) => isApplicationOpen(a.outcome)),
     [applications]
   );
+  const openIds = useMemo(() => openApps.map((app) => app.id), [openApps]);
+  const selectedCount = selectedIds.length;
+  const allVisibleSelected = areAllVisibleSelected(selectedIds, openIds);
+
+  const deleteSelected = () => {
+    if (selectedCount === 0) return;
+    const ids = [...selectedIds];
+    void deleteMutation.mutateAsync({ ids }).then(() => {
+      clearSelection();
+      if (viewItem && ids.includes(viewItem.id)) closeView();
+    });
+  };
 
   const byStage = useMemo(() => {
     const map = Object.fromEntries(
@@ -321,19 +384,32 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragEnd={onDragEnd}
-    >
-      <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
-        {APPLICATION_STAGES.map((stage) => (
-          <StageColumn key={stage} stage={stage} items={byStage[stage]} overId={overColumn} />
-        ))}
-      </div>
-      <DragOverlay>{activeApp ? <ApplicationCard app={activeApp} isOverlay /> : null}</DragOverlay>
-    </DndContext>
+    <>
+      <BatchSelectionBar
+        selectedCount={selectedCount}
+        totalCount={openIds.length}
+        allVisibleSelected={allVisibleSelected}
+        isDeleting={deleteMutation.isPending}
+        onDeleteSelected={deleteSelected}
+        onSelectAll={() => selectAll(openIds)}
+        onClearSelection={clearSelection}
+      />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+      >
+        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
+          {APPLICATION_STAGES.map((stage) => (
+            <StageColumn key={stage} stage={stage} items={byStage[stage]} overId={overColumn} />
+          ))}
+        </div>
+        <DragOverlay>
+          {activeApp ? <ApplicationCard app={activeApp} isOverlay /> : null}
+        </DragOverlay>
+      </DndContext>
+    </>
   );
 }
