@@ -117,14 +117,8 @@ function experienceEntries(experiences: ResumePdfPortfolio["experiences"]) {
     });
 }
 
-function firstProjectHttpUrl(proj: ResumePdfPortfolio["projects"][number]): string | null {
-  const candidates = [proj.demoUrl, ...(proj.repos ?? [])];
-  for (const raw of candidates) {
-    if (!raw?.trim()) continue;
-    const url = toRenderCvHttpUrl(raw);
-    if (url) return url;
-  }
-  return null;
+function projectDemoHttpUrl(proj: ResumePdfPortfolio["projects"][number]): string | null {
+  return proj.demoUrl?.trim() ? toRenderCvHttpUrl(proj.demoUrl) : null;
 }
 
 /** engineeringresumes puts markdown links on the title line (link + external icon). */
@@ -163,7 +157,7 @@ function projectEntries(
         highlights.push(`Stack: ${techNames.join(" · ")}`);
       }
 
-      const url = firstProjectHttpUrl(proj);
+      const url = projectDemoHttpUrl(proj);
       const entry: Record<string, unknown> = { name: projectHeadingName(proj.title, url) };
       if (url && /[[\]]/.test(proj.title)) entry.location = url;
       if (highlights.length > 0) entry.highlights = highlights;

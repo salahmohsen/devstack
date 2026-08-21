@@ -319,7 +319,7 @@ describe("projects and skills", () => {
     expect(doc.cv.sections?.skills?.map((s) => s.label)).toEqual(["Language", "Framework", "UI"]);
   });
 
-  it("links the project title to demoUrl, else the first valid repo", () => {
+  it("links the project title to demoUrl only, never a repo URL", () => {
     const demo = parseYaml(
       baseInput({
         portfolio: {
@@ -329,7 +329,6 @@ describe("projects and skills", () => {
               title: "Dev-Hub",
               summary: "Career OS",
               demoUrl: "https://hub.example.com",
-              repos: ["https://github.com/salah/dev-hub"],
               stacks: [],
               includedInPortfolio: true,
               isArchived: false
@@ -342,7 +341,7 @@ describe("projects and skills", () => {
     );
     expect(demo.doc.cv.sections?.projects?.[0]?.name).toBe("[Dev-Hub](https://hub.example.com/)");
 
-    const repoOnly = parseYaml(
+    const noDemo = parseYaml(
       baseInput({
         portfolio: {
           experiences: [],
@@ -351,7 +350,6 @@ describe("projects and skills", () => {
               title: "Dev-Hub",
               summary: "Career OS",
               demoUrl: "not a url",
-              repos: ["github.com/salah/dev-hub"],
               stacks: [],
               includedInPortfolio: true,
               isArchived: false
@@ -362,30 +360,8 @@ describe("projects and skills", () => {
         }
       })
     );
-    expect(repoOnly.doc.cv.sections?.projects?.[0]?.name).toBe(
-      "[Dev-Hub](https://github.com/salah/dev-hub)"
-    );
-
-    const none = parseYaml(
-      baseInput({
-        portfolio: {
-          experiences: [],
-          projects: [
-            {
-              title: "Dev-Hub",
-              summary: "Career OS",
-              stacks: [],
-              includedInPortfolio: true,
-              isArchived: false
-            }
-          ],
-          stacks: [],
-          contacts: []
-        }
-      })
-    );
-    expect(none.doc.cv.sections?.projects?.[0]?.name).toBe("Dev-Hub");
-    expect(none.doc.cv.sections?.projects?.[0]?.location).toBeUndefined();
+    expect(noDemo.doc.cv.sections?.projects?.[0]?.name).toBe("Dev-Hub");
+    expect(noDemo.doc.cv.sections?.projects?.[0]?.location).toBeUndefined();
   });
 
   it("puts the url in location when the title cannot be a markdown link", () => {

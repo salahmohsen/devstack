@@ -182,7 +182,6 @@ export async function acceptApplyPackage(input: {
       title: live.title,
       summary: draftProj.rewrittenSummary || live.summary,
       demoUrl: live.demoUrl ?? null,
-      repos: live.repos ?? [],
       description: live.description ?? null,
       stacks: (live.stacks ?? [])
         .map((join) =>
