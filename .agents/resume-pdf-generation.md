@@ -76,7 +76,7 @@ tree — ATS-friendly when content stays single-column and text-based.
 1. **Header** — name, contact line, optional headline from latest job
 2. **Summary** — trimmed professional summary or `user.summary`
 3. **Experience** — company, title, dates, bullet highlights
-4. **Projects** — title, dates, highlights (stacks as last highlight when present)
+4. **Projects** — title (markdown-linked to demo URL, else first repo), highlights (stacks as last highlight when present)
 5. **Skills** — categorized stacks
 
 Education is omitted from generation. Resume **import** (parsing an

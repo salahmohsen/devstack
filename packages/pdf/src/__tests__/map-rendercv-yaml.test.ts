@@ -26,7 +26,7 @@ type RenderCvDoc = {
         highlights?: string[];
       }>;
       education?: unknown;
-      projects?: Array<{ name: string; highlights?: string[] }>;
+      projects?: Array<{ name: string; location?: string; highlights?: string[] }>;
       skills?: Array<{ label: string; details: string }>;
     };
   };
@@ -317,6 +317,99 @@ describe("projects and skills", () => {
     expect(highlights.at(-1)).toBe("Stack: TypeScript · Next.js");
     expect(highlights.join(" ")).not.toContain("oxlint");
     expect(doc.cv.sections?.skills?.map((s) => s.label)).toEqual(["Language", "Framework", "UI"]);
+  });
+
+  it("links the project title to demoUrl, else the first valid repo", () => {
+    const demo = parseYaml(
+      baseInput({
+        portfolio: {
+          experiences: [],
+          projects: [
+            {
+              title: "Dev-Hub",
+              summary: "Career OS",
+              demoUrl: "https://hub.example.com",
+              repos: ["https://github.com/salah/dev-hub"],
+              stacks: [],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [],
+          contacts: []
+        }
+      })
+    );
+    expect(demo.doc.cv.sections?.projects?.[0]?.name).toBe("[Dev-Hub](https://hub.example.com/)");
+
+    const repoOnly = parseYaml(
+      baseInput({
+        portfolio: {
+          experiences: [],
+          projects: [
+            {
+              title: "Dev-Hub",
+              summary: "Career OS",
+              demoUrl: "not a url",
+              repos: ["github.com/salah/dev-hub"],
+              stacks: [],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [],
+          contacts: []
+        }
+      })
+    );
+    expect(repoOnly.doc.cv.sections?.projects?.[0]?.name).toBe(
+      "[Dev-Hub](https://github.com/salah/dev-hub)"
+    );
+
+    const none = parseYaml(
+      baseInput({
+        portfolio: {
+          experiences: [],
+          projects: [
+            {
+              title: "Dev-Hub",
+              summary: "Career OS",
+              stacks: [],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [],
+          contacts: []
+        }
+      })
+    );
+    expect(none.doc.cv.sections?.projects?.[0]?.name).toBe("Dev-Hub");
+    expect(none.doc.cv.sections?.projects?.[0]?.location).toBeUndefined();
+  });
+
+  it("puts the url in location when the title cannot be a markdown link", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          experiences: [],
+          projects: [
+            {
+              title: "Hub [beta]",
+              summary: "Career OS",
+              demoUrl: "https://hub.example.com",
+              stacks: [],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [],
+          contacts: []
+        }
+      })
+    );
+    expect(doc.cv.sections?.projects?.[0]?.name).toBe("Hub [beta]");
+    expect(doc.cv.sections?.projects?.[0]?.location).toBe("https://hub.example.com/");
   });
 });
 

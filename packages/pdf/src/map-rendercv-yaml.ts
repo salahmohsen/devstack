@@ -117,6 +117,23 @@ function experienceEntries(experiences: ResumePdfPortfolio["experiences"]) {
     });
 }
 
+function firstProjectHttpUrl(proj: ResumePdfPortfolio["projects"][number]): string | null {
+  const candidates = [proj.demoUrl, ...(proj.repos ?? [])];
+  for (const raw of candidates) {
+    if (!raw?.trim()) continue;
+    const url = toRenderCvHttpUrl(raw);
+    if (url) return url;
+  }
+  return null;
+}
+
+/** engineeringresumes puts markdown links on the title line (link + external icon). */
+function projectHeadingName(title: string, url: string | null): string {
+  if (!url) return title;
+  if (/[[\]]/.test(title)) return title;
+  return `[${title}](${url})`;
+}
+
 function projectEntries(
   projects: ResumePdfPortfolio["projects"],
   stacks: ResumePdfPortfolio["stacks"]
@@ -146,7 +163,9 @@ function projectEntries(
         highlights.push(`Stack: ${techNames.join(" · ")}`);
       }
 
-      const entry: Record<string, unknown> = { name: proj.title };
+      const url = firstProjectHttpUrl(proj);
+      const entry: Record<string, unknown> = { name: projectHeadingName(proj.title, url) };
+      if (url && /[[\]]/.test(proj.title)) entry.location = url;
       if (highlights.length > 0) entry.highlights = highlights;
       return entry;
     });

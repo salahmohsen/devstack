@@ -23,6 +23,10 @@ export type ResumePdfPortfolio = {
   projects: Array<{
     title: string;
     summary: string | null;
+    /** Live demo / project site. Preferred over `repos` for the title link. */
+    demoUrl?: string | null;
+    /** GitHub (or other) repo URLs; first valid http(s) is used when `demoUrl` is absent. */
+    repos?: string[];
     /** Full project description (HTML); preferred over summary for body bullets. */
     description?: string | null;
     /**
