@@ -43,12 +43,12 @@
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
+    "@tsu-stack/pdf": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "files-sdk": "catalog:",
     "hono": "catalog:",
     "ollama-ai-provider-v2": "catalog:",
-    "pdfnative": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"
   },
