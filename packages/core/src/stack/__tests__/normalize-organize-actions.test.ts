@@ -125,7 +125,7 @@ describe("normalizeOrganizeActions", () => {
         type: "rename",
         stackId: "c",
         stackName: "reactjs",
-        details: { newName: "React", alternativeNames: ["reactjs", "React JS"] },
+        details: { newName: "React.js", alternativeNames: ["reactjs", "React JS"] },
         reason: "canonical"
       }
     ];
@@ -133,7 +133,7 @@ describe("normalizeOrganizeActions", () => {
     const { actions: out } = normalizeOrganizeActions(actions, stacks);
     expect(out).toHaveLength(1);
     expect(out[0]?.type).toBe("rename");
-    expect(out[0]?.details.newName).toBe("React");
+    expect(out[0]?.details.newName).toBe("React.js");
     expect(out[0]?.details.alternativeNames).toEqual(["reactjs", "React JS"]);
   });
 });
