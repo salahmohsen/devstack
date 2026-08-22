@@ -30,7 +30,9 @@ const HUB_APPLICATION_MUTATING_TOOLS = new Set([
   "dismiss-job",
   "dismissJob",
   "update-application-stage",
-  "updateApplicationStage"
+  "updateApplicationStage",
+  "add-application-note",
+  "addApplicationNote"
 ]);
 
 function isSuccessfulMutatingToolOutput(toolName: string, output: unknown): boolean {

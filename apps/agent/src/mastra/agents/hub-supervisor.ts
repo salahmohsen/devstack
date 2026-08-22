@@ -11,38 +11,18 @@ import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import {
-  HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
-  HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
-  HUB_COMPANY_MUST_READ_FEEDBACK,
-  HUB_INSPECT_MUST_OPEN_FEEDBACK,
-  HUB_TODAY_MUST_GATHER_FEEDBACK,
-  HUB_STACKS_MUST_LIST_FEEDBACK,
-  HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
-  HUB_TRIAGE_MUST_WRITE_FEEDBACK,
   hubJobUrlImportFeedback,
   hubSupervisorInstructions,
-  shouldForceProposeApplicationFromJd,
-  shouldStopHubLoopAfterClientHitl
+  shouldForceProposeApplicationFromJd
 } from "#@/mastra/lib/hub-superpowers-policy";
 import {
   createHubInputProcessors,
   createHubOutputProcessors,
   HUB_SUPERVISOR_MAX_STEPS,
-  mastraMessagesHavePendingClientHitl,
-  messagesNeedCompanyRead,
-  messagesNeedDailyBriefFacts,
-  messagesNeedEntityInspect,
-  messagesNeedGetSearchBrief,
-  messagesNeedListStacks,
-  shouldStopAfterStackCatalog,
-  shouldStopAfterTodayLetter,
-  messagesNeedProposeAfterJobExtract,
-  messagesNeedProposeAfterJobImport,
-  messagesNeedProposeTriage,
-  messagesNeedSearchBriefAnswer,
-  messagesNeedTriageWrites
+  hubSupervisorOnIterationComplete
 } from "#@/mastra/processors/hub-processors";
 import { acceptApplyPackageTool } from "#@/mastra/tools/accept-apply-package.tool";
+import { addApplicationNoteTool } from "#@/mastra/tools/add-application-note.tool";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
 import { dismissJobTool } from "#@/mastra/tools/dismiss-job.tool";
 import { explainApplicationVsPrefsTool } from "#@/mastra/tools/explain-application-vs-prefs.tool";
@@ -110,81 +90,7 @@ export function createHubSupervisor() {
     outputProcessors: createHubOutputProcessors(),
     defaultOptions: {
       maxSteps: HUB_SUPERVISOR_MAX_STEPS,
-      onIterationComplete: async (ctx) => {
-        if (
-          shouldStopHubLoopAfterClientHitl(ctx) ||
-          mastraMessagesHavePendingClientHitl(ctx.messages)
-        ) {
-          return { continue: false };
-        }
-        const toolNames = (ctx.toolCalls ?? []).map((call) => call.name);
-        if (
-          shouldForceProposeApplicationFromJd(toolNames) ||
-          messagesNeedProposeAfterJobImport(ctx.messages)
-        ) {
-          return {
-            continue: true,
-            feedback: hubJobUrlImportFeedback(
-              shouldForceProposeApplicationFromJd(toolNames) ||
-                messagesNeedProposeAfterJobExtract(ctx.messages)
-            )
-          };
-        }
-        if (messagesNeedProposeTriage(ctx.messages)) {
-          return { continue: true, feedback: HUB_TRIAGE_MUST_PROPOSE_FEEDBACK };
-        }
-        if (messagesNeedTriageWrites(ctx.messages)) {
-          return { continue: true, feedback: HUB_TRIAGE_MUST_WRITE_FEEDBACK };
-        }
-        if (messagesNeedSearchBriefAnswer(ctx.messages)) {
-          return { continue: true, feedback: HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK };
-        }
-        const toolCount = ctx.toolCalls?.length ?? 0;
-        const textOnly = toolCount === 0 && Boolean(ctx.text?.trim());
-        // iteration is 1-based. Allow one force-feedback retry, then stop so
-        // text-only "pulling it now" history contamination cannot maxSteps-spam.
-        const pastFirstForceRetry = ctx.iteration >= 2;
-        if (messagesNeedDailyBriefFacts(ctx.messages)) {
-          if (textOnly && pastFirstForceRetry) {
-            return { continue: false };
-          }
-          return { continue: true, feedback: HUB_TODAY_MUST_GATHER_FEEDBACK };
-        }
-        if (messagesNeedListStacks(ctx.messages)) {
-          if (textOnly && pastFirstForceRetry) {
-            return { continue: false };
-          }
-          return { continue: true, feedback: HUB_STACKS_MUST_LIST_FEEDBACK };
-        }
-        if (messagesNeedGetSearchBrief(ctx.messages)) {
-          if (textOnly && pastFirstForceRetry) {
-            return { continue: false };
-          }
-          return { continue: true, feedback: HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK };
-        }
-        if (messagesNeedEntityInspect(ctx.messages)) {
-          if (textOnly && pastFirstForceRetry) {
-            return { continue: false };
-          }
-          return { continue: true, feedback: HUB_INSPECT_MUST_OPEN_FEEDBACK };
-        }
-        if (messagesNeedCompanyRead(ctx.messages)) {
-          if (textOnly && pastFirstForceRetry) {
-            return { continue: false };
-          }
-          return { continue: true, feedback: HUB_COMPANY_MUST_READ_FEEDBACK };
-        }
-        if (shouldStopAfterTodayLetter(ctx.messages)) {
-          return { continue: false };
-        }
-        if (shouldStopAfterStackCatalog(ctx.messages)) {
-          return { continue: false };
-        }
-        if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
-          return { continue: false };
-        }
-        return { continue: true };
-      },
+      onIterationComplete: (ctx) => hubSupervisorOnIterationComplete(ctx),
       delegation: {
         onDelegationComplete: (context) => {
           if (
@@ -217,6 +123,7 @@ export function createHubSupervisor() {
       searchApplications: searchApplicationsTool,
       explainApplicationVsPrefs: explainApplicationVsPrefsTool,
       getApplication: getApplicationTool,
+      addApplicationNote: addApplicationNoteTool,
       trackJob: trackJobTool,
       dismissJob: dismissJobTool,
       updateApplicationStage: updateApplicationStageTool,

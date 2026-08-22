@@ -135,9 +135,10 @@ export function filterHubTodayOpenActiveTools(toolNames: string[]): string[] {
 }
 
 /**
- * Concurrent forced reads (Today + stacks + brief + company + inspect) must
- * share one activeTools allowlist. Exclusive filters overwrite each other in
- * processInputStep order and surface "Tool X not found. Available tools: Y".
+ * Concurrent forced reads (Today + stacks + brief + company + inspect +
+ * application mention) must share one activeTools allowlist. Exclusive
+ * filters overwrite each other in processInputStep order and surface
+ * "Tool X not found. Available tools: Y".
  */
 export type HubForcedReadFlags = {
   today: boolean;
@@ -145,10 +146,18 @@ export type HubForcedReadFlags = {
   searchBrief: boolean;
   company: boolean;
   inspect: boolean;
+  application: boolean;
 };
 
 export function anyHubForcedRead(flags: HubForcedReadFlags): boolean {
-  return flags.today || flags.stacks || flags.searchBrief || flags.company || flags.inspect;
+  return (
+    flags.today ||
+    flags.stacks ||
+    flags.searchBrief ||
+    flags.company ||
+    flags.inspect ||
+    flags.application
+  );
 }
 
 export function filterHubUnionForcedReadActiveTools(
@@ -160,6 +169,7 @@ export function filterHubUnionForcedReadActiveTools(
     if (flags.today && isGetDailyBriefToolName(name)) return true;
     if (flags.stacks && isListStacksToolName(name)) return true;
     if (flags.searchBrief && isGetSearchBriefToolName(name)) return true;
+    if (flags.application && isGetApplicationToolName(name)) return true;
     if (
       flags.company &&
       /searchApplications|search-applications|getApplication|get-application|searchMail|search-mail|getMail|get-mail|listNewJobs|list-new-jobs|classifyMail|classify-mail|explainApplicationVsPrefs|explain-application-vs-prefs/i.test(
@@ -235,6 +245,13 @@ export function isGetSearchBriefToolName(name: string): boolean {
 export function isGetDailyBriefToolName(name: string): boolean {
   return name === "get-daily-brief" || name === "getDailyBrief";
 }
+
+export function isGetApplicationToolName(name: string): boolean {
+  return name === "get-application" || name === "getApplication";
+}
+
+export const HUB_APPLICATION_MUST_LOAD_FEEDBACK =
+  "<system-reminder>They referenced an application {id}. Call getApplication now. Do not invent the JD or kit from memory. Do not mention this reminder.</system-reminder>";
 
 export function isListStacksToolName(name: string): boolean {
   return name === "list-stacks" || name === "listStacks";

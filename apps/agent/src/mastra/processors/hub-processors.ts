@@ -6,7 +6,11 @@ import {
   type Processor
 } from "@mastra/core/processors";
 
-import { hubPersonalityById, searchBriefUserTurnNeedsSpokenAnswer } from "@tsu-stack/core";
+import {
+  APPLICATION_MENTION_RE,
+  hubPersonalityById,
+  searchBriefUserTurnNeedsSpokenAnswer
+} from "@tsu-stack/core";
 
 import {
   filterHubJobUrlImportActiveTools,
@@ -16,12 +20,16 @@ import {
   HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   HUB_TRIAGE_MUST_WRITE_FEEDBACK,
   hubJobUrlImportFeedback,
+  HUB_APPLICATION_MUST_LOAD_FEEDBACK,
   HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
   HUB_TODAY_MUST_GATHER_FEEDBACK,
   HUB_STACKS_MUST_LIST_FEEDBACK,
   filterHubUnionForcedReadActiveTools,
+  shouldForceProposeApplicationFromJd,
+  shouldStopHubLoopAfterClientHitl,
   type HubForcedReadFlags,
   isDismissJobToolName,
+  isGetApplicationToolName,
   isGetDailyBriefToolName,
   isListStacksToolName,
   isOpenDailyBriefToolName,
@@ -81,6 +89,7 @@ export class HubEnsureFinalResponseProcessor implements Processor {
       messagesNeedTriageWrites(messages) ||
       messagesNeedSearchBriefAnswer(messages) ||
       messagesNeedGetSearchBrief(messages) ||
+      messagesNeedGetApplication(messages) ||
       messagesNeedDailyBriefFacts(messages) ||
       messagesNeedDailyBriefOpen(messages) ||
       messagesNeedListStacks(messages)
@@ -171,7 +180,8 @@ function hubForcedReadFlags(messages: ProcessInputStepArgs["messages"]): HubForc
     stacks: messagesNeedListStacks(messages),
     searchBrief: messagesNeedGetSearchBrief(messages),
     company: messagesNeedCompanyRead(messages),
-    inspect: messagesNeedEntityInspect(messages)
+    inspect: messagesNeedEntityInspect(messages),
+    application: messagesNeedGetApplication(messages)
   };
 }
 
@@ -561,7 +571,8 @@ export function shouldStopAfterStackCatalog(messages: ProcessInputStepArgs["mess
     messagesNeedDailyBriefFacts(messages) ||
     messagesNeedEntityInspect(messages) ||
     messagesNeedGetSearchBrief(messages) ||
-    messagesNeedCompanyRead(messages)
+    messagesNeedCompanyRead(messages) ||
+    messagesNeedGetApplication(messages)
   ) {
     return false;
   }
@@ -572,6 +583,24 @@ export function shouldStopAfterStackCatalog(messages: ProcessInputStepArgs["mess
 export function messagesNeedGetSearchBrief(messages: ProcessInputStepArgs["messages"]): boolean {
   if (!userTurnAsksSearchBrief(latestUserText(messages))) return false;
   return !latestUserTurnSearchBriefState(messages).sawBrief;
+}
+
+/** Latest user turn contains `application {id}` and getApplication has not succeeded yet. */
+export function messagesNeedGetApplication(messages: ProcessInputStepArgs["messages"]): boolean {
+  if (!APPLICATION_MENTION_RE.test(latestUserText(messages))) return false;
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isGetApplicationToolName(name) && mastraPartHasSuccessfulToolResult(part)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 export function messagesNeedDailyBriefOpen(messages: ProcessInputStepArgs["messages"]): boolean {
@@ -589,7 +618,8 @@ export function shouldStopAfterTodayLetter(messages: ProcessInputStepArgs["messa
     messagesNeedEntityInspect(messages) ||
     messagesNeedCompanyRead(messages) ||
     messagesNeedListStacks(messages) ||
-    messagesNeedGetSearchBrief(messages)
+    messagesNeedGetSearchBrief(messages) ||
+    messagesNeedGetApplication(messages)
   ) {
     return false;
   }
@@ -879,6 +909,26 @@ export class HubSearchBriefGatherProcessor implements Processor {
   }
 }
 
+export class HubApplicationMentionProcessor implements Processor {
+  readonly id = "hub-application-mention";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedGetApplication(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_APPLICATION_MUST_LOAD_FEEDBACK,
+      attributes: { reason: "application-must-load" }
+    });
+    const activeTools = hubForcedReadActiveTools(tools, messages);
+    return {
+      toolChoice: "required" as const,
+      ...(activeTools.length > 0 ? { activeTools } : {})
+    };
+  }
+}
+
 export class HubSearchBriefAnswerProcessor implements Processor {
   readonly id = "hub-search-brief-answer";
 
@@ -969,6 +1019,7 @@ export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_S
     new HubTodayProcessor(),
     new HubStackCatalogProcessor(),
     new HubSearchBriefGatherProcessor(),
+    new HubApplicationMentionProcessor(),
     new HubCompanyStatusProcessor(),
     new HubInspectProcessor(),
     new HubJobUrlImportProcessor(),
@@ -988,4 +1039,100 @@ export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_S
     // Safety net after memory + tool filtering (~100k input budget for BYO models).
     new TokenLimiter(100_000)
   ];
+}
+
+export type HubSupervisorIterationCtx = {
+  messages: ProcessInputStepArgs["messages"];
+  toolCalls?: Array<{ id: string; name: string }>;
+  toolResults?: Array<{ id: string }>;
+  text?: string;
+  iteration: number;
+  finishReason?: string;
+};
+
+export function hubSupervisorOnIterationComplete(ctx: HubSupervisorIterationCtx): {
+  continue: boolean;
+  feedback?: string;
+} {
+  const toolCalls = ctx.toolCalls ?? [];
+  const toolResults = ctx.toolResults ?? [];
+  if (
+    shouldStopHubLoopAfterClientHitl({ toolCalls, toolResults }) ||
+    mastraMessagesHavePendingClientHitl(ctx.messages)
+  ) {
+    return { continue: false };
+  }
+  const toolNames = toolCalls.map((call) => call.name);
+  if (
+    shouldForceProposeApplicationFromJd(toolNames) ||
+    messagesNeedProposeAfterJobImport(ctx.messages)
+  ) {
+    return {
+      continue: true,
+      feedback: hubJobUrlImportFeedback(
+        shouldForceProposeApplicationFromJd(toolNames) ||
+          messagesNeedProposeAfterJobExtract(ctx.messages)
+      )
+    };
+  }
+  if (messagesNeedProposeTriage(ctx.messages)) {
+    return { continue: true, feedback: HUB_TRIAGE_MUST_PROPOSE_FEEDBACK };
+  }
+  if (messagesNeedTriageWrites(ctx.messages)) {
+    return { continue: true, feedback: HUB_TRIAGE_MUST_WRITE_FEEDBACK };
+  }
+  if (messagesNeedSearchBriefAnswer(ctx.messages)) {
+    return { continue: true, feedback: HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK };
+  }
+  const toolCount = toolCalls.length;
+  const textOnly = toolCount === 0 && Boolean(ctx.text?.trim());
+  // iteration is 1-based. Allow one force-feedback retry, then stop so
+  // text-only "pulling it now" history contamination cannot maxSteps-spam.
+  const pastFirstForceRetry = ctx.iteration >= 2;
+  if (messagesNeedDailyBriefFacts(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_TODAY_MUST_GATHER_FEEDBACK };
+  }
+  if (messagesNeedListStacks(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_STACKS_MUST_LIST_FEEDBACK };
+  }
+  if (messagesNeedGetSearchBrief(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK };
+  }
+  if (messagesNeedEntityInspect(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_INSPECT_MUST_OPEN_FEEDBACK };
+  }
+  if (messagesNeedCompanyRead(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_COMPANY_MUST_READ_FEEDBACK };
+  }
+  if (messagesNeedGetApplication(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_APPLICATION_MUST_LOAD_FEEDBACK };
+  }
+  if (shouldStopAfterTodayLetter(ctx.messages)) {
+    return { continue: false };
+  }
+  if (shouldStopAfterStackCatalog(ctx.messages)) {
+    return { continue: false };
+  }
+  if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
+    return { continue: false };
+  }
+  return { continue: true };
 }

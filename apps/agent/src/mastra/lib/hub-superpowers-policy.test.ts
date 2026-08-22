@@ -463,7 +463,8 @@ describe("filterHubUnionForcedReadActiveTools", () => {
     "openEntityInspect",
     "listExperiences",
     "findJobsNow",
-    "listNewJobs"
+    "listNewJobs",
+    "getApplication"
   ];
 
   it("unions Today + stacks + brief so exclusive filters cannot orphan tools", () => {
@@ -473,9 +474,36 @@ describe("filterHubUnionForcedReadActiveTools", () => {
         stacks: true,
         searchBrief: true,
         company: false,
-        inspect: false
+        inspect: false,
+        application: false
       })
     ).toEqual(["getDailyBrief", "listStacks", "getSearchBrief"]);
+  });
+
+  it("mention-only allowlists getApplication and not findJobsNow", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        inspect: false,
+        application: true
+      })
+    ).toEqual(["getApplication"]);
+  });
+
+  it("unions mention + Today so both getApplication and getDailyBrief stay available", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: true,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        inspect: false,
+        application: true
+      })
+    ).toEqual(["getDailyBrief", "getApplication"]);
   });
 
   it("returns empty when no forced reads are pending", () => {
@@ -485,7 +513,8 @@ describe("filterHubUnionForcedReadActiveTools", () => {
         stacks: false,
         searchBrief: false,
         company: false,
-        inspect: false
+        inspect: false,
+        application: false
       })
     ).toEqual([]);
   });
