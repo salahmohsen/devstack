@@ -41,9 +41,9 @@ function collectSurfaceKeys(name: string, aliases: readonly string[] = []): Set<
   return keys;
 }
 
-function familyOf(skillKey: string): readonly string[] | null {
+function familyOfSurfaces(surfaces: Set<string>): readonly string[] | null {
   for (const family of CLOSE_SKILL_FAMILIES) {
-    if (family.includes(skillKey)) return family;
+    if (family.some((member) => surfaces.has(member))) return family;
   }
   return null;
 }
@@ -94,16 +94,16 @@ export function classifyJobSkills(input: {
   const missing: string[] = [];
 
   for (const skill of jobSkills) {
-    const key = normalizeJobSkillName(skill);
-    if (heldKeys.has(key)) {
+    const surfaces = collectSurfaceKeys(skill);
+    if ([...surfaces].some((key) => heldKeys.has(key))) {
       have.push(skill);
       continue;
     }
-    const family = familyOf(key);
+    const family = familyOfSurfaces(surfaces);
     let via: string | null = null;
     if (family) {
       for (const row of heldVia) {
-        const hit = family.find((member) => row.keys.has(member) && member !== key);
+        const hit = family.find((member) => row.keys.has(member) && !surfaces.has(member));
         if (hit) {
           via = row.name;
           break;

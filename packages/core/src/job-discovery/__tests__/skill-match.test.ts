@@ -60,6 +60,16 @@ describe("classifyJobSkills", () => {
     expect(result.close).toEqual([{ name: "Azure", via: "AWS" }]);
   });
 
+  it("marks Vue.js Close when React is held", () => {
+    const result = classifyJobSkills({
+      jobSkills: ["Vue.js"],
+      held: [{ name: "React" }]
+    });
+    expect(result.have).toEqual([]);
+    expect(result.close).toEqual([{ name: "Vue.js", via: "React" }]);
+    expect(result.missing).toEqual([]);
+  });
+
   it("does not treat Java as JavaScript", () => {
     const result = classifyJobSkills({
       jobSkills: ["Java"],

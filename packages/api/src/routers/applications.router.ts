@@ -34,7 +34,7 @@ import {
   refineWorkModeFromDescription,
   scoreJobAgainstPreference,
   GenerateApplyPackageInputSchema,
-  isApplyPackageResumePrompt,
+  applyPackageResumePrompt,
   ListApplicationActivityInputSchema,
   ListApplicationsInputSchema,
   PreviewListingInputSchema,
@@ -1064,16 +1064,16 @@ export const applicationsRouter = {
           .map((row) => [row.id, row.coverLetterR2Key as string])
       );
 
-      const kitResumes = (
-        await Promise.all(
-          owned.map(async (row) => {
-            if (!row.resumeId) return null;
-            const resume = await resumeRepository.findByIdForUser(row.resumeId, userId);
-            if (!resume || !isApplyPackageResumePrompt(resume.prompt, row.id)) return null;
-            return resume;
-          })
+      const kitResumeRows = await Promise.all(
+        owned.map((row) =>
+          resumeRepository.findByPromptForUser(userId, applyPackageResumePrompt(row.id))
         )
-      ).filter((row): row is NonNullable<typeof row> => row != null);
+      );
+      const kitResumesById = new Map<string, (typeof kitResumeRows)[number][number]>();
+      for (const rows of kitResumeRows) {
+        for (const resume of rows) kitResumesById.set(resume.id, resume);
+      }
+      const kitResumes = [...kitResumesById.values()];
 
       const deleted = await applicationRepository.deleteMany(input.ids, userId);
 

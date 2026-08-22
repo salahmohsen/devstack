@@ -145,6 +145,21 @@ describe("buildEvidenceWrite", () => {
     });
   });
 
+  it("keeps aliases on a stack update patch", () => {
+    const write = buildEvidenceWrite({
+      kind: "stack",
+      id: "stk_1",
+      record: { name: "React", aliases: ["React.js"] },
+      patch: { aliases: ["React.js"] }
+    });
+    expect(write).toEqual({
+      mode: "update",
+      kind: "stack",
+      id: "stk_1",
+      data: { aliases: ["React.js"] }
+    });
+  });
+
   it("returns null when create project is missing required columns", () => {
     expect(
       buildEvidenceWrite({

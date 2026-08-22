@@ -235,7 +235,8 @@ function buildCreateStack(record: Record<string, unknown>): StackCreateInput | n
     ...optionalField("description", asNullableString(record.description)),
     ...optionalField("type", asNullableString(record.type)),
     ...optionalField("includedInPortfolio", asBoolean(record.includedInPortfolio)),
-    ...optionalField("isFeatured", asBoolean(record.isFeatured))
+    ...optionalField("isFeatured", asBoolean(record.isFeatured)),
+    ...optionalField("aliases", asStringArray(record.aliases))
   });
   return parsed.success ? parsed.data : null;
 }
@@ -258,6 +259,10 @@ function buildUpdateStack(patch: Record<string, unknown>): StackUpdateInput | nu
     data.includedInPortfolio = patch.includedInPortfolio;
   }
   if (typeof patch.isFeatured === "boolean") data.isFeatured = patch.isFeatured;
+  if ("aliases" in patch) {
+    const aliases = asStringArray(patch.aliases);
+    if (aliases) data.aliases = aliases;
+  }
 
   const parsed = StackUpdateInputSchema.safeParse(data);
   return parsed.success ? parsed.data : null;
@@ -275,6 +280,11 @@ function asNonEmptyString(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function asStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value.filter((item): item is string => typeof item === "string");
 }
 
 function asBoolean(value: unknown): boolean | undefined {

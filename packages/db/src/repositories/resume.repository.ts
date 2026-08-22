@@ -58,6 +58,13 @@ export const resumeRepository = {
     });
   },
 
+  async findByPromptForUser(userId: string, prompt: string) {
+    return getDb()
+      .select()
+      .from(resume)
+      .where(and(eq(resume.userId, userId), eq(resume.prompt, prompt)));
+  },
+
   async findDefaultByUserId(userId: string) {
     const rows = await getDb()
       .select()
