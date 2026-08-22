@@ -1,10 +1,12 @@
 import {
   and,
   asc,
+  desc,
   eq,
   gt,
   inArray,
   isNotNull,
+  lt,
   ne,
   or,
   sql,
@@ -28,11 +30,21 @@ export type CreateStackData = Omit<
 export type UpdateStackData = Partial<Omit<CreateStackData, "userId">>;
 export type ReorderStackItem = { id: string; sortOrder: number };
 
-/** Opaque cursor for stacks ordered by (sortOrder, name, id). */
-export type StackListCursor = {
-  sortOrder: number;
-  name: string;
-  id: string;
+export type StackListSortKey = "sortOrder" | "name" | "projectCount" | "updatedAt";
+
+/** Opaque cursor: active sort column(s) + id. Default is (sortOrder, name, id). */
+export type StackListCursor =
+  | { sortBy: "sortOrder"; sortOrder: number; name: string; id: string }
+  | { sortBy: "name"; name: string; id: string }
+  | { sortBy: "projectCount"; projectCount: number; id: string }
+  | { sortBy: "updatedAt"; updatedAt: string; id: string };
+
+export type StackListPageOptions = {
+  cursor?: string | null;
+  limit: number;
+  where?: SQL;
+  sortBy?: StackListSortKey;
+  sortDir?: "asc" | "desc";
 };
 
 export type StackListRow = {
@@ -86,33 +98,58 @@ function projectCountSubquery() {
     .as("project_counts");
 }
 
-function encodeStackListCursor(row: Pick<StackListRow, "sortOrder" | "name" | "id">): string {
-  return Buffer.from(
-    JSON.stringify({
-      sortOrder: row.sortOrder,
-      name: row.name,
-      id: row.id
-    } satisfies StackListCursor),
-    "utf8"
-  ).toString("base64url");
+function encodeStackListCursor(cursor: StackListCursor): string {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function decodeStackListCursor(cursor: string): StackListCursor | null {
   try {
     const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      typeof (parsed as StackListCursor).sortOrder !== "number" ||
-      typeof (parsed as StackListCursor).name !== "string" ||
-      typeof (parsed as StackListCursor).id !== "string"
-    ) {
-      return null;
+    if (!isRecord(parsed) || typeof parsed.id !== "string") return null;
+
+    const sortBy = parsed.sortBy;
+    if (sortBy === "name" && typeof parsed.name === "string") {
+      return { sortBy: "name", name: parsed.name, id: parsed.id };
     }
-    return parsed as StackListCursor;
+    if (sortBy === "projectCount" && typeof parsed.projectCount === "number") {
+      return { sortBy: "projectCount", projectCount: parsed.projectCount, id: parsed.id };
+    }
+    if (sortBy === "updatedAt" && typeof parsed.updatedAt === "string") {
+      return { sortBy: "updatedAt", updatedAt: parsed.updatedAt, id: parsed.id };
+    }
+    if (
+      (sortBy === "sortOrder" || sortBy === undefined) &&
+      typeof parsed.sortOrder === "number" &&
+      typeof parsed.name === "string"
+    ) {
+      return { sortBy: "sortOrder", sortOrder: parsed.sortOrder, name: parsed.name, id: parsed.id };
+    }
+    return null;
   } catch {
     return null;
   }
+}
+
+function andAll(parts: Array<SQL | undefined>): SQL | undefined {
+  const present = parts.filter((part): part is SQL => part !== undefined);
+  if (present.length === 0) return undefined;
+  if (present.length === 1) return present[0];
+  return and(...present);
+}
+
+function encodeRowCursor(row: StackListRow, sortBy: StackListSortKey): StackListCursor {
+  if (sortBy === "name") return { sortBy: "name", name: row.name, id: row.id };
+  if (sortBy === "projectCount") {
+    return { sortBy: "projectCount", projectCount: row.projectCount, id: row.id };
+  }
+  if (sortBy === "updatedAt") {
+    return { sortBy: "updatedAt", updatedAt: row.updatedAt.toISOString(), id: row.id };
+  }
+  return { sortBy: "sortOrder", sortOrder: row.sortOrder, name: row.name, id: row.id };
 }
 
 export const stackRepository = {
@@ -145,35 +182,70 @@ export const stackRepository = {
 
   /**
    * Cursor page for dashboard infinite scroll.
-   * Order: sortOrder ASC, name ASC, id ASC (stable).
+   * Default order: sortOrder ASC, name ASC, id ASC.
+   * Display sort keysets on the active column(s) + id. `where` is precompiled SQL.
    */
   async findPageByUserId(
     userId: string,
-    options: { cursor?: string | null; limit: number }
+    options: StackListPageOptions
   ): Promise<{ items: StackListRow[]; nextCursor: string | null; totalCount: number }> {
     const counts = projectCountSubquery();
     const limit = options.limit;
+    const sortBy = options.sortBy ?? "sortOrder";
+    const sortDir = options.sortDir ?? "asc";
+    const dir = sortDir === "desc" ? desc : asc;
+    const after = sortDir === "desc" ? lt : gt;
 
-    const cursor =
+    const decoded =
       options.cursor != null && options.cursor !== ""
         ? decodeStackListCursor(options.cursor)
         : null;
+    const cursor = decoded?.sortBy === sortBy ? decoded : null;
 
-    const cursorWhere =
-      cursor == null
-        ? undefined
-        : or(
-            gt(stack.sortOrder, cursor.sortOrder),
-            and(eq(stack.sortOrder, cursor.sortOrder), gt(stack.name, cursor.name)),
-            and(
-              eq(stack.sortOrder, cursor.sortOrder),
-              eq(stack.name, cursor.name),
-              gt(stack.id, cursor.id)
-            )
-          );
+    const projectCountExpr = sql<number>`coalesce(${counts.count}, 0)`;
 
-    const whereClause =
-      cursorWhere == null ? eq(stack.userId, userId) : and(eq(stack.userId, userId), cursorWhere);
+    let cursorWhere: SQL | undefined;
+    if (cursor?.sortBy === "sortOrder") {
+      cursorWhere = or(
+        after(stack.sortOrder, cursor.sortOrder),
+        and(eq(stack.sortOrder, cursor.sortOrder), after(stack.name, cursor.name)),
+        and(
+          eq(stack.sortOrder, cursor.sortOrder),
+          eq(stack.name, cursor.name),
+          after(stack.id, cursor.id)
+        )
+      );
+    } else if (cursor?.sortBy === "name") {
+      cursorWhere = or(
+        after(stack.name, cursor.name),
+        and(eq(stack.name, cursor.name), after(stack.id, cursor.id))
+      );
+    } else if (cursor?.sortBy === "projectCount") {
+      cursorWhere = or(
+        after(projectCountExpr, cursor.projectCount),
+        and(eq(projectCountExpr, cursor.projectCount), after(stack.id, cursor.id))
+      );
+    } else if (cursor?.sortBy === "updatedAt") {
+      const at = new Date(cursor.updatedAt);
+      if (!Number.isNaN(at.getTime())) {
+        cursorWhere = or(
+          after(stack.updatedAt, at),
+          and(eq(stack.updatedAt, at), after(stack.id, cursor.id))
+        );
+      }
+    }
+
+    const filterWhere = andAll([eq(stack.userId, userId), options.where]);
+    const pageWhere = andAll([filterWhere, cursorWhere]) ?? eq(stack.userId, userId);
+
+    const orderBy =
+      sortBy === "name"
+        ? [dir(stack.name), dir(stack.id)]
+        : sortBy === "projectCount"
+          ? [dir(projectCountExpr), dir(stack.id)]
+          : sortBy === "updatedAt"
+            ? [dir(stack.updatedAt), dir(stack.id)]
+            : [dir(stack.sortOrder), dir(stack.name), dir(stack.id)];
 
     const [rows, countRow] = await Promise.all([
       getDb()
@@ -192,24 +264,25 @@ export const stackRepository = {
           portfolioEntryId: stack.portfolioEntryId,
           updatedAt: stack.updatedAt,
           createdAt: stack.createdAt,
-          projectCount: sql<number>`coalesce(${counts.count}, 0)`.as("project_count")
+          projectCount: projectCountExpr.as("project_count")
         })
         .from(stack)
         .leftJoin(counts, eq(stack.id, counts.stackId))
-        .where(whereClause)
-        .orderBy(asc(stack.sortOrder), asc(stack.name), asc(stack.id))
+        .where(pageWhere)
+        .orderBy(...orderBy)
         .limit(limit + 1),
       getDb()
         .select({ count: sql<number>`count(*)::int` })
         .from(stack)
-        .where(eq(stack.userId, userId))
+        .where(filterWhere)
         .then((r) => r[0]?.count ?? 0)
     ]);
 
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
     const last = items[items.length - 1];
-    const nextCursor = hasMore && last != null ? encodeStackListCursor(last) : null;
+    const nextCursor =
+      hasMore && last != null ? encodeStackListCursor(encodeRowCursor(last, sortBy)) : null;
 
     return { items, nextCursor, totalCount: countRow };
   },

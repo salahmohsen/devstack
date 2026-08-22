@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   DeleteResponseSchema,
+  ListQueryError,
   ReorderInputSchema,
   ReorderResponseSchema,
   STACKS_LIST_PAGE_SIZE,
@@ -21,6 +22,7 @@ import {
   invalidateSearchBrief,
   shouldInvalidateSearchBriefForEntityPatch
 } from "#@/lib/application/search-brief";
+import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { toStackOutput } from "#@/routers/portfolio.mappers";
 
@@ -86,9 +88,27 @@ export const stacksRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const limit = input?.limit ?? STACKS_LIST_PAGE_SIZE;
+      let compiled;
+      try {
+        compiled = compileListQuery({
+          resource: "skills",
+          q: input?.q,
+          filter: input?.filter,
+          sortBy: input?.sortBy,
+          sortDir: input?.sortDir
+        });
+      } catch (error) {
+        if (error instanceof ListQueryError) {
+          throw new ORPCError("BAD_REQUEST", { message: error.message });
+        }
+        throw error;
+      }
       const page = await stackRepository.findPageByUserId(userId, {
         cursor: input?.cursor ?? null,
-        limit
+        limit,
+        where: compiled.where,
+        sortBy: compiled.sortBy,
+        sortDir: compiled.sortDir
       });
 
       return {

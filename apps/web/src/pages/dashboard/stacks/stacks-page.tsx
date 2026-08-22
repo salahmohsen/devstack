@@ -9,6 +9,8 @@ import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
+  formatStackTypeLabel,
+  STACK_TYPE_ORDER,
   type StackListPageOutput,
   type StackOutput,
   normalizeOrganizeActions
@@ -24,7 +26,9 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
+import { Button } from "@tsu-stack/ui/components/button";
 import { ChaoticPixelsLoader } from "@tsu-stack/ui/components/chaotic-pixels-loader";
+import { type FilterValue } from "@tsu-stack/ui/components/filters";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
@@ -60,13 +64,22 @@ import {
   ItemsGrid,
   ItemsGridCell,
   ItemsNavProvider,
+  ListSearchBar,
   PageHeader,
   PageLayout,
   PanelEditButton,
+  createFeaturedBooleanField,
+  createPortfolioBooleanField,
+  createRelationMultiselectField,
+  filterValuesFromRsql,
   isAnyOpened,
+  isListNarrowed,
+  rsqlFromFilterValues,
   useItemsGridColumnCount,
   useItemsNavigation,
-  type ItemsNavLayout
+  withListSearch,
+  type ItemsNavLayout,
+  type ListSearch
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
@@ -87,6 +100,20 @@ import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
 const skillsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/skills/");
+
+const SKILLS_SORT_OPTIONS = [
+  { value: "name", label: "Name" },
+  { value: "projectCount", label: "Projects" },
+  { value: "updatedAt", label: "Updated" }
+] as const;
+
+const TYPE_DISABLED_OPERATORS = ["is_empty", "is_not_empty"] as const;
+
+function isListQueryBadRequest(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { code?: unknown; status?: unknown };
+  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
+}
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
 export function StackDetailPanel({
@@ -208,7 +235,63 @@ export function StacksPage() {
   const navigate = useNavigate();
   const search = skillsRouteApi.useSearch();
   const deepLinkStackId = search.stackId;
-  const stacksQuery = useListStacksPageInfiniteQuery();
+  const listQuery = useMemo(() => {
+    return {
+      q: search.q,
+      filter: search.filter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [search.q, search.filter, search.sortBy, search.sortDir]);
+  const stacksQuery = useListStacksPageInfiniteQuery(listQuery);
+  const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
+  const narrowed = isListNarrowed({ q: search.q, filter: search.filter, page: "skills" });
+
+  const patchListSearch = useCallback(
+    (patch: Partial<Pick<ListSearch, "q" | "filter" | "sortBy" | "sortDir">>) => {
+      void navigate({
+        to: "/dashboard/skills",
+        search: (prev) => withListSearch(prev, patch),
+        replace: true
+      });
+    },
+    [navigate]
+  );
+
+  const clearListSearch = useCallback(() => {
+    patchListSearch({ q: undefined, filter: undefined });
+  }, [patchListSearch]);
+
+  const filterValues = useMemo(
+    () => filterValuesFromRsql(search.filter, "skills"),
+    [search.filter]
+  );
+
+  const projectOptions = useMemo(
+    () =>
+      (projectsQuery.data ?? []).map((project) => {
+        return { value: project.id, label: project.title };
+      }),
+    [projectsQuery.data]
+  );
+
+  const filterFields = useMemo(
+    () => [
+      {
+        id: "type",
+        label: "Type",
+        type: "select" as const,
+        options: STACK_TYPE_ORDER.map((type) => {
+          return { value: type, label: formatStackTypeLabel(type) };
+        }),
+        disabledOperators: [...TYPE_DISABLED_OPERATORS]
+      },
+      createPortfolioBooleanField(),
+      createFeaturedBooleanField(),
+      createRelationMultiselectField("projects", "Projects", projectOptions)
+    ],
+    [projectOptions]
+  );
 
   const {
     openedItem,
@@ -502,7 +585,7 @@ export function StacksPage() {
     setIsApplyingOrganize(false);
   }
 
-  const listPageKey = getListStacksPageInfiniteQueryKey();
+  const listPageKey = getListStacksPageInfiniteQueryKey(listQuery);
 
   const reorderMutation = useMutation(
     orpcQueryClient.stacks.reorder.mutationOptions({
@@ -632,6 +715,18 @@ export function StacksPage() {
   }
 
   useEffect(() => {
+    if (!stacksQuery.isError || !isListQueryBadRequest(stacksQuery.error)) return;
+    toast.error(
+      stacksQuery.error instanceof Error
+        ? stacksQuery.error.message
+        : "Invalid filters. They were cleared."
+    );
+    if (search.filter) {
+      patchListSearch({ filter: undefined });
+    }
+  }, [stacksQuery.isError, stacksQuery.error, search.filter, patchListSearch]);
+
+  useEffect(() => {
     if (!stacksQuery.isLoading && stacks.length === 0) {
       if (openedItem) {
         setOpenedItem(null);
@@ -728,7 +823,18 @@ export function StacksPage() {
     }
   }
 
-  const emptyState = (
+  const emptyState = narrowed ? (
+    <ItemsEmpty
+      icon={<Package aria-hidden />}
+      title="No skills match"
+      description="Try a different search or clear filters to see all skills."
+      action={
+        <Button type="button" variant="outline" onClick={clearListSearch}>
+          Clear filters
+        </Button>
+      }
+    />
+  ) : (
     <ItemsEmpty
       icon={<Package aria-hidden />}
       title="No skills yet"
@@ -831,7 +937,9 @@ export function StacksPage() {
               sort={{
                 isSort,
                 isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
+                reorderDisabled: narrowed,
                 onSortStart: () => {
+                  if (narrowed) return;
                   void handleStartSort();
                 },
                 onSortSave: handleSaveSort,
@@ -841,6 +949,31 @@ export function StacksPage() {
             />
           }
         />
+
+        {!isSort ? (
+          <ListSearchBar
+            variant="catalog"
+            fields={filterFields}
+            value={filterValues as FilterValue[]}
+            onValueChange={(value) => {
+              patchListSearch({ filter: rsqlFromFilterValues(value, "skills") });
+            }}
+            q={search.q}
+            onQChange={(q) => {
+              patchListSearch({ q });
+            }}
+            sortBy={search.sortBy}
+            sortDir={search.sortDir}
+            sortOptions={SKILLS_SORT_OPTIONS}
+            onSortChange={(next) => {
+              patchListSearch({ sortBy: next.sortBy, sortDir: next.sortDir });
+            }}
+            labels={{
+              searchPlaceholder: "Search skills",
+              searchAriaLabel: "Search skills"
+            }}
+          />
+        ) : null}
 
         {!isSort ? (
           <BatchSelectionBar

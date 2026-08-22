@@ -235,6 +235,19 @@ export function ProjectInfoPanel({
       actions={
         <>
           {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
+          {surface === undefined && project.id ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              render={
+                <Link to="/dashboard/skills" search={{ filter: `projects=in=(${project.id})` }} />
+              }
+            >
+              <LayersIcon strokeWidth={2} aria-hidden="true" />
+              View skills
+            </Button>
+          ) : null}
           <Button
             type="button"
             size="icon-sm"

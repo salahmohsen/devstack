@@ -39,6 +39,7 @@ export {
   parseListSearch,
   resolveJobsFilterParam,
   rsqlFromFilterValues,
+  withListSearch,
   type ListSearch,
   type ListSearchJobsPage,
   type ListSearchVariant

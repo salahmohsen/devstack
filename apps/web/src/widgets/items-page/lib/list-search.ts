@@ -126,6 +126,21 @@ export function filterValuesFromRsql(
   }
 }
 
+const LIST_SEARCH_QUERY_KEYS = ["q", "filter", "sortBy", "sortDir"] as const;
+
+/** Merge list query params; omit empty q/filter/sort so the URL stays shareable. */
+export function withListSearch(
+  search: ListSearch,
+  patch: Partial<Pick<ListSearch, (typeof LIST_SEARCH_QUERY_KEYS)[number]>>
+): ListSearch {
+  const next: ListSearch = { ...search, ...patch };
+  for (const key of LIST_SEARCH_QUERY_KEYS) {
+    const value = next[key];
+    if (value == null || value === "") delete next[key];
+  }
+  return next;
+}
+
 /**
  * Chip `onValueChange` → URL `filter`.
  * Empty complete leaves: catalogs omit; jobs write page-scoped **all** (not seed).
