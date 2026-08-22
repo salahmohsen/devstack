@@ -22,6 +22,7 @@ import { PortfolioRouter } from "#@/routers/portfolio.router";
 import { profileRouter } from "#@/routers/profile.router";
 import { projectsRouter } from "#@/routers/projects.router";
 import { resumeRouter } from "#@/routers/resume.router";
+import { searchRouter } from "#@/routers/search.router";
 import { stacksRouter } from "#@/routers/stacks.router";
 
 export const appRouter = {
@@ -37,6 +38,7 @@ export const appRouter = {
   portfolio: PortfolioRouter,
   profile: profileRouter,
   resume: resumeRouter,
+  search: searchRouter,
   onboarding: onboardingRouter,
   invite: inviteRouter,
   jobDiscovery: jobDiscoveryRouter,

@@ -18,6 +18,7 @@ import {
   CommandSeparator
 } from "@tsu-stack/ui/components/command";
 import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd.js";
+import { useFuzzyFilter } from "@tsu-stack/ui/hooks/use-fuzzy-filter";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { type CommandItem as CommandItemType } from "@/shared/lib/command-palette/types";
@@ -28,6 +29,12 @@ import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 const GROUP_ORDER = [
   "Pages",
   "Agent",
+  "Experiences",
+  "Projects",
+  "Skills",
+  "Resumes",
+  "New jobs",
+  "Tracked jobs",
   "Settings",
   "Playground",
   "Actions",
@@ -36,15 +43,34 @@ const GROUP_ORDER = [
   "Issues"
 ];
 
+function passThroughFilter() {
+  return true;
+}
+
+function commandItemToString(item: unknown): string {
+  if (!item || typeof item !== "object") return "";
+  const record = item as { label?: unknown; keywords?: unknown; sublabel?: unknown };
+  const label = typeof record.label === "string" ? record.label : "";
+  const sublabel = typeof record.sublabel === "string" ? record.sublabel : "";
+  const keywords = Array.isArray(record.keywords)
+    ? record.keywords.filter((value): value is string => typeof value === "string").join(" ")
+    : "";
+  return `${label} ${sublabel} ${keywords}`.trim();
+}
+
 export function CommandPalette() {
-  const { open, setOpen, close, items } = useCommandPalette();
+  const [search, setSearch] = useState("");
+  const { open, setOpen, close, items } = useCommandPalette(search);
   const bindings = useCommandBindings();
   const router = useRouter();
-  const [search, setSearch] = useState("");
+  const { filter } = useFuzzyFilter<CommandItemType>({
+    keys: ["label", "sublabel", "keywords"]
+  });
 
   const groupedItems = useMemo(() => {
+    const ranked = filter(items, search.trim());
     const groups = new Map<string, CommandItemType[]>();
-    for (const item of items) {
+    for (const item of ranked) {
       const list = groups.get(item.group) ?? [];
       list.push(item);
       groups.set(item.group, list);
@@ -58,14 +84,15 @@ export function CommandPalette() {
       .map(([label, groupItems]) => {
         return { label, items: groupItems };
       });
-  }, [items]);
+  }, [filter, items, search]);
 
   const handleItemClick = useCallback(
     (item: CommandItemType) => {
       if (item.action.type === "navigate") {
         void router.navigate({
           to: item.action.to as never,
-          params: item.action.params as never
+          params: item.action.params as never,
+          ...(item.action.search ? { search: item.action.search as never } : {})
         });
       } else {
         void item.action.fn();
@@ -84,13 +111,11 @@ export function CommandPalette() {
     <CommandDialog open={open} onOpenChange={handleOpenChange}>
       <CommandDialogPopup>
         <Command
+          filter={passThroughFilter}
           items={groupedItems}
-          value={search}
+          itemToStringValue={commandItemToString}
           onValueChange={setSearch}
-          itemToStringValue={(item) => {
-            const cmd = item as CommandItemType;
-            return `${cmd.label} ${cmd.keywords?.join(" ") ?? ""}`;
-          }}
+          value={search}
         >
           <CommandInput placeholder="Type a command or search..." />
           <CommandPanel>
@@ -114,7 +139,12 @@ export function CommandPalette() {
                                 className={cn("size-4 shrink-0 opacity-80", item.iconClassName)}
                               />
                             ) : null}
-                            <span className="truncate">{item.label}</span>
+                            <span className="min-w-0 truncate">{item.label}</span>
+                            {item.sublabel ? (
+                              <span className="ms-auto max-w-[45%] shrink-0 truncate text-xs text-muted-foreground">
+                                {item.sublabel}
+                              </span>
+                            ) : null}
                           </div>
                           {isCommandId(item.id) ? <HotkeyKbd binding={bindings[item.id]} /> : null}
                         </CommandItem>

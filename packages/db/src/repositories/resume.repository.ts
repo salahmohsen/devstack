@@ -25,6 +25,7 @@ export type ResumeListOptions = {
   where?: SQL;
   sortBy?: ResumeListSortKey;
   sortDir?: "asc" | "desc";
+  limit?: number;
 };
 
 function andAll(parts: Array<SQL | undefined>): SQL | undefined {
@@ -43,11 +44,12 @@ export const resumeRepository = {
       sortBy === "createdAt"
         ? [dir(resume.createdAt), dir(resume.id)]
         : [dir(resume.updatedAt), dir(resume.id)];
-    return getDb()
+    const query = getDb()
       .select()
       .from(resume)
       .where(andAll([eq(resume.userId, userId), options?.where]) ?? eq(resume.userId, userId))
       .orderBy(...orderBy);
+    return options?.limit != null ? query.limit(options.limit) : query;
   },
 
   async findByIdForUser(id: string, userId: string) {

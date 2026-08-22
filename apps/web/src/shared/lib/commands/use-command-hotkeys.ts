@@ -69,7 +69,8 @@ export function useCommandHotkeys() {
       if (item.action.type === "navigate") {
         void router.navigate({
           to: item.action.to as never,
-          params: item.action.params as never
+          params: item.action.params as never,
+          ...(item.action.search ? { search: item.action.search as never } : {})
         });
         return;
       }
