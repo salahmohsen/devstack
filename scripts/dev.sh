@@ -281,6 +281,31 @@ strip_trailing_slash() {
   printf '%s' "$u"
 }
 
+dump_tunnel_log() {
+  if [ -f "$TUNNEL_LOG" ]; then
+    echo -e "${RED}── cloudflared log (last 20 lines) ──${RESET}" >&2
+    tail -20 "$TUNNEL_LOG" >&2 || true
+    echo -e "${RED}────────────────────────────────────${RESET}" >&2
+  fi
+}
+
+# Wait until the connector registers, or the process dies. DNS to Cloudflare's
+# edge can flake (Go querying [::1]:53 when nothing is bound) — callers retry.
+wait_for_named_tunnel() {
+  local i
+  for i in $(seq 1 12); do
+    if ! kill -0 "$TUNNEL_PID" 2>/dev/null; then
+      return 1
+    fi
+    if grep -q "Registered tunnel connection" "$TUNNEL_LOG" 2>/dev/null; then
+      return 0
+    fi
+    sleep 0.5
+  done
+  # Process still up after ~6s even without the register line — treat as ok.
+  kill -0 "$TUNNEL_PID" 2>/dev/null
+}
+
 start_named_tunnel() {
   command -v cloudflared >/dev/null 2>&1 || fail "cloudflared not installed (brew install cloudflared) — required for named tunnels"
   [ -n "$PUBLIC_SERVER_URL" ] || fail "Named tunnel requires DEV_PUBLIC_SERVER_URL=https://your-stable-host (e.g. https://api-dev.example.com)"
@@ -298,15 +323,26 @@ start_named_tunnel() {
     fail "Named mode needs DEV_CLOUDFLARED_CONFIG or DEV_CLOUDFLARED_TUNNEL_NAME (or set DEV_PUBLIC_SERVER_URL only if the tunnel is already running)"
   fi
 
-  : >"$TUNNEL_LOG"
-  "${cmd[@]}" >"$TUNNEL_LOG" 2>&1 &
-  TUNNEL_PID=$!
-  sleep 1
-  if ! kill -0 "$TUNNEL_PID" 2>/dev/null; then
-    fail "cloudflared named tunnel exited early — see $TUNNEL_LOG"
-  fi
-  ok "Named tunnel running (pid $TUNNEL_PID) → ${PUBLIC_SERVER_URL}"
-  TUNNEL_KIND="named"
+  local attempt
+  for attempt in 1 2 3; do
+    : >"$TUNNEL_LOG"
+    "${cmd[@]}" >"$TUNNEL_LOG" 2>&1 &
+    TUNNEL_PID=$!
+    if wait_for_named_tunnel; then
+      ok "Named tunnel running (pid $TUNNEL_PID) → ${PUBLIC_SERVER_URL}"
+      TUNNEL_KIND="named"
+      return 0
+    fi
+    wait "$TUNNEL_PID" 2>/dev/null || true
+    TUNNEL_PID=""
+    if [ "$attempt" -lt 3 ]; then
+      warn "Named tunnel failed to register (attempt ${attempt}/3). Retrying…"
+      sleep 1
+    fi
+  done
+
+  dump_tunnel_log
+  fail "cloudflared named tunnel exited early — DNS to Cloudflare's edge failed or credentials/config are wrong (full log: $TUNNEL_LOG)"
 }
 
 start_quick_tunnel() {
