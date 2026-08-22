@@ -1,4 +1,5 @@
 import {
+  type FilterField,
   type FilterOption,
   type MultiSelectFilterField,
   type SelectFilterField
@@ -54,6 +55,27 @@ export function createRelationMultiselectField(
     type: "multiselect",
     options,
     disabledOperators: [...RELATION_DISABLED_OPERATORS],
+    ...overrides
+  };
+}
+
+const EMPTYABLE_OPERATORS = [
+  { id: "is_empty", label: "is empty", shape: "none" as const },
+  { id: "is_not_empty", label: "is not empty", shape: "none" as const }
+];
+
+/** Presence-only chip (`tiedToJob`): `is empty` / `is not empty`, no value. */
+export function createEmptyableField(
+  id: string,
+  label: string,
+  overrides?: Partial<SelectFilterField>
+): FilterField {
+  return {
+    id,
+    label,
+    type: "select",
+    options: [],
+    operators: EMPTYABLE_OPERATORS,
     ...overrides
   };
 }

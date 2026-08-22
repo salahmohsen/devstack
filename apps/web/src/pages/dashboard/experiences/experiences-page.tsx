@@ -19,7 +19,9 @@ import {
   AlertDialogPopup,
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
+import { Button } from "@tsu-stack/ui/components/button";
 import { ChaoticPixelsLoader } from "@tsu-stack/ui/components/chaotic-pixels-loader";
+import { type FilterValue } from "@tsu-stack/ui/components/filters";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
@@ -43,11 +45,18 @@ import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
   ItemsEmpty,
   ItemsNavProvider,
+  ListSearchBar,
   ListSkeleton,
   PageHeader,
   PageLayout,
+  createPortfolioBooleanField,
+  filterValuesFromRsql,
   isAnyOpened,
-  useItemsNavigation
+  isListNarrowed,
+  rsqlFromFilterValues,
+  useItemsNavigation,
+  withListSearch,
+  type ListSearch
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
@@ -63,6 +72,20 @@ import { ExperienceForm } from "./experience-form";
 import { ExperienceInfoPanel } from "./experience-info-panel";
 
 const experiencesRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/experiences/");
+
+const EXPERIENCES_SORT_OPTIONS = [
+  { value: "fromDate", label: "Start date" },
+  { value: "title", label: "Title" },
+  { value: "updatedAt", label: "Updated" }
+] as const;
+
+const EXPERIENCE_FILTER_FIELDS = [createPortfolioBooleanField()];
+
+function isListQueryBadRequest(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { code?: unknown; status?: unknown };
+  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
+}
 
 function formatRange(fromDate: string | null, toDate: string | null): string {
   if (!fromDate) return "Ongoing";
@@ -96,8 +119,36 @@ export function ExperiencesPage() {
   const navigate = useNavigate();
   const search = experiencesRouteApi.useSearch();
   const deepLinkExperienceId = search.experienceId;
+  const listQuery = useMemo(() => {
+    return {
+      q: search.q,
+      filter: search.filter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [search.q, search.filter, search.sortBy, search.sortDir]);
+  const experiencesQuery = useListExperiencesPageInfiniteQuery(listQuery);
+  const narrowed = isListNarrowed({ q: search.q, filter: search.filter, page: "experiences" });
 
-  const experiencesQuery = useListExperiencesPageInfiniteQuery();
+  const patchListSearch = useCallback(
+    (patch: Partial<Pick<ListSearch, "q" | "filter" | "sortBy" | "sortDir">>) => {
+      void navigate({
+        to: "/dashboard/experiences",
+        search: (prev) => withListSearch(prev, patch),
+        replace: true
+      });
+    },
+    [navigate]
+  );
+
+  const clearListSearch = useCallback(() => {
+    patchListSearch({ q: undefined, filter: undefined });
+  }, [patchListSearch]);
+
+  const filterValues = useMemo(
+    () => filterValuesFromRsql(search.filter, "experiences"),
+    [search.filter]
+  );
   const visibleExperiences = useMemo(
     () => flattenExperiencesPages(experiencesQuery.data),
     [experiencesQuery.data]
@@ -194,7 +245,7 @@ export function ExperiencesPage() {
     })
   );
 
-  const listPageKey = getListExperiencesPageInfiniteQueryKey();
+  const listPageKey = getListExperiencesPageInfiniteQueryKey(listQuery);
 
   const reorderMutation = useMutation(
     orpcQueryClient.experiences.reorder.mutationOptions({
@@ -262,6 +313,7 @@ export function ExperiencesPage() {
   }
 
   async function handleStartSort() {
+    if (narrowed) return;
     // Reorder needs the full catalog so indices stay correct vs unloaded pages.
     setIsLoadingFullListForSort(true);
     try {
@@ -384,6 +436,18 @@ export function ExperiencesPage() {
   const isAnyOpen = isAnyOpened(isItemOpen);
 
   useEffect(() => {
+    if (!experiencesQuery.isError || !isListQueryBadRequest(experiencesQuery.error)) return;
+    toast.error(
+      experiencesQuery.error instanceof Error
+        ? experiencesQuery.error.message
+        : "Invalid filters. They were cleared."
+    );
+    if (search.filter) {
+      patchListSearch({ filter: undefined });
+    }
+  }, [experiencesQuery.isError, experiencesQuery.error, search.filter, patchListSearch]);
+
+  useEffect(() => {
     if (!experiencesQuery.isLoading && visibleExperiences.length === 0) {
       if (openedItem) {
         setOpenedItem(null);
@@ -412,7 +476,18 @@ export function ExperiencesPage() {
     setDialogOpen(true);
   }, []);
 
-  const emptyState = (
+  const emptyState = narrowed ? (
+    <ItemsEmpty
+      icon={<BriefcaseIcon aria-hidden />}
+      title="No experiences match"
+      description="Try a different search or clear filters to see all experiences."
+      action={
+        <Button type="button" variant="outline" onClick={clearListSearch}>
+          Clear filters
+        </Button>
+      }
+    />
+  ) : (
     <ItemsEmpty
       icon={<BriefcaseIcon aria-hidden />}
       title="No experiences yet"
@@ -524,7 +599,9 @@ export function ExperiencesPage() {
               sort={{
                 isSort: isSort,
                 isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
+                reorderDisabled: narrowed,
                 onSortStart: () => {
+                  if (narrowed) return;
                   void handleStartSort();
                 },
                 onSortSave: handleSaveSort,
@@ -534,6 +611,31 @@ export function ExperiencesPage() {
             />
           }
         />
+
+        {!isSort ? (
+          <ListSearchBar
+            variant="catalog"
+            fields={EXPERIENCE_FILTER_FIELDS}
+            value={filterValues as FilterValue[]}
+            onValueChange={(value) => {
+              patchListSearch({ filter: rsqlFromFilterValues(value, "experiences") });
+            }}
+            q={search.q}
+            onQChange={(q) => {
+              patchListSearch({ q });
+            }}
+            sortBy={search.sortBy}
+            sortDir={search.sortDir}
+            sortOptions={EXPERIENCES_SORT_OPTIONS}
+            onSortChange={(next) => {
+              patchListSearch({ sortBy: next.sortBy, sortDir: next.sortDir });
+            }}
+            labels={{
+              searchPlaceholder: "Search experiences",
+              searchAriaLabel: "Search experiences"
+            }}
+          />
+        ) : null}
 
         {!isSort ? (
           <BatchSelectionBar

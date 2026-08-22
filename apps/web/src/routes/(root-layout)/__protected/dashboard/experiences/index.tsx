@@ -1,19 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { parseListSearch } from "@/widgets/items-page";
+
 import { ExperiencesPage } from "@/pages/dashboard/experiences";
 import { getListExperiencesPageInfiniteOptions } from "@/pages/dashboard/experiences/api/list-experiences-page.query";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/experiences/")({
-  component: ExperiencesPage,
-  validateSearch: (raw: Record<string, unknown>): { experienceId?: string } => {
-    const experienceId = raw.experienceId;
-    if (typeof experienceId === "string" && experienceId.length > 0) {
-      return { experienceId };
-    }
-    return {};
+  validateSearch: (raw: Record<string, unknown>) => parseListSearch(raw),
+  loaderDeps: ({ search }) => {
+    return {
+      q: search.q,
+      filter: search.filter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
   },
-  loader: ({ context }) => {
-    // Prefetch first page only — further pages load via infinite scroll.
-    void context.queryClient.ensureInfiniteQueryData(getListExperiencesPageInfiniteOptions());
-  }
+  loader: ({ context, deps }) => {
+    void context.queryClient.ensureInfiniteQueryData(getListExperiencesPageInfiniteOptions(deps));
+  },
+  component: ExperiencesPage
 });

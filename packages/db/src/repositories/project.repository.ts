@@ -1,10 +1,12 @@
 import {
   and,
   asc,
+  desc,
   eq,
   gt,
   inArray,
   isNotNull,
+  lt,
   or,
   sql,
   type InferInsertModel,
@@ -34,42 +36,89 @@ export type UpdateProjectData = Partial<
 
 export type ReorderProjectItem = { id: string; sortOrder: number };
 
-/** Opaque cursor for projects ordered by (sortOrder, title, id). */
-export type ProjectListCursor = {
-  sortOrder: number;
-  title: string;
-  id: string;
+export type ProjectListSortKey = "sortOrder" | "year" | "title" | "updatedAt";
+
+/** Opaque cursor: active sort column(s) + id. Default is (sortOrder, title, id). */
+export type ProjectListCursor =
+  | { sortBy: "sortOrder"; sortOrder: number; title: string; id: string }
+  | { sortBy: "year"; year: number; id: string }
+  | { sortBy: "title"; title: string; id: string }
+  | { sortBy: "updatedAt"; updatedAt: string; id: string };
+
+export type ProjectListPageOptions = {
+  cursor?: string | null;
+  limit: number;
+  where?: SQL;
+  sortBy?: ProjectListSortKey;
+  sortDir?: "asc" | "desc";
 };
 
-function encodeProjectListCursor(
-  row: Pick<ProjectListCursor, "sortOrder" | "title" | "id">
-): string {
-  return Buffer.from(
-    JSON.stringify({
-      sortOrder: row.sortOrder,
-      title: row.title,
-      id: row.id
-    } satisfies ProjectListCursor),
-    "utf8"
-  ).toString("base64url");
+type ProjectListKeyRow = {
+  id: string;
+  sortOrder: number;
+  title: string;
+  year: number;
+  updatedAt: Date;
+};
+
+function encodeProjectListCursor(cursor: ProjectListCursor): string {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function decodeProjectListCursor(cursor: string): ProjectListCursor | null {
   try {
     const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      typeof (parsed as ProjectListCursor).sortOrder !== "number" ||
-      typeof (parsed as ProjectListCursor).title !== "string" ||
-      typeof (parsed as ProjectListCursor).id !== "string"
-    ) {
-      return null;
+    if (!isRecord(parsed) || typeof parsed.id !== "string") return null;
+
+    const sortBy = parsed.sortBy;
+    if (sortBy === "title" && typeof parsed.title === "string") {
+      return { sortBy: "title", title: parsed.title, id: parsed.id };
     }
-    return parsed as ProjectListCursor;
+    if (sortBy === "year" && typeof parsed.year === "number") {
+      return { sortBy: "year", year: parsed.year, id: parsed.id };
+    }
+    if (sortBy === "updatedAt" && typeof parsed.updatedAt === "string") {
+      return { sortBy: "updatedAt", updatedAt: parsed.updatedAt, id: parsed.id };
+    }
+    if (
+      (sortBy === "sortOrder" || sortBy === undefined) &&
+      typeof parsed.sortOrder === "number" &&
+      typeof parsed.title === "string"
+    ) {
+      return {
+        sortBy: "sortOrder",
+        sortOrder: parsed.sortOrder,
+        title: parsed.title,
+        id: parsed.id
+      };
+    }
+    return null;
   } catch {
     return null;
   }
+}
+
+function andAll(parts: Array<SQL | undefined>): SQL | undefined {
+  const present = parts.filter((part): part is SQL => part !== undefined);
+  if (present.length === 0) return undefined;
+  if (present.length === 1) return present[0];
+  return and(...present);
+}
+
+function encodeProjectRowCursor(
+  row: ProjectListKeyRow,
+  sortBy: ProjectListSortKey
+): ProjectListCursor {
+  if (sortBy === "title") return { sortBy: "title", title: row.title, id: row.id };
+  if (sortBy === "year") return { sortBy: "year", year: row.year, id: row.id };
+  if (sortBy === "updatedAt") {
+    return { sortBy: "updatedAt", updatedAt: row.updatedAt.toISOString(), id: row.id };
+  }
+  return { sortBy: "sortOrder", sortOrder: row.sortOrder, title: row.title, id: row.id };
 }
 
 export const projectRepository = {
@@ -87,49 +136,82 @@ export const projectRepository = {
 
   /**
    * Cursor page for dashboard infinite scroll.
-   * Order: sortOrder ASC, title ASC, id ASC (stable).
-   * Full row + stacks (same shape as findAllByUserId).
+   * Default order: sortOrder ASC, title ASC, id ASC.
+   * Display sort keysets on the active column(s) + id. `where` is precompiled SQL.
    */
-  async findPageByUserId(userId: string, options: { cursor?: string | null; limit: number }) {
+  async findPageByUserId(userId: string, options: ProjectListPageOptions) {
     const limit = options.limit;
-    const cursor =
+    const sortBy = options.sortBy ?? "sortOrder";
+    const sortDir = options.sortDir ?? "asc";
+    const dir = sortDir === "desc" ? desc : asc;
+    const after = sortDir === "desc" ? lt : gt;
+
+    const decoded =
       options.cursor != null && options.cursor !== ""
         ? decodeProjectListCursor(options.cursor)
         : null;
+    const cursor = decoded?.sortBy === sortBy ? decoded : null;
 
-    const cursorWhere =
-      cursor == null
-        ? undefined
-        : or(
-            gt(project.sortOrder, cursor.sortOrder),
-            and(eq(project.sortOrder, cursor.sortOrder), gt(project.title, cursor.title)),
-            and(
-              eq(project.sortOrder, cursor.sortOrder),
-              eq(project.title, cursor.title),
-              gt(project.id, cursor.id)
-            )
-          );
+    let cursorWhere: SQL | undefined;
+    if (cursor?.sortBy === "sortOrder") {
+      cursorWhere = or(
+        after(project.sortOrder, cursor.sortOrder),
+        and(eq(project.sortOrder, cursor.sortOrder), after(project.title, cursor.title)),
+        and(
+          eq(project.sortOrder, cursor.sortOrder),
+          eq(project.title, cursor.title),
+          after(project.id, cursor.id)
+        )
+      );
+    } else if (cursor?.sortBy === "title") {
+      cursorWhere = or(
+        after(project.title, cursor.title),
+        and(eq(project.title, cursor.title), after(project.id, cursor.id))
+      );
+    } else if (cursor?.sortBy === "year") {
+      cursorWhere = or(
+        after(project.year, cursor.year),
+        and(eq(project.year, cursor.year), after(project.id, cursor.id))
+      );
+    } else if (cursor?.sortBy === "updatedAt") {
+      const at = new Date(cursor.updatedAt);
+      if (!Number.isNaN(at.getTime())) {
+        cursorWhere = or(
+          after(project.updatedAt, at),
+          and(eq(project.updatedAt, at), after(project.id, cursor.id))
+        );
+      }
+    }
 
-    const whereClause =
-      cursorWhere == null
-        ? eq(project.userId, userId)
-        : and(eq(project.userId, userId), cursorWhere);
+    const filterWhere = andAll([eq(project.userId, userId), options.where]);
+    const pageWhere = andAll([filterWhere, cursorWhere]) ?? eq(project.userId, userId);
+
+    const orderBy =
+      sortBy === "title"
+        ? [dir(project.title), dir(project.id)]
+        : sortBy === "year"
+          ? [dir(project.year), dir(project.id)]
+          : sortBy === "updatedAt"
+            ? [dir(project.updatedAt), dir(project.id)]
+            : [dir(project.sortOrder), dir(project.title), dir(project.id)];
 
     const [rows, countRow] = await Promise.all([
       getDb()
         .select({
           id: project.id,
           sortOrder: project.sortOrder,
-          title: project.title
+          title: project.title,
+          year: project.year,
+          updatedAt: project.updatedAt
         })
         .from(project)
-        .where(whereClause)
-        .orderBy(asc(project.sortOrder), asc(project.title), asc(project.id))
+        .where(pageWhere)
+        .orderBy(...orderBy)
         .limit(limit + 1),
       getDb()
         .select({ count: sql<number>`count(*)::int` })
         .from(project)
-        .where(eq(project.userId, userId))
+        .where(filterWhere)
         .then((r) => r[0]?.count ?? 0)
     ]);
 
@@ -156,7 +238,10 @@ export const projectRepository = {
       .filter((p): p is NonNullable<typeof p> => p != null);
 
     const last = pageRows[pageRows.length - 1];
-    const nextCursor = hasMore && last != null ? encodeProjectListCursor(last) : null;
+    const nextCursor =
+      hasMore && last != null
+        ? encodeProjectListCursor(encodeProjectRowCursor(last, sortBy))
+        : null;
 
     return { items, nextCursor, totalCount: countRow };
   },

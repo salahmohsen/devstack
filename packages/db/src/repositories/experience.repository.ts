@@ -1,10 +1,12 @@
 import {
   and,
   asc,
+  desc,
   eq,
   gt,
   inArray,
   isNotNull,
+  lt,
   or,
   sql,
   type InferInsertModel,
@@ -24,42 +26,91 @@ export type CreateExperienceData = Omit<
 export type UpdateExperienceData = Partial<Omit<CreateExperienceData, "userId">>;
 export type ReorderExperienceItem = { id: string; sortOrder: number };
 
-/** Opaque cursor for experiences ordered by (sortOrder, title, id). */
-export type ExperienceListCursor = {
-  sortOrder: number;
-  title: string;
-  id: string;
+export type ExperienceListSortKey = "sortOrder" | "fromDate" | "title" | "updatedAt";
+
+/** Opaque cursor: active sort column(s) + id. Default is (sortOrder, title, id). */
+export type ExperienceListCursor =
+  | { sortBy: "sortOrder"; sortOrder: number; title: string; id: string }
+  | { sortBy: "fromDate"; fromDate: string; id: string }
+  | { sortBy: "title"; title: string; id: string }
+  | { sortBy: "updatedAt"; updatedAt: string; id: string };
+
+export type ExperienceListPageOptions = {
+  cursor?: string | null;
+  limit: number;
+  where?: SQL;
+  sortBy?: ExperienceListSortKey;
+  sortDir?: "asc" | "desc";
 };
 
-function encodeExperienceListCursor(
-  row: Pick<ExperienceListCursor, "sortOrder" | "title" | "id">
-): string {
-  return Buffer.from(
-    JSON.stringify({
-      sortOrder: row.sortOrder,
-      title: row.title,
-      id: row.id
-    } satisfies ExperienceListCursor),
-    "utf8"
-  ).toString("base64url");
+type ExperienceListKeyRow = {
+  id: string;
+  sortOrder: number;
+  title: string;
+  fromDate: string | null;
+  updatedAt: Date;
+};
+
+function encodeExperienceListCursor(cursor: ExperienceListCursor): string {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function decodeExperienceListCursor(cursor: string): ExperienceListCursor | null {
   try {
     const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      typeof (parsed as ExperienceListCursor).sortOrder !== "number" ||
-      typeof (parsed as ExperienceListCursor).title !== "string" ||
-      typeof (parsed as ExperienceListCursor).id !== "string"
-    ) {
-      return null;
+    if (!isRecord(parsed) || typeof parsed.id !== "string") return null;
+
+    const sortBy = parsed.sortBy;
+    if (sortBy === "title" && typeof parsed.title === "string") {
+      return { sortBy: "title", title: parsed.title, id: parsed.id };
     }
-    return parsed as ExperienceListCursor;
+    if (sortBy === "fromDate" && typeof parsed.fromDate === "string") {
+      return { sortBy: "fromDate", fromDate: parsed.fromDate, id: parsed.id };
+    }
+    if (sortBy === "updatedAt" && typeof parsed.updatedAt === "string") {
+      return { sortBy: "updatedAt", updatedAt: parsed.updatedAt, id: parsed.id };
+    }
+    if (
+      (sortBy === "sortOrder" || sortBy === undefined) &&
+      typeof parsed.sortOrder === "number" &&
+      typeof parsed.title === "string"
+    ) {
+      return {
+        sortBy: "sortOrder",
+        sortOrder: parsed.sortOrder,
+        title: parsed.title,
+        id: parsed.id
+      };
+    }
+    return null;
   } catch {
     return null;
   }
+}
+
+function andAll(parts: Array<SQL | undefined>): SQL | undefined {
+  const present = parts.filter((part): part is SQL => part !== undefined);
+  if (present.length === 0) return undefined;
+  if (present.length === 1) return present[0];
+  return and(...present);
+}
+
+function encodeExperienceRowCursor(
+  row: ExperienceListKeyRow,
+  sortBy: ExperienceListSortKey
+): ExperienceListCursor {
+  if (sortBy === "title") return { sortBy: "title", title: row.title, id: row.id };
+  if (sortBy === "fromDate") {
+    return { sortBy: "fromDate", fromDate: row.fromDate ?? "", id: row.id };
+  }
+  if (sortBy === "updatedAt") {
+    return { sortBy: "updatedAt", updatedAt: row.updatedAt.toISOString(), id: row.id };
+  }
+  return { sortBy: "sortOrder", sortOrder: row.sortOrder, title: row.title, id: row.id };
 }
 
 export const experienceRepository = {
@@ -82,49 +133,83 @@ export const experienceRepository = {
 
   /**
    * Cursor page for dashboard infinite scroll.
-   * Order: sortOrder ASC, title ASC, id ASC (stable).
-   * Full row + projects/stacks (same shape as findAllByUserId).
+   * Default order: sortOrder ASC, title ASC, id ASC.
+   * Display sort keysets on the active column(s) + id. `where` is precompiled SQL.
    */
-  async findPageByUserId(userId: string, options: { cursor?: string | null; limit: number }) {
+  async findPageByUserId(userId: string, options: ExperienceListPageOptions) {
     const limit = options.limit;
-    const cursor =
+    const sortBy = options.sortBy ?? "sortOrder";
+    const sortDir = options.sortDir ?? "asc";
+    const dir = sortDir === "desc" ? desc : asc;
+    const after = sortDir === "desc" ? lt : gt;
+    const fromDateExpr = sql<string>`coalesce(${experience.fromDate}, '')`;
+
+    const decoded =
       options.cursor != null && options.cursor !== ""
         ? decodeExperienceListCursor(options.cursor)
         : null;
+    const cursor = decoded?.sortBy === sortBy ? decoded : null;
 
-    const cursorWhere =
-      cursor == null
-        ? undefined
-        : or(
-            gt(experience.sortOrder, cursor.sortOrder),
-            and(eq(experience.sortOrder, cursor.sortOrder), gt(experience.title, cursor.title)),
-            and(
-              eq(experience.sortOrder, cursor.sortOrder),
-              eq(experience.title, cursor.title),
-              gt(experience.id, cursor.id)
-            )
-          );
+    let cursorWhere: SQL | undefined;
+    if (cursor?.sortBy === "sortOrder") {
+      cursorWhere = or(
+        after(experience.sortOrder, cursor.sortOrder),
+        and(eq(experience.sortOrder, cursor.sortOrder), after(experience.title, cursor.title)),
+        and(
+          eq(experience.sortOrder, cursor.sortOrder),
+          eq(experience.title, cursor.title),
+          after(experience.id, cursor.id)
+        )
+      );
+    } else if (cursor?.sortBy === "title") {
+      cursorWhere = or(
+        after(experience.title, cursor.title),
+        and(eq(experience.title, cursor.title), after(experience.id, cursor.id))
+      );
+    } else if (cursor?.sortBy === "fromDate") {
+      cursorWhere = or(
+        after(fromDateExpr, cursor.fromDate),
+        and(eq(fromDateExpr, cursor.fromDate), after(experience.id, cursor.id))
+      );
+    } else if (cursor?.sortBy === "updatedAt") {
+      const at = new Date(cursor.updatedAt);
+      if (!Number.isNaN(at.getTime())) {
+        cursorWhere = or(
+          after(experience.updatedAt, at),
+          and(eq(experience.updatedAt, at), after(experience.id, cursor.id))
+        );
+      }
+    }
 
-    const whereClause =
-      cursorWhere == null
-        ? eq(experience.userId, userId)
-        : and(eq(experience.userId, userId), cursorWhere);
+    const filterWhere = andAll([eq(experience.userId, userId), options.where]);
+    const pageWhere = andAll([filterWhere, cursorWhere]) ?? eq(experience.userId, userId);
+
+    const orderBy =
+      sortBy === "title"
+        ? [dir(experience.title), dir(experience.id)]
+        : sortBy === "fromDate"
+          ? [dir(fromDateExpr), dir(experience.id)]
+          : sortBy === "updatedAt"
+            ? [dir(experience.updatedAt), dir(experience.id)]
+            : [dir(experience.sortOrder), dir(experience.title), dir(experience.id)];
 
     const [rows, countRow] = await Promise.all([
       getDb()
         .select({
           id: experience.id,
           sortOrder: experience.sortOrder,
-          title: experience.title
+          title: experience.title,
+          fromDate: experience.fromDate,
+          updatedAt: experience.updatedAt
         })
         .from(experience)
-        .where(whereClause)
-        .orderBy(asc(experience.sortOrder), asc(experience.title), asc(experience.id))
+        .where(pageWhere)
+        .orderBy(...orderBy)
         .limit(limit + 1),
       getDb()
         .select({ count: sql<number>`count(*)::int` })
         .from(experience)
-        .where(eq(experience.userId, userId))
+        .where(filterWhere)
         .then((r) => r[0]?.count ?? 0)
     ]);
 
@@ -156,7 +241,10 @@ export const experienceRepository = {
       .filter((e): e is NonNullable<typeof e> => e != null);
 
     const last = pageRows[pageRows.length - 1];
-    const nextCursor = hasMore && last != null ? encodeExperienceListCursor(last) : null;
+    const nextCursor =
+      hasMore && last != null
+        ? encodeExperienceListCursor(encodeExperienceRowCursor(last, sortBy))
+        : null;
 
     return { items, nextCursor, totalCount: countRow };
   },

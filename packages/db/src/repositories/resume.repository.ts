@@ -1,4 +1,13 @@
-import { and, eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  type InferInsertModel,
+  type InferSelectModel,
+  type SQL
+} from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { resume } from "../schema/resume.schema.ts";
@@ -10,12 +19,35 @@ export type CreateResumeData = Omit<
 >;
 export type UpdateResumeData = Partial<Omit<CreateResumeData, "userId">>;
 
+export type ResumeListSortKey = "updatedAt" | "createdAt";
+
+export type ResumeListOptions = {
+  where?: SQL;
+  sortBy?: ResumeListSortKey;
+  sortDir?: "asc" | "desc";
+};
+
+function andAll(parts: Array<SQL | undefined>): SQL | undefined {
+  const present = parts.filter((part): part is SQL => part !== undefined);
+  if (present.length === 0) return undefined;
+  if (present.length === 1) return present[0];
+  return and(...present);
+}
+
 export const resumeRepository = {
-  async findAllByUserId(userId: string) {
-    return getDb().query.resume.findMany({
-      where: { userId },
-      orderBy: (r, { desc }) => [desc(r.createdAt)]
-    });
+  async findAllByUserId(userId: string, options?: ResumeListOptions) {
+    const sortBy = options?.sortBy ?? "updatedAt";
+    const sortDir = options?.sortDir ?? "desc";
+    const dir = sortDir === "desc" ? desc : asc;
+    const orderBy =
+      sortBy === "createdAt"
+        ? [dir(resume.createdAt), dir(resume.id)]
+        : [dir(resume.updatedAt), dir(resume.id)];
+    return getDb()
+      .select()
+      .from(resume)
+      .where(andAll([eq(resume.userId, userId), options?.where]) ?? eq(resume.userId, userId))
+      .orderBy(...orderBy);
   },
 
   async findByIdForUser(id: string, userId: string) {
