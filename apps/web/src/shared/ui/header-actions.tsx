@@ -55,17 +55,19 @@ type HeaderActionProps = {
     onSortSave: () => void;
     onSortRestore: () => void;
     onSortCancel: () => void;
+    /** When true, Reorder is unavailable (list is narrowed by search/chips). */
+    reorderDisabled?: boolean;
   };
 };
 
-function ReorderMenu({ onSortStart }: { onSortStart: () => void }) {
+function ReorderMenu({ onSortStart, disabled }: { onSortStart: () => void; disabled?: boolean }) {
   return (
     <Menu>
       <MenuTrigger render={<Button type="button" size="icon" aria-label="More actions" />}>
         <ChevronDownIcon aria-hidden />
       </MenuTrigger>
       <MenuPopup align="end">
-        <MenuItem onClick={onSortStart}>
+        <MenuItem disabled={disabled} onClick={onSortStart}>
           <ArrowUpDownIcon />
           Reorder
         </MenuItem>
@@ -96,13 +98,22 @@ function AddButton({
 }
 
 export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps) {
-  const { isSort, isSortPending, onSortStart, onSortSave, onSortRestore, onSortCancel } =
-    sort ?? {};
+  const {
+    isSort,
+    isSortPending,
+    onSortStart,
+    onSortSave,
+    onSortRestore,
+    onSortCancel,
+    reorderDisabled
+  } = sort ?? {};
 
   const addControl = add?.onAdd ? (
     <AddButton onAdd={add.onAdd} label={add.label} isLoading={add.isLoading} />
   ) : null;
-  const menuControl = onSortStart ? <ReorderMenu onSortStart={onSortStart} /> : null;
+  const menuControl = onSortStart ? (
+    <ReorderMenu disabled={reorderDisabled} onSortStart={onSortStart} />
+  ) : null;
 
   return (
     <div className="flex gap-2">
