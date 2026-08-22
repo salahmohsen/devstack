@@ -855,7 +855,7 @@ export const agentRouter = {
             icon: stack.icon,
             projectCount: stack.projectCount ?? 0,
             npmPackages: (stack.dependencies ?? []).map((d) => d.npmPackage),
-            alternativeNames: stack.alternativeNames ?? [],
+            aliases: stack.aliases ?? [],
             isFeatured: Boolean(stack.isFeatured),
             includedInPortfolio: Boolean(stack.portfolioEntryId)
           };

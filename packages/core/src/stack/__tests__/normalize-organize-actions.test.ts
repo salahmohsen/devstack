@@ -119,13 +119,13 @@ describe("normalizeOrganizeActions", () => {
     expect(sortOrder).toEqual(["b", "c"]);
   });
 
-  it("keeps alternative names on a rename", () => {
+  it("keeps aliases on a rename", () => {
     const actions: OrganizeAction[] = [
       {
         type: "rename",
         stackId: "c",
         stackName: "reactjs",
-        details: { newName: "React.js", alternativeNames: ["reactjs", "React JS"] },
+        details: { newName: "React.js", aliases: ["reactjs", "React JS"] },
         reason: "canonical"
       }
     ];
@@ -134,6 +134,21 @@ describe("normalizeOrganizeActions", () => {
     expect(out).toHaveLength(1);
     expect(out[0]?.type).toBe("rename");
     expect(out[0]?.details.newName).toBe("React.js");
-    expect(out[0]?.details.alternativeNames).toEqual(["reactjs", "React JS"]);
+    expect(out[0]?.details.aliases).toEqual(["reactjs", "React JS"]);
+  });
+
+  it("reads in-flight alternativeNames as aliases", () => {
+    const actions: OrganizeAction[] = [
+      {
+        type: "rename",
+        stackId: "c",
+        stackName: "reactjs",
+        details: { newName: "React.js", alternativeNames: ["reactjs"] },
+        reason: "canonical"
+      }
+    ];
+
+    const { actions: out } = normalizeOrganizeActions(actions, stacks);
+    expect(out[0]?.details.aliases).toEqual(["reactjs"]);
   });
 });

@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   sanitizeSvg,
-  STACK_ALTERNATIVE_NAME_MAX_LENGTH,
-  STACK_ALTERNATIVE_NAMES_MAX,
+  STACK_ALIAS_MAX_LENGTH,
+  STACK_ALIASES_MAX,
   StackCreateInputSchema,
   StackUpdateInputSchema,
   type StackOutput
@@ -111,7 +111,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
       type: stack?.type ?? "",
       includedInPortfolio: !!stack?.portfolioEntryId,
       isFeatured: !!stack?.isFeatured,
-      alternativeNames: stack?.alternativeNames ?? [],
+      aliases: stack?.aliases ?? [],
       dependencies: (stack?.dependencies ?? []).map((d) => {
         return {
           npmPackage: d.npmPackage,
@@ -135,7 +135,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             type: value.type || null,
             includedInPortfolio: value.includedInPortfolio,
             isFeatured: value.isFeatured,
-            alternativeNames: value.alternativeNames,
+            aliases: value.aliases,
             dependencies: value.dependencies,
             projectIds: value.projectIds
           }
@@ -148,7 +148,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
           type: value.type || null,
           includedInPortfolio: value.includedInPortfolio,
           isFeatured: value.isFeatured,
-          alternativeNames: value.alternativeNames,
+          aliases: value.aliases,
           dependencies: value.dependencies,
           projectIds: value.projectIds
         });
@@ -168,7 +168,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
         type: stack.type ?? "",
         includedInPortfolio: !!stack.portfolioEntryId,
         isFeatured: !!stack.isFeatured,
-        alternativeNames: stack.alternativeNames ?? [],
+        aliases: stack.aliases ?? [],
         dependencies: stack.dependencies.map((d) => {
           return {
             npmPackage: d.npmPackage,
@@ -186,7 +186,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
         type: "",
         includedInPortfolio: false,
         isFeatured: false,
-        alternativeNames: [],
+        aliases: [],
         dependencies: [],
         projectIds: []
       });
@@ -214,14 +214,14 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => <field.InputField label="Name" placeholder="e.g. React" />}
           </form.AppField>
 
-          <form.AppField name="alternativeNames">
+          <form.AppField name="aliases">
             {(field) => (
               <field.TagsField
-                label="Alternative names"
+                label="Aliases"
                 description="Other names for this skill (React.js, ReactJS). Helps matching and search."
                 placeholder="Type a name and press Enter"
-                maxItems={STACK_ALTERNATIVE_NAMES_MAX}
-                maxItemLength={STACK_ALTERNATIVE_NAME_MAX_LENGTH}
+                maxItems={STACK_ALIASES_MAX}
+                maxItemLength={STACK_ALIAS_MAX_LENGTH}
               />
             )}
           </form.AppField>

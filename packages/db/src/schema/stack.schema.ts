@@ -33,7 +33,7 @@ export const stack = pgTable(
     confidence: text("confidence"),
     sortOrder: integer("sort_order").notNull().default(0),
     isFeatured: boolean("is_featured").notNull().default(false),
-    alternativeNames: jsonb("alternative_names").$type<string[]>().notNull().default([]),
+    aliases: jsonb("aliases").$type<string[]>().notNull().default([]),
     portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
       onDelete: "set null"
     }),

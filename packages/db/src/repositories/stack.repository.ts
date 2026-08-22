@@ -58,7 +58,7 @@ export type StackListRow = {
   confidence: string | null;
   sortOrder: number;
   isFeatured: boolean;
-  alternativeNames: string[];
+  aliases: string[];
   portfolioEntryId: string | null;
   updatedAt: Date;
   createdAt: Date;
@@ -168,7 +168,7 @@ export const stackRepository = {
         confidence: stack.confidence,
         sortOrder: stack.sortOrder,
         isFeatured: stack.isFeatured,
-        alternativeNames: stack.alternativeNames,
+        aliases: stack.aliases,
         portfolioEntryId: stack.portfolioEntryId,
         updatedAt: stack.updatedAt,
         createdAt: stack.createdAt,
@@ -260,7 +260,7 @@ export const stackRepository = {
           confidence: stack.confidence,
           sortOrder: stack.sortOrder,
           isFeatured: stack.isFeatured,
-          alternativeNames: stack.alternativeNames,
+          aliases: stack.aliases,
           portfolioEntryId: stack.portfolioEntryId,
           updatedAt: stack.updatedAt,
           createdAt: stack.createdAt,
@@ -456,7 +456,7 @@ export const stackRepository = {
         confidence: input.confidence ?? null,
         sortOrder: input.sortOrder ?? 0,
         isFeatured: input.isFeatured ?? false,
-        alternativeNames: input.alternativeNames ?? [],
+        aliases: input.aliases ?? [],
         portfolioEntryId: pid
       });
 
@@ -724,14 +724,14 @@ export const stackRepository = {
 
       const mergedNames = mergeAlternativeNames(
         survivor.name,
-        survivor.alternativeNames,
+        survivor.aliases,
         victim.name,
-        victim.alternativeNames
+        victim.aliases
       );
       if (mergedNames.length > 0) {
         await tx
           .update(stack)
-          .set({ alternativeNames: mergedNames })
+          .set({ aliases: mergedNames })
           .where(and(eq(stack.id, survivorId), eq(stack.userId, userId)));
       }
 

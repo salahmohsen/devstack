@@ -23,7 +23,7 @@ function stack(overrides: Partial<StackOutput> = {}): StackOutput {
     isFeatured: false,
     portfolioEntryId: null,
     includedInPortfolio: false,
-    alternativeNames: ["CSS-in-JS"],
+    aliases: ["CSS-in-JS"],
     dependencies: [{ npmPackage: "react", description: null, homepage: null }],
     projects: [{ id: "p1", name: "App", logo: null }],
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),

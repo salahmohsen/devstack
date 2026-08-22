@@ -37,7 +37,7 @@ type MutableRename = {
   type: "rename";
   stackId: string;
   stackName: string;
-  details: { newName: string; alternativeNames?: string[] };
+  details: { newName: string; aliases?: string[] };
   reason: string;
 };
 
@@ -218,14 +218,16 @@ export function normalizeOrganizeActions(
       nameOwner.delete(oldKey);
     }
 
-    const aliases = action.details.alternativeNames?.filter((name) => name.trim()) ?? [];
+    const aliases = (action.details.aliases ?? action.details.alternativeNames ?? []).filter(
+      (name) => name.trim()
+    );
     renames.push({
       type: "rename",
       stackId: action.stackId,
       stackName: currentName,
       details: {
         newName,
-        ...(aliases.length > 0 ? { alternativeNames: aliases } : {})
+        ...(aliases.length > 0 ? { aliases: aliases } : {})
       },
       reason: action.reason
     });

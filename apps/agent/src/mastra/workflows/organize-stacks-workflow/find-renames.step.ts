@@ -152,7 +152,7 @@ export const findRenames = createStep({
 
       const stackList = chunk
         .map((s) => {
-          const aliases = (s.alternativeNames ?? []).join(", ");
+          const aliases = (s.aliases ?? []).join(", ");
           return aliases
             ? `- id: ${s.id} | name: "${s.name}" | aliases: ${aliases}`
             : `- id: ${s.id} | name: "${s.name}"`;
@@ -173,13 +173,13 @@ Output JSON:
       "stackId": "id",
       "currentName": "current",
       "newName": "canonical",
-      "alternativeNames": ["old name", "abbrev"],
+      "aliases": ["old name", "abbrev"],
       "reason": "why rename"
     }
   ]
 }
 
-Only suggest renames when the current name is clearly non-canonical. Skip skills that already have the conventional name. Always include the current name in alternativeNames when it differs from newName. Keep existing aliases.`;
+Only suggest renames when the current name is clearly non-canonical. Skip skills that already have the conventional name. Always include the current name in aliases when it differs from newName. Keep existing aliases.`;
 
       const chunkStarted = Date.now();
       try {
@@ -239,17 +239,13 @@ Only suggest renames when the current name is clearly non-canonical. Skip skills
             nameOwner.delete(oldKey);
           }
           nameOwner.set(key, { id: rename.stackId, name: newName });
-          const aliases = [
-            stack.name,
-            ...(stack.alternativeNames ?? []),
-            ...(rename.alternativeNames ?? [])
-          ];
+          const aliases = [stack.name, ...(stack.aliases ?? []), ...(rename.aliases ?? [])];
           renameActions.push({
             stackId: rename.stackId,
             currentName: stack.name,
             newName,
             reason: rename.reason,
-            alternativeNames: aliases
+            aliases: aliases
           });
         }
       } catch (error) {
