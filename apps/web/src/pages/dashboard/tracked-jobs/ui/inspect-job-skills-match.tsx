@@ -20,6 +20,11 @@ import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-appli
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { JobSkillsMatch, type JobSkillChipHaveItKind } from "@/shared/ui/job-card-marks";
 
+import {
+  useGetJobPreferenceQuery,
+  useUpsertJobPreferenceMutation
+} from "@/features/job-preference";
+
 function catalogFromHeld(held: readonly HeldSkill[] | undefined): HeldSkillWithId[] {
   const rows: HeldSkillWithId[] = [];
   for (const row of held ?? []) {
@@ -61,15 +66,17 @@ function AliasSkillPickerDialog({
   onOpenChange: (open: boolean) => void;
   onConfirm: (skillId: string) => void;
 }) {
-  const items = useMemo(() => 
-    catalog.map((skill) => {
-      const aliases = skill.aliases ?? [];
-      return {
-        value: skill.id,
-        label: aliases.length > 0 ? `${skill.name} · ${aliases.join(", ")}` : skill.name
-      };
-    })
-  , [catalog]);
+  const items = useMemo(
+    () =>
+      catalog.map((skill) => {
+        const aliases = skill.aliases ?? [];
+        return {
+          value: skill.id,
+          label: aliases.length > 0 ? `${skill.name} · ${aliases.join(", ")}` : skill.name
+        };
+      }),
+    [catalog]
+  );
 
   const form = useAppForm({
     defaultValues: { skillId: preselectHeldSkillForAlias(token, catalog) ?? "" },
@@ -122,6 +129,9 @@ export function InspectJobSkillsMatch({
   const queryClient = useQueryClient();
   const catalog = useMemo(() => catalogFromHeld(held), [held]);
   const [pickerToken, setPickerToken] = useState<string | null>(null);
+  const preferenceQuery = useGetJobPreferenceQuery();
+  const upsertPreference = useUpsertJobPreferenceMutation();
+  const excludeKeywords = preferenceQuery.data?.excludeKeywords ?? [];
 
   const updateStack = useMutation(
     orpcQueryClient.stacks.update.mutationOptions({
@@ -138,6 +148,35 @@ export function InspectJobSkillsMatch({
     }
     if (catalog.length === 0) return;
     setPickerToken(token);
+  }
+
+  function handleAvoid(token: string) {
+    const trimmed = token.trim();
+    if (!trimmed) return;
+    if (!preferenceQuery.isSuccess || !preferenceQuery.data) return;
+
+    const current = preferenceQuery.data.excludeKeywords ?? [];
+    const tokenKey = normalizeJobSkillName(trimmed);
+    if (current.some((keyword) => normalizeJobSkillName(keyword) === tokenKey)) return;
+
+    const next = [...current, trimmed];
+    void upsertPreference
+      .mutateAsync({ excludeKeywords: next })
+      .then(() => {
+        toast.success(`Avoiding ${trimmed}.`, {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              void upsertPreference.mutateAsync({ excludeKeywords: current }).catch(() => {
+                toast.error("Could not undo avoid.");
+              });
+            }
+          }
+        });
+      })
+      .catch(() => {
+        toast.error("Could not update job preferences.");
+      });
   }
 
   function handleConfirmAlias(skillId: string) {
@@ -188,7 +227,10 @@ export function InspectJobSkillsMatch({
         listingMinYears={listingMinYears}
         seekerYears={seekerYears}
         onHaveIt={handleHaveIt}
+        onAvoid={handleAvoid}
         hasAliasCatalog={catalog.length > 0}
+        canAvoid={preferenceQuery.isSuccess && !upsertPreference.isPending}
+        excludedKeywords={excludeKeywords}
       />
       {pickerToken ? (
         <AliasSkillPickerDialog

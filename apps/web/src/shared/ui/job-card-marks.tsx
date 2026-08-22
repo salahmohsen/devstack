@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import {
   classifyJobSkills,
+  normalizeJobSkillName,
   skillsOverlap,
   type HeldSkill,
   type JobSkillTag
@@ -179,27 +180,42 @@ function SkillChipMark({ tone }: { tone: "have" | "close" | "missing" }) {
   );
 }
 
+function isExcludedToken(token: string, excludedKeywords: readonly string[] | undefined): boolean {
+  const tokenKey = normalizeJobSkillName(token);
+  if (!tokenKey) return false;
+  return (excludedKeywords ?? []).some((keyword) => normalizeJobSkillName(keyword) === tokenKey);
+}
+
 function SkillChip({
   tone,
   item,
   onHaveIt,
-  hasAliasCatalog
+  onAvoid,
+  hasAliasCatalog,
+  canAvoid,
+  excludedKeywords
 }: {
   tone: "have" | "close" | "missing";
   item: SkillChipItem;
   onHaveIt?: (input: { token: string; kind: JobSkillChipHaveItKind }) => void;
+  onAvoid?: (token: string) => void;
   hasAliasCatalog?: boolean;
+  canAvoid?: boolean;
+  excludedKeywords?: readonly string[];
 }) {
+  const excluded = isExcludedToken(item.token, excludedKeywords);
   const chipClass = cn(SKILL_CHIP_CLASS, skillChipToneClass(tone));
   const inner = (
     <>
       <SkillChipMark tone={tone} />
-      <span className="truncate lowercase">{item.label}</span>
+      <span className={cn("truncate lowercase", excluded && "line-through opacity-70")}>
+        {item.label}
+      </span>
     </>
   );
 
-  const interactive = tone !== "have" && onHaveIt != null;
-  if (!interactive || onHaveIt == null) {
+  const interactive = tone !== "have" && (onHaveIt != null || onAvoid != null);
+  if (!interactive) {
     return (
       <span title={item.label} className={chipClass}>
         {inner}
@@ -215,7 +231,7 @@ function SkillChip({
       <MenuTrigger
         type="button"
         title={item.label}
-        aria-label={`${item.token} actions`}
+        aria-label={excluded ? `${item.token}, avoided` : `${item.token} actions`}
         className={cn(
           chipClass,
           "cursor-pointer border-0 shadow-none outline-none",
@@ -226,14 +242,26 @@ function SkillChip({
         {inner}
       </MenuTrigger>
       <MenuPopup align="start">
-        <MenuItem
-          disabled={haveItDisabled}
-          onClick={() => {
-            onHaveIt({ token: item.token, kind });
-          }}
-        >
-          I have it
-        </MenuItem>
+        {onHaveIt ? (
+          <MenuItem
+            disabled={haveItDisabled}
+            onClick={() => {
+              onHaveIt({ token: item.token, kind });
+            }}
+          >
+            I have it
+          </MenuItem>
+        ) : null}
+        {onAvoid ? (
+          <MenuItem
+            disabled={excluded || canAvoid === false}
+            onClick={() => {
+              onAvoid(item.token);
+            }}
+          >
+            Avoid
+          </MenuItem>
+        ) : null}
       </MenuPopup>
     </Menu>
   );
@@ -244,13 +272,19 @@ function SkillChipGroup({
   tone,
   skills,
   onHaveIt,
-  hasAliasCatalog
+  onAvoid,
+  hasAliasCatalog,
+  canAvoid,
+  excludedKeywords
 }: {
   label: string;
   tone: "have" | "close" | "missing";
   skills: readonly SkillChipItem[];
   onHaveIt?: (input: { token: string; kind: JobSkillChipHaveItKind }) => void;
+  onAvoid?: (token: string) => void;
   hasAliasCatalog?: boolean;
+  canAvoid?: boolean;
+  excludedKeywords?: readonly string[];
 }) {
   if (skills.length === 0) return null;
   return (
@@ -263,7 +297,10 @@ function SkillChipGroup({
               tone={tone}
               item={item}
               onHaveIt={onHaveIt}
+              onAvoid={onAvoid}
               hasAliasCatalog={hasAliasCatalog}
+              canAvoid={canAvoid}
+              excludedKeywords={excludedKeywords}
             />
           </li>
         ))}
@@ -280,7 +317,10 @@ export function JobSkillsMatch({
   listingMinYears,
   seekerYears,
   onHaveIt,
-  hasAliasCatalog
+  onAvoid,
+  hasAliasCatalog,
+  canAvoid,
+  excludedKeywords
 }: {
   jobSkills: readonly string[];
   stackNames?: readonly string[];
@@ -288,7 +328,10 @@ export function JobSkillsMatch({
   listingMinYears?: number | null;
   seekerYears?: number | null;
   onHaveIt?: (input: { token: string; kind: JobSkillChipHaveItKind }) => void;
+  onAvoid?: (token: string) => void;
   hasAliasCatalog?: boolean;
+  canAvoid?: boolean;
+  excludedKeywords?: readonly string[];
 }) {
   const classified = classifyJobSkills({
     jobSkills,
@@ -333,6 +376,7 @@ export function JobSkillsMatch({
         skills={classified.have.map((name) => {
           return { token: name, label: name };
         })}
+        excludedKeywords={excludedKeywords}
       />
       <SkillChipGroup
         label="Close — you have a related skill"
@@ -341,7 +385,10 @@ export function JobSkillsMatch({
           return { token: row.name, label: `${row.name} · you have ${row.via}` };
         })}
         onHaveIt={onHaveIt}
+        onAvoid={onAvoid}
         hasAliasCatalog={hasAliasCatalog}
+        canAvoid={canAvoid}
+        excludedKeywords={excludedKeywords}
       />
       <SkillChipGroup
         label="Missing"
@@ -350,7 +397,10 @@ export function JobSkillsMatch({
           return { token: name, label: name };
         })}
         onHaveIt={onHaveIt}
+        onAvoid={onAvoid}
         hasAliasCatalog={hasAliasCatalog}
+        canAvoid={canAvoid}
+        excludedKeywords={excludedKeywords}
       />
       {yearsNote ? (
         <div>
