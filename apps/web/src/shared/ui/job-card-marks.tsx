@@ -4,6 +4,7 @@ import { TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 
 import {
+  canonicalizeListingSkillNames,
   classifyJobSkills,
   normalizeJobSkillName,
   skillsOverlap,
@@ -91,11 +92,13 @@ export function JobYearsBadge({ years }: { years: number | null | undefined }) {
 
 export function listingSkillNames(
   required: readonly JobSkillTag[] | undefined,
-  preferred: readonly JobSkillTag[] | undefined
+  preferred: readonly JobSkillTag[] | undefined,
+  held: readonly HeldSkill[] = []
 ): string[] {
-  return [...(required ?? []), ...(preferred ?? [])]
+  const raw = [...(required ?? []), ...(preferred ?? [])]
     .map((skill) => skill.name.trim())
     .filter(Boolean);
+  return canonicalizeListingSkillNames(raw, held);
 }
 
 /** Listing skill names vs those already tagged to a tenant stack. */

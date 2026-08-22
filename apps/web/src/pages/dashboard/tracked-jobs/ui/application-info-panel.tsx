@@ -271,7 +271,6 @@ export function ApplicationInfoPanel({
 
   const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
   const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
-  const jobSkills = listingSkillNames(item.requiredSkills, item.preferredSkills);
   const heldSkills = (stacksQuery.data ?? []).map((stack) => {
     return {
       id: stack.id,
@@ -279,6 +278,7 @@ export function ApplicationInfoPanel({
       aliases: stack.aliases ?? []
     };
   });
+  const jobSkills = listingSkillNames(item.requiredSkills, item.preferredSkills, heldSkills);
   const seekerYears = mergeExperienceYears(experiencesQuery.data ?? []);
   const showSkillsMatch =
     stacksQuery.isSuccess &&
