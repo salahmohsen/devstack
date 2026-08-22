@@ -1,19 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getListApplicationsQueryOptions } from "@/features/applications";
+import {
+  getCountApplicationsQueryOptions,
+  getListApplicationsPageInfiniteOptions
+} from "@/features/applications";
+
+import { parseListSearch, resolveJobsFilterParam } from "@/widgets/items-page";
 
 import { NewJobsPage } from "@/pages/dashboard/new-jobs";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/new-jobs/")({
-  component: NewJobsPage,
-  validateSearch: (raw: Record<string, unknown>): { applicationId?: string } => {
-    const applicationId = raw.applicationId;
-    if (typeof applicationId === "string" && applicationId.length > 0) {
-      return { applicationId };
-    }
-    return {};
+  validateSearch: (raw: Record<string, unknown>) => parseListSearch(raw),
+  loaderDeps: ({ search }) => {
+    return {
+      q: search.q,
+      filter: resolveJobsFilterParam({ page: "new-jobs", filter: search.filter }),
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
   },
-  beforeLoad: ({ context: { queryClient } }) => {
-    void queryClient.ensureQueryData(getListApplicationsQueryOptions("inbox"));
-  }
+  loader: ({ context, deps }) => {
+    void context.queryClient.ensureInfiniteQueryData(
+      getListApplicationsPageInfiniteOptions({ ...deps, scope: "new-jobs" })
+    );
+    void context.queryClient.ensureQueryData(getCountApplicationsQueryOptions("inbox"));
+    void context.queryClient.ensureQueryData(getCountApplicationsQueryOptions("dismissed"));
+  },
+  component: NewJobsPage
 });

@@ -23,8 +23,12 @@ export {
   createBooleanSelectField,
   createEmptyableField,
   createFeaturedBooleanField,
+  createMatchScoreField,
+  createOutcomeField,
   createPortfolioBooleanField,
-  createRelationMultiselectField
+  createRelationMultiselectField,
+  createStageField,
+  createTrackingStatusField
 } from "@/widgets/items-page/lib/list-search-fields";
 export {
   ListSearchSchema,

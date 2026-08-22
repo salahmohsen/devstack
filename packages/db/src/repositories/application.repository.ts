@@ -3,17 +3,19 @@ import {
   asc,
   desc,
   eq,
+  gt,
   gte,
   inArray,
   isNotNull,
   isNull,
-  lte,
   lt,
+  lte,
   ne,
   or,
   sql,
   type InferInsertModel,
-  type InferSelectModel
+  type InferSelectModel,
+  type SQL
 } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
@@ -46,6 +48,190 @@ export type UpdateApplicationData = Partial<
     "userId" | "stage" | "stageChangedAt" | "outcome" | "outcomeAt" | "trackingStatus"
   >
 >;
+
+export type ApplicationListSortKey = "matchScore" | "updatedAt" | "company" | "stage";
+
+/** Opaque cursor: active sort column(s) + id. `matchScore` encodes null scores. */
+export type ApplicationListCursor =
+  | { sortBy: "matchScore"; matchScore: number | null; updatedAt: string; id: string }
+  | { sortBy: "updatedAt"; updatedAt: string; id: string }
+  | { sortBy: "company"; companyName: string; id: string }
+  | { sortBy: "stage"; stage: string; id: string };
+
+export type ApplicationListPageOptions = {
+  cursor?: string | null;
+  limit: number;
+  where?: SQL;
+  sortBy?: ApplicationListSortKey;
+  sortDir?: "asc" | "desc";
+};
+
+export type ApplicationListBoardOptions = {
+  limit: number;
+  where?: SQL;
+  sortBy?: ApplicationListSortKey;
+  sortDir?: "asc" | "desc";
+};
+
+type ApplicationListKeyRow = {
+  id: string;
+  matchScore: number | null;
+  companyName: string;
+  stage: string;
+  updatedAt: Date;
+};
+
+function encodeApplicationListCursor(cursor: ApplicationListCursor): string {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function decodeApplicationListCursor(cursor: string): ApplicationListCursor | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
+    if (!isRecord(parsed) || typeof parsed.id !== "string") return null;
+
+    const sortBy = parsed.sortBy;
+    if (
+      sortBy === "matchScore" &&
+      (typeof parsed.matchScore === "number" || parsed.matchScore === null) &&
+      typeof parsed.updatedAt === "string"
+    ) {
+      return {
+        sortBy: "matchScore",
+        matchScore: parsed.matchScore,
+        updatedAt: parsed.updatedAt,
+        id: parsed.id
+      };
+    }
+    if (sortBy === "updatedAt" && typeof parsed.updatedAt === "string") {
+      return { sortBy: "updatedAt", updatedAt: parsed.updatedAt, id: parsed.id };
+    }
+    if (sortBy === "company" && typeof parsed.companyName === "string") {
+      return { sortBy: "company", companyName: parsed.companyName, id: parsed.id };
+    }
+    if (sortBy === "stage" && typeof parsed.stage === "string") {
+      return { sortBy: "stage", stage: parsed.stage, id: parsed.id };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function andAll(parts: Array<SQL | undefined>): SQL | undefined {
+  const present = parts.filter((part): part is SQL => part !== undefined);
+  if (present.length === 0) return undefined;
+  if (present.length === 1) return present[0];
+  return and(...present);
+}
+
+function encodeApplicationRowCursor(
+  row: ApplicationListKeyRow,
+  sortBy: ApplicationListSortKey
+): ApplicationListCursor {
+  if (sortBy === "matchScore") {
+    return {
+      sortBy: "matchScore",
+      matchScore: row.matchScore,
+      updatedAt: row.updatedAt.toISOString(),
+      id: row.id
+    };
+  }
+  if (sortBy === "company") {
+    return { sortBy: "company", companyName: row.companyName, id: row.id };
+  }
+  if (sortBy === "stage") {
+    return { sortBy: "stage", stage: row.stage, id: row.id };
+  }
+  return { sortBy: "updatedAt", updatedAt: row.updatedAt.toISOString(), id: row.id };
+}
+
+/**
+ * Keyset after a `matchScore` row. DESC/ASC both use NULLS LAST so unscored
+ * jobs stay at the end; the cursor must encode `matchScore: null`.
+ */
+function matchScoreCursorWhere(
+  cursor: Extract<ApplicationListCursor, { sortBy: "matchScore" }>,
+  sortDir: "asc" | "desc"
+): SQL | undefined {
+  const after = sortDir === "desc" ? lt : gt;
+  const at = new Date(cursor.updatedAt);
+  if (Number.isNaN(at.getTime())) return undefined;
+
+  if (cursor.matchScore != null) {
+    return or(
+      and(isNotNull(application.matchScore), after(application.matchScore, cursor.matchScore)),
+      and(eq(application.matchScore, cursor.matchScore), after(application.updatedAt, at)),
+      and(
+        eq(application.matchScore, cursor.matchScore),
+        eq(application.updatedAt, at),
+        after(application.id, cursor.id)
+      ),
+      isNull(application.matchScore)
+    );
+  }
+
+  return and(
+    isNull(application.matchScore),
+    or(
+      after(application.updatedAt, at),
+      and(eq(application.updatedAt, at), after(application.id, cursor.id))
+    )
+  );
+}
+
+function applicationOrderBy(sortBy: ApplicationListSortKey, sortDir: "asc" | "desc"): SQL[] {
+  const dir = sortDir === "desc" ? desc : asc;
+  const matchScoreOrder =
+    sortDir === "desc"
+      ? sql`${application.matchScore} DESC NULLS LAST`
+      : sql`${application.matchScore} ASC NULLS LAST`;
+  if (sortBy === "matchScore") {
+    return [matchScoreOrder, dir(application.updatedAt), dir(application.id)];
+  }
+  if (sortBy === "company") {
+    return [dir(application.companyName), dir(application.id)];
+  }
+  if (sortBy === "stage") {
+    return [dir(application.stage), dir(application.id)];
+  }
+  return [dir(application.updatedAt), dir(application.id)];
+}
+
+function applicationCursorWhere(
+  cursor: ApplicationListCursor,
+  sortBy: ApplicationListSortKey,
+  sortDir: "asc" | "desc"
+): SQL | undefined {
+  if (cursor.sortBy !== sortBy) return undefined;
+  const after = sortDir === "desc" ? lt : gt;
+  if (cursor.sortBy === "matchScore") {
+    return matchScoreCursorWhere(cursor, sortDir);
+  }
+  if (cursor.sortBy === "company") {
+    return or(
+      after(application.companyName, cursor.companyName),
+      and(eq(application.companyName, cursor.companyName), after(application.id, cursor.id))
+    );
+  }
+  if (cursor.sortBy === "stage") {
+    const stage = cursor.stage as ApplicationStage;
+    return or(
+      after(application.stage, stage),
+      and(eq(application.stage, stage), after(application.id, cursor.id))
+    );
+  }
+  const at = new Date(cursor.updatedAt);
+  if (Number.isNaN(at.getTime())) return undefined;
+  return or(
+    after(application.updatedAt, at),
+    and(eq(application.updatedAt, at), after(application.id, cursor.id))
+  );
+}
 
 /** First inbox HTTP check; keep in sync with core `LIVENESS_AFTER_MS` (~3.5d). */
 const INBOX_LIVENESS_AFTER_MS = Math.floor((7 * 24 * 60 * 60 * 1000) / 2);
@@ -233,6 +419,80 @@ export const applicationRepository = {
       .from(application)
       .where(and(eq(application.userId, userId), eq(application.trackingStatus, trackingStatus)))
       .orderBy(desc(application.updatedAt));
+  },
+
+  /**
+   * Cursor page for dashboard New jobs / Tracked list.
+   * `where` is precompiled (partition + chips + q). Default sort is
+   * `matchScore DESC NULLS LAST` (New jobs) or `updatedAt DESC` (Tracked).
+   */
+  async findPageByUserId(userId: string, options: ApplicationListPageOptions) {
+    const limit = options.limit;
+    const sortBy = options.sortBy ?? "updatedAt";
+    const sortDir = options.sortDir ?? "desc";
+    const decoded =
+      options.cursor != null && options.cursor !== ""
+        ? decodeApplicationListCursor(options.cursor)
+        : null;
+    const cursor = decoded?.sortBy === sortBy ? decoded : null;
+    const cursorWhere = cursor ? applicationCursorWhere(cursor, sortBy, sortDir) : undefined;
+
+    const filterWhere = andAll([eq(application.userId, userId), options.where]);
+    const pageWhere = andAll([filterWhere, cursorWhere]) ?? eq(application.userId, userId);
+    const orderBy = applicationOrderBy(sortBy, sortDir);
+
+    const [rows, countRow] = await Promise.all([
+      getDb()
+        .select()
+        .from(application)
+        .where(pageWhere)
+        .orderBy(...orderBy)
+        .limit(limit + 1),
+      getDb()
+        .select({ count: sql<number>`count(*)::int` })
+        .from(application)
+        .where(filterWhere)
+        .then((r) => r[0]?.count ?? 0)
+    ]);
+
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const last = items[items.length - 1];
+    const nextCursor =
+      hasMore && last != null
+        ? encodeApplicationListCursor(encodeApplicationRowCursor(last, sortBy))
+        : null;
+
+    return { items, nextCursor, totalCount: countRow };
+  },
+
+  /**
+   * Open-only tracked board (compile already ANDs `outcome IS NULL`).
+   * No cursor; cap `limit` (200). `totalCount` is the un-capped match count.
+   */
+  async findBoardByUserId(userId: string, options: ApplicationListBoardOptions) {
+    const limit = options.limit;
+    const sortBy = options.sortBy ?? "updatedAt";
+    const sortDir = options.sortDir ?? "desc";
+    const filterWhere = andAll([eq(application.userId, userId), options.where]);
+    const pageWhere = filterWhere ?? eq(application.userId, userId);
+    const orderBy = applicationOrderBy(sortBy, sortDir);
+
+    const [items, countRow] = await Promise.all([
+      getDb()
+        .select()
+        .from(application)
+        .where(pageWhere)
+        .orderBy(...orderBy)
+        .limit(limit),
+      getDb()
+        .select({ count: sql<number>`count(*)::int` })
+        .from(application)
+        .where(filterWhere)
+        .then((r) => r[0]?.count ?? 0)
+    ]);
+
+    return { items, totalCount: countRow };
   },
 
   /** Inbox rows that landed in the Today window and already have a take. */

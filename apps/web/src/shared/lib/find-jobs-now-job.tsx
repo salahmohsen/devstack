@@ -71,7 +71,9 @@ function inboxCountFromCache(queryClient: QueryClient): number {
 
 async function invalidateInbox(queryClient: QueryClient) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: inboxListQueryKey }),
+    queryClient.invalidateQueries({ queryKey: orpcQueryClient.applications.list.key() }),
+    queryClient.invalidateQueries({ queryKey: orpcQueryClient.applications.listPage.key() }),
+    queryClient.invalidateQueries({ queryKey: orpcQueryClient.applications.listBoard.key() }),
     queryClient.invalidateQueries({ queryKey: inboxCountQueryKey })
   ]);
 }

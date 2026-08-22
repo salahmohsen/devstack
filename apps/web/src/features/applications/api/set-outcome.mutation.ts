@@ -5,6 +5,7 @@ import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { APPLICATION_OUTCOME_LABELS } from "@tsu-stack/core";
 
 import { applicationsQueryKeys } from "@/features/applications/api/list-applications.query";
+import { invalidateApplicationsListQueries } from "@/features/applications/lib/invalidate-applications-list";
 
 export function useSetOutcomeMutation() {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export function useSetOutcomeMutation() {
     orpcQueryClient.applications.setOutcome.mutationOptions({
       onSuccess: async (data, variables) => {
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() }),
+          invalidateApplicationsListQueries(queryClient),
           queryClient.invalidateQueries({
             queryKey: applicationsQueryKeys.get(variables.id)
           }),

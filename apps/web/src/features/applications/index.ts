@@ -3,6 +3,21 @@ export {
   getListApplicationsQueryOptions,
   useListApplicationsQuery
 } from "@/features/applications/api/list-applications.query";
+export {
+  APPLICATIONS_LIST_STALE_TIME_MS,
+  flattenApplicationsPages,
+  getListApplicationsPageInfiniteOptions,
+  getListApplicationsPageInfiniteQueryKey,
+  useListApplicationsPageInfiniteQuery,
+  type ApplicationsListSearchQuery
+} from "@/features/applications/api/list-applications-page.query";
+export {
+  getListApplicationsBoardQueryKey,
+  getListApplicationsBoardQueryOptions,
+  useListApplicationsBoardQuery,
+  type ApplicationsBoardSearchQuery
+} from "@/features/applications/api/list-applications-board.query";
+export { invalidateApplicationsListQueries } from "@/features/applications/lib/invalidate-applications-list";
 export { useCreateApplicationMutation } from "@/features/applications/api/create-application.mutation";
 export { useUpdateApplicationMutation } from "@/features/applications/api/update-application.mutation";
 export { useUpdateStageMutation } from "@/features/applications/api/update-stage.mutation";

@@ -4,24 +4,52 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { FileTextIcon, LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ApplicationOutput } from "@tsu-stack/core";
+import {
+  APPLICATION_OUTCOME_LABELS,
+  APPLICATION_SOURCE_TAG_LABELS,
+  APPLICATION_SOURCE_TAGS,
+  APPLICATION_STAGE_LABELS,
+  APPLICATION_STAGES,
+  APPLICATION_OUTCOMES,
+  type ApplicationOutput
+} from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
+import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
-import { useListApplicationsQuery } from "@/features/applications";
+import {
+  flattenApplicationsPages,
+  useCountApplicationsQuery,
+  useListApplicationsBoardQuery,
+  useListApplicationsPageInfiniteQuery
+} from "@/features/applications";
 
 import {
   isAnyOpened,
   ItemsNavProvider,
+  ListSearchBar,
   PageHeader,
   PageLayout,
-  useItemsNavigation
+  TRACKED_SEED,
+  createMatchScoreField,
+  createOutcomeField,
+  createRelationMultiselectField,
+  createStageField,
+  filterValuesFromRsql,
+  isListNarrowed,
+  resolveJobsFilterParam,
+  rsqlFromFilterValues,
+  useItemsNavigation,
+  withListSearch,
+  type ListSearch
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
@@ -80,7 +108,18 @@ const DeleteApplicationDialog = lazy(() =>
   })
 );
 
-const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
+const TRACKED_SORT_OPTIONS = [
+  { value: "updatedAt", label: "Updated" },
+  { value: "stage", label: "Stage" },
+  { value: "matchScore", label: "Match score" },
+  { value: "company", label: "Company" }
+] as const;
+
+function isListQueryBadRequest(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { code?: unknown; status?: unknown };
+  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
+}
 
 const trackedJobsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/tracked-jobs/");
 
@@ -90,8 +129,27 @@ export function TrackedJobsPage() {
   const queryClient = useQueryClient();
   const search = trackedJobsRouteApi.useSearch();
   const deepLinkApplicationId = search.applicationId;
-  /** Tracked jobs only — pipeline CRM. */
-  const listQuery = useListApplicationsQuery("tracked");
+  const resolvedFilter = resolveJobsFilterParam({ page: "tracked-jobs", filter: search.filter });
+  const listQueryInput = useMemo(() => {
+    return {
+      scope: "tracked-jobs" as const,
+      q: search.q,
+      filter: resolvedFilter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [resolvedFilter, search.q, search.sortBy, search.sortDir]);
+  const boardQueryInput = useMemo(() => {
+    return {
+      q: search.q,
+      filter: resolvedFilter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [resolvedFilter, search.q, search.sortBy, search.sortDir]);
+  const listQuery = useListApplicationsPageInfiniteQuery(listQueryInput);
+  const boardQuery = useListApplicationsBoardQuery(boardQueryInput);
+  const trackedCountQuery = useCountApplicationsQuery("tracked");
   // Hub tool invalidation lives on HubChatProvider (dashboard layout).
   const {
     sheetOpen,
@@ -103,7 +161,6 @@ export function TrackedJobsPage() {
     closeSheet,
     closeView,
     showView,
-    listFilter,
     packageSheetAppId,
     closePackageSheet,
     sendOutreachAppId,
@@ -120,14 +177,94 @@ export function TrackedJobsPage() {
   const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && sheetOpen) closeSheet();
 
-  // Stable empty fallback so memo deps do not thrash every render.
-  const applications = listQuery.data ?? EMPTY_APPLICATIONS;
+  const listApplications = useMemo(
+    () => flattenApplicationsPages(listQuery.data),
+    [listQuery.data]
+  );
+  const boardItems = boardQuery.data?.items;
+  const boardApplications = useMemo(() => boardItems ?? [], [boardItems]);
+  const applications = view === "list" ? listApplications : boardApplications;
+  const trackedTotal = trackedCountQuery.data?.count ?? 0;
+  const narrowed = isListNarrowed({ q: search.q, filter: search.filter, page: "tracked-jobs" });
+  const listTotalCount = listQuery.data?.pages[0]?.totalCount;
+  const boardTotalCount = boardQuery.data?.totalCount ?? 0;
 
-  const filtered = useMemo(() => {
-    if (listFilter === "open") return applications.filter((a) => a.outcome == null);
-    if (listFilter === "closed") return applications.filter((a) => a.outcome != null);
-    return applications;
-  }, [applications, listFilter]);
+  const patchListSearch = useCallback(
+    (patch: Partial<Pick<ListSearch, "q" | "filter" | "sortBy" | "sortDir">>) => {
+      void navigate({
+        to: "/dashboard/tracked-jobs",
+        search: (prev) => withListSearch(prev, patch),
+        replace: true
+      });
+    },
+    [navigate]
+  );
+
+  const clearListSearch = useCallback(() => {
+    patchListSearch({ q: undefined, filter: TRACKED_SEED });
+  }, [patchListSearch]);
+
+  useEffect(() => {
+    if (search.filter?.trim()) return;
+    patchListSearch({ filter: TRACKED_SEED });
+  }, [search.filter, patchListSearch]);
+
+  const listQueryError = listQuery.error;
+  const boardQueryError = boardQuery.error;
+  useEffect(() => {
+    const error = listQueryError ?? boardQueryError;
+    const isError = listQuery.isError || boardQuery.isError;
+    if (!isError || !isListQueryBadRequest(error)) return;
+    toast.error(error instanceof Error ? error.message : "Invalid filters. They were reset.");
+    if (search.filter !== TRACKED_SEED) {
+      patchListSearch({ filter: TRACKED_SEED });
+    }
+  }, [
+    listQuery.isError,
+    boardQuery.isError,
+    listQueryError,
+    boardQueryError,
+    search.filter,
+    patchListSearch
+  ]);
+
+  const filterValues = useMemo(
+    () => filterValuesFromRsql(resolvedFilter, "tracked-jobs"),
+    [resolvedFilter]
+  );
+
+  const filterFields = useMemo(
+    () => [
+      createOutcomeField(
+        APPLICATION_OUTCOMES.map((value) => {
+          return { value, label: APPLICATION_OUTCOME_LABELS[value] };
+        })
+      ),
+      createStageField(
+        APPLICATION_STAGES.map((value) => {
+          return { value, label: APPLICATION_STAGE_LABELS[value] };
+        })
+      ),
+      createRelationMultiselectField(
+        "sourceTags",
+        "Source",
+        APPLICATION_SOURCE_TAGS.map((tag) => {
+          return { value: tag, label: APPLICATION_SOURCE_TAG_LABELS[tag] };
+        })
+      ),
+      createMatchScoreField()
+    ],
+    []
+  );
+
+  const { sentinelRef } = useInfiniteScroll<HTMLLIElement>({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: () => {
+      void listQuery.fetchNextPage();
+    },
+    enabled: view === "list" && listApplications.length > 0
+  });
 
   // Hub JD save/package lands here with ?applicationId= — open the inspect panel.
   useEffect(() => {
@@ -148,10 +285,12 @@ export function TrackedJobsPage() {
       });
     };
 
-    const fromList = applications.find((application) => application.id === deepLinkApplicationId);
+    const fromList =
+      listApplications.find((application) => application.id === deepLinkApplicationId) ??
+      boardApplications.find((application) => application.id === deepLinkApplicationId);
     if (fromList) {
       openAndStrip(fromList);
-    } else if (!listQuery.isLoading) {
+    } else if (!listQuery.isLoading && !boardQuery.isLoading) {
       void queryClient
         .fetchQuery(
           orpcQueryClient.applications.get.queryOptions({ input: { id: deepLinkApplicationId } })
@@ -166,33 +305,49 @@ export function TrackedJobsPage() {
       cancelled = true;
       cancelFlush?.();
     };
-  }, [applications, deepLinkApplicationId, listQuery.isLoading, navigate, queryClient, showView]);
+  }, [
+    listApplications,
+    boardApplications,
+    deepLinkApplicationId,
+    listQuery.isLoading,
+    boardQuery.isLoading,
+    navigate,
+    queryClient,
+    showView
+  ]);
 
   // Prefer live list row so stage/outcome/edit/package changes refresh the side panel.
+  const knownById = useMemo(() => {
+    const map = new Map<string, ApplicationOutput>();
+    for (const row of listApplications) map.set(row.id, row);
+    for (const row of boardApplications) map.set(row.id, row);
+    return map;
+  }, [listApplications, boardApplications]);
+
   const liveViewItem = useMemo(() => {
     if (!viewItem) return null;
-    return applications.find((a) => a.id === viewItem.id) ?? viewItem;
-  }, [applications, viewItem]);
+    return knownById.get(viewItem.id) ?? viewItem;
+  }, [knownById, viewItem]);
 
   const packageApplication = useMemo(() => {
     if (!packageSheetAppId) return null;
-    return applications.find((a) => a.id === packageSheetAppId) ?? null;
-  }, [packageSheetAppId, applications]);
+    return knownById.get(packageSheetAppId) ?? null;
+  }, [packageSheetAppId, knownById]);
 
   const sendApplication = useMemo(() => {
     if (!sendOutreachAppId) return null;
-    return applications.find((a) => a.id === sendOutreachAppId) ?? null;
-  }, [sendOutreachAppId, applications]);
+    return knownById.get(sendOutreachAppId) ?? null;
+  }, [sendOutreachAppId, knownById]);
 
   const deleteApplication = useMemo(() => {
     if (!deleteConfirmAppId) return null;
-    return applications.find((a) => a.id === deleteConfirmAppId) ?? null;
-  }, [deleteConfirmAppId, applications]);
+    return knownById.get(deleteConfirmAppId) ?? null;
+  }, [deleteConfirmAppId, knownById]);
 
   const materialPreviewApplication = useMemo(() => {
     if (!materialPreview) return null;
-    return applications.find((a) => a.id === materialPreview.applicationId) ?? null;
-  }, [materialPreview, applications]);
+    return knownById.get(materialPreview.applicationId) ?? null;
+  }, [materialPreview, knownById]);
 
   // Side panel works for both board (View / card click) and list (row click).
   const isItemOpen = useMemo(
@@ -221,15 +376,15 @@ export function TrackedJobsPage() {
         closeView();
         return;
       }
-      const item = applications.find((a) => a.id === id);
+      const item = knownById.get(id);
       if (item) showView(item);
     },
-    [applications, showView, closeView]
+    [knownById, showView, closeView]
   );
 
   const containerRef = useRef<HTMLUListElement | null>(null);
   const { handleNext, handlePrev } = useItemsNavigation({
-    items: filtered,
+    items: applications,
     openedItem: liveViewItem,
     isItemOpen,
     setOpenedItem,
@@ -283,17 +438,57 @@ export function TrackedJobsPage() {
           }
         />
 
-        <div className="flex min-h-0 flex-1 flex-col">
-          {listQuery.isLoading && view === "board" ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <ListSearchBar
+            variant="tracked-jobs"
+            fields={filterFields}
+            value={filterValues}
+            onValueChange={(next: FilterValue[]) => {
+              patchListSearch({ filter: rsqlFromFilterValues(next, "tracked-jobs") });
+            }}
+            q={search.q}
+            onQChange={(q) => patchListSearch({ q })}
+            sortBy={search.sortBy}
+            sortDir={search.sortDir}
+            sortOptions={TRACKED_SORT_OPTIONS}
+            onSortChange={(next) => patchListSearch(next)}
+            onJobsClear={clearListSearch}
+            labels={{
+              searchPlaceholder: "Search jobs",
+              searchAriaLabel: "Search jobs"
+            }}
+          />
+          {boardQuery.isLoading && view === "board" ? (
             <AiLoader />
           ) : view === "board" ? (
-            <ApplicationsBoard applications={applications} />
-          ) : (
-            <ApplicationsList
-              applications={applications}
-              isLoading={listQuery.isLoading}
-              listRef={containerRef}
+            <ApplicationsBoard
+              applications={boardApplications}
+              narrowed={narrowed}
+              trackedTotal={trackedTotal}
+              totalCount={boardTotalCount}
+              onClearFilters={clearListSearch}
             />
+          ) : (
+            <>
+              <ApplicationsList
+                applications={listApplications}
+                isLoading={listQuery.isLoading}
+                listRef={containerRef}
+                narrowed={narrowed}
+                trackedTotal={trackedTotal}
+                onClearFilters={clearListSearch}
+                sentinelRef={sentinelRef}
+                isFetchingNextPage={listQuery.isFetchingNextPage}
+                hasNextPage={listQuery.hasNextPage}
+              />
+              {listTotalCount != null && listApplications.length > 0 ? (
+                <p className="pb-2 text-center text-xs text-muted-foreground">
+                  Showing {listApplications.length}
+                  {listTotalCount > listApplications.length ? ` of ${listTotalCount}` : ""} job
+                  {listTotalCount === 1 ? "" : "s"}
+                </p>
+              ) : null}
+            </>
           )}
         </div>
 

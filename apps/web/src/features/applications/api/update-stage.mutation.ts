@@ -9,6 +9,7 @@ import {
 } from "@tsu-stack/core";
 
 import { applicationsQueryKeys } from "@/features/applications/api/list-applications.query";
+import { invalidateApplicationsListQueries } from "@/features/applications/lib/invalidate-applications-list";
 
 export function useUpdateStageMutation() {
   const queryClient = useQueryClient();
@@ -44,7 +45,7 @@ export function useUpdateStageMutation() {
       },
       onSettled: async (_data, _err, variables) => {
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() }),
+          invalidateApplicationsListQueries(queryClient),
           queryClient.invalidateQueries({
             queryKey: applicationsQueryKeys.activity(variables.id)
           })

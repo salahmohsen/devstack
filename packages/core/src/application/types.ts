@@ -208,6 +208,32 @@ export const ApplicationListPageOutputSchema = z.object({
   totalCount: z.number().int().nonnegative().describe("Total matching applications for the user")
 });
 
+/** Cap for Tracked jobs board (no cursor). Closed cards never appear. */
+export const APPLICATIONS_LIST_BOARD_LIMIT = 200;
+
+/**
+ * Open-only tracked board. Same q/filter/sort as the list; compile strips
+ * outcome leaves and ANDs `outcome IS NULL` plus the tracked partition.
+ */
+export const ApplicationListBoardInputSchema = ListQueryInputSchema.extend({
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(APPLICATIONS_LIST_BOARD_LIMIT)
+    .optional()
+    .describe(`Board cap (default ${APPLICATIONS_LIST_BOARD_LIMIT})`)
+});
+
+export const ApplicationListBoardOutputSchema = z.object({
+  items: z.array(ApplicationOutputSchema),
+  totalCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Filtered open tracked count (may exceed the 200-card cap)")
+});
+
 export const ApplicationActivityOutputSchema = z.object({
   id: z.string(),
   applicationId: z.string(),
@@ -404,6 +430,8 @@ export type ApplicationOutput = z.infer<typeof ApplicationOutputSchema>;
 export type ApplicationListOutput = z.infer<typeof ApplicationListOutputSchema>;
 export type ApplicationListPageInput = z.infer<typeof ApplicationListPageInputSchema>;
 export type ApplicationListPageOutput = z.infer<typeof ApplicationListPageOutputSchema>;
+export type ApplicationListBoardInput = z.infer<typeof ApplicationListBoardInputSchema>;
+export type ApplicationListBoardOutput = z.infer<typeof ApplicationListBoardOutputSchema>;
 export type CreateApplicationInput = z.infer<typeof CreateApplicationInputSchema>;
 export type UpdateApplicationInput = z.infer<typeof UpdateApplicationInputSchema>;
 export type UpdateStageInput = z.infer<typeof UpdateStageInputSchema>;

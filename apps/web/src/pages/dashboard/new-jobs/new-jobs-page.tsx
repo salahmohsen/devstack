@@ -26,8 +26,12 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
+  APPLICATION_SOURCE_TAG_LABELS,
+  APPLICATION_SOURCE_TAGS,
+  APPLICATION_TRACKING_STATUS_LABELS,
   applicationSourceChipLabels,
   type ApplicationOutput,
+  type ApplicationTrackingStatus,
   isThinJobDescription
 } from "@tsu-stack/core";
 import {
@@ -40,17 +44,18 @@ import {
   AlertDialogPopup,
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
-import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import { ChaoticPixelsLoader } from "@tsu-stack/ui/components/chaotic-pixels-loader";
 import {
   ContextMenu,
   ContextMenuPopup,
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
+import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
-import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
   areAllVisibleSelected,
   isBatchSelectActive,
@@ -81,8 +86,9 @@ import {
   useCountApplicationsQuery,
   useDeleteApplicationsMutation,
   useDismissApplicationMutation,
+  flattenApplicationsPages,
   useGenerateApplyPackageMutation,
-  useListApplicationsQuery,
+  useListApplicationsPageInfiniteQuery,
   usePromoteApplicationMutation,
   useRefreshFromListingJob,
   useRegenerateAgentTakeMutation,
@@ -93,11 +99,23 @@ import { useGetJobPreferenceQuery } from "@/features/job-preference";
 import {
   ItemsEmpty,
   ItemsNavProvider,
+  ListSearchBar,
   ListSkeleton,
+  NEW_JOBS_SEED,
   PageHeader,
   PageLayout,
+  createBooleanSelectField,
+  createMatchScoreField,
+  createRelationMultiselectField,
+  createTrackingStatusField,
+  filterValuesFromRsql,
   isAnyOpened,
-  useItemsNavigation
+  isListNarrowed,
+  resolveJobsFilterParam,
+  rsqlFromFilterValues,
+  useItemsNavigation,
+  withListSearch,
+  type ListSearch
 } from "@/widgets/items-page";
 import { useSidePanelClose } from "@/widgets/layout";
 
@@ -128,12 +146,24 @@ const ApplyPackageSheet = lazy(() =>
   })
 );
 
-type InboxFilter = "inbox" | "dismissed";
+type NewJobsTracking = Extract<ApplicationTrackingStatus, "inbox" | "dismissed">;
 
-const INBOX_TABS = [
-  { value: "inbox" as const, label: "New" },
-  { value: "dismissed" as const, label: "Dismissed" }
-];
+const NEW_JOBS_SORT_OPTIONS = [
+  { value: "matchScore", label: "Match score" },
+  { value: "updatedAt", label: "Updated" },
+  { value: "company", label: "Company" }
+] as const;
+
+function isListQueryBadRequest(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { code?: unknown; status?: unknown };
+  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
+}
+
+function formatCountLabel(label: string, count: number | undefined): string {
+  if (count == null || count <= 0) return label;
+  return `${label} (${count > 99 ? "99+" : count})`;
+}
 
 function newJobTags(job: ApplicationOutput): ListItemTag[] {
   const tags: ListItemTag[] = [];
@@ -193,7 +223,7 @@ const newJobsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/new-jo
 function NewJobOverflowMenuItems({
   slots,
   job,
-  filter,
+  trackingStatus,
   busy,
   takeBusy,
   batchSelected,
@@ -210,7 +240,7 @@ function NewJobOverflowMenuItems({
 }: {
   slots: ListItemMenuSlots;
   job: ApplicationOutput;
-  filter: InboxFilter;
+  trackingStatus: NewJobsTracking;
   busy: boolean;
   takeBusy: boolean;
   batchSelected: boolean;
@@ -229,7 +259,7 @@ function NewJobOverflowMenuItems({
   const hasUsableDescription = hasUsableJobDescription(job);
   const hasAnyDescription = Boolean(job.description?.trim());
 
-  if (filter === "dismissed") {
+  if (trackingStatus === "dismissed") {
     return (
       <>
         <Item onClick={onToggleSelect}>
@@ -299,7 +329,7 @@ function NewJobOverflowMenuItems({
 
 function NewJobRowActions({
   job,
-  filter,
+  trackingStatus,
   busy,
   takeBusy,
   batchSelected,
@@ -316,7 +346,7 @@ function NewJobRowActions({
   onViewListing
 }: {
   job: ApplicationOutput;
-  filter: InboxFilter;
+  trackingStatus: NewJobsTracking;
   busy: boolean;
   takeBusy: boolean;
   batchSelected: boolean;
@@ -336,7 +366,7 @@ function NewJobRowActions({
     <NewJobOverflowMenuItems
       slots={newJobMenuSlots}
       job={job}
-      filter={filter}
+      trackingStatus={trackingStatus}
       busy={busy}
       takeBusy={takeBusy}
       batchSelected={batchSelected}
@@ -353,7 +383,7 @@ function NewJobRowActions({
     />
   );
 
-  if (filter === "dismissed") {
+  if (trackingStatus === "dismissed") {
     return (
       <div className="flex flex-wrap items-center justify-end gap-1.5">
         <Button type="button" size="sm" variant="outline" loading={busy} onClick={onRestore}>
@@ -443,7 +473,6 @@ export function NewJobsPage() {
   const queryClient = useQueryClient();
   const search = newJobsRouteApi.useSearch();
   const deepLinkApplicationId = search.applicationId;
-  const [filter, setFilter] = useState<InboxFilter>("inbox");
   const [viewItem, setViewItem] = useState<ApplicationOutput | null>(null);
   useSidePanelClose(useCallback(() => setViewItem(null), []));
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -459,7 +488,17 @@ export function NewJobsPage() {
   const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && editApp != null) setEditApp(null);
 
-  const listQuery = useListApplicationsQuery(filter);
+  const resolvedFilter = resolveJobsFilterParam({ page: "new-jobs", filter: search.filter });
+  const listQueryInput = useMemo(() => {
+    return {
+      scope: "new-jobs" as const,
+      q: search.q,
+      filter: resolvedFilter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [resolvedFilter, search.q, search.sortBy, search.sortDir]);
+  const listQuery = useListApplicationsPageInfiniteQuery(listQueryInput);
   const inboxCountQuery = useCountApplicationsQuery("inbox");
   const dismissedCountQuery = useCountApplicationsQuery("dismissed");
   const jobPreferenceQuery = useGetJobPreferenceQuery();
@@ -474,11 +513,87 @@ export function NewJobsPage() {
   const agentTakeJob = useAgentTakeJob();
   const deleteApps = useDeleteApplicationsMutation();
 
-  const jobs = useMemo(() => listQuery.data ?? [], [listQuery.data]);
-  const tabCounts: Record<InboxFilter, number> = {
-    inbox: inboxCountQuery.data?.count ?? (filter === "inbox" ? jobs.length : 0),
-    dismissed: dismissedCountQuery.data?.count ?? (filter === "dismissed" ? jobs.length : 0)
-  };
+  const jobs = useMemo(() => flattenApplicationsPages(listQuery.data), [listQuery.data]);
+  const totalCount = listQuery.data?.pages[0]?.totalCount;
+  const narrowed = isListNarrowed({ q: search.q, filter: search.filter, page: "new-jobs" });
+  const allDismissed = jobs.length > 0 && jobs.every((job) => job.trackingStatus === "dismissed");
+
+  const patchListSearch = useCallback(
+    (patch: Partial<Pick<ListSearch, "q" | "filter" | "sortBy" | "sortDir">>) => {
+      void navigate({
+        to: "/dashboard/new-jobs",
+        search: (prev) => withListSearch(prev, patch),
+        replace: true
+      });
+    },
+    [navigate]
+  );
+
+  const clearListSearch = useCallback(() => {
+    patchListSearch({ q: undefined, filter: NEW_JOBS_SEED });
+  }, [patchListSearch]);
+
+  useEffect(() => {
+    if (search.filter?.trim()) return;
+    patchListSearch({ filter: NEW_JOBS_SEED });
+  }, [search.filter, patchListSearch]);
+
+  useEffect(() => {
+    if (!listQuery.isError || !isListQueryBadRequest(listQuery.error)) return;
+    toast.error(
+      listQuery.error instanceof Error
+        ? listQuery.error.message
+        : "Invalid filters. They were reset."
+    );
+    if (search.filter !== NEW_JOBS_SEED) {
+      patchListSearch({ filter: NEW_JOBS_SEED });
+    }
+  }, [listQuery.isError, listQuery.error, search.filter, patchListSearch]);
+
+  const filterValues = useMemo(
+    () => filterValuesFromRsql(resolvedFilter, "new-jobs"),
+    [resolvedFilter]
+  );
+
+  const filterFields = useMemo(
+    () => [
+      createTrackingStatusField([
+        {
+          value: "inbox",
+          label: formatCountLabel(
+            APPLICATION_TRACKING_STATUS_LABELS.inbox,
+            inboxCountQuery.data?.count
+          )
+        },
+        {
+          value: "dismissed",
+          label: formatCountLabel(
+            APPLICATION_TRACKING_STATUS_LABELS.dismissed,
+            dismissedCountQuery.data?.count
+          )
+        }
+      ]),
+      createRelationMultiselectField(
+        "sourceTags",
+        "Source",
+        APPLICATION_SOURCE_TAGS.map((tag) => {
+          return { value: tag, label: APPLICATION_SOURCE_TAG_LABELS[tag] };
+        })
+      ),
+      createBooleanSelectField("listingClosed", "Listing closed"),
+      createMatchScoreField()
+    ],
+    [dismissedCountQuery.data?.count, inboxCountQuery.data?.count]
+  );
+
+  const { sentinelRef } = useInfiniteScroll<HTMLLIElement>({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: () => {
+      void listQuery.fetchNextPage();
+    },
+    enabled: jobs.length > 0
+  });
 
   const { pendingOpenApplicationId } = useRefreshFromListingJob();
 
@@ -487,9 +602,8 @@ export function NewJobsPage() {
     if (!pendingOpenApplicationId) return;
     const job = jobs.find((j) => j.id === pendingOpenApplicationId);
     if (!job) return;
-    // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from external job toast
-    setFilter("inbox");
     expandDashboardSidePanel();
+    // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from external job toast
     setViewItem(job);
     clearPendingOpenApplicationId();
   }, [pendingOpenApplicationId, jobs]);
@@ -605,7 +719,7 @@ export function NewJobsPage() {
   );
 
   const bulkDismiss = async () => {
-    if (selectedIds.length === 0 || filter !== "inbox") return;
+    if (selectedIds.length === 0 || allDismissed) return;
     setBusyId("__bulk__");
     try {
       await batchDismiss.mutateAsync({ ids: [...selectedIds] });
@@ -618,7 +732,7 @@ export function NewJobsPage() {
   };
 
   const bulkRestore = async () => {
-    if (selectedIds.length === 0 || filter !== "dismissed") return;
+    if (selectedIds.length === 0 || !allDismissed) return;
     setBusyId("__bulk_restore__");
     try {
       await batchRestore.mutateAsync({ ids: [...selectedIds] });
@@ -631,7 +745,7 @@ export function NewJobsPage() {
   };
 
   const bulkDeletePermanent = async () => {
-    if (selectedIds.length === 0 || filter !== "dismissed") return;
+    if (selectedIds.length === 0 || !allDismissed) return;
     setBusyId("__bulk_delete__");
     try {
       await deleteApps.mutateAsync({ ids: [...selectedIds] });
@@ -653,47 +767,28 @@ export function NewJobsPage() {
           actions={<NewJobsDiscoveryActions importFromEmail={importFromEmail} />}
         />
 
-        <Tabs
-          value={filter}
-          onValueChange={(value) => {
-            if (value === "inbox" || value === "dismissed") {
-              setFilter(value);
-              clearSelection();
-              setViewItem(null);
-            }
-          }}
-          className="flex min-h-0 flex-1 flex-col gap-3"
-        >
-          <TabsList className="w-fit shrink-0">
-            {INBOX_TABS.map((tab) => {
-              const count = tabCounts[tab.value];
-              return (
-                <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
-                  {tab.label}
-                  {count > 0 ? (
-                    <Badge size="sm" variant="brand" className="tabular-nums">
-                      {count > 99 ? "99+" : count}
-                    </Badge>
-                  ) : null}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <ListSearchBar
+            variant="new-jobs"
+            fields={filterFields}
+            value={filterValues}
+            onValueChange={(next: FilterValue[]) => {
+              patchListSearch({ filter: rsqlFromFilterValues(next, "new-jobs") });
+            }}
+            q={search.q}
+            onQChange={(q) => patchListSearch({ q })}
+            sortBy={search.sortBy}
+            sortDir={search.sortDir}
+            sortOptions={NEW_JOBS_SORT_OPTIONS}
+            onSortChange={(next) => patchListSearch(next)}
+            onJobsClear={clearListSearch}
+            labels={{
+              searchPlaceholder: "Search jobs",
+              searchAriaLabel: "Search jobs"
+            }}
+          />
 
-          {filter === "inbox" ? (
-            <BatchSelectionBar
-              selectedCount={selectedCount}
-              totalCount={jobs.length}
-              allVisibleSelected={allVisibleSelected}
-              isDeleting={busyId === "__bulk__"}
-              deleteLabel="Dismiss"
-              deleteVariant="destructive"
-              deleteUsesBanIcon
-              onDeleteSelected={() => void bulkDismiss()}
-              onSelectAll={selectAllVisible}
-              onClearSelection={clearSelection}
-            />
-          ) : (
+          {allDismissed ? (
             <BatchSelectionBar
               selectedCount={selectedCount}
               totalCount={jobs.length}
@@ -708,13 +803,37 @@ export function NewJobsPage() {
               onSelectAll={selectAllVisible}
               onClearSelection={clearSelection}
             />
+          ) : (
+            <BatchSelectionBar
+              selectedCount={selectedCount}
+              totalCount={jobs.length}
+              allVisibleSelected={allVisibleSelected}
+              isDeleting={busyId === "__bulk__"}
+              deleteLabel="Dismiss"
+              deleteVariant="destructive"
+              deleteUsesBanIcon
+              onDeleteSelected={() => void bulkDismiss()}
+              onSelectAll={selectAllVisible}
+              onClearSelection={clearSelection}
+            />
           )}
 
           <div className="flex min-h-0 flex-1 flex-col">
             {listQuery.isLoading ? (
               <ListSkeleton />
             ) : jobs.length === 0 ? (
-              filter === "inbox" ? (
+              narrowed ? (
+                <ItemsEmpty
+                  icon={<InboxIcon aria-hidden />}
+                  title="No jobs match"
+                  description="Try a different search or clear filters to see New jobs."
+                  action={
+                    <Button type="button" size="sm" variant="outline" onClick={clearListSearch}>
+                      Clear filters
+                    </Button>
+                  }
+                />
+              ) : (
                 <ItemsEmpty
                   icon={<SparklesIcon aria-hidden />}
                   title="No new matches"
@@ -732,12 +851,6 @@ export function NewJobsPage() {
                       </Button>
                     </div>
                   }
-                />
-              ) : (
-                <ItemsEmpty
-                  icon={<InboxIcon aria-hidden />}
-                  title="No dismissed jobs"
-                  description="Jobs you dismiss from New stay here until you restore them, track them, or delete permanently."
                 />
               )
             ) : (
@@ -793,7 +906,7 @@ export function NewJobsPage() {
                         id: job.id,
                         title: job.title,
                         companyName: job.companyName,
-                        trackingStatus: filter === "dismissed" ? "dismissed" : "inbox"
+                        trackingStatus: job.trackingStatus === "dismissed" ? "dismissed" : "inbox"
                       });
                     },
                     onUpdateDescription: () => setDescriptionApp(job),
@@ -833,7 +946,9 @@ export function NewJobsPage() {
                             actions={
                               <NewJobRowActions
                                 job={job}
-                                filter={filter}
+                                trackingStatus={
+                                  job.trackingStatus === "dismissed" ? "dismissed" : "inbox"
+                                }
                                 busy={busy}
                                 takeBusy={takeBusy}
                                 batchSelected={batchSelected}
@@ -853,7 +968,9 @@ export function NewJobsPage() {
                           <NewJobOverflowMenuItems
                             slots={newJobContextSlots}
                             job={job}
-                            filter={filter}
+                            trackingStatus={
+                              job.trackingStatus === "dismissed" ? "dismissed" : "inbox"
+                            }
                             busy={busy}
                             takeBusy={takeBusy}
                             batchSelected={batchSelected}
@@ -864,10 +981,24 @@ export function NewJobsPage() {
                     </li>
                   );
                 })}
+                <li ref={sentinelRef} className="list-none" aria-hidden={!listQuery.hasNextPage}>
+                  <div className="flex w-full items-center justify-center py-2">
+                    {listQuery.isFetchingNextPage ? (
+                      <ChaoticPixelsLoader label="Loading more jobs" />
+                    ) : null}
+                  </div>
+                </li>
               </ul>
             )}
+            {totalCount != null && jobs.length > 0 ? (
+              <p className="pb-2 text-center text-xs text-muted-foreground">
+                Showing {jobs.length}
+                {totalCount > jobs.length ? ` of ${totalCount}` : ""} job
+                {totalCount === 1 ? "" : "s"}
+              </p>
+            ) : null}
           </div>
-        </Tabs>
+        </div>
 
         <Suspense fallback={null}>
           <ItemsInspectHost

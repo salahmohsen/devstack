@@ -10,7 +10,10 @@ import {
   useHubChat,
   type HubToolNamePart
 } from "@/features/agent-hub";
-import { applicationCountQueryKeys, applicationsQueryKeys } from "@/features/applications";
+import {
+  applicationCountQueryKeys,
+  invalidateApplicationsListQueries
+} from "@/features/applications";
 
 /** Tools that mutate applications from the shared hub thread. */
 const HUB_APPLICATION_MUTATING_TOOLS = new Set([
@@ -77,9 +80,7 @@ async function invalidateAllApplicationSurfaces(
   queryClient: ReturnType<typeof useQueryClient>
 ): Promise<void> {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("inbox") }),
-    queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("tracked") }),
-    queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("dismissed") }),
+    invalidateApplicationsListQueries(queryClient),
     queryClient.invalidateQueries({ queryKey: applicationCountQueryKeys.byStatus("inbox") })
   ]);
 }
