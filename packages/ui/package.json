@@ -14,7 +14,8 @@
     "./components/cardcn": "./components/cardcn/index.ts",
     "./components/animated-wash": "./components/animated-wash/index.ts",
     "./components/fancy/text": "./components/fancy/text/index.ts",
-    "./components/uitripled": "./components/uitripled/index.ts"
+    "./components/uitripled": "./components/uitripled/index.ts",
+    "./components/filters": "./components/filters/index.ts"
   },
   "scripts": {
     "ui": "vpx shadcn@latest"
@@ -40,6 +41,7 @@
     "files-sdk": "catalog:",
     "geist": "catalog:",
     "lucide-react": "catalog:",
+    "match-sorter": "catalog:",
     "motion": "catalog:",
     "next-themes": "catalog:",
     "react-day-picker": "^10.0.1",
