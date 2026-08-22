@@ -196,12 +196,13 @@ jobs:
           fi
 
           if paths_dirty "$base_agent" \
-            apps/agent packages/core packages/db packages/env packages/logger; then
+            apps/agent packages/api packages/core packages/db packages/env \
+            packages/logger packages/pdf; then
             want_agent=true
           fi
           if paths_dirty "$base_server" \
             apps/server packages/api packages/auth packages/core packages/db \
-            packages/email packages/env packages/github packages/logger; then
+            packages/email packages/env packages/github packages/logger packages/pdf; then
             want_server=true
           fi
           if paths_dirty "$base_web" \
