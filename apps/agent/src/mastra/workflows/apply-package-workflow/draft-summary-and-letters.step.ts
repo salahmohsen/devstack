@@ -80,14 +80,16 @@ ${JSON.stringify(stackNames, null, 2)}
 
 Rules:
 - professionalSummary: optional 2–4 sentence tailored summary grounded in profile + rewritten evidence + job; null if nothing useful to say.
+- headline: target-role line only (fair title, optional years/scope). Do not rename past employers. Empty string if nothing fair to say.
 - coverLetterBody: formal ~3–5 short paragraphs; company/role; proof from rewritten evidence only.
 - outreachSubject: one professional line (company + role when natural).
 - outreachBody: short recruiter outreach (~80–150 words); plain text; not a full cover letter paste.
 - proposedRecruiterEmail: only if a plausible contact email appears in the job brief description; else null. Never invent emails.
-- notes: optional short reviewer notes (fit highlights, thin JD caveats).
+- notes: optional short reviewer notes (fit highlights, thin JD caveats). Not an ATS score.
+- Light tweaks only: reorder + mirror phrasing where true. No leverage/synergy/utilize/spearheaded/results-driven unless already in the seeker's text.
 - Do not invent employers, titles, metrics, tools, or achievements.
 - Do not rename companies/roles/projects.
-- Return structured output only (professionalSummary, coverLetterBody, outreachSubject, outreachBody, proposedRecruiterEmail, optional notes).`;
+- Return structured output only (professionalSummary, headline, coverLetterBody, outreachSubject, outreachBody, proposedRecruiterEmail, optional notes / jdBuckets / keywordDualForms / atsVendor).`;
 }
 
 export const draftSummaryAndLetters = createStep({

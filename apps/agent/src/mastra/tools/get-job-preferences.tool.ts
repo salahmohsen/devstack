@@ -35,7 +35,8 @@ export const getJobPreferencesTool = createTool({
         customTitle: z.string().nullable(),
         jobsPerRun: z.number().int(),
         dailyBoardScoreCap: z.number().int(),
-        importFromEmail: z.boolean()
+        importFromEmail: z.boolean(),
+        reviewApplyKit: z.boolean()
       })
       .nullable()
   }),
@@ -65,7 +66,8 @@ export const getJobPreferencesTool = createTool({
         customTitle: row.customTitle ?? null,
         jobsPerRun: row.jobsPerRun ?? 25,
         dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
-        importFromEmail: row.importFromEmail ?? false
+        importFromEmail: row.importFromEmail ?? false,
+        reviewApplyKit: row.reviewApplyKit ?? true
       }
     };
   }

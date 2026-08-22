@@ -53,6 +53,7 @@ function toOutput(
     jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
     dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
     importFromEmail: row.importFromEmail ?? false,
+    reviewApplyKit: row.reviewApplyKit ?? true,
     updatedAt: row.updatedAt,
     boardScoresUsedToday
   });
@@ -75,7 +76,8 @@ function rowToPreference(
     customTitle: row.customTitle ?? null,
     jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
     dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
-    importFromEmail: row.importFromEmail ?? false
+    importFromEmail: row.importFromEmail ?? false,
+    reviewApplyKit: row.reviewApplyKit ?? true
   };
 }
 
@@ -136,7 +138,8 @@ export const jobPreferenceRouter = {
         customTitle: merged.customTitle,
         jobsPerRun: refineJobsPerRun(merged.jobsPerRun),
         dailyBoardScoreCap: refineDailyBoardScoreCap(merged.dailyBoardScoreCap),
-        importFromEmail: merged.importFromEmail
+        importFromEmail: merged.importFromEmail,
+        reviewApplyKit: merged.reviewApplyKit
       });
 
       const [, boardScoresUsedToday] = await Promise.all([

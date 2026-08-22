@@ -10,11 +10,11 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import {
   getApplicationPrimaryAction,
   listingUrlFor,
-  useGenerateApplyPackageMutation,
   type ApplicationPrimaryActionKind
 } from "@/features/applications";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useDashboardApplyPackage } from "@/pages/dashboard/tracked-jobs/_lib/use-dashboard-apply-package";
 
 const PRIMARY_ACTION_ICONS: Record<
   ApplicationPrimaryActionKind,
@@ -57,14 +57,14 @@ export function ApplicationPrimaryActionButton({
   className
 }: ApplicationPrimaryActionButtonProps) {
   const primary = getApplicationPrimaryAction(app);
-  const { openEdit, openPackageSheet, openSendOutreach } = useApplicationStore();
-  const generateMutation = useGenerateApplyPackageMutation();
+  const { openEdit, openSendOutreach } = useApplicationStore();
+  const { runGenerate, runReview, pending } = useDashboardApplyPackage();
   const open = isApplicationOpen(app.outcome);
 
   if (!primary) return null;
 
   const Icon = PRIMARY_ACTION_ICONS[primary.kind];
-  const generating = generateMutation.isPending && primary.kind === "prepare";
+  const generating = pending && (primary.kind === "prepare" || primary.kind === "review");
   const disabled = !open || generating;
   const resolvedVariant =
     buttonVariant ?? (primary.kind === "open-listing" && !grouped ? "outline" : "default");
@@ -72,20 +72,13 @@ export function ApplicationPrimaryActionButton({
   function runPrimary() {
     switch (primary!.kind) {
       case "prepare":
-        generateMutation.mutate(
-          { applicationId: app.id },
-          {
-            onSuccess: (data) => {
-              openPackageSheet(data.id);
-            }
-          }
-        );
+        runGenerate(app.id);
         break;
       case "add-jd":
         openEdit(app);
         break;
       case "review":
-        openPackageSheet(app.id);
+        runReview(app.id);
         break;
       case "send":
         openSendOutreach(app.id);

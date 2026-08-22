@@ -67,7 +67,8 @@ export const JobPreferenceFieldsSchema = z.object({
   customTitle: customTitleField,
   jobsPerRun: jobsPerRunField,
   dailyBoardScoreCap: dailyBoardScoreCapField,
-  importFromEmail: z.boolean()
+  importFromEmail: z.boolean(),
+  reviewApplyKit: z.boolean()
 });
 export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
 
@@ -89,7 +90,8 @@ export const JobPreferenceSchema = z.object({
   customTitle: customTitleField.default(null),
   jobsPerRun: jobsPerRunField.default(DEFAULT_JOBS_PER_RUN),
   dailyBoardScoreCap: dailyBoardScoreCapField.default(DEFAULT_DAILY_BOARD_SCORE_CAP),
-  importFromEmail: z.boolean().default(false)
+  importFromEmail: z.boolean().default(false),
+  reviewApplyKit: z.boolean().default(true)
 });
 
 /** API get/upsert response. */
@@ -131,7 +133,8 @@ export const UpsertJobPreferenceInputSchema = z
     customTitle: customTitleField.optional(),
     jobsPerRun: jobsPerRunField.optional(),
     dailyBoardScoreCap: dailyBoardScoreCapField.optional(),
-    importFromEmail: z.boolean().optional()
+    importFromEmail: z.boolean().optional(),
+    reviewApplyKit: z.boolean().optional()
   })
   .superRefine(refineCustomDiscoveryTitle);
 export type UpsertJobPreferenceInput = z.infer<typeof UpsertJobPreferenceInputSchema>;

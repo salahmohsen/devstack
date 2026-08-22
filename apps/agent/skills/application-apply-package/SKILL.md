@@ -2,10 +2,10 @@
 name: application-apply-package
 description: >
   Use when building a tailored apply package for one job application:
-  rewrite all portfolio experiences/projects in the snapshot for the role,
+  light snapshot tweaks of portfolio experiences/projects for the role,
   then draft professional summary + cover letter + recruiter outreach email.
   Structured draft only; multi-step (chunked rewrites then letters).
-version: 1.1.0
+version: 1.2.0
 tags:
   - application
   - resume
@@ -36,10 +36,22 @@ Generation is **multi-step**. Each call is one phase; follow the phase rules for
 4. **Ground rewrites** in the item’s existing description/summary/bullets (+ private analysis for projects when present). Prefer stronger, clearer phrasing for the target role; do not fabricate scope.
 5. **Return structured output only** (schema for this phase). No free-form essay outside the fields.
 
+## Light tweaks, not a rewrite
+
+- Reorder and **mirror JD phrasing where true**. Do not invent a second career.
+- Keep facts. Numerals when the source already has a quantity.
+- Dual acronyms when both forms are in the JD ∩ portfolio (e.g. Amazon Web Services (AWS)).
+- Banned cluster unless already in the seeker’s text: leverage, synergy, utilize, spearheaded, results-driven, passionate, world-class, rockstar.
+- Do not clone the JD. Do not dump every listing keyword.
+- `headline` is the **target role** line (fair title + optional years/scope). Do **not** rename past employers.
+- Snapshot only — never ask to write these bullets back onto master experience/project/stack rows.
+- **No user-facing ATS score**, Jobscan percent, or trophy. Optional `atsVendor` is a host guess for notes only.
+
 ## PDF include flag
 
 - On the final draft, **all** experiences, projects, and stacks from the snapshot are `include: true`.
-- The **server** sets `include` at assemble time. Models need not emit include/exclude decisions and should not treat “list with include:false for the whole catalog” as the product path.
+- The **server** sets `include` at assemble time. Models must **not** emit `include: false` and must not treat silent exclude as the product path.
+- Page budget / auto-hide is an accept-path concern when Review apply kit is off — not a model decision.
 
 ## Phases
 
@@ -62,7 +74,7 @@ Generation is **multi-step**. Each call is one phase; follow the phase rules for
 ### Phase: summary + letters
 
 - Input: job brief, profile/contacts, **already rewritten** experiences/projects (not raw full portfolio walls), stack names.
-- Output: `professionalSummary` (optional), `coverLetterBody`, `outreachSubject`, `outreachBody`, `proposedRecruiterEmail`, optional `notes`.
+- Output: `professionalSummary` (optional), `headline` (target role line), `coverLetterBody`, `outreachSubject`, `outreachBody`, `proposedRecruiterEmail`, optional `notes`, optional `jdBuckets` / `keywordDualForms` / `atsVendor`.
 - Ground summary and letters only in profile + rewritten evidence + job — no invented credentials.
 - Stacks: names only for context; server includes all snapshot stacks on the PDF.
 
@@ -81,7 +93,7 @@ Generation is **multi-step**. Each call is one phase; follow the phase rules for
 
 ## Notes
 
-Optional short `notes` for the human reviewer (fit highlights, thin JD caveats). Not shown on PDFs. Not “selection rationale for exclude list.”
+Optional short `notes` for the human reviewer (fit highlights, thin JD caveats). Not shown on PDFs. Not “selection rationale for exclude list.” Not an ATS score.
 
 ## Output
 

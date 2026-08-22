@@ -34,6 +34,7 @@ import {
   refineWorkModeFromDescription,
   scoreJobAgainstPreference,
   GenerateApplyPackageInputSchema,
+  isApplyPackageResumePrompt,
   ListApplicationActivityInputSchema,
   ListApplicationsInputSchema,
   PreviewListingInputSchema,
@@ -1051,7 +1052,8 @@ export const applicationsRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
 
-      // Load cover keys before deleteMany (returns only ids). Do not delete resume objects.
+      // Load cover keys and kit resume rows before deleteMany (returns only ids).
+      // Non-kit resumes stay; kit resumes (`prompt: apply-package:{id}`) are deleted.
       const owned = (
         await Promise.all(input.ids.map((id) => applicationRepository.findByIdForUser(id, userId)))
       ).filter((row): row is NonNullable<typeof row> => row != null);
@@ -1062,10 +1064,28 @@ export const applicationsRouter = {
           .map((row) => [row.id, row.coverLetterR2Key as string])
       );
 
+      const kitResumes = (
+        await Promise.all(
+          owned.map(async (row) => {
+            if (!row.resumeId) return null;
+            const resume = await resumeRepository.findByIdForUser(row.resumeId, userId);
+            if (!resume || !isApplyPackageResumePrompt(resume.prompt, row.id)) return null;
+            return resume;
+          })
+        )
+      ).filter((row): row is NonNullable<typeof row> => row != null);
+
       const deleted = await applicationRepository.deleteMany(input.ids, userId);
 
-      await Promise.all(
-        deleted.map(async ({ id }) => {
+      if (kitResumes.length > 0) {
+        await resumeRepository.deleteMany(
+          kitResumes.map((row) => row.id),
+          userId
+        );
+      }
+
+      await Promise.all([
+        ...deleted.map(async ({ id }) => {
           const key = coverKeyById.get(id);
           if (!key) return;
           try {
@@ -1073,8 +1093,16 @@ export const applicationsRouter = {
           } catch {
             // Best-effort cover cleanup; row is already gone.
           }
+        }),
+        ...kitResumes.map(async (resume) => {
+          if (!resume.r2Key) return;
+          try {
+            await context.mediaBucket.delete(resume.r2Key);
+          } catch {
+            // Best-effort kit resume object; row is already gone.
+          }
         })
-      );
+      ]);
 
       return { success: deleted.length > 0 };
     }),

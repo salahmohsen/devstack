@@ -34,7 +34,7 @@ export function useGenerateApplyPackageMutation() {
             queryKey: applicationsQueryKeys.activity(data.id)
           })
         ]);
-        toast.success("Apply package draft ready to review.");
+        toast.success("Apply package drafted.");
       },
       onError: (error) => {
         if (isDefinedError(error)) {

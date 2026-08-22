@@ -89,6 +89,15 @@ export const ApplyPackageStackDraftSchema = z.object({
 });
 export type ApplyPackageStackDraft = z.infer<typeof ApplyPackageStackDraftSchema>;
 
+/** Internal review notes — not a PDF field. */
+export const ApplyPackageJdBucketsSchema = z.object({
+  must: z.array(z.string()).default([]),
+  nice: z.array(z.string()).default([]),
+  missing: z.array(z.string()).default([]),
+  repeated: z.array(z.string()).default([])
+});
+export type ApplyPackageJdBuckets = z.infer<typeof ApplyPackageJdBucketsSchema>;
+
 /**
  * Structured apply package draft persisted on `application.applyPackageDraft`.
  * Cleared on Accept (accepted fields live on dedicated columns).
@@ -99,6 +108,8 @@ export const ApplyPackageDraftSchema = z.object({
   jobContext: ApplyPackageJobContextSchema,
   proposedRecruiterEmail: optionalNullableEmail.nullable(),
   professionalSummary: z.string().nullable(),
+  /** Target-role line for RenderCV `cv.headline`. Empty falls back to resumeHeadline. */
+  headline: z.string().default(""),
   experiences: z.array(ApplyPackageExperienceDraftSchema),
   projects: z.array(ApplyPackageProjectDraftSchema),
   stacks: z.array(ApplyPackageStackDraftSchema),
@@ -106,7 +117,12 @@ export const ApplyPackageDraftSchema = z.object({
   outreachSubject: z.string(),
   outreachBody: z.string(),
   /** AI rationale for the human reviewer. */
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  jdBuckets: ApplyPackageJdBucketsSchema.optional(),
+  /** JD ∩ portfolio dual forms (e.g. “Amazon Web Services (AWS)”). */
+  keywordDualForms: z.array(z.string()).optional(),
+  /** Recognized ATS host (Greenhouse, Workday, …). Notes only — not a PDF field. */
+  atsVendor: z.string().optional()
 });
 export type ApplyPackageDraft = z.infer<typeof ApplyPackageDraftSchema>;
 
@@ -209,6 +225,24 @@ export type SendOutreachInput = z.infer<typeof SendOutreachInputSchema>;
 /** Max portfolio experiences/projects per rewrite LLM step. */
 export const APPLY_PACKAGE_REWRITE_CHUNK_SIZE = 3 as const;
 
+/** Known listing hosts → ATS vendor slug for optional reviewer notes. */
+export function detectAtsVendor(url: string | null | undefined): string | undefined {
+  const raw = url?.trim();
+  if (!raw) return undefined;
+  try {
+    const host = new URL(raw).hostname.toLowerCase();
+    if (host.includes("greenhouse")) return "greenhouse";
+    if (host.includes("myworkdayjobs") || host.includes("workday")) return "workday";
+    if (host.includes("lever.co")) return "lever";
+    if (host.includes("ashbyhq")) return "ashby";
+    if (host.includes("smartrecruiters")) return "smartrecruiters";
+    if (host.includes("icims")) return "icims";
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function chunkArray<T>(items: readonly T[], size: number): T[][] {
   if (size <= 0) throw new Error("chunk size must be positive");
   const out: T[][] = [];
@@ -271,7 +305,22 @@ export const ApplyPackageSummaryAndLettersSchema = z.object({
   proposedRecruiterEmail: optionalNullableEmail
     .nullable()
     .describe("Recruiter email only if present in the JD; otherwise null"),
-  notes: z.string().optional().describe("Internal note for the seeker, not sent")
+  notes: z.string().optional().describe("Internal note for the seeker, not sent"),
+  headline: z
+    .string()
+    .optional()
+    .describe("Target role headline line (not an employer rename). Empty omits."),
+  jdBuckets: ApplyPackageJdBucketsSchema.optional().describe(
+    "Must / nice / missing / repeated JD buckets for the reviewer — not the PDF"
+  ),
+  keywordDualForms: z
+    .array(z.string())
+    .optional()
+    .describe("JD ∩ portfolio dual spellings such as Amazon Web Services (AWS)"),
+  atsVendor: z
+    .string()
+    .optional()
+    .describe("Recognized ATS host if obvious from the listing URL; omit otherwise")
 });
 export type ApplyPackageSummaryAndLetters = z.infer<typeof ApplyPackageSummaryAndLettersSchema>;
 
@@ -337,6 +386,7 @@ export function assembleApplyPackageDraft(
   });
 
   const generatedAtTrimmed = input.generatedAt?.trim();
+  const atsVendor = input.letters.atsVendor?.trim() ?? detectAtsVendor(input.jobContext.listingUrl);
   const draft = {
     applicationId: input.applicationId,
     generatedAt:
@@ -346,13 +396,19 @@ export function assembleApplyPackageDraft(
     jobContext: input.jobContext,
     proposedRecruiterEmail: input.letters.proposedRecruiterEmail ?? null,
     professionalSummary: input.letters.professionalSummary,
+    headline: input.letters.headline?.trim() ?? "",
     experiences,
     projects,
     stacks,
     coverLetterBody: input.letters.coverLetterBody,
     outreachSubject: input.letters.outreachSubject,
     outreachBody: input.letters.outreachBody,
-    ...(input.letters.notes != null ? { notes: input.letters.notes } : {})
+    ...(input.letters.notes != null ? { notes: input.letters.notes } : {}),
+    ...(input.letters.jdBuckets != null ? { jdBuckets: input.letters.jdBuckets } : {}),
+    ...(input.letters.keywordDualForms != null
+      ? { keywordDualForms: input.letters.keywordDualForms }
+      : {}),
+    ...(atsVendor ? { atsVendor } : {})
   };
 
   const parsed = ApplyPackageDraftSchema.safeParse(draft);

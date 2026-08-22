@@ -41,7 +41,8 @@ function rowToPreference(row: JobPreferenceEntity): JobPreference {
     customTitle: row.customTitle ?? null,
     jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
     dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
-    importFromEmail: row.importFromEmail ?? false
+    importFromEmail: row.importFromEmail ?? false,
+    reviewApplyKit: row.reviewApplyKit ?? true
   };
 }
 
@@ -106,7 +107,8 @@ export const upsertSoftJobPreferencesTool = createTool({
         customTitle: next.customTitle,
         jobsPerRun: next.jobsPerRun,
         dailyBoardScoreCap: next.dailyBoardScoreCap,
-        importFromEmail: next.importFromEmail
+        importFromEmail: next.importFromEmail,
+        reviewApplyKit: next.reviewApplyKit
       });
       await jobPreferenceRepository.clearSearchBrief(userId);
       const log = createAgentLogger({ operation: "agent__search_brief" });

@@ -197,7 +197,9 @@ function contactsForOrder(contacts: PdfContact[], profileEmail: string): PdfCont
 
 function buildCv(input: ResumePdfInput): Record<string, unknown> {
   const cv: Record<string, unknown> = { name: input.profile.name };
-  const headline = resumeHeadline(input.portfolio.experiences);
+  const headline = [input.headline?.trim(), resumeHeadline(input.portfolio.experiences)].find(
+    (value) => Boolean(value)
+  );
   if (headline) cv.headline = headline;
 
   const ordered = contactsForOrder(input.portfolio.contacts, input.profile.email);

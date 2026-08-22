@@ -24,6 +24,7 @@ export async function loadJobPreference(userId: string): Promise<JobPreference> 
     customTitle: row.customTitle ?? null,
     jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
-    importFromEmail: row.importFromEmail ?? false
+    importFromEmail: row.importFromEmail ?? false,
+    reviewApplyKit: row.reviewApplyKit ?? true
   };
 }

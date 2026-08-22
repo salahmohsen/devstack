@@ -108,6 +108,7 @@ describe("mergeJobPreference", () => {
     expect(d.jobsPerRun).toBe(25);
     expect(d.dailyBoardScoreCap).toBe(50);
     expect(d.importFromEmail).toBe(false);
+    expect(d.reviewApplyKit).toBe(true);
   });
 
   it("merges jobsPerRun and importFromEmail when provided", () => {
@@ -118,6 +119,14 @@ describe("mergeJobPreference", () => {
     });
     expect(merged.jobsPerRun).toBe(15); // snapped
     expect(merged.importFromEmail).toBe(true);
+  });
+
+  it("merges reviewApplyKit when provided", () => {
+    const merged = mergeJobPreference(defaultJobPreference(), {
+      reviewApplyKit: false,
+      salaryCurrency: undefined
+    });
+    expect(merged.reviewApplyKit).toBe(false);
   });
 
   it("merges dailyBoardScoreCap when provided", () => {

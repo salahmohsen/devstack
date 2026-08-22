@@ -26,6 +26,7 @@ export type UpsertJobPreferenceData = {
   jobsPerRun: number;
   dailyBoardScoreCap: number;
   importFromEmail: boolean;
+  reviewApplyKit: boolean;
 };
 
 export const jobPreferenceRepository = {
@@ -60,6 +61,7 @@ export const jobPreferenceRepository = {
           jobsPerRun: input.jobsPerRun,
           dailyBoardScoreCap: input.dailyBoardScoreCap,
           importFromEmail: input.importFromEmail,
+          reviewApplyKit: input.reviewApplyKit,
           updatedAt: new Date()
         })
         .where(eq(jobPreference.userId, input.userId))
@@ -86,7 +88,8 @@ export const jobPreferenceRepository = {
         customTitle: input.customTitle,
         jobsPerRun: input.jobsPerRun,
         dailyBoardScoreCap: input.dailyBoardScoreCap,
-        importFromEmail: input.importFromEmail
+        importFromEmail: input.importFromEmail,
+        reviewApplyKit: input.reviewApplyKit
       })
       .returning();
     if (!row) throw new Error("Failed to insert job_preference");
