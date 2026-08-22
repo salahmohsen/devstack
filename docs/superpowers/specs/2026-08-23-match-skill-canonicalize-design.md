@@ -1,7 +1,7 @@
 # Match chips: canonicalize listing skills, silent same-skill link, in-panel create
 
 **Date:** 2026-08-23  
-**Status:** Locked for implementation (PO accepted 2026-08-23). Ready for an implementation plan.  
+**Status:** Locked for implementation (PO accepted 2026-08-23). Plan: [2026-08-23-match-skill-canonicalize](../plans/2026-08-23-match-skill-canonicalize.md).  
 **Goal:** Inspect Match chips and `%` only count checkable tools. Role phrases leave the bar. Same-skill tokens link to the catalog without a picker. Create skill from “I have it” stays in the side panel on this job.  
 **Surfaces:** New jobs inspect, Tracked inspect, land leftover extract, regenerate take, Skills form (hosted from inspect)  
 **Verification skill:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) after implement (take + inspect Match). Lessons in that skill’s `LESSONS.md`.  
