@@ -49,7 +49,6 @@ import { ITEM_AVATAR_EYEBROW_CLASSNAME } from "@/shared/ui/item-avatar";
 import {
   AgentTakeMarkdown,
   JobIdentityMark,
-  JobSkillsMatch,
   JobYearsBadge,
   listingSkillNames,
   yearsRequirementNote
@@ -81,6 +80,7 @@ import {
   ApplicationKitMaterials,
   ApplyPackagePanelActions
 } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
+import { InspectJobSkillsMatch } from "@/pages/dashboard/tracked-jobs/ui/inspect-job-skills-match";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";
@@ -254,6 +254,7 @@ export function ApplicationInfoPanel({
   const jobSkills = listingSkillNames(item.requiredSkills, item.preferredSkills);
   const heldSkills = (stacksQuery.data ?? []).map((stack) => {
     return {
+      id: stack.id,
       name: stack.name,
       aliases: stack.aliases ?? []
     };
@@ -403,7 +404,7 @@ export function ApplicationInfoPanel({
             <ItemInfoSection title="Match" icon={<LayersIcon />}>
               <div className="space-y-4">
                 {showSkillsMatch ? (
-                  <JobSkillsMatch
+                  <InspectJobSkillsMatch
                     jobSkills={jobSkills}
                     held={heldSkills}
                     listingMinYears={item.experienceYearsMin}

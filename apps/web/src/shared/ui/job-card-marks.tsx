@@ -10,6 +10,7 @@ import {
   type JobSkillTag
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { ProgressBar } from "@/shared/ui/interior/progress-bar";
@@ -148,42 +149,122 @@ export function yearsRequirementNote(input: {
   return `Requires ${listing}+ years; you have ${seeker}.`;
 }
 
+type SkillChipItem = {
+  token: string;
+  label: string;
+};
+
+export type JobSkillChipHaveItKind = "close" | "missing";
+
+const SKILL_CHIP_CLASS =
+  "inline-flex max-w-full items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] leading-5";
+
+function skillChipToneClass(tone: "have" | "close" | "missing"): string {
+  if (tone === "have") return "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300";
+  if (tone === "close") return "bg-amber-500/10 text-amber-800 dark:text-amber-300";
+  return "bg-red-500/10 text-red-800 dark:text-red-300";
+}
+
+function SkillChipMark({ tone }: { tone: "have" | "close" | "missing" }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "size-1.5 shrink-0 rounded-full",
+        tone === "have" && "bg-emerald-500",
+        tone === "close" && "bg-amber-500",
+        tone === "missing" && "bg-red-500"
+      )}
+    />
+  );
+}
+
+function SkillChip({
+  tone,
+  item,
+  onHaveIt,
+  hasAliasCatalog
+}: {
+  tone: "have" | "close" | "missing";
+  item: SkillChipItem;
+  onHaveIt?: (input: { token: string; kind: JobSkillChipHaveItKind }) => void;
+  hasAliasCatalog?: boolean;
+}) {
+  const chipClass = cn(SKILL_CHIP_CLASS, skillChipToneClass(tone));
+  const inner = (
+    <>
+      <SkillChipMark tone={tone} />
+      <span className="truncate lowercase">{item.label}</span>
+    </>
+  );
+
+  const interactive = tone !== "have" && onHaveIt != null;
+  if (!interactive || onHaveIt == null) {
+    return (
+      <span title={item.label} className={chipClass}>
+        {inner}
+      </span>
+    );
+  }
+
+  const kind: JobSkillChipHaveItKind = tone;
+  const haveItDisabled = kind === "missing" && !hasAliasCatalog;
+
+  return (
+    <Menu>
+      <MenuTrigger
+        type="button"
+        title={item.label}
+        aria-label={`${item.token} actions`}
+        className={cn(
+          chipClass,
+          "cursor-pointer border-0 shadow-none outline-none",
+          "transition-[transform,background-color] hover:brightness-[0.97] active:scale-[0.96]",
+          "focus-visible:ring-2 focus-visible:ring-ring/50"
+        )}
+      >
+        {inner}
+      </MenuTrigger>
+      <MenuPopup align="start">
+        <MenuItem
+          disabled={haveItDisabled}
+          onClick={() => {
+            onHaveIt({ token: item.token, kind });
+          }}
+        >
+          I have it
+        </MenuItem>
+      </MenuPopup>
+    </Menu>
+  );
+}
+
 function SkillChipGroup({
   label,
   tone,
-  skills
+  skills,
+  onHaveIt,
+  hasAliasCatalog
 }: {
   label: string;
   tone: "have" | "close" | "missing";
-  skills: readonly string[];
+  skills: readonly SkillChipItem[];
+  onHaveIt?: (input: { token: string; kind: JobSkillChipHaveItKind }) => void;
+  hasAliasCatalog?: boolean;
 }) {
   if (skills.length === 0) return null;
   return (
     <div className="min-w-0">
       <p className="text-xs font-medium text-foreground">{label}</p>
       <ul className="mt-1.5 flex flex-wrap gap-1.5">
-        {skills.map((skill) => (
-          <li key={`${tone}-${skill}`}>
-            <span
-              title={skill}
-              className={cn(
-                "inline-flex max-w-full items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] leading-5",
-                tone === "have" && "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
-                tone === "close" && "bg-amber-500/10 text-amber-800 dark:text-amber-300",
-                tone === "missing" && "bg-red-500/10 text-red-800 dark:text-red-300"
-              )}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "size-1.5 shrink-0 rounded-full",
-                  tone === "have" && "bg-emerald-500",
-                  tone === "close" && "bg-amber-500",
-                  tone === "missing" && "bg-red-500"
-                )}
-              />
-              <span className="truncate lowercase">{skill}</span>
-            </span>
+        {skills.map((item, index) => (
+          <li key={`${tone}-${item.token}-${index}`}>
+            <SkillChip
+              tone={tone}
+              item={item}
+              onHaveIt={onHaveIt}
+              hasAliasCatalog={hasAliasCatalog}
+            />
           </li>
         ))}
       </ul>
@@ -197,13 +278,17 @@ export function JobSkillsMatch({
   stackNames,
   held,
   listingMinYears,
-  seekerYears
+  seekerYears,
+  onHaveIt,
+  hasAliasCatalog
 }: {
   jobSkills: readonly string[];
   stackNames?: readonly string[];
   held?: readonly HeldSkill[];
   listingMinYears?: number | null;
   seekerYears?: number | null;
+  onHaveIt?: (input: { token: string; kind: JobSkillChipHaveItKind }) => void;
+  hasAliasCatalog?: boolean;
 }) {
   const classified = classifyJobSkills({
     jobSkills,
@@ -242,13 +327,31 @@ export function JobSkillsMatch({
           />
         </div>
       ) : null}
-      <SkillChipGroup label="You have" tone="have" skills={classified.have} />
+      <SkillChipGroup
+        label="You have"
+        tone="have"
+        skills={classified.have.map((name) => {
+          return { token: name, label: name };
+        })}
+      />
       <SkillChipGroup
         label="Close — you have a related skill"
         tone="close"
-        skills={classified.close.map((row) => `${row.name} · you have ${row.via}`)}
+        skills={classified.close.map((row) => {
+          return { token: row.name, label: `${row.name} · you have ${row.via}` };
+        })}
+        onHaveIt={onHaveIt}
+        hasAliasCatalog={hasAliasCatalog}
       />
-      <SkillChipGroup label="Missing" tone="missing" skills={classified.missing} />
+      <SkillChipGroup
+        label="Missing"
+        tone="missing"
+        skills={classified.missing.map((name) => {
+          return { token: name, label: name };
+        })}
+        onHaveIt={onHaveIt}
+        hasAliasCatalog={hasAliasCatalog}
+      />
       {yearsNote ? (
         <div>
           <p className="text-xs font-medium text-foreground">Requirements</p>

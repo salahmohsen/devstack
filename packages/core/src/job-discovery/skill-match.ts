@@ -5,9 +5,12 @@ import {
 } from "#@/application/job-skills";
 
 export type HeldSkill = {
+  id?: string;
   name: string;
   aliases?: readonly string[];
 };
+
+export type HeldSkillWithId = HeldSkill & { id: string };
 
 export type ClassifiedJobSkills = {
   available: boolean;
@@ -43,6 +46,30 @@ function familyOf(skillKey: string): readonly string[] | null {
     if (family.includes(skillKey)) return family;
   }
   return null;
+}
+
+/**
+ * Exact name/alias or a unique `CANONICAL_SKILL_ALIASES` hit onto one catalog
+ * row. Never prefix/suffix (`Java` ↛ `JavaScript`). Collisions and empty
+ * catalog return null — Enter must not confirm a guess.
+ */
+export function preselectHeldSkillForAlias(
+  token: string,
+  held: readonly HeldSkillWithId[]
+): string | null {
+  if (held.length === 0) return null;
+  const tokenKey = normalizeJobSkillName(token);
+  if (!tokenKey) return null;
+
+  const hits = new Set<string>();
+  for (const row of held) {
+    if (collectSurfaceKeys(row.name, row.aliases ?? []).has(tokenKey)) {
+      hits.add(row.id);
+      if (hits.size > 1) return null;
+    }
+  }
+  if (hits.size !== 1) return null;
+  return hits.values().next().value ?? null;
 }
 
 export function classifyJobSkills(input: {

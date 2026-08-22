@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { classifyJobSkills } from "#@/job-discovery/skill-match";
+import { classifyJobSkills, preselectHeldSkillForAlias } from "#@/job-discovery/skill-match";
 
 describe("classifyJobSkills", () => {
   it("is unavailable when the job lists no skills", () => {
@@ -76,5 +76,50 @@ describe("classifyJobSkills", () => {
       held: [{ name: "React" }]
     });
     expect(result.missing).toEqual(["frontend development"]);
+  });
+});
+
+describe("preselectHeldSkillForAlias", () => {
+  it("returns null for an empty catalog", () => {
+    expect(preselectHeldSkillForAlias("React", [])).toBeNull();
+  });
+
+  it("does not preselect JavaScript for Java", () => {
+    expect(preselectHeldSkillForAlias("Java", [{ id: "js", name: "JavaScript" }])).toBeNull();
+  });
+
+  it("does not preselect TypeScript for Type", () => {
+    expect(preselectHeldSkillForAlias("Type", [{ id: "ts", name: "TypeScript" }])).toBeNull();
+  });
+
+  it("does not preselect Kubernetes for net", () => {
+    expect(preselectHeldSkillForAlias("net", [{ id: "k8s", name: "Kubernetes" }])).toBeNull();
+  });
+
+  it("preselects unique canonical React.js / ReactJS onto held React", () => {
+    const held = [{ id: "react", name: "React", aliases: [] as const }];
+    expect(preselectHeldSkillForAlias("React.js", held)).toBe("react");
+    expect(preselectHeldSkillForAlias("ReactJS", held)).toBe("react");
+  });
+
+  it("preselects on an exact alias match", () => {
+    expect(
+      preselectHeldSkillForAlias("Amazon Web Services", [
+        { id: "aws", name: "AWS", aliases: ["Amazon Web Services"] }
+      ])
+    ).toBe("aws");
+  });
+
+  it("preselects on an exact name match ignoring case", () => {
+    expect(preselectHeldSkillForAlias("go", [{ id: "go", name: "Go" }])).toBe("go");
+  });
+
+  it("returns null when two catalog rows collide", () => {
+    expect(
+      preselectHeldSkillForAlias("ReactJS", [
+        { id: "a", name: "React" },
+        { id: "b", name: "React.js" }
+      ])
+    ).toBeNull();
   });
 });
