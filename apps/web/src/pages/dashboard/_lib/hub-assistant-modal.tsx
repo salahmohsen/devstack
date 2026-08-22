@@ -95,6 +95,9 @@ export function HubAssistantModal({ className }: { className?: string }) {
               variant="ghost"
               size="icon-sm"
               aria-label="Expand hub assistant"
+              onClick={() => {
+                consumeOpenHubAssistant();
+              }}
               render={<Link to="/dashboard" />}
             >
               <Maximize2 className="size-4" aria-hidden />

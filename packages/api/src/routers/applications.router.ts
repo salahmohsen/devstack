@@ -1261,6 +1261,9 @@ export const applicationsRouter = {
       },
       PDF_RENDER_FAILED: {
         message: "PDF render failed"
+      },
+      COMMIT_FAILED: {
+        message: "Failed to save the new apply kit. The previous kit is unchanged."
       }
     })
     .handler(async ({ input, context, errors }) => {
@@ -1279,6 +1282,9 @@ export const applicationsRouter = {
         }
         if (result.code === "PDF_RENDER_FAILED") {
           throw errors.PDF_RENDER_FAILED({ message: result.message });
+        }
+        if (result.code === "COMMIT_FAILED") {
+          throw errors.COMMIT_FAILED({ message: result.message });
         }
         throw errors.INVALID_DRAFT({ message: result.message });
       }

@@ -42,7 +42,8 @@ export type AcceptApplyPackageErrorCode =
   | "INVALID_DRAFT"
   | "STORAGE_NOT_CONFIGURED"
   | "PDF_ENGINE_UNAVAILABLE"
-  | "PDF_RENDER_FAILED";
+  | "PDF_RENDER_FAILED"
+  | "COMMIT_FAILED";
 
 export type AcceptApplyPackageResult =
   | { ok: true; application: ApplicationEntity }
@@ -419,7 +420,13 @@ export async function acceptApplyPackage(input: {
         stage: replace.stage
       });
       failLog.emit({ _forceKeep: true });
-      if (replace.stage === "commit") return { ok: false, code: "NOT_FOUND" as const };
+      if (replace.stage === "commit") {
+        return {
+          ok: false,
+          code: "COMMIT_FAILED" as const,
+          message: "Failed to save the new apply kit. The previous kit is unchanged."
+        };
+      }
       return {
         ok: false,
         code: "PDF_RENDER_FAILED" as const,
