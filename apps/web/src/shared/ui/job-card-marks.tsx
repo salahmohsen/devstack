@@ -288,8 +288,8 @@ function SkillChipGroup({
     <div className="min-w-0">
       <p className="text-xs font-medium text-foreground">{label}</p>
       <ul className="mt-1.5 flex flex-wrap gap-1.5">
-        {skills.map((item, index) => (
-          <li key={`${tone}-${item.token}-${index}`}>
+        {skills.map((item) => (
+          <li key={`${tone}-${item.token}-${item.label}`}>
             <SkillChip
               tone={tone}
               item={item}

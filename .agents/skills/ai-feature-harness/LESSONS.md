@@ -17,6 +17,19 @@
 
 ---
 
+## 2026-08-22 — Hub job context: mention force vs dump; Avoid is prefs not HITL
+
+- **Trigger:** Hub job-context plan (Open in agent mention, thickened getApplication, Avoid, apply-kit replace)
+- **Finding:** Planted `:application[label]{name=id}` must expand to `application {id}` **and** `anyHubForcedRead` must OR the new `application` bit. Flags alone do not set `activeTools` — the mention processor still has to run. `onIterationComplete` must continue text-only mention turns or the model speaks instead of calling `getApplication`
+- **Finding:** Interview rehearsal without braces (`application ${id}`) never trips the gather regex. Live template tests must use `APPLICATION_MENTION_RE` on the **actual** `requestHubInterviewRehearsal` string
+- **Finding:** Inspect **Avoid** is a silent `excludeKeywords` upsert, not `proposeHardPreferenceChange`. Hub spoken “exclude RN” stays Confirm File Diff
+- **Finding:** Alias picker must not prefix-match (`Java` ↛ `JavaScript`). Preselect is exact name/alias or unique `CANONICAL_SKILL_ALIASES` hit only
+- **Finding:** Kit replace must PUT new resume+cover and commit DB **before** deleting old `apply-package:{id}` resume objects. Fail closed leave the old kit. Application delete must also drop those kit objects
+- **Finding:** Hub keeps generate+accept Approval even when Job settings Review apply kit is off. Off only skips the dashboard sheet
+- **Finding:** Local `:3000`/`:5200`/`:4111` were down this pass — live Open-in-agent / Avoid undo / kit regenerate were not browser-proven. Unit seams: mention expand, union allowlist, iteration continue, ranker current-role, fail-PUT keep old kit
+- **User preference:** Grill locks stay frozen; do not dump JD into the composer
+- **Evidence class:** Core/agent/web unit; `vp run -w fix` 0 errors; React Doctor changed-scope 78 (HITL useMemo matches existing cards); unauth chat not probed (agent down)
+
 ## 2026-08-21 — Resume PDF generate/Accept: prove this binary, then engines on its PATH
 
 - **Trigger:** Typst/RenderCV resume PDF harness (dashboard generate + apply-package Accept)

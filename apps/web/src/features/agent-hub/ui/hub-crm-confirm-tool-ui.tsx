@@ -425,15 +425,13 @@ export function ProposeBatchTrackingChangeToolUI({
         });
         return;
       }
-      for (const id of input.ids) {
-        if (input.trackingAction === "track") {
-          await promote.mutateAsync({ id });
-        } else if (input.trackingAction === "dismiss") {
-          await dismiss.mutateAsync({ id });
-        } else {
-          await orpcClient.applications.restore({ id });
-        }
-      }
+      await Promise.all(
+        input.ids.map((id) => {
+          if (input.trackingAction === "track") return promote.mutateAsync({ id });
+          if (input.trackingAction === "dismiss") return dismiss.mutateAsync({ id });
+          return orpcClient.applications.restore({ id });
+        })
+      );
       complete({
         action: "confirm",
         trackingAction: input.trackingAction,
