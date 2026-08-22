@@ -121,14 +121,22 @@ export function ListSearchBar(props: ListSearchBarProps) {
       setLocalQ(qProp);
     }
   }
-  const [debouncedQ] = useDebouncedValue(localQ, SEARCH_DEBOUNCE_MS);
+  const [debouncedQ, setDebouncedQ] = useDebouncedValue(localQ, SEARCH_DEBOUNCE_MS);
+
+  const clearQ = () => {
+    setLocalQ("");
+    setDebouncedQ("");
+    onQChange(undefined);
+  };
 
   useEffect(() => {
+    // Unsettled debounce still holds the pre-clear string; skip so Clear can drop `q`.
+    if (localQ !== debouncedQ) return;
     const next = debouncedQ.trim();
     const committed = qProp.trim();
     if (next === committed) return;
     onQChange(next.length > 0 ? next : undefined);
-  }, [debouncedQ, qProp, onQChange]);
+  }, [debouncedQ, localQ, qProp, onQChange]);
 
   const [drafts, setDrafts] = useState<FilterValue[]>([]);
   const committedKey = value
@@ -154,7 +162,7 @@ export function ListSearchBar(props: ListSearchBarProps) {
 
   const handleJobsClear = () => {
     setDrafts([]);
-    setLocalQ("");
+    clearQ();
     onJobsClear?.();
   };
 
@@ -197,10 +205,7 @@ export function ListSearchBar(props: ListSearchBarProps) {
           <InputGroupAddon align="inline-end">
             <Button
               aria-label="Clear search"
-              onClick={() => {
-                setLocalQ("");
-                onQChange(undefined);
-              }}
+              onClick={clearQ}
               size="icon-xs"
               type="button"
               variant="ghost"

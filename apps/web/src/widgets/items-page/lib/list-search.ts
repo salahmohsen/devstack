@@ -4,6 +4,7 @@ import {
   astToFilterValues,
   filterValuesToAst,
   isCompleteFilterLeaf,
+  ListQueryError,
   parseRsql,
   printRsql,
   type FilterLeaf,
@@ -115,9 +116,14 @@ export function filterValuesFromRsql(
 ): FilterLeaf[] {
   const trimmed = filter?.trim();
   if (!trimmed) return [];
-  const leaves = astToFilterValues(parseRsql(trimmed, resource));
-  if (resource === "new-jobs") return leaves.filter((leaf) => !isNewJobsAllLeaf(leaf));
-  return leaves;
+  try {
+    const leaves = astToFilterValues(parseRsql(trimmed, resource));
+    if (resource === "new-jobs") return leaves.filter((leaf) => !isNewJobsAllLeaf(leaf));
+    return leaves;
+  } catch (error) {
+    if (error instanceof ListQueryError) return [];
+    throw error;
+  }
 }
 
 /**
