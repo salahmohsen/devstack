@@ -86,22 +86,25 @@ export function asNumberRange(value: unknown): NumberRange {
  */
 export function asFilterValues(value: unknown): FilterValue[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-    .filter(
-      (item) =>
-        typeof item.id === "string" &&
-        typeof item.field === "string" &&
-        typeof item.operator === "string"
-    )
-    .map((item) => {
-      return {
-        id: item.id as string,
-        field: item.field as string,
-        operator: item.operator as string,
-        value: item.value
-      };
+  const result: FilterValue[] = [];
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) continue;
+    const record = item as Record<string, unknown>;
+    if (
+      typeof record.id !== "string" ||
+      typeof record.field !== "string" ||
+      typeof record.operator !== "string"
+    ) {
+      continue;
+    }
+    result.push({
+      id: record.id,
+      field: record.field,
+      operator: record.operator,
+      value: record.value
     });
+  }
+  return result;
 }
 
 /** Default English labels for the built-in operators. */
@@ -277,11 +280,12 @@ export function formatFilterValue(field: FilterField, filter: FilterValue): stri
     case "select":
       return field.options.find((option) => option.value === filter.value)?.label ?? "";
     case "multiselect": {
-      const values = asStringArray(filter.value);
-      return field.options
-        .filter((option) => values.includes(option.value))
-        .map((option) => option.label)
-        .join(", ");
+      const selected = new Set(asStringArray(filter.value));
+      const labels: string[] = [];
+      for (const option of field.options) {
+        if (selected.has(option.value)) labels.push(option.label);
+      }
+      return labels.join(", ");
     }
     case "text":
       return asString(filter.value);

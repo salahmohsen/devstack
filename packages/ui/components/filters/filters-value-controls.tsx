@@ -224,7 +224,8 @@ function OptionsValueControl({
 
   if (field.type === "multiselect") {
     const values = asStringArray(filter.value);
-    const selected = field.options.filter((option) => values.includes(option.value));
+    const selectedIds = new Set(values);
+    const selected = field.options.filter((option) => selectedIds.has(option.value));
     const atMax = field.maxSelections != null && values.length >= field.maxSelections;
     const firstSelected = selected[0];
     const display =
