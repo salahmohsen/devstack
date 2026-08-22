@@ -143,9 +143,23 @@ _Avoid_: hiring urgency, application stage, title pack.
 
 **Agent take**:
 Short markdown on an application explaining fit. At most five concise
-bullets. Humanizer voice (plain, no hype, no invented facts). Written at
-land / harvest / regenerate. Not a paragraph.
-_Avoid_: 1–3 sentence blurbs; selling the job; JSON.
+bullets about the role (not a skill dump). Humanizer voice (plain, no
+hype, no invented facts). Written at land / harvest / regenerate. Inspect
+shows Have / Close / Missing chips above it.
+_Avoid_: 1–3 sentence blurbs; selling the job; a user-facing ATS score.
+
+**Skill alias**:
+Another spelling of the same skill (React.js → React). Shared list in
+`packages/core` plus the tenant’s `aliases` on the skill row. Counts as
+Have. Product field: **Aliases**.
+_Avoid_: alternativeNames; treating related tools as aliases (TypeScript
+is not JavaScript).
+
+**Close skill**:
+A JD token related to a stack the seeker has, not the same skill
+(JavaScript vs TypeScript, Azure vs AWS). Yellow chip. Does not create a
+stack. Small hardcoded families in `packages/core`.
+_Avoid_: marking Close as Have; LLM-invented families.
 
 **Search brief**:
 A per-tenant generated markdown document for AI layers. One artifact: opening
@@ -168,6 +182,23 @@ that disclosure only. Hub chat evidence writes stay File Diff Confirm.
 List `+` and inspect Edit still remount the original entity forms.
 _Avoid_: scoring the snapshot; opening the side panel for the brief.
 
+**Evidence**:
+The seeker’s portfolio facts: experience, project, and stack (skill) rows.
+Hub and tailored resumes read these. Not a Resume document and not
+Application kit.
+_Avoid_: resume facets; identity facets; kit bullets as a second source of
+truth.
+
+**Hub home**:
+Full-page hub chat at `/dashboard`.
+_Avoid_: a second agent product; treating the floater as a different model.
+
+**Hub floater**:
+Assistant modal on dashboard routes that are not Hub home. Same thread as Hub
+home. Inspect **Open in agent** opens this, not Hub home. Expand in the
+floater header navigates to Hub home.
+_Avoid_: a second chat runtime; covering the inspect panel.
+
 **Hub operator**:
 The hub supervisor runs the seeker loop on the same objects as the dashboard:
 job preference, search brief, Find jobs now, New jobs, applications. Chat is
@@ -182,6 +213,21 @@ Hub inspect Edit uses `EntityFormHost` (`completeOnClose: false`) and does
 not re-register `open-entity-form` as a model tool. Spec:
 `docs/superpowers/specs/2026-08-16-conversational-evidence-approval-design.md`.
 _Avoid_: career-coach clone; a second identity markdown file.
+
+**Application mention**:
+A hub composer directive chip that names one Application by id
+(`:application[label]{name=<applicationId>}`). Same chip family as
+capability mentions (Today, Job rules); different type. The chip is a
+pointer, not the JD, kit, or mail payload.
+_Avoid_: file attachment; hidden model context; dumping listing HTML into
+the chip; “tool badge” as a second concept.
+
+**Application kit**:
+Apply materials stored on a tracked Application: linked resume, cover
+letter text, outreach text. Not its own entity. Inbox rows usually have
+none.
+_Avoid_: resume facets; treating kit PDFs as the tool payload; a second
+resume product.
 
 **Entity inspect panel**:
 Dashboard **view** for applications, experiences, projects, and skills uses
@@ -310,19 +356,14 @@ separate action from editing the entity.
 _Avoid_: AI switch, include flag, visibility switch.
 
 **Analysis**:
-A nullable `text` column on the `project` table holding user-authored
-markdown — what was done, why, trade-offs, metrics, lessons. Private
-input for the resume-generation agent: the agent reads it when
-composing a tailored resume bullet but the column is not rendered on
-the public project page and is excluded from `ProjectPublicOutputSchema`
-so it never leaves the server in a public response. Optional; default
-`null`. Lives in the evidence layer alongside `summary` and
-`description`, distinct from them in audience and rendering: those are
-the public recruiter-facing copy, this is the tenant's private notes to
-the agent.
-_Avoid_: `narrative` (different scope, different layer), `caseStudy`,
-`writeup`, `breakdown` (all imply a public surface), `notes`,
-`comments` (no resume-generation signal).
+User-authored private markdown on a project (what was done, why,
+trade-offs, metrics, lessons). The tenant writes it in the project
+form only. Hub and resume-generation read the full text as source of
+truth for that project; they do not author it and do not speak it in
+chat. Not on the public project page. Optional.
+_Avoid_: `narrative` (different scope), `caseStudy`, `writeup`,
+`breakdown` (public-surface words), `notes`, `comments`; hub patching
+this column.
 
 ## Output
 
@@ -401,13 +442,13 @@ A named technology or practice the seeker claims — framework, language,
 library, tool, **or** something that is not a code dependency (CI/CD,
 process, platform). Broader than a project's real stack. Display `name`
 (customizable), optional `npmPackage` (for detect-stacks dedup), `type`,
-optional `icon`, optional `alternativeNames` (other labels for the same
-skill, shown as tags). Linked to projects via `project_stack` when that skill
+optional `icon`, optional `aliases` (other labels for the same skill,
+shown as tags). Linked to projects via `project_stack` when that skill
 is used on a project. A skill may exist with no project and no npm
 package. Product UI says **Skills**, not Stacks, for this catalog.
 _Avoid_: calling the catalog “stacks” in product copy; requiring every
-skill to be an npm dependency; storing npm packages as alternative names
-(those live on `stack_dependency`).
+skill to be an npm dependency; storing npm packages as aliases (those
+live on `stack_dependency`); alternativeNames.
 
 **Stack** (on a project):
 The project's actual tech — typically dependencies from linked repos.

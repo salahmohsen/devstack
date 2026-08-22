@@ -52,6 +52,7 @@ Pick the most specific file for the task. Use links within that file instead of 
 - [Job discovery adapters](docs/superpowers/specs/2026-08-14-job-discovery-adapters-design.md) — public board adapters, shared catalog, cheap rank + BYO AI; mail harvest opt-in.
 - [Jobs hardening from Freehire](docs/superpowers/specs/2026-08-20-devhub-jobs-hardening-from-freehire-design.md) — company table, years/logo, score cap, mail-on-job, silence nudges. Grill lock. ADR [0026](docs/adr/0026-job-posting-shared-pool-and-company-table.md).
 - [List search + filters](docs/superpowers/specs/2026-08-22-list-search-filters-design.md) — Cubby chips, `q`, display sort, RSQL URL, palette `search.entities`. Grill lock.
+- [Hub job context](docs/superpowers/specs/2026-08-22-hub-job-context-design.md) — Application mention, rich `getApplication`, evidence/CRM hub writes, apply-kit, Have/Close/Missing. Grill lock.
 
 ## Task Entry Points
 
