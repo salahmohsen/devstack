@@ -237,4 +237,13 @@ describe("sanitizeLinkedJobSkills", () => {
       )
     ).toEqual([{ name: "TanStack Query", stackId: "stack-tq", band: "required" }]);
   });
+
+  it("unique-links React.js when stackId is null on a clean catalog", () => {
+    expect(
+      sanitizeLinkedJobSkills(
+        [{ name: "React.js", band: "required", stackId: null }],
+        [{ id: "stack-react", name: "React", aliases: [] }]
+      )
+    ).toEqual([{ name: "React", stackId: "stack-react", band: "required" }]);
+  });
 });

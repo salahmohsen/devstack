@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { skillsFromLinkedPayload } from "#@/lib/application/link-job-skills";
 
 const stacks = [
-  { id: "stack-react", name: "React" },
-  { id: "stack-tq", name: "TanStack Query" }
+  { id: "stack-react", name: "React", aliases: [] as string[] },
+  { id: "stack-tq", name: "TanStack Query", aliases: [] as string[] }
 ];
 
 describe("skillsFromLinkedPayload", () => {
@@ -22,8 +22,24 @@ describe("skillsFromLinkedPayload", () => {
         stacks
       )
     ).toEqual({
-      requiredSkills: [{ name: "React Query", stackId: "stack-tq", band: "required" }],
+      requiredSkills: [{ name: "TanStack Query", stackId: "stack-tq", band: "required" }],
       preferredSkills: [{ name: "Vite", stackId: null, band: "preferred" }]
+    });
+  });
+
+  it("unique-links React.js when stackId is null on a clean catalog", () => {
+    expect(
+      skillsFromLinkedPayload(
+        {
+          object: {
+            skills: [{ name: "React.js", band: "required", stackId: null }]
+          }
+        },
+        [{ id: "stack-react", name: "React", aliases: [] }]
+      )
+    ).toEqual({
+      requiredSkills: [{ name: "React", stackId: "stack-react", band: "required" }],
+      preferredSkills: []
     });
   });
 });

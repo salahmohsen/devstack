@@ -214,8 +214,15 @@ async function resolveSkillsForUser(
   userId: string,
   required: readonly string[],
   preferred: readonly string[] = []
-): Promise<{ requiredSkills: JobSkillTag[]; preferredSkills: JobSkillTag[] }> {
+): Promise<{
+  requiredSkills: JobSkillTag[];
+  preferredSkills: JobSkillTag[];
+  held: { id: string; name: string; aliases: string[] }[];
+}> {
   const stacks = await stackRepository.findAllByUserId(userId);
+  const held = stacks.map((stack) => {
+    return { id: stack.id, name: stack.name, aliases: stack.aliases ?? [] };
+  });
   const tags = resolveJobSkillTags(
     [
       ...required.map((name) => {
@@ -225,13 +232,12 @@ async function resolveSkillsForUser(
         return { name, band: "preferred" as const };
       })
     ],
-    stacks.map((stack) => {
-      return { id: stack.id, name: stack.name };
-    })
+    held
   );
   return {
     requiredSkills: tags.filter((tag) => tag.band === "required"),
-    preferredSkills: tags.filter((tag) => tag.band === "preferred")
+    preferredSkills: tags.filter((tag) => tag.band === "preferred"),
+    held
   };
 }
 

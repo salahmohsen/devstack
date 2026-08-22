@@ -31,7 +31,7 @@ export async function linkJobSkillsForUserInAgent(input: {
   const stacks = await runWithDb(db, async () => {
     const rows = await stackRepository.findAllByUserId(input.userId);
     return rows.map((stack) => {
-      return { id: stack.id, name: stack.name };
+      return { id: stack.id, name: stack.name, aliases: stack.aliases ?? [] };
     });
   });
 
