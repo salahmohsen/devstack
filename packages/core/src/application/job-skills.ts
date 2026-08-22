@@ -26,7 +26,7 @@ const WEB_FUNDAMENTAL_SKILL_NAMES = ["HTML", "CSS", "JavaScript"] as const;
  * Alternate JD spellings → canonical display name.
  * Longest pattern wins at match time (`React Query` before `React`).
  */
-const CANONICAL_SKILL_ALIASES: Readonly<Record<string, readonly string[]>> = {
+export const CANONICAL_SKILL_ALIASES: Readonly<Record<string, readonly string[]>> = {
   React: ["React.js", "ReactJS"],
   Vue: ["Vue.js", "VueJS"],
   Angular: ["Angular.js", "AngularJS"],
@@ -40,6 +40,13 @@ const CANONICAL_SKILL_ALIASES: Readonly<Record<string, readonly string[]>> = {
   PostgreSQL: ["Postgres"],
   "Framer Motion": ["Framer-Motion"]
 };
+
+/** Related-but-not-equal families. Membership is Close, never Have. */
+export const CLOSE_SKILL_FAMILIES: readonly (readonly string[])[] = [
+  ["javascript", "typescript"],
+  ["aws", "gcp", "azure"],
+  ["react", "vue", "angular"]
+];
 
 type SkillMentionPattern = {
   display: string;

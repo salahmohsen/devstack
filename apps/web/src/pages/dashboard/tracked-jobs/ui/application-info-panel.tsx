@@ -252,7 +252,12 @@ export function ApplicationInfoPanel({
   const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
   const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
   const jobSkills = listingSkillNames(item.requiredSkills, item.preferredSkills);
-  const stackNames = (stacksQuery.data ?? []).map((stack) => stack.name);
+  const heldSkills = (stacksQuery.data ?? []).map((stack) => {
+    return {
+      name: stack.name,
+      aliases: stack.aliases ?? []
+    };
+  });
   const seekerYears = mergeExperienceYears(experiencesQuery.data ?? []);
   const showSkillsMatch =
     stacksQuery.isSuccess &&
@@ -394,14 +399,52 @@ export function ApplicationInfoPanel({
         createdAt={item.createdAt}
       >
         <ItemInfoSections>
-          {showSkillsMatch ? (
-            <ItemInfoSection title="Skills" icon={<LayersIcon />}>
-              <JobSkillsMatch
-                jobSkills={jobSkills}
-                stackNames={stackNames}
-                listingMinYears={item.experienceYearsMin}
-                seekerYears={seekerYears}
-              />
+          {showSkillsMatch || takeReady.ok || item.agentTake?.trim() ? (
+            <ItemInfoSection title="Match" icon={<LayersIcon />}>
+              <div className="space-y-4">
+                {showSkillsMatch ? (
+                  <JobSkillsMatch
+                    jobSkills={jobSkills}
+                    held={heldSkills}
+                    listingMinYears={item.experienceYearsMin}
+                    seekerYears={seekerYears}
+                  />
+                ) : null}
+                <div>
+                  {takeReady.ok && item.agentTake?.trim() ? (
+                    <AgentTakeMarkdown text={item.agentTake} />
+                  ) : (
+                    <p className="italic">
+                      {takeReady.ok
+                        ? "No agent take yet."
+                        : "Agent take stays off until this listing has enough detail."}
+                    </p>
+                  )}
+                  {!takeReady.ok ? (
+                    <p className="mt-2 text-sm text-muted-foreground">{takeReady.message}</p>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    disabled={!takeReady.ok}
+                    loading={regenerateTake.isPending}
+                    onClick={() => {
+                      if (!takeReady.ok) return;
+                      void regenerateTake.mutateAsync({
+                        id: item.id,
+                        title: item.title,
+                        companyName: item.companyName,
+                        trackingStatus: item.trackingStatus
+                      });
+                    }}
+                  >
+                    <RefreshCwIcon className="size-3.5" aria-hidden />
+                    {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
+                  </Button>
+                </div>
+              </div>
             </ItemInfoSection>
           ) : null}
 
@@ -446,41 +489,6 @@ export function ApplicationInfoPanel({
                 );
               })()
             : null}
-
-          <ItemInfoSection title="Agent's take" icon={<SparklesIcon />}>
-            {takeReady.ok && item.agentTake?.trim() ? (
-              <AgentTakeMarkdown text={item.agentTake} />
-            ) : (
-              <p className="italic">
-                {takeReady.ok
-                  ? "No agent take yet."
-                  : "Agent take stays off until this listing has enough detail."}
-              </p>
-            )}
-            {!takeReady.ok ? (
-              <p className="mt-2 text-sm text-muted-foreground">{takeReady.message}</p>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              disabled={!takeReady.ok}
-              loading={regenerateTake.isPending}
-              onClick={() => {
-                if (!takeReady.ok) return;
-                void regenerateTake.mutateAsync({
-                  id: item.id,
-                  title: item.title,
-                  companyName: item.companyName,
-                  trackingStatus: item.trackingStatus
-                });
-              }}
-            >
-              <RefreshCwIcon className="size-3.5" aria-hidden />
-              {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
-            </Button>
-          </ItemInfoSection>
 
           {!isDiscovery && item.trackingStatus === "tracked" ? (
             <ItemInfoSection title="Interview" icon={<SparklesIcon />}>

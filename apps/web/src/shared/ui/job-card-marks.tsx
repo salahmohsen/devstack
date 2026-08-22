@@ -3,7 +3,12 @@
 import { TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 
-import { skillsOverlap, type JobSkillTag } from "@tsu-stack/core";
+import {
+  classifyJobSkills,
+  skillsOverlap,
+  type HeldSkill,
+  type JobSkillTag
+} from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -149,7 +154,7 @@ function SkillChipGroup({
   skills
 }: {
   label: string;
-  tone: "have" | "missing";
+  tone: "have" | "close" | "missing";
   skills: readonly string[];
 }) {
   if (skills.length === 0) return null;
@@ -163,16 +168,18 @@ function SkillChipGroup({
               title={skill}
               className={cn(
                 "inline-flex max-w-full items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] leading-5",
-                tone === "have"
-                  ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300"
-                  : "bg-red-500/10 text-red-800 dark:text-red-300"
+                tone === "have" && "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
+                tone === "close" && "bg-amber-500/10 text-amber-800 dark:text-amber-300",
+                tone === "missing" && "bg-red-500/10 text-red-800 dark:text-red-300"
               )}
             >
               <span
                 aria-hidden
                 className={cn(
                   "size-1.5 shrink-0 rounded-full",
-                  tone === "have" ? "bg-emerald-500" : "bg-red-500"
+                  tone === "have" && "bg-emerald-500",
+                  tone === "close" && "bg-amber-500",
+                  tone === "missing" && "bg-red-500"
                 )}
               />
               <span className="truncate lowercase">{skill}</span>
@@ -184,49 +191,64 @@ function SkillChipGroup({
   );
 }
 
-/** Inspect-panel skills match: percent, you-have / missing chips, years gap. */
+/** Inspect-panel skills match: percent, you-have / close / missing chips, years gap. */
 export function JobSkillsMatch({
   jobSkills,
   stackNames,
+  held,
   listingMinYears,
   seekerYears
 }: {
   jobSkills: readonly string[];
-  stackNames: readonly string[];
+  stackNames?: readonly string[];
+  held?: readonly HeldSkill[];
   listingMinYears?: number | null;
   seekerYears?: number | null;
 }) {
-  const overlap = skillsOverlap({ jobSkills, stackNames });
+  const classified = classifyJobSkills({
+    jobSkills,
+    held:
+      held ??
+      (stackNames ?? []).map((name) => {
+        return { name };
+      })
+  });
   const yearsNote = yearsRequirementNote({ listingMinYears, seekerYears });
-  if (!overlap.available && !yearsNote) return null;
+  if (!classified.available && !yearsNote) return null;
 
-  const total = overlap.matched.length + overlap.missing.length;
+  const total = classified.have.length + classified.close.length + classified.missing.length;
 
   return (
     <div className="space-y-3 text-foreground">
-      {overlap.available && overlap.percent != null ? (
+      {classified.available && classified.percent != null ? (
         <div>
           <div className="flex items-baseline justify-between gap-3">
             <NumberTicker
-              value={overlap.percent}
+              value={classified.percent}
               suffix="%"
               className="text-2xl font-semibold tracking-tight"
             />
             <p className="text-xs text-muted-foreground">
-              {overlap.matched.length} of {total} skills
+              {classified.have.length} of {total} skills
+              {classified.close.length > 0 ? ` · ${classified.close.length} close` : ""}
             </p>
           </div>
           <ProgressBar
             className="mt-1.5"
-            value={overlap.percent}
+            value={classified.percent}
             max={100}
             hideHeader
-            label={`${overlap.percent}% of listed skills, ${overlap.matched.length} of ${total}`}
+            label={`${classified.percent}% of listed skills, ${classified.have.length} of ${total}`}
           />
         </div>
       ) : null}
-      <SkillChipGroup label="You have" tone="have" skills={overlap.matched} />
-      <SkillChipGroup label="Missing" tone="missing" skills={overlap.missing} />
+      <SkillChipGroup label="You have" tone="have" skills={classified.have} />
+      <SkillChipGroup
+        label="Close — you have a related skill"
+        tone="close"
+        skills={classified.close.map((row) => `${row.name} · you have ${row.via}`)}
+      />
+      <SkillChipGroup label="Missing" tone="missing" skills={classified.missing} />
       {yearsNote ? (
         <div>
           <p className="text-xs font-medium text-foreground">Requirements</p>
