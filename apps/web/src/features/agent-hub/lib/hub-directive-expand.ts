@@ -21,6 +21,11 @@ export function expandHubDirectiveText(text: string): string {
       out += seg.text;
       continue;
     }
+    if (seg.type === "application") {
+      const id = seg.id.trim();
+      out += id ? `application {${id}}` : seg.label;
+      continue;
+    }
     const fromMap = INSERT_BY_MENTION_ID.get(seg.id);
     out += fromMap ?? seg.label;
   }

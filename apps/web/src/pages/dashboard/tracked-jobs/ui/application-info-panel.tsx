@@ -56,7 +56,7 @@ import {
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
-import { requestHubInterviewRehearsal } from "@/features/agent-hub";
+import { requestHubApplicationMention, requestHubInterviewRehearsal } from "@/features/agent-hub";
 import {
   ApplicationActivitySection,
   ApplicationApplyMethodBadge,
@@ -202,6 +202,26 @@ function JobDescriptionBody({ value }: { value: string }) {
     >
       {value}
     </Markdown>
+  );
+}
+
+function OpenInAgentButton({ item }: { item: ApplicationOutput }) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      onClick={() => {
+        requestHubApplicationMention({
+          id: item.id,
+          title: item.title,
+          companyName: item.companyName
+        });
+      }}
+    >
+      <SparklesIcon aria-hidden />
+      Open in agent
+    </Button>
   );
 }
 
@@ -370,31 +390,34 @@ export function ApplicationInfoPanel({
           </div>
         }
         actions={
-          !isDiscovery ? (
-            <ApplicationActionGroup app={item} variant="panel" />
-          ) : (
-            <>
-              {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
-              {item.url ? (
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="outline"
-                  className="active:scale-[0.96]"
-                  render={
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Open job posting (${postingHost(item.url)})`}
-                    />
-                  }
-                >
-                  <ExternalLinkIcon strokeWidth={1.75} />
-                </Button>
-              ) : null}
-            </>
-          )
+          <>
+            <OpenInAgentButton item={item} />
+            {!isDiscovery ? (
+              <ApplicationActionGroup app={item} variant="panel" />
+            ) : (
+              <>
+                {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
+                {item.url ? (
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    className="active:scale-[0.96]"
+                    render={
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Open job posting (${postingHost(item.url)})`}
+                      />
+                    }
+                  >
+                    <ExternalLinkIcon strokeWidth={1.75} />
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </>
         }
         updatedAt={item.updatedAt}
         createdAt={item.createdAt}

@@ -19,11 +19,14 @@ import {
   waitingHubConfirmCards
 } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import {
+  consumeHubApplicationPlantNewChat,
   consumeHubCreateIntent,
   consumeHubInterviewRehearsal,
+  getHubApplicationPlant,
   getHubCreateIntent,
   getHubInterviewRehearsal,
   hubCreateInterviewText,
+  subscribeHubApplicationPlant,
   subscribeHubCreateIntent
 } from "@/features/agent-hub/lib/hub-assistant-open";
 import { getHubComposerPersonality } from "@/features/agent-hub/lib/hub-composer-personality";
@@ -60,6 +63,12 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     getHubInterviewRehearsal,
     getHubInterviewRehearsal
   );
+  const pendingPlant = React.useSyncExternalStore(
+    subscribeHubApplicationPlant,
+    getHubApplicationPlant,
+    getHubApplicationPlant
+  );
+  const startingPlantChatRef = React.useRef(false);
 
   const [historyReady, setHistoryReady] = React.useState(false);
   const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
@@ -250,6 +259,17 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     await historyLoadRef.current;
     return { epoch: result.epoch, threadId: result.threadId };
   }, [addToolOutput, importHistory]);
+
+  // Open in agent: fresh thread, then plant (composer-side). Never send.
+  React.useEffect(() => {
+    if (!pendingPlant?.needsNewChat) return;
+    if (startingPlantChatRef.current) return;
+    startingPlantChatRef.current = true;
+    void startNewChat().finally(() => {
+      consumeHubApplicationPlantNewChat();
+      startingPlantChatRef.current = false;
+    });
+  }, [pendingPlant, startNewChat]);
 
   React.useEffect(() => {
     if (!historyReady || remountCancelDoneRef.current) return;

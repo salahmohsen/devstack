@@ -2,7 +2,8 @@
 
 import { AssistantModalPrimitive } from "@assistant-ui/react";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Maximize2, X } from "lucide-react";
 import { lazy, Suspense, useState, useSyncExternalStore } from "react";
 
 import { hubPersonalityAvatarSeed } from "@tsu-stack/core";
@@ -54,7 +55,7 @@ export function HubAssistantModal({ className }: { className?: string }) {
     >
       <AssistantModalPrimitive.Anchor
         className={cn(
-          "fixed z-40",
+          "fixed z-60",
           hasContent
             ? "right-4 bottom-20 sm:bottom-6 xl:right-145 xl:bottom-6"
             : "right-4 bottom-20 sm:right-6 sm:bottom-6",
@@ -80,7 +81,7 @@ export function HubAssistantModal({ className }: { className?: string }) {
         align="end"
         sideOffset={12}
         className={cn(
-          "z-40 flex h-[min(36rem,calc(100dvh-6rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-background p-0 shadow-2xl sm:w-[min(26rem,calc(100vw-3rem))]"
+          "z-60 flex h-[min(36rem,calc(100dvh-6rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-background p-0 shadow-2xl sm:w-[min(26rem,calc(100vw-3rem))]"
         )}
       >
         <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
@@ -88,23 +89,34 @@ export function HubAssistantModal({ className }: { className?: string }) {
             <AgentAvatar seed={avatarSeed} size={20} className="me-1.5 inline-block align-middle" />
             Hub assistant
           </p>
-          <AssistantModalPrimitive.Trigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Close hub assistant"
-              />
-            }
-          >
-            <X className="size-4" aria-hidden />
-          </AssistantModalPrimitive.Trigger>
+          <div className="flex items-center gap-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Expand hub assistant"
+              render={<Link to="/dashboard" />}
+            >
+              <Maximize2 className="size-4" aria-hidden />
+            </Button>
+            <AssistantModalPrimitive.Trigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Close hub assistant"
+                />
+              }
+            >
+              <X className="size-4" aria-hidden />
+            </AssistantModalPrimitive.Trigger>
+          </div>
         </div>
         <div className="min-h-0 flex-1">
           {visible ? (
             <Suspense fallback={null}>
-              <AgentHubThread />
+              <AgentHubThread variant="floater" />
             </Suspense>
           ) : null}
         </div>
