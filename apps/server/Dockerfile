@@ -26,6 +26,7 @@ COPY --chown=vp:vp packages/email/package.json packages/email/
 COPY --chown=vp:vp packages/env/package.json packages/env/
 COPY --chown=vp:vp packages/github/package.json packages/github/
 COPY --chown=vp:vp packages/logger/package.json packages/logger/
+COPY --chown=vp:vp packages/pdf/package.json packages/pdf/
 COPY --chown=vp:vp packages/seo/package.json packages/seo/
 COPY --chown=vp:vp packages/ui/package.json packages/ui/
 COPY --chown=vp:vp tools/tsconfig/package.json tools/tsconfig/
@@ -89,10 +90,22 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends wget ca-certificates libatomic1 \
+  && apt-get install -y --no-install-recommends wget ca-certificates libatomic1 xz-utils \
   && rm -rf /var/lib/apt/lists/* \
   && addgroup --gid 1001 nodejs \
   && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" server
+
+# Local `pnpm run dev`: Typst 0.14.2 + `uv pip install 'rendercv[full]==2.8'`
+# (Python 3.12+). Runtime uses a venv — uv-managed CPython is EXTERNALLY-MANAGED.
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY docker/install-pdf-engines.sh /tmp/install-pdf-engines.sh
+ARG TARGETARCH
+RUN --mount=type=cache,target=/root/.cache/uv \
+  chmod +x /tmp/install-pdf-engines.sh \
+  && /tmp/install-pdf-engines.sh \
+  && rm -f /tmp/install-pdf-engines.sh
+ENV PATH="/opt/rendercv/bin:$PATH"
+ENV TYPST_FONT_PATHS=/usr/local/share/rendercv-fonts
 
 COPY --from=build /tmp/node /usr/local/bin/node
 COPY --from=build /tmp/SOURCE_COMMIT /etc/tsu-source-commit

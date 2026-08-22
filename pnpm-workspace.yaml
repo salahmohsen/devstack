@@ -146,8 +146,6 @@ catalog:
   "@tanstack/react-store": ^0.11.0
   "@fontsource-variable/inter": ^5.2.8
   geist: ^1.7.2
-  pdfnative: ^1.6.0
-  pdfnative-react: ^0.2.0
   "@better-auth/drizzle-adapter": 1.7.0-rc.1
   "mastra": "^1.20.3"
   "@mastra/core": "^1.54.0"
@@ -194,6 +192,7 @@ catalog:
   blobatar: ^2.0.0
   border-beam: ^1.3.0
   match-sorter: ^8.3.0
+  yaml: ^2.9.0
 
 catalogMode: prefer
 

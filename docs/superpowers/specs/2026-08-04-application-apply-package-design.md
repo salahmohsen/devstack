@@ -11,7 +11,7 @@
 - Career mail assistant — `docs/superpowers/specs/2026-07-31-career-mail-assistant-design.md`
 - Apply package workflow split — `docs/superpowers/specs/2026-08-04-apply-package-workflow-split-design.md` (generation: rewrite-all + multi-step)
 - Resume import (source PDF ≠ generated resume) — ADR-0023 / onboarding design
-- Generated resumes — `resume` table, `packages/api` resume router + `buildResumeDocument`
+- Generated resumes — `resume` table, `packages/api` resume router + `@tsu-stack/pdf` (`renderResumePdfBytes` / `renderCoverLetterPdfBytes`)
 
 ---
 
@@ -232,14 +232,14 @@ Add `AiFeature` value: **`applyPackage`** (default model same flash/pro family a
 
 ### Resume
 
-- Extend `buildResumeDocument` (or parallel builder path) to accept **override portfolio**: selected experiences/projects with rewritten bullets/summary + tailored professional summary + profile/contacts.
+- Call `@tsu-stack/pdf` `renderResumePdfBytes` with **override portfolio**: selected experiences/projects with rewritten bullets/summary + tailored professional summary + profile/contacts.
 - `resume.author = "agent"`, `prompt` may store short note e.g. `apply-package:{applicationId}`.
 - Object key: prefer `{userId}/resumes/{filename}` (align with media-storage conventions when wiring).
 - Filename: include company/role slug + date.
 
 ### Cover letter
 
-- Simple text→PDF (pdfnative or minimal layout: title, date, body paragraphs).
+- Call `@tsu-stack/pdf` `renderCoverLetterPdfBytes` (vendored Typst, engineeringresumes-family header/fonts, A4, PDF/UA-1).
 - Store key + filename on application.
 
 ---

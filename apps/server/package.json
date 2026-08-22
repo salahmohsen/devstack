@@ -33,7 +33,6 @@
     "bullmq": "catalog:",
     "hono": "catalog:",
     "ioredis": "catalog:",
-    "pdfnative": "catalog:",
     "pg": "catalog:",
     "socket.io": "catalog:",
     "zod": "catalog:"

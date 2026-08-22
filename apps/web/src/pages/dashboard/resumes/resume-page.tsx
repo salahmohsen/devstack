@@ -1,5 +1,6 @@
 "use client";
 
+import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { Building2Icon, FileTextIcon } from "lucide-react";
@@ -91,7 +92,6 @@ export function ResumesPage() {
     selectAll,
     clearSelection
   } = useResumeStore();
-  const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const search = resumesRouteApi.useSearch();
@@ -168,17 +168,38 @@ export function ResumesPage() {
     }
   });
 
-  async function handleGenerate() {
-    setIsGenerating(true);
-    try {
-      await orpcClient.resume.generate();
-      await invalidateQueries();
-      toast.success("Resume generated");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to generate resume.";
-      toastAiError(message, { feature: "resume", severity: "hard" });
-    }
-    setIsGenerating(false);
+  const generateMutation = useMutation(
+    orpcQueryClient.resume.generate.mutationOptions({
+      onSuccess: async () => {
+        await invalidateQueries();
+        toast.success("Resume generated");
+      },
+      onError: (error) => {
+        if (isDefinedError(error)) {
+          switch (error.code) {
+            case "PDF_ENGINE_UNAVAILABLE":
+              toast.error(
+                error.message ?? "PDF engine is unavailable (rendercv or typst missing on PATH)."
+              );
+              return;
+            case "PDF_RENDER_FAILED":
+              toast.error(error.message ?? "Failed to render resume PDF.");
+              return;
+          }
+        }
+
+        toastAiError(error.message || "Failed to generate resume.", {
+          feature: "resume",
+          severity: "hard"
+        });
+      }
+    })
+  );
+
+  const isGenerating = generateMutation.isPending;
+
+  function handleGenerate() {
+    generateMutation.mutate(undefined);
   }
 
   const gridRef = useRef<HTMLDivElement>(null);
