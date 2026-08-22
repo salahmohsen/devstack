@@ -4,7 +4,9 @@ import {
   DeleteInputSchema,
   DeleteResponseSchema,
   formatGeneralResumeFilename,
+  ListQueryError,
   PublicUsernameInputSchema,
+  ResumeListInputSchema,
   ResumeListOutputSchema,
   ResumeOutputSchema,
   SetDefaultInputSchema,
@@ -25,6 +27,7 @@ import {
   renderResumePdfBytes
 } from "@tsu-stack/pdf";
 
+import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 import {
@@ -123,10 +126,30 @@ export const resumeRouter = {
       description: "List all generated resumes",
       method: "GET"
     })
+    .input(ResumeListInputSchema.optional())
     .output(ResumeListOutputSchema)
-    .handler(async ({ context }) => {
+    .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
-      const rows = await resumeRepository.findAllByUserId(userId);
+      let compiled;
+      try {
+        compiled = compileListQuery({
+          resource: "resumes",
+          q: input?.q,
+          filter: input?.filter,
+          sortBy: input?.sortBy,
+          sortDir: input?.sortDir
+        });
+      } catch (error) {
+        if (error instanceof ListQueryError) {
+          throw new ORPCError("BAD_REQUEST", { message: error.message });
+        }
+        throw error;
+      }
+      const rows = await resumeRepository.findAllByUserId(userId, {
+        where: compiled.where,
+        sortBy: compiled.sortBy,
+        sortDir: compiled.sortDir
+      });
       return withLinkedJobs(userId, rows);
     }),
   get: protectedProcedure

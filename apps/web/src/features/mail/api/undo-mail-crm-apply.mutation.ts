@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { APPLICATION_STAGE_LABELS } from "@tsu-stack/core";
 
+import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
+
 import { mailQueryKeys } from "@/features/mail/api/list-mail.query";
 
 export function useUndoMailCrmApplyMutation() {
@@ -21,10 +23,7 @@ export function useUndoMailCrmApplyMutation() {
           queryClient.invalidateQueries({
             queryKey: orpcQueryClient.mail.list.key({ type: "query" })
           }),
-          // Invalidate applications board without importing the applications feature (FSD).
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.applications.list.key({ type: "query" })
-          })
+          invalidateApplicationsListQueries(queryClient)
         ]);
       },
       onError: (error) => {

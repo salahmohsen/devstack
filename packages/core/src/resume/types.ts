@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ListQueryInputSchema } from "#@/list-query/types";
+
 export const ResumeAuthorSchema = z.enum(["admin", "agent"]);
 export type ResumeAuthor = z.infer<typeof ResumeAuthorSchema>;
 
@@ -27,6 +29,10 @@ export type ResumeOutput = z.infer<typeof ResumeOutputSchema>;
 
 export const ResumeListOutputSchema = z.array(ResumeOutputSchema);
 export type ResumeListOutput = z.infer<typeof ResumeListOutputSchema>;
+
+/** Optional q / filter / sort for `resume.list` (full list until paging is needed). */
+export const ResumeListInputSchema = ListQueryInputSchema;
+export type ResumeListInput = z.infer<typeof ResumeListInputSchema>;
 
 export const SetDefaultInputSchema = z.object({
   id: z.string()

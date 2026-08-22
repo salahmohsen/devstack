@@ -50,70 +50,70 @@ export const COMMAND_CATALOG = [
     id: "nav:dashboard",
     label: "Agent",
     description: "Open the agent hub",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:onboarding",
     label: "Onboarding",
     description: "Open onboarding",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:experiences",
     label: "Experiences",
     description: "Open experiences",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:projects",
     label: "Projects",
     description: "Open projects",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:stacks",
     label: "Skills",
     description: "Open the skills catalog",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:resumes",
     label: "Resumes",
     description: "Open resumes",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:new-jobs",
     label: "New jobs",
     description: "Open new job discoveries",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:tracked-jobs",
     label: "Tracked jobs",
     description: "Open tracked applications",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:mail",
     label: "Mail",
     description: "Open career mail",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {
     id: "nav:settings",
     label: "Settings",
     description: "Open settings",
-    group: "Agent",
+    group: "Dashboard",
     scope: "palette-closed"
   },
   {

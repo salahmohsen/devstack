@@ -17,6 +17,7 @@ import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 import { applicationCountQueryKeys } from "@/features/applications/api/count-applications.query";
 import { applicationsQueryKeys } from "@/features/applications/api/list-applications.query";
+import { invalidateApplicationsListQueries } from "@/features/applications/lib/invalidate-applications-list";
 import {
   getScanJobAlertsState,
   setScanJobAlertsState
@@ -65,7 +66,7 @@ function inboxCountFromCache(queryClient: QueryClient): number {
 
 async function invalidateInbox(queryClient: QueryClient) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("inbox") }),
+    invalidateApplicationsListQueries(queryClient),
     queryClient.invalidateQueries({
       queryKey: applicationCountQueryKeys.byStatus("inbox")
     })

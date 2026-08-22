@@ -1,0 +1,39 @@
+# Grok Build PR Review — inline findings + one sticky status comment.
+# Uses your SuperGrok session (`GROK_AUTH_JSON`), not an XAI_API_KEY.
+#
+# Docs: https://github.com/marketplace/actions/grok-build-pr-review
+# Source: https://github.com/0xr3ngar/grok-build-review-action
+#
+# Setup: `cat ~/.grok/auth.json` → repo secret `GROK_AUTH_JSON`.
+# Fork PRs skip (no secrets on `pull_request`). Do not switch to
+# `pull_request_target`. Rotate the secret after `grok login` if reviews stop.
+
+name: Grok PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: grok-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: 0xr3ngar/grok-build-review-action@v1
+        with:
+          grok_auth_json: ${{ secrets.GROK_AUTH_JSON }}
+          # Advisory: comment on findings, never fail the check.
+          fail_on: never
+          roast_level: professional

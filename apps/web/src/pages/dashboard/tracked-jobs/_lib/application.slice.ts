@@ -9,7 +9,6 @@ import { type ApplicationMaterialKind } from "@/features/applications";
 export type { ApplicationMaterialKind };
 
 type SheetMode = "create" | "edit";
-type ListFilter = "open" | "closed" | "all";
 
 type ApplicationUIState = {
   sheetOpen: boolean;
@@ -19,7 +18,6 @@ type ApplicationUIState = {
   /** Item shown in the list side panel (view only). */
   viewItem: ApplicationOutput | null;
   selectedIds: string[];
-  listFilter: ListFilter;
   stageInFlightIds: Record<string, true>;
   /** Apply package draft review sheet (application id). */
   packageSheetAppId: string | null;
@@ -50,7 +48,6 @@ type ApplicationUIActions = {
   /** Always open the info panel for this item (no toggle). */
   showView: (item: ApplicationOutput) => void;
   closeView: () => void;
-  setListFilter: (filter: ListFilter) => void;
   toggleSelect: (id: string) => void;
   selectAll: (ids: string[]) => void;
   clearSelection: () => void;
@@ -73,7 +70,6 @@ let state: ApplicationUIState = {
   editItem: null,
   viewItem: null,
   selectedIds: [],
-  listFilter: "open",
   stageInFlightIds: {},
   packageSheetAppId: null,
   sendOutreachAppId: null,
@@ -111,7 +107,6 @@ const actions: ApplicationUIActions = {
     setState({ viewItem: item });
   },
   closeView: () => setState({ viewItem: null }),
-  setListFilter: (listFilter) => setState({ listFilter }),
   toggleSelect: (id) =>
     setState({
       selectedIds: state.selectedIds.includes(id)

@@ -8,6 +8,7 @@ import { type ApplicationListOutput } from "@tsu-stack/core";
 import { toastAiError } from "@/shared/lib/toast-ai-error";
 
 import { applicationsQueryKeys } from "@/features/applications/api/list-applications.query";
+import { invalidateApplicationsListQueries } from "@/features/applications/lib/invalidate-applications-list";
 
 export function useGenerateApplyPackageMutation() {
   const queryClient = useQueryClient();
@@ -25,7 +26,7 @@ export function useGenerateApplyPackageMutation() {
           return { ...prev, ...data };
         });
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() }),
+          invalidateApplicationsListQueries(queryClient),
           queryClient.invalidateQueries({
             queryKey: applicationsQueryKeys.get(data.id)
           }),

@@ -327,6 +327,9 @@ catalogs:
     mastra:
       specifier: ^1.20.3
       version: 1.20.3
+    match-sorter:
+      specifier: ^8.3.0
+      version: 8.3.0
     motion:
       specifier: ^12.42.2
       version: 12.42.2
@@ -1420,6 +1423,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 1.22.0(react@19.2.7)
+      match-sorter:
+        specifier: 'catalog:'
+        version: 8.3.0
       motion:
         specifier: 'catalog:'
         version: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

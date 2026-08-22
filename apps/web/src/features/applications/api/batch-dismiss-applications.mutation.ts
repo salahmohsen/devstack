@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 import { applicationCountQueryKeys } from "@/features/applications/api/count-applications.query";
-import { applicationsQueryKeys } from "@/features/applications/api/list-applications.query";
+import { invalidateApplicationsListQueries } from "@/features/applications/lib/invalidate-applications-list";
 
 export function useBatchDismissApplicationsMutation() {
   const queryClient = useQueryClient();
@@ -12,8 +12,7 @@ export function useBatchDismissApplicationsMutation() {
     orpcQueryClient.applications.batchDismiss.mutationOptions({
       onSuccess: async (rows) => {
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("inbox") }),
-          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("dismissed") }),
+          invalidateApplicationsListQueries(queryClient),
           queryClient.invalidateQueries({
             queryKey: applicationCountQueryKeys.byStatus("inbox")
           }),

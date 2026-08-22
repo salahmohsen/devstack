@@ -1,9 +1,9 @@
 "use client";
 
-import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
+import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { FolderKanbanIcon, SparklesIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -19,7 +19,9 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
+import { Button } from "@tsu-stack/ui/components/button";
 import { ChaoticPixelsLoader } from "@tsu-stack/ui/components/chaotic-pixels-loader";
+import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import {
   PreviewCard,
   PreviewCardPopup,
@@ -34,6 +36,8 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -48,12 +52,21 @@ import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 import {
   ItemsEmpty,
   ItemsNavProvider,
+  ListSearchBar,
   ListSkeleton,
   PageHeader,
   PageLayout,
   ProjectInfoPanel,
+  createPortfolioBooleanField,
+  createRelationMultiselectField,
+  filterValuesFromRsql,
   isAnyOpened,
-  useItemsNavigation
+  isListNarrowed,
+  isListQueryBadRequest,
+  rsqlFromFilterValues,
+  useItemsNavigation,
+  withListSearch,
+  type ListSearch
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
@@ -69,11 +82,64 @@ import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
 const projectsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/projects/");
 
+const PROJECTS_SORT_OPTIONS = [
+  { value: "year", label: "Year" },
+  { value: "title", label: "Title" },
+  { value: "updatedAt", label: "Updated" }
+] as const;
+
 export function ProjectsPage() {
-  const projectsQuery = useListProjectsPageInfiniteQuery();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { projectId: deepLinkProjectId } = projectsRouteApi.useSearch();
+  const search = projectsRouteApi.useSearch();
+  const deepLinkProjectId = search.projectId;
+  const listQuery = useMemo(() => {
+    return {
+      q: search.q,
+      filter: search.filter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [search.q, search.filter, search.sortBy, search.sortDir]);
+  const projectsQuery = useListProjectsPageInfiniteQuery(listQuery);
+  const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
+  const narrowed = isListNarrowed({ q: search.q, filter: search.filter, page: "projects" });
+
+  const patchListSearch = useCallback(
+    (patch: Partial<Pick<ListSearch, "q" | "filter" | "sortBy" | "sortDir">>) => {
+      void navigate({
+        to: "/dashboard/projects",
+        search: (prev) => withListSearch(prev, patch),
+        replace: true
+      });
+    },
+    [navigate]
+  );
+
+  const clearListSearch = useCallback(() => {
+    patchListSearch({ q: undefined, filter: undefined });
+  }, [patchListSearch]);
+
+  const filterValues = useMemo(
+    () => filterValuesFromRsql(search.filter, "projects"),
+    [search.filter]
+  );
+
+  const stackOptions = useMemo(
+    () =>
+      (stacksQuery.data ?? []).map((stack) => {
+        return { value: stack.id, label: stack.name };
+      }),
+    [stacksQuery.data]
+  );
+
+  const filterFields = useMemo(
+    () => [
+      createPortfolioBooleanField(),
+      createRelationMultiselectField("stacks", "Skills", stackOptions)
+    ],
+    [stackOptions]
+  );
 
   const {
     openedItem,
@@ -94,30 +160,40 @@ export function ProjectsPage() {
   useEffect(() => {
     if (!deepLinkProjectId) return;
 
-    const fromList = projects.find((project) => project.id === deepLinkProjectId);
-    if (fromList) {
-      setOpenedItem(fromList);
-      setIsItemOpen({ [fromList.id]: true });
-      void navigate({ to: "/dashboard/projects", search: {}, replace: true });
-      return;
-    }
-
-    if (projectsQuery.isLoading) return;
-
     let cancelled = false;
-    void queryClient
-      .fetchQuery(orpcQueryClient.projects.get.queryOptions({ input: { id: deepLinkProjectId } }))
-      .then((project) => {
+    let cancelFlush: (() => void) | undefined;
+
+    const openAndStrip = (project: ProjectOutput | null | undefined) => {
+      cancelFlush = scheduleAfterLayoutClose(() => {
         if (cancelled) return;
         if (project) {
+          expandDashboardSidePanel();
           setOpenedItem(project);
           setIsItemOpen({ [project.id]: true });
         }
-        void navigate({ to: "/dashboard/projects", search: {}, replace: true });
+        void navigate({
+          to: "/dashboard/projects",
+          search: (prev) => omitSearchKey(prev, "projectId"),
+          replace: true
+        });
       });
+    };
+
+    const fromList = projects.find((project) => project.id === deepLinkProjectId);
+    if (fromList) {
+      openAndStrip(fromList);
+    } else if (!projectsQuery.isLoading) {
+      void queryClient
+        .fetchQuery(orpcQueryClient.projects.get.queryOptions({ input: { id: deepLinkProjectId } }))
+        .then((project) => {
+          if (cancelled) return;
+          openAndStrip(project);
+        });
+    }
 
     return () => {
       cancelled = true;
+      cancelFlush?.();
     };
   }, [
     deepLinkProjectId,
@@ -173,7 +249,7 @@ export function ProjectsPage() {
     })
   );
 
-  const listPageKey = getListProjectsPageInfiniteQueryKey();
+  const listPageKey = getListProjectsPageInfiniteQueryKey(listQuery);
 
   const reorderMutation = useMutation(
     orpcQueryClient.projects.reorder.mutationOptions({
@@ -239,6 +315,7 @@ export function ProjectsPage() {
   }
 
   async function handleStartSort() {
+    if (narrowed) return;
     // Reorder needs the full catalog so indices stay correct vs unloaded pages.
     setIsLoadingFullListForSort(true);
     try {
@@ -356,6 +433,25 @@ export function ProjectsPage() {
   const isAddingToPortfolio = batchAction === "portfolio";
 
   useEffect(() => {
+    if (!projectsQuery.isError || !isListQueryBadRequest(projectsQuery.error)) return;
+    toast.error(
+      projectsQuery.error instanceof Error
+        ? projectsQuery.error.message
+        : "Invalid filters. They were cleared."
+    );
+    if (search.filter || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: undefined, sortBy: undefined, sortDir: undefined });
+    }
+  }, [
+    projectsQuery.isError,
+    projectsQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
+
+  useEffect(() => {
     if (!projectsQuery.isLoading && projects.length === 0) {
       if (openedItem) {
         setOpenedItem(null);
@@ -410,7 +506,18 @@ export function ProjectsPage() {
     setDetectReposDialogOpen(true);
   }
 
-  const emptyState = (
+  const emptyState = narrowed ? (
+    <ItemsEmpty
+      icon={<FolderKanbanIcon aria-hidden />}
+      title="No projects match"
+      description="Try a different search or clear filters to see all projects."
+      action={
+        <Button type="button" variant="outline" onClick={clearListSearch}>
+          Clear filters
+        </Button>
+      }
+    />
+  ) : (
     <ItemsEmpty
       icon={<FolderKanbanIcon aria-hidden />}
       title="No projects yet"
@@ -549,7 +656,9 @@ export function ProjectsPage() {
               sort={{
                 isSort,
                 isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
+                reorderDisabled: narrowed,
                 onSortStart: () => {
+                  if (narrowed) return;
                   void handleStartSort();
                 },
                 onSortSave: handleSaveSort,
@@ -559,6 +668,31 @@ export function ProjectsPage() {
             />
           }
         />
+
+        {!isSort ? (
+          <ListSearchBar
+            variant="catalog"
+            fields={filterFields}
+            value={filterValues as FilterValue[]}
+            onValueChange={(value) => {
+              patchListSearch({ filter: rsqlFromFilterValues(value, "projects") });
+            }}
+            q={search.q}
+            onQChange={(q) => {
+              patchListSearch({ q });
+            }}
+            sortBy={search.sortBy}
+            sortDir={search.sortDir}
+            sortOptions={PROJECTS_SORT_OPTIONS}
+            onSortChange={(next) => {
+              patchListSearch({ sortBy: next.sortBy, sortDir: next.sortDir });
+            }}
+            labels={{
+              searchPlaceholder: "Search projects",
+              searchAriaLabel: "Search projects"
+            }}
+          />
+        ) : null}
 
         {!isSort ? (
           <BatchSelectionBar

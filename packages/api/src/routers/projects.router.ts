@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   CreateProjectInputSchema,
   DeleteResponseSchema,
+  ListQueryError,
   PROJECTS_LIST_PAGE_SIZE,
   ProjectListOutputSchema,
   ProjectListPageInputSchema,
@@ -20,6 +21,7 @@ import {
   invalidateSearchBrief,
   shouldInvalidateSearchBriefForEntityPatch
 } from "#@/lib/application/search-brief";
+import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toProjectOutput } from "#@/routers/portfolio.mappers";
 
@@ -52,9 +54,27 @@ export const projectsRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const limit = input?.limit ?? PROJECTS_LIST_PAGE_SIZE;
+      let compiled;
+      try {
+        compiled = compileListQuery({
+          resource: "projects",
+          q: input?.q,
+          filter: input?.filter,
+          sortBy: input?.sortBy,
+          sortDir: input?.sortDir
+        });
+      } catch (error) {
+        if (error instanceof ListQueryError) {
+          throw new ORPCError("BAD_REQUEST", { message: error.message });
+        }
+        throw error;
+      }
       const page = await projectRepository.findPageByUserId(userId, {
         cursor: input?.cursor ?? null,
-        limit
+        limit,
+        where: compiled.where,
+        sortBy: compiled.sortBy,
+        sortDir: compiled.sortDir
       });
 
       return {

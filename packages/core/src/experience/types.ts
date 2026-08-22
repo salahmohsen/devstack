@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { type ExperienceSchemaInsert, type ExperienceSchemaSelect } from "@tsu-stack/db/types";
 
+import { ListQueryInputSchema } from "#@/list-query/types";
 import { ProjectOutputSchema, ProjectPublicOutputSchema } from "#@/project/types";
 
 const ExperienceDateStringSchema = z
@@ -78,20 +79,22 @@ export const EXPERIENCES_LIST_PAGE_SIZE = 24;
  * Cursor page for dashboard experiences list.
  * Keep `experiences.list` (full array) for pickers / sort full catalog.
  */
-export const ExperienceListPageInputSchema = z.object({
-  cursor: z
-    .string()
-    .nullable()
-    .optional()
-    .describe("Opaque cursor from previous page; omit/null for first page"),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(100)
-    .optional()
-    .describe(`Page size (default ${EXPERIENCES_LIST_PAGE_SIZE})`)
-});
+export const ExperienceListPageInputSchema = z
+  .object({
+    cursor: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Opaque cursor from previous page; omit/null for first page"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .describe(`Page size (default ${EXPERIENCES_LIST_PAGE_SIZE})`)
+  })
+  .extend(ListQueryInputSchema.shape);
 
 export const ExperienceListPageOutputSchema = z.object({
   items: z.array(ExperienceOutputSchema),

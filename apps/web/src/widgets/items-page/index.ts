@@ -16,6 +16,40 @@ export {
   type ItemsNavLayout
 } from "@/widgets/items-page/lib/use-items-navigation";
 export { useItemsTabUrlSync } from "@/widgets/items-page/lib/use-items-tab-url-sync";
+export {
+  BOOLEAN_SELECT_DISABLED_OPERATORS,
+  BOOLEAN_SELECT_OPTIONS,
+  RELATION_DISABLED_OPERATORS,
+  createBooleanSelectField,
+  createEmptyableField,
+  createFeaturedBooleanField,
+  createMatchScoreField,
+  createOutcomeField,
+  createPortfolioBooleanField,
+  createRelationMultiselectField,
+  createStageField,
+  createTrackingStatusField
+} from "@/widgets/items-page/lib/list-search-fields";
+export {
+  ListSearchSchema,
+  NEW_JOBS_ALL,
+  NEW_JOBS_SEED,
+  TRACKED_ALL,
+  TRACKED_SEED,
+  defaultSortDir,
+  filterValuesFromRsql,
+  isListNarrowed,
+  isListQueryBadRequest,
+  jobsAllRsql,
+  jobsSeedRsql,
+  parseListSearch,
+  resolveJobsFilterParam,
+  rsqlFromFilterValues,
+  withListSearch,
+  type ListSearch,
+  type ListSearchJobsPage,
+  type ListSearchVariant
+} from "@/widgets/items-page/lib/list-search";
 
 // UI
 export { ItemGridCard } from "@/widgets/items-page/ui/item-grid-card";
@@ -27,6 +61,12 @@ export { GridSkeleton, ListSkeleton } from "@/widgets/items-page/ui/item-skeleto
 export { ItemsEmpty } from "@/widgets/items-page/ui/items-empty";
 export { ItemsFilterButton } from "@/widgets/items-page/ui/items-filter-button";
 export type { ItemsFilterOption } from "@/widgets/items-page/ui/items-filter-button";
+export { ListSearchBar } from "@/widgets/items-page/ui/list-search-bar";
+export type {
+  ListSearchBarLabels,
+  ListSearchBarProps,
+  ListSearchSortOption
+} from "@/widgets/items-page/ui/list-search-bar";
 export {
   ItemInfoPanel,
   ItemInfoRow,

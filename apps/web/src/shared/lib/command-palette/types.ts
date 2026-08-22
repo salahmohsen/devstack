@@ -1,7 +1,12 @@
 import { type ComponentType } from "react";
 
 export type CommandAction =
-  | { type: "navigate"; to: string; params?: Record<string, string> }
+  | {
+      type: "navigate";
+      to: string;
+      params?: Record<string, string>;
+      search?: Record<string, string>;
+    }
   | { type: "execute"; fn: () => void | Promise<void> };
 
 export type CommandItemMeta = {
@@ -15,6 +20,7 @@ export type CommandItemMeta = {
 export type CommandItem = {
   id: string;
   label: string;
+  sublabel?: string;
   group: string;
   icon?: ComponentType<{ className?: string }>;
   iconClassName?: string;

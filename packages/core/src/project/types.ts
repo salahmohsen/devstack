@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { type ProjectSchemaInsert, type ProjectSchemaSelect } from "@tsu-stack/db/types";
 
+import { ListQueryInputSchema } from "#@/list-query/types";
 import { StackOutputSchema } from "#@/stack/types";
 
 export const ProjectOutputSchema = z.object({
@@ -58,20 +59,22 @@ export const PROJECTS_LIST_PAGE_SIZE = 24;
  * Cursor page for dashboard projects list.
  * Keep `projects.list` (full array) for pickers / sort full catalog.
  */
-export const ProjectListPageInputSchema = z.object({
-  cursor: z
-    .string()
-    .nullable()
-    .optional()
-    .describe("Opaque cursor from previous page; omit/null for first page"),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(100)
-    .optional()
-    .describe(`Page size (default ${PROJECTS_LIST_PAGE_SIZE})`)
-});
+export const ProjectListPageInputSchema = z
+  .object({
+    cursor: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Opaque cursor from previous page; omit/null for first page"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .describe(`Page size (default ${PROJECTS_LIST_PAGE_SIZE})`)
+  })
+  .extend(ListQueryInputSchema.shape);
 
 export const ProjectListPageOutputSchema = z.object({
   items: z.array(ProjectOutputSchema),

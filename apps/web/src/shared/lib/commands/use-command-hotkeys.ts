@@ -35,7 +35,7 @@ function isCommandAvailable(id: CommandId, hasPaletteItem: boolean): boolean {
 
 export function useCommandHotkeys() {
   const router = useRouter();
-  const items = useCommandItems();
+  const { items } = useCommandItems();
   const bindings = useCommandBindings();
   const paletteOpen = useCommandPaletteOpen();
   const cheatsheetOpen = useShortcutCheatsheetOpen();
@@ -69,7 +69,8 @@ export function useCommandHotkeys() {
       if (item.action.type === "navigate") {
         void router.navigate({
           to: item.action.to as never,
-          params: item.action.params as never
+          params: item.action.params as never,
+          ...(item.action.search ? { search: item.action.search as never } : {})
         });
         return;
       }

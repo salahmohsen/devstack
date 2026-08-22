@@ -29,11 +29,13 @@ import { useMemo, useState, type ComponentType } from "react";
 import {
   APPLICATION_STAGES,
   APPLICATION_STAGE_LABELS,
+  APPLICATIONS_LIST_BOARD_LIMIT,
   HIRING_URGENCY_LABELS,
   isApplicationOpen,
   type ApplicationOutput,
   type ApplicationStage
 } from "@tsu-stack/core";
+import { Alert, AlertDescription } from "@tsu-stack/ui/components/alert";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
@@ -68,6 +70,10 @@ import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/applic
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
+  narrowed: boolean;
+  trackedTotal: number;
+  totalCount: number;
+  onClearFilters: () => void;
 };
 
 const STAGE_ICONS: Record<ApplicationStage, ComponentType<{ className?: string }>> = {
@@ -272,7 +278,13 @@ function StageColumn({
   );
 }
 
-export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
+export function ApplicationsBoard({
+  applications,
+  narrowed,
+  trackedTotal,
+  totalCount,
+  onClearFilters
+}: ApplicationsBoardProps) {
   const updateStage = useUpdateStageMutation();
   const deleteMutation = useDeleteApplicationsMutation();
   const {
@@ -320,26 +332,42 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
   const activeApp = activeId ? openApps.find((a) => a.id === activeId) : null;
 
   if (applications.length === 0) {
-    return (
-      <ItemsEmpty
-        icon={<BriefcaseIcon aria-hidden />}
-        title="No tracked jobs yet"
-        description="Track a discovery from New jobs, add a role manually, or import a job description."
-        action={
-          <Group>
-            <Button type="button" onClick={openCreate}>
-              <PlusIcon aria-hidden />
-              New
+    if (narrowed) {
+      return (
+        <ItemsEmpty
+          icon={<BriefcaseIcon aria-hidden />}
+          title="No jobs match"
+          description="Try a different search or clear filters to see the open board."
+          action={
+            <Button type="button" variant="outline" onClick={onClearFilters}>
+              Clear filters
             </Button>
-            <GroupSeparator />
-            <Button type="button" variant="outline" onClick={openImportJdSheet}>
-              <FileTextIcon aria-hidden />
-              Import
-            </Button>
-          </Group>
-        }
-      />
-    );
+          }
+        />
+      );
+    }
+    if (trackedTotal === 0) {
+      return (
+        <ItemsEmpty
+          icon={<BriefcaseIcon aria-hidden />}
+          title="No tracked jobs yet"
+          description="Track a discovery from New jobs, add a role manually, or import a job description."
+          action={
+            <Group>
+              <Button type="button" onClick={openCreate}>
+                <PlusIcon aria-hidden />
+                New
+              </Button>
+              <GroupSeparator />
+              <Button type="button" variant="outline" onClick={openImportJdSheet}>
+                <FileTextIcon aria-hidden />
+                Import
+              </Button>
+            </Group>
+          }
+        />
+      );
+    }
   }
 
   function findStage(id: string): ApplicationStage | null {
@@ -385,6 +413,14 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
 
   return (
     <>
+      {totalCount > APPLICATIONS_LIST_BOARD_LIMIT ? (
+        <Alert variant="info">
+          <AlertDescription>
+            Showing {APPLICATIONS_LIST_BOARD_LIMIT} of {totalCount} open jobs. Narrow filters or
+            switch to the list to see the rest. Closed jobs never appear on the board.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       <BatchSelectionBar
         selectedCount={selectedCount}
         totalCount={openIds.length}

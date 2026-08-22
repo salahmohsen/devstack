@@ -1,18 +1,26 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
+  Briefcase,
   CircleDot,
   Code,
+  FileText,
+  FolderKanban,
   GitMerge,
   GitPullRequest,
   GitPullRequestClosed,
   GitPullRequestDraft,
+  Layers,
+  ListChecks,
   RefreshCw,
-  UserCircle
+  Sparkles,
+  UserCircle,
+  type LucideIcon
 } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
+import { type SearchEntityHit, type SearchEntityType } from "@tsu-stack/core";
 import {
   type IssueSummary,
   type MyIssuesResult,
@@ -26,8 +34,44 @@ import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { githubQueryKeys } from "@/lib/github.query";
 
 import { getRegisteredCommands, subscribeCommands } from "./registry";
+import { useSearchEntitiesQuery } from "./search-entities.query";
 import { type CommandItem } from "./types";
 import { useRefreshGitHubData } from "./use-refresh-github-data";
+
+const ENTITY_GROUP: Record<SearchEntityType, string> = {
+  experience: "Experiences",
+  project: "Projects",
+  stack: "Skills",
+  resume: "Resumes",
+  inbox_job: "New jobs",
+  tracked_job: "Tracked jobs"
+};
+
+const ENTITY_ICON: Record<SearchEntityType, LucideIcon> = {
+  experience: Briefcase,
+  project: FolderKanban,
+  stack: Layers,
+  resume: FileText,
+  inbox_job: Sparkles,
+  tracked_job: ListChecks
+};
+
+function entityHitToCommandItem(hit: SearchEntityHit): CommandItem {
+  return {
+    id: `entity:${hit.type}:${hit.id}`,
+    label: hit.label,
+    sublabel: hit.sublabel ?? undefined,
+    group: ENTITY_GROUP[hit.type],
+    icon: ENTITY_ICON[hit.type],
+    keywords: [hit.sublabel ?? "", hit.type].filter(Boolean),
+    authRequired: true,
+    action: {
+      type: "navigate",
+      to: hit.to,
+      search: hit.search
+    }
+  };
+}
 
 function sessionUsername(user: unknown): string | undefined {
   return sessionUsernameFromUser(user) ?? undefined;
@@ -59,12 +103,13 @@ function getIssueIcon(issue: IssueSummary) {
   return { icon: CircleDot, iconClassName: "text-green-500" };
 }
 
-export function useCommandItems(): CommandItem[] {
+export function useCommandItems(q = ""): { items: CommandItem[]; isSearching: boolean } {
   const { data: user } = useQuery(getAuthUserQueryOptions());
   const isSignedIn = !!user;
   const scope = { userId: user?.id ?? "" };
   const queryClient = useQueryClient();
   const refreshGitHubData = useRefreshGitHubData();
+  const { query: entitiesQuery, enabled: entitiesEnabled } = useSearchEntitiesQuery(q, isSignedIn);
 
   const staticCommands = useSyncExternalStore(
     subscribeCommands,
@@ -247,5 +292,10 @@ export function useCommandItems(): CommandItem[] {
     return bTime.localeCompare(aTime);
   });
 
-  return [...visibleStatic, ...dynamicItems];
+  const entityItems = entitiesEnabled ? (entitiesQuery.data ?? []).map(entityHitToCommandItem) : [];
+
+  return {
+    items: [...visibleStatic, ...dynamicItems, ...entityItems],
+    isSearching: entitiesEnabled && entitiesQuery.isFetching
+  };
 }

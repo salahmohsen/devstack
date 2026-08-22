@@ -1,13 +1,21 @@
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
   AcceptApplyPackageInputSchema,
   AddApplicationNoteInputSchema,
   ApplicationActivityOutputSchema,
+  ApplicationListBoardInputSchema,
+  ApplicationListBoardOutputSchema,
+  ApplicationListPageInputSchema,
+  ApplicationListPageOutputSchema,
+  APPLICATIONS_LIST_BOARD_LIMIT,
+  APPLICATIONS_LIST_PAGE_SIZE,
   DeleteApplicationNoteInputSchema,
   ApplicationGetOutputSchema,
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
+  ListQueryError,
   BatchDismissApplicationsInputSchema,
   BatchRestoreApplicationsInputSchema,
   buildApplicationSourceTags,
@@ -61,6 +69,7 @@ import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "#@/lib/application/load-seeker-match-evidence";
 import { refreshApplicationFromListingUrl } from "#@/lib/application/refresh-from-listing-url";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
+import { compileListQuery } from "#@/lib/list-query/compile";
 import { requestMailJobHarvest } from "#@/lib/mail/harvest-enqueue-hook";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
@@ -167,6 +176,33 @@ async function isResumeOwned(resumeId: string | null | undefined, userId: string
   return owned != null;
 }
 
+function compileApplicationsOrThrow(
+  input: {
+    q?: string;
+    filter?: string;
+    sortBy?: string;
+    sortDir?: "asc" | "desc";
+  },
+  resource: "new-jobs" | "tracked-jobs",
+  board = false
+) {
+  try {
+    return compileListQuery({
+      resource,
+      q: input.q,
+      filter: input.filter,
+      sortBy: input.sortBy,
+      sortDir: input.sortDir,
+      board
+    });
+  } catch (error) {
+    if (error instanceof ListQueryError) {
+      throw new ORPCError("BAD_REQUEST", { message: error.message });
+    }
+    throw error;
+  }
+}
+
 export const applicationsRouter = {
   list: protectedProcedure
     .route({
@@ -180,6 +216,62 @@ export const applicationsRouter = {
       const status = input?.trackingStatus ?? "tracked";
       const rows = await applicationRepository.findByUserIdAndTrackingStatus(userId, status);
       return toApplicationOutputs(rows);
+    }),
+
+  /**
+   * Cursor page for dashboard New jobs / Tracked list.
+   * Partition comes from `scope`, never from a client trackingStatus default.
+   */
+  listPage: protectedProcedure
+    .route({
+      description: "Paginated applications for New jobs / Tracked jobs list (not hub pickers)",
+      method: "GET"
+    })
+    .input(ApplicationListPageInputSchema)
+    .output(ApplicationListPageOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const limit = input.limit ?? APPLICATIONS_LIST_PAGE_SIZE;
+      const compiled = compileApplicationsOrThrow(input, input.scope);
+      const page = await applicationRepository.findPageByUserId(userId, {
+        cursor: input.cursor ?? null,
+        limit,
+        where: compiled.where,
+        sortBy: compiled.sortBy,
+        sortDir: compiled.sortDir
+      });
+      return {
+        items: await toApplicationOutputs(page.items),
+        nextCursor: page.nextCursor,
+        totalCount: page.totalCount
+      };
+    }),
+
+  /**
+   * Open-only tracked board. Compile strips outcome leaves and ANDs
+   * `outcome IS NULL` plus the tracked partition. Cap 200.
+   */
+  listBoard: protectedProcedure
+    .route({
+      description: "Open tracked applications for the pipeline board (capped, no cursor)",
+      method: "GET"
+    })
+    .input(ApplicationListBoardInputSchema.optional())
+    .output(ApplicationListBoardOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const limit = input?.limit ?? APPLICATIONS_LIST_BOARD_LIMIT;
+      const compiled = compileApplicationsOrThrow(input ?? {}, "tracked-jobs", true);
+      const page = await applicationRepository.findBoardByUserId(userId, {
+        limit,
+        where: compiled.where,
+        sortBy: compiled.sortBy,
+        sortDir: compiled.sortDir
+      });
+      return {
+        items: await toApplicationOutputs(page.items),
+        totalCount: page.totalCount
+      };
     }),
 
   previewListing: protectedProcedure

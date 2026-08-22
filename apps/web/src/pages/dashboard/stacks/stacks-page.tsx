@@ -2,13 +2,15 @@
 
 import { rectSortingStrategy } from "@dnd-kit/sortable";
 import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { BoxesIcon, FolderKanbanIcon, LayersIcon, Package, TagsIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
+  formatStackTypeLabel,
+  STACK_TYPE_ORDER,
   type StackListPageOutput,
   type StackOutput,
   normalizeOrganizeActions
@@ -24,7 +26,9 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
+import { Button } from "@tsu-stack/ui/components/button";
 import { ChaoticPixelsLoader } from "@tsu-stack/ui/components/chaotic-pixels-loader";
+import { type FilterValue } from "@tsu-stack/ui/components/filters";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
@@ -33,6 +37,8 @@ import {
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -58,13 +64,23 @@ import {
   ItemsGrid,
   ItemsGridCell,
   ItemsNavProvider,
+  ListSearchBar,
   PageHeader,
   PageLayout,
   PanelEditButton,
+  createFeaturedBooleanField,
+  createPortfolioBooleanField,
+  createRelationMultiselectField,
+  filterValuesFromRsql,
   isAnyOpened,
+  isListNarrowed,
+  isListQueryBadRequest,
+  rsqlFromFilterValues,
   useItemsGridColumnCount,
   useItemsNavigation,
-  type ItemsNavLayout
+  withListSearch,
+  type ItemsNavLayout,
+  type ListSearch
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
@@ -83,6 +99,16 @@ import {
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
+
+const skillsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/skills/");
+
+const SKILLS_SORT_OPTIONS = [
+  { value: "name", label: "Name" },
+  { value: "projectCount", label: "Projects" },
+  { value: "updatedAt", label: "Updated" }
+] as const;
+
+const TYPE_DISABLED_OPERATORS = ["is_empty", "is_not_empty"] as const;
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
 export function StackDetailPanel({
@@ -201,7 +227,66 @@ export function StackDetailPanel({
 
 export function StacksPage() {
   const queryClient = useQueryClient();
-  const stacksQuery = useListStacksPageInfiniteQuery();
+  const navigate = useNavigate();
+  const search = skillsRouteApi.useSearch();
+  const deepLinkStackId = search.stackId;
+  const listQuery = useMemo(() => {
+    return {
+      q: search.q,
+      filter: search.filter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [search.q, search.filter, search.sortBy, search.sortDir]);
+  const stacksQuery = useListStacksPageInfiniteQuery(listQuery);
+  const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
+  const narrowed = isListNarrowed({ q: search.q, filter: search.filter, page: "skills" });
+
+  const patchListSearch = useCallback(
+    (patch: Partial<Pick<ListSearch, "q" | "filter" | "sortBy" | "sortDir">>) => {
+      void navigate({
+        to: "/dashboard/skills",
+        search: (prev) => withListSearch(prev, patch),
+        replace: true
+      });
+    },
+    [navigate]
+  );
+
+  const clearListSearch = useCallback(() => {
+    patchListSearch({ q: undefined, filter: undefined });
+  }, [patchListSearch]);
+
+  const filterValues = useMemo(
+    () => filterValuesFromRsql(search.filter, "skills"),
+    [search.filter]
+  );
+
+  const projectOptions = useMemo(
+    () =>
+      (projectsQuery.data ?? []).map((project) => {
+        return { value: project.id, label: project.title };
+      }),
+    [projectsQuery.data]
+  );
+
+  const filterFields = useMemo(
+    () => [
+      {
+        id: "type",
+        label: "Type",
+        type: "select" as const,
+        options: STACK_TYPE_ORDER.map((type) => {
+          return { value: type, label: formatStackTypeLabel(type) };
+        }),
+        disabledOperators: [...TYPE_DISABLED_OPERATORS]
+      },
+      createPortfolioBooleanField(),
+      createFeaturedBooleanField(),
+      createRelationMultiselectField("projects", "Projects", projectOptions)
+    ],
+    [projectOptions]
+  );
 
   const {
     openedItem,
@@ -217,6 +302,55 @@ export function StacksPage() {
 
   const stacks = useMemo(() => flattenStacksPages(stacksQuery.data), [stacksQuery.data]);
   const totalCount = stacksQuery.data?.pages[0]?.totalCount;
+
+  // Open inspect when arriving with ?stackId= (palette / deep link).
+  useEffect(() => {
+    if (!deepLinkStackId) return;
+
+    let cancelled = false;
+    let cancelFlush: (() => void) | undefined;
+
+    const openAndStrip = (stack: StackOutput | null | undefined) => {
+      cancelFlush = scheduleAfterLayoutClose(() => {
+        if (cancelled) return;
+        if (stack) {
+          expandDashboardSidePanel();
+          setOpenedItem(stack);
+          setIsItemOpen({ [stack.id]: true });
+        }
+        void navigate({
+          to: "/dashboard/skills",
+          search: (prev) => omitSearchKey(prev, "stackId"),
+          replace: true
+        });
+      });
+    };
+
+    const fromList = stacks.find((s) => s.id === deepLinkStackId);
+    if (fromList) {
+      openAndStrip(fromList);
+    } else if (!stacksQuery.isLoading) {
+      void queryClient
+        .fetchQuery(orpcQueryClient.stacks.get.queryOptions({ input: { id: deepLinkStackId } }))
+        .then((stack) => {
+          if (cancelled) return;
+          openAndStrip(stack);
+        });
+    }
+
+    return () => {
+      cancelled = true;
+      cancelFlush?.();
+    };
+  }, [
+    deepLinkStackId,
+    stacks,
+    stacksQuery.isLoading,
+    queryClient,
+    setOpenedItem,
+    setIsItemOpen,
+    navigate
+  ]);
 
   // ── Sort state (declared early so infinite scroll can disable during sort)
   const [isSort, setIsSort] = useState(false);
@@ -446,7 +580,7 @@ export function StacksPage() {
     setIsApplyingOrganize(false);
   }
 
-  const listPageKey = getListStacksPageInfiniteQueryKey();
+  const listPageKey = getListStacksPageInfiniteQueryKey(listQuery);
 
   const reorderMutation = useMutation(
     orpcQueryClient.stacks.reorder.mutationOptions({
@@ -576,6 +710,25 @@ export function StacksPage() {
   }
 
   useEffect(() => {
+    if (!stacksQuery.isError || !isListQueryBadRequest(stacksQuery.error)) return;
+    toast.error(
+      stacksQuery.error instanceof Error
+        ? stacksQuery.error.message
+        : "Invalid filters. They were cleared."
+    );
+    if (search.filter || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: undefined, sortBy: undefined, sortDir: undefined });
+    }
+  }, [
+    stacksQuery.isError,
+    stacksQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
+
+  useEffect(() => {
     if (!stacksQuery.isLoading && stacks.length === 0) {
       if (openedItem) {
         setOpenedItem(null);
@@ -672,7 +825,18 @@ export function StacksPage() {
     }
   }
 
-  const emptyState = (
+  const emptyState = narrowed ? (
+    <ItemsEmpty
+      icon={<Package aria-hidden />}
+      title="No skills match"
+      description="Try a different search or clear filters to see all skills."
+      action={
+        <Button type="button" variant="outline" onClick={clearListSearch}>
+          Clear filters
+        </Button>
+      }
+    />
+  ) : (
     <ItemsEmpty
       icon={<Package aria-hidden />}
       title="No skills yet"
@@ -775,7 +939,9 @@ export function StacksPage() {
               sort={{
                 isSort,
                 isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
+                reorderDisabled: narrowed,
                 onSortStart: () => {
+                  if (narrowed) return;
                   void handleStartSort();
                 },
                 onSortSave: handleSaveSort,
@@ -785,6 +951,31 @@ export function StacksPage() {
             />
           }
         />
+
+        {!isSort ? (
+          <ListSearchBar
+            variant="catalog"
+            fields={filterFields}
+            value={filterValues as FilterValue[]}
+            onValueChange={(value) => {
+              patchListSearch({ filter: rsqlFromFilterValues(value, "skills") });
+            }}
+            q={search.q}
+            onQChange={(q) => {
+              patchListSearch({ q });
+            }}
+            sortBy={search.sortBy}
+            sortDir={search.sortDir}
+            sortOptions={SKILLS_SORT_OPTIONS}
+            onSortChange={(next) => {
+              patchListSearch({ sortBy: next.sortBy, sortDir: next.sortDir });
+            }}
+            labels={{
+              searchPlaceholder: "Search skills",
+              searchAriaLabel: "Search skills"
+            }}
+          />
+        ) : null}
 
         {!isSort ? (
           <BatchSelectionBar

@@ -1,7 +1,7 @@
 "use client";
 
 import { isDefinedError } from "@orpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { Building2Icon, FileTextIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
+import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 
 import {
@@ -26,6 +27,8 @@ import {
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { toastAiError } from "@/shared/lib/toast-ai-error";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
@@ -37,11 +40,19 @@ import {
   ItemsEmpty,
   ItemsGrid,
   ItemsNavProvider,
+  ListSearchBar,
   PageHeader,
   PageLayout,
+  createEmptyableField,
+  filterValuesFromRsql,
   isAnyOpened,
+  isListNarrowed,
+  isListQueryBadRequest,
+  rsqlFromFilterValues,
   useItemsGridColumnCount,
-  useItemsNavigation
+  useItemsNavigation,
+  withListSearch,
+  type ListSearch
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
@@ -51,10 +62,18 @@ import {
   resumeCardTitle
 } from "@/pages/dashboard/resumes/_lib/resume-identity";
 import { useResumeStore } from "@/pages/dashboard/resumes/_lib/resume.slice";
+import { useListResumesQuery } from "@/pages/dashboard/resumes/api/list-resumes.query";
 import { ResumeActionGroup } from "@/pages/dashboard/resumes/ui/resume-action-group";
 import { ResumeItem, ResumeTypeBadges } from "@/pages/dashboard/resumes/ui/resume-item";
 
 const resumesRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/resumes/");
+
+const RESUMES_SORT_OPTIONS = [
+  { value: "updatedAt", label: "Updated" },
+  { value: "createdAt", label: "Created" }
+] as const;
+
+const RESUME_FILTER_FIELDS = [createEmptyableField("tiedToJob", "Tied to a job")];
 
 export function ResumesPage() {
   const {
@@ -70,22 +89,54 @@ export function ResumesPage() {
   } = useResumeStore();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { resumeId: deepLinkResumeId } = resumesRouteApi.useSearch();
-
-  const resumesQuery = useQuery(orpcQueryClient.resume.list.queryOptions());
+  const search = resumesRouteApi.useSearch();
+  const deepLinkResumeId = search.resumeId;
+  const listQuery = useMemo(() => {
+    return {
+      q: search.q,
+      filter: search.filter,
+      sortBy: search.sortBy,
+      sortDir: search.sortDir
+    };
+  }, [search.q, search.filter, search.sortBy, search.sortDir]);
+  const resumesQuery = useListResumesQuery(listQuery);
   const visibleResumes = useMemo(() => resumesQuery.data ?? [], [resumesQuery.data]);
+  const narrowed = isListNarrowed({ q: search.q, filter: search.filter, page: "resumes" });
+
+  const patchListSearch = useCallback(
+    (patch: Partial<Pick<ListSearch, "q" | "filter" | "sortBy" | "sortDir">>) => {
+      void navigate({
+        to: "/dashboard/resumes",
+        search: (prev) => withListSearch(prev, patch),
+        replace: true
+      });
+    },
+    [navigate]
+  );
+
+  const clearListSearch = useCallback(() => {
+    patchListSearch({ q: undefined, filter: undefined });
+  }, [patchListSearch]);
+
+  const filterValues = useMemo(
+    () => filterValuesFromRsql(search.filter, "resumes"),
+    [search.filter]
+  );
 
   // Open side panel when arriving with ?resumeId= from applications (or elsewhere).
   useEffect(() => {
     if (!deepLinkResumeId || resumesQuery.isLoading) return;
     const resume = visibleResumes.find((r) => r.id === deepLinkResumeId);
     if (!resume) return;
-    setOpenedItem(resume);
-    setIsItemOpen({ [resume.id]: true });
-    void navigate({
-      to: "/dashboard/resumes",
-      search: {},
-      replace: true
+    return scheduleAfterLayoutClose(() => {
+      expandDashboardSidePanel();
+      setOpenedItem(resume);
+      setIsItemOpen({ [resume.id]: true });
+      void navigate({
+        to: "/dashboard/resumes",
+        search: (prev) => omitSearchKey(prev, "resumeId"),
+        replace: true
+      });
     });
   }, [
     deepLinkResumeId,
@@ -194,6 +245,25 @@ export function ResumesPage() {
   }
 
   useEffect(() => {
+    if (!resumesQuery.isError || !isListQueryBadRequest(resumesQuery.error)) return;
+    toast.error(
+      resumesQuery.error instanceof Error
+        ? resumesQuery.error.message
+        : "Invalid filters. They were cleared."
+    );
+    if (search.filter || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: undefined, sortBy: undefined, sortDir: undefined });
+    }
+  }, [
+    resumesQuery.isError,
+    resumesQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
+
+  useEffect(() => {
     if (!resumesQuery.isLoading && visibleResumes.length === 0) {
       if (openedItem) {
         setOpenedItem(null);
@@ -211,7 +281,18 @@ export function ResumesPage() {
     clearSelection
   ]);
 
-  const emptyState = (
+  const emptyState = narrowed ? (
+    <ItemsEmpty
+      icon={<FileTextIcon aria-hidden />}
+      title="No resumes match"
+      description="Try a different search or clear filters to see all resumes."
+      action={
+        <Button type="button" variant="outline" onClick={clearListSearch}>
+          Clear filters
+        </Button>
+      }
+    />
+  ) : (
     <ItemsEmpty
       icon={<FileTextIcon aria-hidden />}
       title="No resumes yet"
@@ -239,6 +320,29 @@ export function ResumesPage() {
               }}
             />
           }
+        />
+
+        <ListSearchBar
+          variant="catalog"
+          fields={RESUME_FILTER_FIELDS}
+          value={filterValues as FilterValue[]}
+          onValueChange={(value) => {
+            patchListSearch({ filter: rsqlFromFilterValues(value, "resumes") });
+          }}
+          q={search.q}
+          onQChange={(q) => {
+            patchListSearch({ q });
+          }}
+          sortBy={search.sortBy}
+          sortDir={search.sortDir}
+          sortOptions={RESUMES_SORT_OPTIONS}
+          onSortChange={(next) => {
+            patchListSearch({ sortBy: next.sortBy, sortDir: next.sortDir });
+          }}
+          labels={{
+            searchPlaceholder: "Search resumes",
+            searchAriaLabel: "Search resumes"
+          }}
         />
 
         <BatchSelectionBar

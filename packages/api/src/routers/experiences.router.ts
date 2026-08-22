@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
@@ -8,6 +9,7 @@ import {
   ExperienceListPageInputSchema,
   ExperienceListPageOutputSchema,
   ExperienceOutputSchema,
+  ListQueryError,
   ReorderInputSchema,
   ReorderResponseSchema,
   UpdateExperienceInputSchema
@@ -18,6 +20,7 @@ import {
   invalidateSearchBrief,
   shouldInvalidateSearchBriefForEntityPatch
 } from "#@/lib/application/search-brief";
+import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toExperienceListOutput, toExperienceOutput } from "#@/routers/portfolio.mappers";
 
@@ -50,9 +53,27 @@ export const experiencesRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const limit = input?.limit ?? EXPERIENCES_LIST_PAGE_SIZE;
+      let compiled;
+      try {
+        compiled = compileListQuery({
+          resource: "experiences",
+          q: input?.q,
+          filter: input?.filter,
+          sortBy: input?.sortBy,
+          sortDir: input?.sortDir
+        });
+      } catch (error) {
+        if (error instanceof ListQueryError) {
+          throw new ORPCError("BAD_REQUEST", { message: error.message });
+        }
+        throw error;
+      }
       const page = await experienceRepository.findPageByUserId(userId, {
         cursor: input?.cursor ?? null,
-        limit
+        limit,
+        where: compiled.where,
+        sortBy: compiled.sortBy,
+        sortDir: compiled.sortDir
       });
 
       return {

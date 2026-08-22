@@ -21,7 +21,7 @@ import {
 } from "@/shared/lib/commands";
 import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 
-const GROUP_ORDER = ["Global", "Pages", "Agent", "Settings", "Playground", "Tabs"] as const;
+const GROUP_ORDER = ["Global", "Pages", "Dashboard", "Settings", "Playground", "Tabs"] as const;
 
 export function ShortcutCheatsheet() {
   const open = useShortcutCheatsheetOpen();

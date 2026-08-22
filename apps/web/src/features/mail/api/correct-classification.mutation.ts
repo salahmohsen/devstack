@@ -3,6 +3,8 @@ import { toast } from "sonner";
 
 import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
+import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
+
 import { mailQueryKeys } from "@/features/mail/api/list-mail.query";
 
 export function useCorrectMailClassificationMutation() {
@@ -20,9 +22,7 @@ export function useCorrectMailClassificationMutation() {
           queryClient.invalidateQueries({
             queryKey: orpcQueryClient.mail.list.key({ type: "query" })
           }),
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.applications.list.key({ type: "query" })
-          })
+          invalidateApplicationsListQueries(queryClient)
         ]);
       },
       onError: (error) => {
