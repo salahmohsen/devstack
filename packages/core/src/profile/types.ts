@@ -101,7 +101,16 @@ export const ProfileOutputSchema = z.object({
   /** Public path handle (Better Auth username). */
   username: UsernameSchema
 }) satisfies z.ZodType<
-  Omit<UserSchemaSelect, "updatedAt" | "onboardingCompletedAt" | "displayUsername"> & {
+  Omit<
+    UserSchemaSelect,
+    | "updatedAt"
+    | "onboardingCompletedAt"
+    | "displayUsername"
+    | "role"
+    | "banned"
+    | "banReason"
+    | "banExpires"
+  > & {
     contacts: z.infer<typeof contactOutputSchema>[];
   }
 >;

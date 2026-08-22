@@ -12,6 +12,7 @@ import { ShortcutCheatsheet } from "@/shared/ui/shortcut-cheatsheet";
 
 import { ClipWidth } from "@/widgets/layout/ui/clip-width";
 import { DashboardMobileNavProvider } from "@/widgets/layout/ui/dashboard-mobile-nav";
+import { ImpersonationBanner } from "@/widgets/layout/ui/impersonation-banner";
 import { DASHBOARD_NAV_DEFAULT_WIDTH, DashboardSidebar } from "@/widgets/layout/ui/sidebar";
 
 import { CommandPalette } from "./command-palette";
@@ -79,6 +80,7 @@ export function RootLayout({ children }: PropsWithChildren) {
         )}
       >
         <Topbar />
+        <ImpersonationBanner />
 
         <SidePanelProvider
           value={{

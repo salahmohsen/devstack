@@ -7,7 +7,6 @@ import {
   Keyboard,
   KeyRound,
   Blocks,
-  Mail,
   Sparkles,
   UserRound
 } from "lucide-react";
@@ -32,7 +31,6 @@ type NavItem = {
     | "/dashboard/settings/jobs"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
-    | "/dashboard/settings/invites"
     | "/dashboard/settings/shortcuts";
   icon: typeof UserRound;
   group: "You" | "Workspace" | "Intelligence";
@@ -111,14 +109,6 @@ const SETTINGS_NAV: readonly NavItem[] = [
     to: "/dashboard/settings/notifications",
     icon: Bell,
     group: "Intelligence"
-  },
-  {
-    id: "invites",
-    label: "Invites",
-    description: "One-time signup codes",
-    to: "/dashboard/settings/invites",
-    icon: Mail,
-    group: "Workspace"
   }
 ] as const;
 

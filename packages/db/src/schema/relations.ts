@@ -206,6 +206,26 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       usedBy: r.one.user({
         from: r.invite.usedByUserId,
         to: r.user.id
+      }),
+      redemptions: r.many.inviteRedemption({
+        from: r.invite.id,
+        to: r.inviteRedemption.inviteId
+      })
+    },
+    inviteRedemption: {
+      invite: r.one.invite({
+        from: r.inviteRedemption.inviteId,
+        to: r.invite.id
+      }),
+      user: r.one.user({
+        from: r.inviteRedemption.userId,
+        to: r.user.id
+      })
+    },
+    platformSetting: {
+      updatedBy: r.one.user({
+        from: r.platformSetting.updatedByUserId,
+        to: r.user.id
       })
     },
     usernameSlugAlias: {

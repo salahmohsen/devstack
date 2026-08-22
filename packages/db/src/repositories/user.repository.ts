@@ -1,7 +1,13 @@
-import { count, eq } from "drizzle-orm";
+import { count, desc, eq, ilike, max, or, sql } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
-import { user } from "../schema/auth.schema.ts";
+import { application } from "../schema/application.schema.ts";
+import { account, session, user } from "../schema/auth.schema.ts";
+import { experience } from "../schema/experience.schema.ts";
+import { mailMessage } from "../schema/mail-message.schema.ts";
+import { project } from "../schema/project.schema.ts";
+import { stack } from "../schema/stack.schema.ts";
+import { userCustomDomain } from "../schema/user-custom-domain.schema.ts";
 import { usernameSlugAlias } from "../schema/username-slug-alias.schema.ts";
 import { type UserSchemaInsert, type UserSchemaSelect } from "../types/auth.schema.ts";
 
@@ -79,5 +85,116 @@ export const userRepository = {
 
   async updateUsername(id: string, username: string): Promise<UserSchemaSelect | null> {
     return userRepository.update(id, { username, displayUsername: username });
+  },
+
+  async countByRole(role: string): Promise<number> {
+    const [row] = await getDb().select({ value: count() }).from(user).where(eq(user.role, role));
+    return Number(row?.value ?? 0);
+  },
+
+  async countBanned(): Promise<number> {
+    const [row] = await getDb().select({ value: count() }).from(user).where(eq(user.banned, true));
+    return Number(row?.value ?? 0);
+  },
+
+  async listForAdmin(input: { q?: string; limit: number; offset: number }): Promise<{
+    items: Array<UserSchemaSelect & { lastSeenAt: Date | null; sessionCount: number }>;
+    total: number;
+  }> {
+    const db = getDb();
+    const q = input.q?.trim();
+    const search = q
+      ? or(ilike(user.name, `%${q}%`), ilike(user.email, `%${q}%`), ilike(user.username, `%${q}%`))
+      : undefined;
+
+    const [totalRow] = await db.select({ value: count() }).from(user).where(search);
+
+    const rows = await db
+      .select({
+        user,
+        lastSeenAt: max(session.updatedAt),
+        sessionCount: sql<number>`count(${session.id})::int`
+      })
+      .from(user)
+      .leftJoin(session, eq(session.userId, user.id))
+      .where(search)
+      .groupBy(user.id)
+      .orderBy(desc(user.createdAt))
+      .limit(input.limit)
+      .offset(input.offset);
+
+    return {
+      items: rows.map((row) => {
+        return {
+          ...row.user,
+          lastSeenAt: row.lastSeenAt ?? null,
+          sessionCount: Number(row.sessionCount ?? 0)
+        };
+      }),
+      total: Number(totalRow?.value ?? 0)
+    };
+  },
+
+  async listProviders(userId: string): Promise<Array<{ providerId: string }>> {
+    const rows = await getDb()
+      .select({ providerId: account.providerId })
+      .from(account)
+      .where(eq(account.userId, userId));
+    return rows;
+  },
+
+  async tenantCounts(userId: string): Promise<{
+    experiences: number;
+    projects: number;
+    stacks: number;
+    applications: number;
+    mailMessages: number;
+  }> {
+    const db = getDb();
+    const [experiences, projects, stacks, applications, mailMessages] = await Promise.all([
+      db.select({ value: count() }).from(experience).where(eq(experience.userId, userId)),
+      db.select({ value: count() }).from(project).where(eq(project.userId, userId)),
+      db.select({ value: count() }).from(stack).where(eq(stack.userId, userId)),
+      db.select({ value: count() }).from(application).where(eq(application.userId, userId)),
+      db.select({ value: count() }).from(mailMessage).where(eq(mailMessage.userId, userId))
+    ]);
+    return {
+      experiences: Number(experiences[0]?.value ?? 0),
+      projects: Number(projects[0]?.value ?? 0),
+      stacks: Number(stacks[0]?.value ?? 0),
+      applications: Number(applications[0]?.value ?? 0),
+      mailMessages: Number(mailMessages[0]?.value ?? 0)
+    };
+  },
+
+  async findCustomDomainHostname(userId: string): Promise<string | null> {
+    const [row] = await getDb()
+      .select({ hostname: userCustomDomain.hostname })
+      .from(userCustomDomain)
+      .where(eq(userCustomDomain.userId, userId))
+      .limit(1);
+    return row?.hostname ?? null;
+  },
+
+  async sessionStats(userId: string): Promise<{ lastSeenAt: Date | null; sessionCount: number }> {
+    const [row] = await getDb()
+      .select({
+        lastSeenAt: max(session.updatedAt),
+        sessionCount: sql<number>`count(${session.id})::int`
+      })
+      .from(session)
+      .where(eq(session.userId, userId));
+    return {
+      lastSeenAt: row?.lastSeenAt ?? null,
+      sessionCount: Number(row?.sessionCount ?? 0)
+    };
+  },
+
+  async revokeSessions(userId: string): Promise<number> {
+    const deleted = await getDb()
+      .delete(session)
+      .where(eq(session.userId, userId))
+      .returning({ id: session.id });
+    return deleted.length;
   }
 };

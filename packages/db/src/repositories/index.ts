@@ -41,6 +41,11 @@ export {
   type InviteEntity
 } from "./invite.repository.ts";
 export {
+  platformSettingRepository,
+  PLATFORM_SETTING_ID,
+  type PlatformSettingEntity
+} from "./platform-setting.repository.ts";
+export {
   jobPreferenceRepository,
   type JobPreferenceEntity,
   type UpsertJobPreferenceData

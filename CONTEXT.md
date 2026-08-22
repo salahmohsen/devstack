@@ -21,10 +21,23 @@ existing aliases.
 _Avoid_: redirect table (generic), vanity URL. Historical table name: `profile_slug_alias`.
 
 **Invite**:
-Single-use (or revocable) registration code. Empty database bootstraps the
-first user without an invite; later signups require a valid invite. Not a
-user column — code arrives via signup body, short-lived cookie, or OAuth state.
-_Avoid_: open registration, invite-as-role.
+Named registration link or emailed single-use code. Empty database bootstraps
+the first user without an invite. After that, **signup mode** (platform
+setting) is `invite_only` (default) or `open`. Codes arrive via signup body,
+short-lived cookie, or OAuth state — not a user column. Redemptions attribute
+the new user to the invite. Super admin creates and names invites; members
+cannot. _Avoid_: invite-as-role; treating super admin as owner of other
+tenants’ portfolios.
+
+**Super admin**:
+Platform operator (`user.role = admin`). UI label Super admin. Lists users,
+manages invites and signup mode, can ban and impersonate. Does not own
+another tenant’s `userId` rows — impersonation is how they act as that tenant.
+_Avoid_: “admin user” as the sole portfolio owner.
+
+**Signup mode**:
+Install-wide `invite_only` | `open` on `platform_setting`. Operator toggle
+in Admin → Access. _Avoid_: assuming registration is always closed.
 
 **Custom domain** (`user_custom_domain`):
 Optional verified hostname that maps Host → that tenant’s portfolio at `/`.

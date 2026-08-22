@@ -35,6 +35,7 @@ import { Route as rootLayoutUsernameReposIndexRouteImport } from './routes/(root
 import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
 import { Route as rootLayout_protectedDashboardResumesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/route'
 import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/route'
+import { Route as rootLayout_protectedDashboardAdminRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/admin/route'
 import { Route as rootLayoutUsernameReposRepoRouteRouteImport } from './routes/(root-layout)/$username/repos/$repo/route'
 import { Route as rootLayout_protectedPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/__protected/playground/agent/index'
 import { Route as rootLayout_protectedDashboardTrackedJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/tracked-jobs/index'
@@ -62,6 +63,9 @@ import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } 
 import { Route as rootLayout_protectedDashboardSettingsConnectionsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/connections/index'
 import { Route as rootLayout_protectedDashboardSettingsAiIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/ai/index'
 import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
+import { Route as rootLayout_protectedDashboardAdminUsersIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/admin/users/index'
+import { Route as rootLayout_protectedDashboardAdminInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/admin/invites/index'
+import { Route as rootLayout_protectedDashboardAdminAccessIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/admin/access/index'
 import { Route as rootLayoutUsernameReposRepoTreeSplatRouteImport } from './routes/(root-layout)/$username/repos/$repo/tree/$'
 import { Route as rootLayoutUsernameReposRepoBlobSplatRouteImport } from './routes/(root-layout)/$username/repos/$repo/blob/$'
 
@@ -207,6 +211,12 @@ const rootLayout_protectedDashboardExperiencesRouteRoute =
   rootLayout_protectedDashboardExperiencesRouteRouteImport.update({
     id: '/experiences',
     path: '/experiences',
+    getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardAdminRouteRoute =
+  rootLayout_protectedDashboardAdminRouteRouteImport.update({
+    id: '/admin',
+    path: '/admin',
     getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
   } as any)
 const rootLayoutUsernameReposRepoRouteRoute =
@@ -371,6 +381,24 @@ const rootLayout_protectedDashboardSettingsAccountIndexRoute =
     path: '/account/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardAdminUsersIndexRoute =
+  rootLayout_protectedDashboardAdminUsersIndexRouteImport.update({
+    id: '/users/',
+    path: '/users/',
+    getParentRoute: () => rootLayout_protectedDashboardAdminRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardAdminInvitesIndexRoute =
+  rootLayout_protectedDashboardAdminInvitesIndexRouteImport.update({
+    id: '/invites/',
+    path: '/invites/',
+    getParentRoute: () => rootLayout_protectedDashboardAdminRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardAdminAccessIndexRoute =
+  rootLayout_protectedDashboardAdminAccessIndexRouteImport.update({
+    id: '/access/',
+    path: '/access/',
+    getParentRoute: () => rootLayout_protectedDashboardAdminRouteRoute,
+  } as any)
 const rootLayoutUsernameReposRepoTreeSplatRoute =
   rootLayoutUsernameReposRepoTreeSplatRouteImport.update({
     id: '/tree/$',
@@ -400,6 +428,7 @@ export interface FileRoutesByFullPath {
   '/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
   '/api/files/': typeof ApiFilesIndexRoute
   '/$username/repos/$repo': typeof rootLayoutUsernameReposRepoRouteRouteWithChildren
+  '/dashboard/admin': typeof rootLayout_protectedDashboardAdminRouteRouteWithChildren
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
   '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesRouteRouteWithChildren
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
@@ -427,6 +456,9 @@ export interface FileRoutesByFullPath {
   '/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/$username/repos/$repo/blob/$': typeof rootLayoutUsernameReposRepoBlobSplatRoute
   '/$username/repos/$repo/tree/$': typeof rootLayoutUsernameReposRepoTreeSplatRoute
+  '/dashboard/admin/access/': typeof rootLayout_protectedDashboardAdminAccessIndexRoute
+  '/dashboard/admin/invites/': typeof rootLayout_protectedDashboardAdminInvitesIndexRoute
+  '/dashboard/admin/users/': typeof rootLayout_protectedDashboardAdminUsersIndexRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
@@ -451,6 +483,7 @@ export interface FileRoutesByTo {
   '/repos': typeof rootLayoutReposIndexRoute
   '/terms-of-service': typeof rootLayoutTermsOfServiceIndexRoute
   '/api/files': typeof ApiFilesIndexRoute
+  '/dashboard/admin': typeof rootLayout_protectedDashboardAdminRouteRouteWithChildren
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/$username/repos': typeof rootLayoutUsernameReposIndexRoute
   '/sign-in': typeof rootLayoutguestSignInIndexRoute
@@ -476,6 +509,9 @@ export interface FileRoutesByTo {
   '/playground/agent': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/$username/repos/$repo/blob/$': typeof rootLayoutUsernameReposRepoBlobSplatRoute
   '/$username/repos/$repo/tree/$': typeof rootLayoutUsernameReposRepoTreeSplatRoute
+  '/dashboard/admin/access': typeof rootLayout_protectedDashboardAdminAccessIndexRoute
+  '/dashboard/admin/invites': typeof rootLayout_protectedDashboardAdminInvitesIndexRoute
+  '/dashboard/admin/users': typeof rootLayout_protectedDashboardAdminUsersIndexRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/ai': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/dashboard/settings/connections': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
@@ -507,6 +543,7 @@ export interface FileRoutesById {
   '/(root-layout)/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
   '/api/files/': typeof ApiFilesIndexRoute
   '/(root-layout)/$username/repos/$repo': typeof rootLayoutUsernameReposRepoRouteRouteWithChildren
+  '/(root-layout)/__protected/dashboard/admin': typeof rootLayout_protectedDashboardAdminRouteRouteWithChildren
   '/(root-layout)/__protected/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
   '/(root-layout)/__protected/dashboard/resumes': typeof rootLayout_protectedDashboardResumesRouteRouteWithChildren
   '/(root-layout)/__protected/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
@@ -534,6 +571,9 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/(root-layout)/$username/repos/$repo/blob/$': typeof rootLayoutUsernameReposRepoBlobSplatRoute
   '/(root-layout)/$username/repos/$repo/tree/$': typeof rootLayoutUsernameReposRepoTreeSplatRoute
+  '/(root-layout)/__protected/dashboard/admin/access/': typeof rootLayout_protectedDashboardAdminAccessIndexRoute
+  '/(root-layout)/__protected/dashboard/admin/invites/': typeof rootLayout_protectedDashboardAdminInvitesIndexRoute
+  '/(root-layout)/__protected/dashboard/admin/users/': typeof rootLayout_protectedDashboardAdminUsersIndexRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/(root-layout)/__protected/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/(root-layout)/__protected/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
@@ -564,6 +604,7 @@ export interface FileRouteTypes {
     | '/terms-of-service/'
     | '/api/files/'
     | '/$username/repos/$repo'
+    | '/dashboard/admin'
     | '/dashboard/experiences'
     | '/dashboard/resumes'
     | '/dashboard/settings'
@@ -591,6 +632,9 @@ export interface FileRouteTypes {
     | '/playground/agent/'
     | '/$username/repos/$repo/blob/$'
     | '/$username/repos/$repo/tree/$'
+    | '/dashboard/admin/access/'
+    | '/dashboard/admin/invites/'
+    | '/dashboard/admin/users/'
     | '/dashboard/settings/account/'
     | '/dashboard/settings/ai/'
     | '/dashboard/settings/connections/'
@@ -615,6 +659,7 @@ export interface FileRouteTypes {
     | '/repos'
     | '/terms-of-service'
     | '/api/files'
+    | '/dashboard/admin'
     | '/dashboard/settings'
     | '/$username/repos'
     | '/sign-in'
@@ -640,6 +685,9 @@ export interface FileRouteTypes {
     | '/playground/agent'
     | '/$username/repos/$repo/blob/$'
     | '/$username/repos/$repo/tree/$'
+    | '/dashboard/admin/access'
+    | '/dashboard/admin/invites'
+    | '/dashboard/admin/users'
     | '/dashboard/settings/account'
     | '/dashboard/settings/ai'
     | '/dashboard/settings/connections'
@@ -670,6 +718,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/terms-of-service/'
     | '/api/files/'
     | '/(root-layout)/$username/repos/$repo'
+    | '/(root-layout)/__protected/dashboard/admin'
     | '/(root-layout)/__protected/dashboard/experiences'
     | '/(root-layout)/__protected/dashboard/resumes'
     | '/(root-layout)/__protected/dashboard/settings'
@@ -697,6 +746,9 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/playground/agent/'
     | '/(root-layout)/$username/repos/$repo/blob/$'
     | '/(root-layout)/$username/repos/$repo/tree/$'
+    | '/(root-layout)/__protected/dashboard/admin/access/'
+    | '/(root-layout)/__protected/dashboard/admin/invites/'
+    | '/(root-layout)/__protected/dashboard/admin/users/'
     | '/(root-layout)/__protected/dashboard/settings/account/'
     | '/(root-layout)/__protected/dashboard/settings/ai/'
     | '/(root-layout)/__protected/dashboard/settings/connections/'
@@ -906,6 +958,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesRouteRouteImport
       parentRoute: typeof rootLayout_protectedDashboardRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/admin': {
+      id: '/(root-layout)/__protected/dashboard/admin'
+      path: '/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof rootLayout_protectedDashboardAdminRouteRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardRouteRoute
+    }
     '/(root-layout)/$username/repos/$repo': {
       id: '/(root-layout)/$username/repos/$repo'
       path: '/$username/repos/$repo'
@@ -1095,6 +1154,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/admin/users/': {
+      id: '/(root-layout)/__protected/dashboard/admin/users/'
+      path: '/users'
+      fullPath: '/dashboard/admin/users/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardAdminUsersIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardAdminRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/admin/invites/': {
+      id: '/(root-layout)/__protected/dashboard/admin/invites/'
+      path: '/invites'
+      fullPath: '/dashboard/admin/invites/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardAdminInvitesIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardAdminRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/admin/access/': {
+      id: '/(root-layout)/__protected/dashboard/admin/access/'
+      path: '/access'
+      fullPath: '/dashboard/admin/access/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardAdminAccessIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardAdminRouteRoute
+    }
     '/(root-layout)/$username/repos/$repo/tree/$': {
       id: '/(root-layout)/$username/repos/$repo/tree/$'
       path: '/tree/$'
@@ -1111,6 +1191,27 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface rootLayout_protectedDashboardAdminRouteRouteChildren {
+  rootLayout_protectedDashboardAdminAccessIndexRoute: typeof rootLayout_protectedDashboardAdminAccessIndexRoute
+  rootLayout_protectedDashboardAdminInvitesIndexRoute: typeof rootLayout_protectedDashboardAdminInvitesIndexRoute
+  rootLayout_protectedDashboardAdminUsersIndexRoute: typeof rootLayout_protectedDashboardAdminUsersIndexRoute
+}
+
+const rootLayout_protectedDashboardAdminRouteRouteChildren: rootLayout_protectedDashboardAdminRouteRouteChildren =
+  {
+    rootLayout_protectedDashboardAdminAccessIndexRoute:
+      rootLayout_protectedDashboardAdminAccessIndexRoute,
+    rootLayout_protectedDashboardAdminInvitesIndexRoute:
+      rootLayout_protectedDashboardAdminInvitesIndexRoute,
+    rootLayout_protectedDashboardAdminUsersIndexRoute:
+      rootLayout_protectedDashboardAdminUsersIndexRoute,
+  }
+
+const rootLayout_protectedDashboardAdminRouteRouteWithChildren =
+  rootLayout_protectedDashboardAdminRouteRoute._addFileChildren(
+    rootLayout_protectedDashboardAdminRouteRouteChildren,
+  )
 
 interface rootLayout_protectedDashboardExperiencesRouteRouteChildren {
   rootLayout_protectedDashboardExperiencesIndexRoute: typeof rootLayout_protectedDashboardExperiencesIndexRoute
@@ -1188,6 +1289,7 @@ const rootLayout_protectedDashboardSettingsRouteRouteWithChildren =
   )
 
 interface rootLayout_protectedDashboardRouteRouteChildren {
+  rootLayout_protectedDashboardAdminRouteRoute: typeof rootLayout_protectedDashboardAdminRouteRouteWithChildren
   rootLayout_protectedDashboardExperiencesRouteRoute: typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
   rootLayout_protectedDashboardResumesRouteRoute: typeof rootLayout_protectedDashboardResumesRouteRouteWithChildren
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
@@ -1204,6 +1306,8 @@ interface rootLayout_protectedDashboardRouteRouteChildren {
 
 const rootLayout_protectedDashboardRouteRouteChildren: rootLayout_protectedDashboardRouteRouteChildren =
   {
+    rootLayout_protectedDashboardAdminRouteRoute:
+      rootLayout_protectedDashboardAdminRouteRouteWithChildren,
     rootLayout_protectedDashboardExperiencesRouteRoute:
       rootLayout_protectedDashboardExperiencesRouteRouteWithChildren,
     rootLayout_protectedDashboardResumesRouteRoute:
@@ -1357,13 +1461,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

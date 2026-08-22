@@ -33,7 +33,7 @@ Route groups live in the file system as pathless layouts. `__protected/` and `(g
 - `sign-in/` and `sign-in/create-an-account/` are wrapped by `(guest)/` to mark them as guest-only
 - Authenticated users → redirected to a non-guest route (the `?redirect` param is validated against the route tree and any route whose id contains `(guest)` is excluded)
 - The `?redirect` param is also sanitized to exclude `__protected/` routes (see `sign-in/index.tsx` and `create-an-account/index.tsx`)
-- Registration is **invite-gated** after the first user: create-account and OAuth signup need a valid invite (see Gotchas)
+- Registration follows **signup mode** (Admin → Access): invite-only after the first user (default), or open. Create-account and OAuth still accept an invite for attribution. See Gotchas.
 
 ## Middleware
 
@@ -67,7 +67,8 @@ The auto-generated auth relations and the hand-written app relations in `package
 ## Gotchas
 
 - **Cross-subdomain cookies are required in production.** Web (`https://salahmohsen.com`) and API (`https://api.salahmohsen.com`) are different hosts. OAuth sets the session cookie on the API host; the web SSR `$getUser` guard only sees it when Better Auth `advanced.crossSubDomainCookies` is enabled with the shared parent domain (`.salahmohsen.com`). `getSharedCookieDomain()` in `@tsu-stack/env/utils/url` derives this from `VITE_WEB_URL` + `VITE_SERVER_URL`. Localhost leaves host-only cookies (ports share the `localhost` host, so local works without the flag).
-- **Invite-gated multi-user:** empty DB bootstraps the first user without an invite; further `user.create` requires a valid invite code (body, cookie, or OAuth state). Each user is a tenant (`userId` on domain rows) with a public `username`. GitHub account linking still uses matching email (`account.accountLinking.trustedProviders: ["github"]`) when linking to an existing user.
+- **Invite-gated multi-user:** empty DB bootstraps the first user without an invite and sets `role: admin` (super admin). Further `user.create` requires a valid invite when signup mode is `invite_only` (default). Open mode skips the invite; a supplied code must still be valid and is attributed via `invite_redemption`. Each user is a tenant (`userId` on domain rows) with a public `username`. GitHub account linking still uses matching email (`account.accountLinking.trustedProviders: ["github"]`) when linking to an existing user.
+- **Super admin:** Better Auth `admin()` plugin (`role`, `banned`, `impersonatedBy`). Re-run `vp run --filter @tsu-stack/db auth:generate` after plugin changes, then re-apply `username` `.notNull()` and `onboardingCompletedAt` timezone. Dashboard `/dashboard/admin` and oRPC `admin.*` use `superAdminProcedure`. Impersonate uses `authClient.admin`. Members never see Admin; Settings no longer has Invites.
 - Cross-domain auth setups still require deliberate cookie/domain/CORS configuration even with Better Auth defaults
 - `SameSite=Strict` is usually too brittle for OAuth, email links, and other redirect-based auth flows
 - The auth query uses `refetchOnWindowFocus: "always"` for cross-tab session sync

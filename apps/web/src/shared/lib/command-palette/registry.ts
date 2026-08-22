@@ -263,13 +263,34 @@ registerCommands([
     action: { type: "navigate", to: "/dashboard/settings/notifications" }
   },
   {
-    id: "nav:settings-invites",
-    label: "Settings: Invites",
-    group: "Settings",
-    icon: UserPlus,
-    keywords: ["invites", "signup", "codes", "access"],
+    id: "nav:admin-users",
+    label: "Admin: Users",
+    group: "Admin",
+    icon: UserRound,
+    keywords: ["admin", "users", "accounts", "ban"],
     authRequired: true,
-    action: { type: "navigate", to: "/dashboard/settings/invites" }
+    adminRequired: true,
+    action: { type: "navigate", to: "/dashboard/admin/users" }
+  },
+  {
+    id: "nav:admin-invites",
+    label: "Admin: Invites",
+    group: "Admin",
+    icon: UserPlus,
+    keywords: ["admin", "invites", "signup", "codes", "access"],
+    authRequired: true,
+    adminRequired: true,
+    action: { type: "navigate", to: "/dashboard/admin/invites" }
+  },
+  {
+    id: "nav:admin-access",
+    label: "Admin: Access",
+    group: "Admin",
+    icon: KeyRound,
+    keywords: ["admin", "registration", "open", "invite-only"],
+    authRequired: true,
+    adminRequired: true,
+    action: { type: "navigate", to: "/dashboard/admin/access" }
   },
   {
     id: "nav:settings-shortcuts",
