@@ -109,7 +109,7 @@ export function useCommandItems(q = ""): CommandItem[] {
   const scope = { userId: user?.id ?? "" };
   const queryClient = useQueryClient();
   const refreshGitHubData = useRefreshGitHubData();
-  const entitiesQuery = useSearchEntitiesQuery(q, isSignedIn);
+  const { query: entitiesQuery, enabled: entitiesEnabled } = useSearchEntitiesQuery(q, isSignedIn);
 
   const staticCommands = useSyncExternalStore(
     subscribeCommands,
@@ -292,7 +292,7 @@ export function useCommandItems(q = ""): CommandItem[] {
     return bTime.localeCompare(aTime);
   });
 
-  const entityItems = isSignedIn ? (entitiesQuery.data ?? []).map(entityHitToCommandItem) : [];
+  const entityItems = entitiesEnabled ? (entitiesQuery.data ?? []).map(entityHitToCommandItem) : [];
 
   return [...visibleStatic, ...dynamicItems, ...entityItems];
 }
