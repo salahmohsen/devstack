@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { canonicalizeListingSkillNames } from "#@/application/job-skills";
-import { classifyJobSkills, preselectHeldSkillForAlias } from "#@/job-discovery/skill-match";
+import {
+  canonicalizeListingSkillNames,
+  preselectHeldSkillForAlias
+} from "#@/application/job-skills";
+import { classifyJobSkills } from "#@/job-discovery/skill-match";
 
 describe("classifyJobSkills", () => {
   it("is unavailable when the job lists no skills", () => {

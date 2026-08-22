@@ -24,36 +24,61 @@ describe("resolveJobSkillTags", () => {
           { name: "React", band: "required" },
           { name: "typescript", band: "preferred" }
         ],
-        stacks
+        [
+          { id: "stack-react", name: "React" },
+          { id: "stack-ts", name: "TypeScript" }
+        ]
       )
     ).toEqual([
       { name: "React", stackId: "stack-react", band: "required" },
-      { name: "typescript", stackId: "stack-ts", band: "preferred" }
+      { name: "TypeScript", stackId: "stack-ts", band: "preferred" }
     ]);
   });
 
-  it("returns stackId null for unmatched skills (no auto-create)", () => {
-    expect(resolveJobSkillTags([{ name: "Katalon", band: "required" }], stacks)).toEqual([
-      { name: "Katalon", stackId: null, band: "required" }
-    ]);
+  it("drops unmatched skills (no auto-create)", () => {
+    expect(resolveJobSkillTags([{ name: "Katalon", band: "required" }], stacks)).toEqual([]);
   });
 
-  it("normalizes trim, case, and collapsed spaces for matching", () => {
+  it("unique-links a held name with collapsed spaces", () => {
     expect(
       resolveJobSkillTags(
         [{ name: "  Type   Script  ", band: "preferred" }],
-        [
-          { id: "stack-ts", name: "TypeScript" },
-          { id: "stack-spaced", name: "  type script " }
-        ]
+        [{ id: "stack-spaced", name: "Type Script", aliases: [] }]
       )
-    ).toEqual([{ name: "  Type   Script  ", stackId: "stack-spaced", band: "preferred" }]);
+    ).toEqual([{ name: "Type Script", stackId: "stack-spaced", band: "preferred" }]);
   });
 
-  it("uses first stack when normalized names collide", () => {
+  it("sets stackId null when normalized names collide", () => {
     expect(resolveJobSkillTags([{ name: "REACT", band: "required" }], stacks)).toEqual([
-      { name: "REACT", stackId: "stack-react", band: "required" }
+      { name: "react", stackId: null, band: "required" }
     ]);
+  });
+
+  it("drops role phrases and unique-links React.js to held React", () => {
+    expect(
+      resolveJobSkillTags(
+        [
+          { name: "React.js", band: "required" },
+          { name: "frontend development", band: "required" }
+        ],
+        [{ id: "stack-react", name: "React", aliases: [] }]
+      )
+    ).toEqual([{ name: "React", stackId: "stack-react", band: "required" }]);
+  });
+
+  it("does not link Java to JavaScript", () => {
+    expect(
+      resolveJobSkillTags(
+        [{ name: "Java", band: "required" }],
+        [{ id: "js", name: "JavaScript", aliases: [] }]
+      )
+    ).toEqual([]);
+  });
+
+  it("does not append aliases", () => {
+    const held = [{ id: "react", name: "React", aliases: [] as string[] }];
+    resolveJobSkillTags([{ name: "React.js", band: "required" }], held);
+    expect(held[0]?.aliases).toEqual([]);
   });
 });
 
@@ -148,7 +173,7 @@ describe("canonicalizeListingSkillNames", () => {
 });
 
 describe("sanitizeLinkedJobSkills", () => {
-  it("keeps only stack ids from the provided catalog", () => {
+  it("keeps trusted catalog ids, drops invented and non-allowlisted names", () => {
     expect(
       sanitizeLinkedJobSkills(
         {
@@ -160,11 +185,7 @@ describe("sanitizeLinkedJobSkills", () => {
         },
         stacks
       )
-    ).toEqual([
-      { name: "React Query", stackId: "stack-ts", band: "required" },
-      { name: "Invented", stackId: null, band: "required" },
-      { name: "shadcn/ui", stackId: null, band: "preferred" }
-    ]);
+    ).toEqual([{ name: "TanStack Query", stackId: "stack-ts", band: "required" }]);
   });
 
   it("builds a catalog-aware prompt that forbids inventing stack ids", () => {
@@ -190,7 +211,7 @@ describe("sanitizeLinkedJobSkills", () => {
         ],
         stacks
       )
-    ).toEqual([{ name: "React", stackId: "stack-react", band: "required" }]);
+    ).toEqual([{ name: "react", stackId: "stack-react", band: "required" }]);
   });
 
   it("parses LLM payloads that omit band or use aliases", () => {
@@ -203,9 +224,17 @@ describe("sanitizeLinkedJobSkills", () => {
     });
     expect(parsed.skills).toHaveLength(3);
     expect(sanitizeLinkedJobSkills(parsed, stacks)).toEqual([
-      { name: "React", stackId: null, band: "required" },
-      { name: "TypeScript", stackId: "stack-ts", band: "required" },
-      { name: "Figma", stackId: null, band: "preferred" }
+      { name: "react", stackId: null, band: "required" },
+      { name: "TypeScript", stackId: "stack-ts", band: "required" }
     ]);
+  });
+
+  it("keeps trusted TanStack Query id when LLM says React Query", () => {
+    expect(
+      sanitizeLinkedJobSkills(
+        [{ name: "React Query", band: "required", stackId: "stack-tq" }],
+        [{ id: "stack-tq", name: "TanStack Query", aliases: [] }]
+      )
+    ).toEqual([{ name: "TanStack Query", stackId: "stack-tq", band: "required" }]);
   });
 });

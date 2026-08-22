@@ -1,8 +1,4 @@
-import {
-  CANONICAL_SKILL_ALIASES,
-  CLOSE_SKILL_FAMILIES,
-  normalizeJobSkillName
-} from "#@/application/job-skills";
+import { CLOSE_SKILL_FAMILIES, collectSurfaceKeys } from "#@/application/job-skills";
 
 export type HeldSkill = {
   id?: string;
@@ -20,56 +16,11 @@ export type ClassifiedJobSkills = {
   percent: number | null;
 };
 
-function collectSurfaceKeys(name: string, aliases: readonly string[] = []): Set<string> {
-  const keys = new Set<string>();
-  const add = (raw: string) => {
-    const key = normalizeJobSkillName(raw);
-    if (key) keys.add(key);
-  };
-  add(name);
-  for (const alias of aliases) add(alias);
-  const nameKey = normalizeJobSkillName(name);
-  for (const [canonical, extras] of Object.entries(CANONICAL_SKILL_ALIASES)) {
-    const family = [canonical, ...extras].map(normalizeJobSkillName);
-    if (
-      family.includes(nameKey) ||
-      extras.some((extra) => keys.has(normalizeJobSkillName(extra)))
-    ) {
-      for (const member of family) keys.add(member);
-    }
-  }
-  return keys;
-}
-
 function familyOfSurfaces(surfaces: Set<string>): readonly string[] | null {
   for (const family of CLOSE_SKILL_FAMILIES) {
     if (family.some((member) => surfaces.has(member))) return family;
   }
   return null;
-}
-
-/**
- * Exact name/alias or a unique `CANONICAL_SKILL_ALIASES` hit onto one catalog
- * row. Never prefix/suffix (`Java` ↛ `JavaScript`). Collisions and empty
- * catalog return null — Enter must not confirm a guess.
- */
-export function preselectHeldSkillForAlias(
-  token: string,
-  held: readonly HeldSkillWithId[]
-): string | null {
-  if (held.length === 0) return null;
-  const tokenKey = normalizeJobSkillName(token);
-  if (!tokenKey) return null;
-
-  const hits = new Set<string>();
-  for (const row of held) {
-    if (collectSurfaceKeys(row.name, row.aliases ?? []).has(tokenKey)) {
-      hits.add(row.id);
-      if (hits.size > 1) return null;
-    }
-  }
-  if (hits.size !== 1) return null;
-  return hits.values().next().value ?? null;
 }
 
 export function classifyJobSkills(input: {
