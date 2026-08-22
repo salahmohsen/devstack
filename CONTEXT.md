@@ -145,7 +145,8 @@ _Avoid_: hiring urgency, application stage, title pack.
 Short markdown on an application explaining fit. At most five concise
 bullets about the role (not a skill dump). Humanizer voice (plain, no
 hype, no invented facts). Written at land / harvest / regenerate. Inspect
-shows Have / Close / Missing chips above it.
+shows Have / Close / Missing chips above it (checkable tools only;
+role phrases are take prose, not chips).
 _Avoid_: 1–3 sentence blurbs; selling the job; a user-facing ATS score.
 
 **Skill alias**:
