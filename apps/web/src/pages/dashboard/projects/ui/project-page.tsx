@@ -62,6 +62,7 @@ import {
   filterValuesFromRsql,
   isAnyOpened,
   isListNarrowed,
+  isListQueryBadRequest,
   rsqlFromFilterValues,
   useItemsNavigation,
   withListSearch,
@@ -86,12 +87,6 @@ const PROJECTS_SORT_OPTIONS = [
   { value: "title", label: "Title" },
   { value: "updatedAt", label: "Updated" }
 ] as const;
-
-function isListQueryBadRequest(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const candidate = error as { code?: unknown; status?: unknown };
-  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
-}
 
 export function ProjectsPage() {
   const queryClient = useQueryClient();
@@ -444,10 +439,17 @@ export function ProjectsPage() {
         ? projectsQuery.error.message
         : "Invalid filters. They were cleared."
     );
-    if (search.filter) {
-      patchListSearch({ filter: undefined });
+    if (search.filter || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: undefined, sortBy: undefined, sortDir: undefined });
     }
-  }, [projectsQuery.isError, projectsQuery.error, search.filter, patchListSearch]);
+  }, [
+    projectsQuery.isError,
+    projectsQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
 
   useEffect(() => {
     if (!projectsQuery.isLoading && projects.length === 0) {

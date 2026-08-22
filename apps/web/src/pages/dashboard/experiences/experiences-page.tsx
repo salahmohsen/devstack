@@ -53,6 +53,7 @@ import {
   filterValuesFromRsql,
   isAnyOpened,
   isListNarrowed,
+  isListQueryBadRequest,
   rsqlFromFilterValues,
   useItemsNavigation,
   withListSearch,
@@ -80,12 +81,6 @@ const EXPERIENCES_SORT_OPTIONS = [
 ] as const;
 
 const EXPERIENCE_FILTER_FIELDS = [createPortfolioBooleanField()];
-
-function isListQueryBadRequest(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const candidate = error as { code?: unknown; status?: unknown };
-  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
-}
 
 function formatRange(fromDate: string | null, toDate: string | null): string {
   if (!fromDate) return "Ongoing";
@@ -442,10 +437,17 @@ export function ExperiencesPage() {
         ? experiencesQuery.error.message
         : "Invalid filters. They were cleared."
     );
-    if (search.filter) {
-      patchListSearch({ filter: undefined });
+    if (search.filter || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: undefined, sortBy: undefined, sortDir: undefined });
     }
-  }, [experiencesQuery.isError, experiencesQuery.error, search.filter, patchListSearch]);
+  }, [
+    experiencesQuery.isError,
+    experiencesQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
 
   useEffect(() => {
     if (!experiencesQuery.isLoading && visibleExperiences.length === 0) {

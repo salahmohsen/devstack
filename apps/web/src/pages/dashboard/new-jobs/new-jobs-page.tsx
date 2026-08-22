@@ -111,6 +111,7 @@ import {
   filterValuesFromRsql,
   isAnyOpened,
   isListNarrowed,
+  isListQueryBadRequest,
   resolveJobsFilterParam,
   rsqlFromFilterValues,
   useItemsNavigation,
@@ -153,12 +154,6 @@ const NEW_JOBS_SORT_OPTIONS = [
   { value: "updatedAt", label: "Updated" },
   { value: "company", label: "Company" }
 ] as const;
-
-function isListQueryBadRequest(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const candidate = error as { code?: unknown; status?: unknown };
-  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
-}
 
 function formatCountLabel(label: string, count: number | undefined): string {
   if (count == null || count <= 0) return label;
@@ -545,10 +540,17 @@ export function NewJobsPage() {
         ? listQuery.error.message
         : "Invalid filters. They were reset."
     );
-    if (search.filter !== NEW_JOBS_SEED) {
-      patchListSearch({ filter: NEW_JOBS_SEED });
+    if (search.filter !== NEW_JOBS_SEED || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: NEW_JOBS_SEED, sortBy: undefined, sortDir: undefined });
     }
-  }, [listQuery.isError, listQuery.error, search.filter, patchListSearch]);
+  }, [
+    listQuery.isError,
+    listQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
 
   const filterValues = useMemo(
     () => filterValuesFromRsql(resolvedFilter, "new-jobs"),

@@ -69,7 +69,16 @@ export function CommandPalette() {
   });
 
   const groupedItems = useMemo(() => {
-    const ranked = filter(items, search.trim());
+    const query = search.trim();
+    const navItems: CommandItemType[] = [];
+    const entityItems: CommandItemType[] = [];
+    for (const item of items) {
+      if (item.id.startsWith("entity:")) entityItems.push(item);
+      else navItems.push(item);
+    }
+    // Entity hits are already SQL-filtered (aliases, linked jobs). A second
+    // fuzzy pass on label/sublabel would drop those rows.
+    const ranked = query.length > 0 ? [...filter(navItems, query), ...entityItems] : navItems;
     const groups = new Map<string, CommandItemType[]>();
     for (const item of ranked) {
       const list = groups.get(item.group) ?? [];

@@ -40,6 +40,13 @@ function optionalTrimmedString(value: unknown): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+/** oRPC / HTTP 400 from an invalid list `filter` or `sortBy`. */
+export function isListQueryBadRequest(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { code?: unknown; status?: unknown };
+  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
+}
+
 /** Coerce unknown route search into list params. Invalid `sortDir` is dropped. */
 export function parseListSearch(raw: unknown): ListSearch {
   const record = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};

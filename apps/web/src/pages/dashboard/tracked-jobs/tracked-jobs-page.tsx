@@ -45,6 +45,7 @@ import {
   createStageField,
   filterValuesFromRsql,
   isListNarrowed,
+  isListQueryBadRequest,
   resolveJobsFilterParam,
   rsqlFromFilterValues,
   useItemsNavigation,
@@ -114,12 +115,6 @@ const TRACKED_SORT_OPTIONS = [
   { value: "matchScore", label: "Match score" },
   { value: "company", label: "Company" }
 ] as const;
-
-function isListQueryBadRequest(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const candidate = error as { code?: unknown; status?: unknown };
-  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
-}
 
 const trackedJobsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/tracked-jobs/");
 
@@ -216,8 +211,8 @@ export function TrackedJobsPage() {
     const isError = listQuery.isError || boardQuery.isError;
     if (!isError || !isListQueryBadRequest(error)) return;
     toast.error(error instanceof Error ? error.message : "Invalid filters. They were reset.");
-    if (search.filter !== TRACKED_SEED) {
-      patchListSearch({ filter: TRACKED_SEED });
+    if (search.filter !== TRACKED_SEED || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: TRACKED_SEED, sortBy: undefined, sortDir: undefined });
     }
   }, [
     listQuery.isError,
@@ -225,6 +220,8 @@ export function TrackedJobsPage() {
     listQueryError,
     boardQueryError,
     search.filter,
+    search.sortBy,
+    search.sortDir,
     patchListSearch
   ]);
 

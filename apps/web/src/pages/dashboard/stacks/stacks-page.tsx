@@ -74,6 +74,7 @@ import {
   filterValuesFromRsql,
   isAnyOpened,
   isListNarrowed,
+  isListQueryBadRequest,
   rsqlFromFilterValues,
   useItemsGridColumnCount,
   useItemsNavigation,
@@ -108,12 +109,6 @@ const SKILLS_SORT_OPTIONS = [
 ] as const;
 
 const TYPE_DISABLED_OPERATORS = ["is_empty", "is_not_empty"] as const;
-
-function isListQueryBadRequest(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const candidate = error as { code?: unknown; status?: unknown };
-  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
-}
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
 export function StackDetailPanel({
@@ -721,10 +716,17 @@ export function StacksPage() {
         ? stacksQuery.error.message
         : "Invalid filters. They were cleared."
     );
-    if (search.filter) {
-      patchListSearch({ filter: undefined });
+    if (search.filter || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: undefined, sortBy: undefined, sortDir: undefined });
     }
-  }, [stacksQuery.isError, stacksQuery.error, search.filter, patchListSearch]);
+  }, [
+    stacksQuery.isError,
+    stacksQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
 
   useEffect(() => {
     if (!stacksQuery.isLoading && stacks.length === 0) {

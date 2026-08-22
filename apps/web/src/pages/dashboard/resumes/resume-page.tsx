@@ -47,6 +47,7 @@ import {
   filterValuesFromRsql,
   isAnyOpened,
   isListNarrowed,
+  isListQueryBadRequest,
   rsqlFromFilterValues,
   useItemsGridColumnCount,
   useItemsNavigation,
@@ -73,12 +74,6 @@ const RESUMES_SORT_OPTIONS = [
 ] as const;
 
 const RESUME_FILTER_FIELDS = [createEmptyableField("tiedToJob", "Tied to a job")];
-
-function isListQueryBadRequest(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  const candidate = error as { code?: unknown; status?: unknown };
-  return candidate.code === "BAD_REQUEST" || candidate.status === 400;
-}
 
 export function ResumesPage() {
   const {
@@ -256,10 +251,17 @@ export function ResumesPage() {
         ? resumesQuery.error.message
         : "Invalid filters. They were cleared."
     );
-    if (search.filter) {
-      patchListSearch({ filter: undefined });
+    if (search.filter || search.sortBy || search.sortDir) {
+      patchListSearch({ filter: undefined, sortBy: undefined, sortDir: undefined });
     }
-  }, [resumesQuery.isError, resumesQuery.error, search.filter, patchListSearch]);
+  }, [
+    resumesQuery.isError,
+    resumesQuery.error,
+    search.filter,
+    search.sortBy,
+    search.sortDir,
+    patchListSearch
+  ]);
 
   useEffect(() => {
     if (!resumesQuery.isLoading && visibleResumes.length === 0) {

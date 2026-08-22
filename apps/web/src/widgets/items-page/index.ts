@@ -39,6 +39,7 @@ export {
   defaultSortDir,
   filterValuesFromRsql,
   isListNarrowed,
+  isListQueryBadRequest,
   jobsAllRsql,
   jobsSeedRsql,
   parseListSearch,
