@@ -39,7 +39,7 @@ import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 import { SettingsFrame } from "./settings-frame";
 import { SettingsSection } from "./settings-section";
 
-const GROUP_ORDER = ["Global", "Pages", "Agent", "Settings", "Playground", "Tabs"] as const;
+const GROUP_ORDER = ["Global", "Pages", "Dashboard", "Settings", "Playground", "Tabs"] as const;
 
 function toStoredBinding(sequence: HotkeySequence): CommandBinding | null {
   if (sequence.length === 0) return null;

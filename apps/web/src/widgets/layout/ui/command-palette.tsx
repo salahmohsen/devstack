@@ -18,6 +18,7 @@ import {
   CommandSeparator
 } from "@tsu-stack/ui/components/command";
 import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd.js";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { useFuzzyFilter } from "@tsu-stack/ui/hooks/use-fuzzy-filter";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -28,7 +29,7 @@ import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 
 const GROUP_ORDER = [
   "Pages",
-  "Agent",
+  "Dashboard",
   "Experiences",
   "Projects",
   "Skills",
@@ -60,7 +61,7 @@ function commandItemToString(item: unknown): string {
 
 export function CommandPalette() {
   const [search, setSearch] = useState("");
-  const { open, setOpen, close, items } = useCommandPalette(search);
+  const { open, setOpen, close, items, isSearching } = useCommandPalette(search);
   const bindings = useCommandBindings();
   const router = useRouter();
   const { filter } = useFuzzyFilter<CommandItemType>({
@@ -118,11 +119,18 @@ export function CommandPalette() {
           value={search}
         >
           <CommandInput placeholder="Type a command or search..." />
-          <CommandPanel>
+          <CommandPanel aria-busy={isSearching || undefined}>
             <CommandEmpty>
-              {search.trim().length === 1
-                ? "Type at least 2 characters to search."
-                : "No results found."}
+              {isSearching ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Spinner aria-hidden className="size-4" />
+                  Searching…
+                </span>
+              ) : search.trim().length === 1 ? (
+                "Type at least 2 characters to search."
+              ) : (
+                "No results found."
+              )}
             </CommandEmpty>
             <CommandList>
               {(group: { label: string; items: CommandItemType[] }, index: number) => (

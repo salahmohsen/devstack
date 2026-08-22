@@ -87,11 +87,11 @@ registerCommands([
     action: { type: "navigate", to: "/" }
   },
 
-  // —— Agent (auth) ——
+  // —— Dashboard (auth) ——
   {
     id: "nav:dashboard",
     label: "Agent",
-    group: "Agent",
+    group: "Dashboard",
     icon: Bot,
     keywords: ["agent", "hub", "home", "dashboard"],
     authRequired: true,
@@ -100,7 +100,7 @@ registerCommands([
   {
     id: "nav:onboarding",
     label: "Onboarding",
-    group: "Agent",
+    group: "Dashboard",
     icon: Rocket,
     keywords: ["onboarding", "setup", "getting started"],
     authRequired: true,
@@ -109,7 +109,7 @@ registerCommands([
   {
     id: "nav:experiences",
     label: "Experiences",
-    group: "Agent",
+    group: "Dashboard",
     icon: Briefcase,
     keywords: ["experience", "work", "jobs", "career"],
     authRequired: true,
@@ -118,7 +118,7 @@ registerCommands([
   {
     id: "nav:projects",
     label: "Projects",
-    group: "Agent",
+    group: "Dashboard",
     icon: FolderKanban,
     keywords: ["projects", "portfolio", "work"],
     authRequired: true,
@@ -127,7 +127,7 @@ registerCommands([
   {
     id: "nav:stacks",
     label: "Skills",
-    group: "Agent",
+    group: "Dashboard",
     icon: Layers,
     keywords: ["stack", "tech", "skills", "tools"],
     authRequired: true,
@@ -136,7 +136,7 @@ registerCommands([
   {
     id: "nav:resumes",
     label: "Resumes",
-    group: "Agent",
+    group: "Dashboard",
     icon: FileText,
     keywords: ["resume", "cv", "document"],
     authRequired: true,
@@ -145,7 +145,7 @@ registerCommands([
   {
     id: "nav:new-jobs",
     label: "New jobs",
-    group: "Agent",
+    group: "Dashboard",
     icon: Sparkles,
     keywords: ["new jobs", "discoveries", "inbox", "harvest", "job alerts"],
     authRequired: true,
@@ -154,7 +154,7 @@ registerCommands([
   {
     id: "nav:tracked-jobs",
     label: "Tracked jobs",
-    group: "Agent",
+    group: "Dashboard",
     icon: ListChecks,
     keywords: ["tracked", "applications", "jobs", "pipeline", "crm", "seeker"],
     authRequired: true,
@@ -163,7 +163,7 @@ registerCommands([
   {
     id: "nav:mail",
     label: "Mail",
-    group: "Agent",
+    group: "Dashboard",
     icon: Mail,
     keywords: ["mail", "inbox", "email", "career"],
     authRequired: true,
@@ -172,7 +172,7 @@ registerCommands([
   {
     id: "nav:settings",
     label: "Settings",
-    group: "Agent",
+    group: "Dashboard",
     icon: Settings,
     keywords: ["settings", "preferences", "config"],
     authRequired: true,

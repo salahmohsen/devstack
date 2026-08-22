@@ -176,11 +176,8 @@ export function ListSearchBar(props: ListSearchBarProps) {
 
   const handleSortValue = (next: string) => {
     if (variant === "catalog" && next === CATALOG_DEFAULT_SORT) {
-      onSortChange({});
-      return;
-    }
-    if (variant !== "catalog" && jobsDefaultSort && next === jobsDefaultSort) {
-      onSortChange({});
+      // `withListSearch` merges; `{}` would keep the previous sort. Undefined omits it.
+      onSortChange({ sortBy: undefined, sortDir: undefined });
       return;
     }
     if (next === sortBy) return;

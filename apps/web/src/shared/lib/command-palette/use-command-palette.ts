@@ -5,8 +5,8 @@ import { useCommandItems } from "./use-command-items";
 
 export function useCommandPalette(q = "") {
   const open = useCommandPaletteOpen();
-  const items = useCommandItems(q);
+  const { items, isSearching } = useCommandItems(q);
   const close = useCallback(() => setCommandPaletteOpen(false), []);
 
-  return { open, setOpen: setCommandPaletteOpen, close, items };
+  return { open, setOpen: setCommandPaletteOpen, close, items, isSearching };
 }

@@ -35,7 +35,7 @@ function isCommandAvailable(id: CommandId, hasPaletteItem: boolean): boolean {
 
 export function useCommandHotkeys() {
   const router = useRouter();
-  const items = useCommandItems();
+  const { items } = useCommandItems();
   const bindings = useCommandBindings();
   const paletteOpen = useCommandPaletteOpen();
   const cheatsheetOpen = useShortcutCheatsheetOpen();

@@ -103,7 +103,7 @@ function getIssueIcon(issue: IssueSummary) {
   return { icon: CircleDot, iconClassName: "text-green-500" };
 }
 
-export function useCommandItems(q = ""): CommandItem[] {
+export function useCommandItems(q = ""): { items: CommandItem[]; isSearching: boolean } {
   const { data: user } = useQuery(getAuthUserQueryOptions());
   const isSignedIn = !!user;
   const scope = { userId: user?.id ?? "" };
@@ -294,5 +294,8 @@ export function useCommandItems(q = ""): CommandItem[] {
 
   const entityItems = entitiesEnabled ? (entitiesQuery.data ?? []).map(entityHitToCommandItem) : [];
 
-  return [...visibleStatic, ...dynamicItems, ...entityItems];
+  return {
+    items: [...visibleStatic, ...dynamicItems, ...entityItems],
+    isSearching: entitiesEnabled && entitiesQuery.isFetching
+  };
 }
