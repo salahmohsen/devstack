@@ -32,7 +32,10 @@ Take rules (always):
 - Plain words. Short sentences. is/are/has. No hype, no pivotal/landscape/delve, no em dashes.
 - Do not invent employers, skills, or years.
 - If fit is weak, say so. Do not sell the job.
-- Prefer under 800 characters.`,
+- Prefer under 800 characters.
+- Skills chips are deterministic; do not recompute or invent tools.
+- Do not list dropped role phrases as missing skills.
+- You may mention the role (e.g. frontend) only if Have chips support it.`,
     model: byoModelFromRequestContext
   });
 }

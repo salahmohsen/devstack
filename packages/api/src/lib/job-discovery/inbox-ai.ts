@@ -3,6 +3,7 @@ import {
   applyZeroDollarCandidate,
   buildApplicationSourceTags,
   canonicalizeJobUrl,
+  classifyJobSkills,
   decideTwoAxis,
   dailyAiAttemptCap,
   EmploymentTypeSchema,
@@ -657,11 +658,21 @@ async function runInboxAiForPosting(input: {
     }
   }
 
-  const { requiredSkills, preferredSkills } = await resolveSkillsForUser(
+  const { requiredSkills, preferredSkills, held } = await resolveSkillsForUser(
     input.userId,
     requiredNames,
     preferredNames
   );
+  const classified = classifyJobSkills({
+    jobSkills: [...requiredSkills, ...preferredSkills].map((skill) => skill.name),
+    held
+  });
+  const skillsMatch = {
+    have: classified.have,
+    close: classified.close,
+    missing: classified.missing,
+    percent: classified.percent
+  };
 
   const baseInsert = {
     userId: input.userId,
@@ -751,7 +762,8 @@ async function runInboxAiForPosting(input: {
         description,
         experienceYearsMin: posting.experienceYearsMin,
         seekerYears: cap.seekerYears,
-        yearsCapped: cap.capped
+        yearsCapped: cap.capped,
+        skillsMatch
       },
       matchReasons: match.reasons
     });
