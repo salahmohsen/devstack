@@ -19,6 +19,7 @@ import {
   upsertAiJobIsland
 } from "@/shared/lib/ai-job";
 import { getFindJobsNowState, setFindJobsNowState } from "@/shared/lib/find-jobs-now-store";
+import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
 import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 const inboxListQueryKey = orpcQueryClient.applications.list.queryKey({
@@ -71,9 +72,7 @@ function inboxCountFromCache(queryClient: QueryClient): number {
 
 async function invalidateInbox(queryClient: QueryClient) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: orpcQueryClient.applications.list.key() }),
-    queryClient.invalidateQueries({ queryKey: orpcQueryClient.applications.listPage.key() }),
-    queryClient.invalidateQueries({ queryKey: orpcQueryClient.applications.listBoard.key() }),
+    invalidateApplicationsListQueries(queryClient),
     queryClient.invalidateQueries({ queryKey: inboxCountQueryKey })
   ]);
 }

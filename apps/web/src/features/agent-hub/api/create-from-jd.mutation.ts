@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ApplicationListOutput } from "@tsu-stack/core";
 
+import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
 import { toastAiError } from "@/shared/lib/toast-ai-error";
 
 function trackedListKey() {
@@ -23,7 +24,7 @@ export function useCreateApplicationFromJdMutation() {
           }
           return [created, ...prev];
         });
-        await queryClient.invalidateQueries({ queryKey: trackedListKey() });
+        await invalidateApplicationsListQueries(queryClient);
         toast.success("Application added to pipeline.");
       },
       onError: (error) => {
@@ -39,14 +40,7 @@ export function usePromoteInboxJobMutation() {
   return useMutation(
     orpcQueryClient.applications.promote.mutationOptions({
       onSuccess: async () => {
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.applications.list.queryKey({
-              input: { trackingStatus: "inbox" }
-            })
-          }),
-          queryClient.invalidateQueries({ queryKey: trackedListKey() })
-        ]);
+        await invalidateApplicationsListQueries(queryClient);
       }
     })
   );
@@ -58,18 +52,7 @@ export function useDismissInboxJobMutation() {
   return useMutation(
     orpcQueryClient.applications.dismiss.mutationOptions({
       onSuccess: async () => {
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.applications.list.queryKey({
-              input: { trackingStatus: "dismissed" }
-            })
-          }),
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.applications.list.queryKey({
-              input: { trackingStatus: "inbox" }
-            })
-          })
-        ]);
+        await invalidateApplicationsListQueries(queryClient);
       }
     })
   );
@@ -81,19 +64,7 @@ export function useDismissApplicationFromJdMutation() {
   return useMutation(
     orpcQueryClient.applications.dismissFromHub.mutationOptions({
       onSuccess: async () => {
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.applications.list.queryKey({
-              input: { trackingStatus: "dismissed" }
-            })
-          }),
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.applications.list.queryKey({
-              input: { trackingStatus: "inbox" }
-            })
-          }),
-          queryClient.invalidateQueries({ queryKey: trackedListKey() })
-        ]);
+        await invalidateApplicationsListQueries(queryClient);
         toast.success("Job dismissed.");
       },
       onError: (error) => {
@@ -113,7 +84,7 @@ export function useGenerateApplyPackageFromJdMutation() {
           if (!prev) return prev;
           return prev.map((row) => (row.id === data.id ? data : row));
         });
-        await queryClient.invalidateQueries({ queryKey: trackedListKey() });
+        await invalidateApplicationsListQueries(queryClient);
         toast.success("Apply package draft ready to review.");
       },
       onError: (error) => {
