@@ -191,7 +191,6 @@ function SkillChip({
   item,
   onHaveIt,
   onAvoid,
-  hasAliasCatalog,
   canAvoid,
   excludedKeywords
 }: {
@@ -224,7 +223,6 @@ function SkillChip({
   }
 
   const kind: JobSkillChipHaveItKind = tone;
-  const haveItDisabled = kind === "missing" && !hasAliasCatalog;
 
   return (
     <Menu>
@@ -244,7 +242,6 @@ function SkillChip({
       <MenuPopup align="start">
         {onHaveIt ? (
           <MenuItem
-            disabled={haveItDisabled}
             onClick={() => {
               onHaveIt({ token: item.token, kind });
             }}

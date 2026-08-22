@@ -13,6 +13,7 @@ export function EvidenceApprovalCard({
   toolCallId,
   kind,
   id,
+  op,
   currentMarkdown,
   proposedMarkdown,
   confirmDisabled,
@@ -25,6 +26,7 @@ export function EvidenceApprovalCard({
   toolCallId: string;
   kind: EvidenceKind | null;
   id?: string;
+  op?: "create" | "update" | "delete";
   currentMarkdown: string;
   proposedMarkdown: string;
   confirmDisabled: boolean;
@@ -56,7 +58,7 @@ export function EvidenceApprovalCard({
 
   return (
     <ApprovalCard
-      title={kind ? evidenceApprovalTitle(kind, id) : "Confirm evidence change"}
+      title={kind ? evidenceApprovalTitle(kind, id, op) : "Confirm evidence change"}
       description={
         kind == null
           ? "This evidence proposal could not be read. Cancel to unlock the composer."
@@ -73,7 +75,8 @@ export function EvidenceApprovalCard({
               ? "submitting"
               : "pending"
       }
-      approveLabel="Confirm"
+      approveLabel={op === "delete" ? "Delete" : "Confirm"}
+      approveVariant={op === "delete" ? "destructive" : "default"}
       rejectLabel="Cancel"
       onApprove={completedAction || !kind ? undefined : () => handle("confirm")}
       onReject={completedAction ? undefined : () => handle("cancel")}
@@ -81,7 +84,9 @@ export function EvidenceApprovalCard({
       rejectDisabled={locked || submitting != null}
       result={
         completedAction === "confirm"
-          ? "Saved."
+          ? op === "delete"
+            ? "Deleted."
+            : "Saved."
           : completedAction === "cancel"
             ? "No longer pending."
             : undefined

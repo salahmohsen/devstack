@@ -154,4 +154,40 @@ describe("buildEvidenceWrite", () => {
       })
     ).toBeNull();
   });
+
+  it("builds a delete write from op and id", () => {
+    expect(
+      buildEvidenceWrite({
+        kind: "project",
+        id: "prj_1",
+        op: "delete",
+        record: { title: "Dev-Hub" },
+        patch: {}
+      })
+    ).toEqual({ mode: "delete", kind: "project", id: "prj_1" });
+    expect(
+      buildEvidenceWrite({
+        kind: "stack",
+        op: "delete",
+        record: { name: "React" },
+        patch: {}
+      })
+    ).toBeNull();
+  });
+
+  it("strips analysis keys from a project update", () => {
+    expect(
+      buildEvidenceWrite({
+        kind: "project",
+        id: "prj_1",
+        record: { title: "Dev-Hub", analysis: "private" },
+        patch: { title: "Dev-Hub 2", analysis: "should not persist" }
+      })
+    ).toEqual({
+      mode: "update",
+      kind: "project",
+      id: "prj_1",
+      data: { title: "Dev-Hub 2" }
+    });
+  });
 });

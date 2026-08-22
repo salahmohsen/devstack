@@ -61,9 +61,18 @@ import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-applicatio
 import { proposeEvidenceChangeTool } from "#@/mastra/tools/propose-evidence-change.tool";
 import { proposeHardPreferenceChangeTool } from "#@/mastra/tools/propose-hard-preference-change.tool";
 import {
+  proposeApplicationFieldChangeTool,
+  proposeBatchTrackingChangeTool,
+  proposeDeleteApplicationTool,
+  proposeDeleteNoteTool,
+  proposeRefreshFromUrlTool,
+  proposeSetOutcomeTool
+} from "#@/mastra/tools/propose-hub-crm.tool";
+import {
   proposeMailCrmChangeTool,
   proposeNewJobsTriageTool
 } from "#@/mastra/tools/propose-new-jobs-triage.tool";
+import { restoreApplicationTool } from "#@/mastra/tools/restore-application.tool";
 import { searchApplicationsTool } from "#@/mastra/tools/search-applications.tool";
 import { searchEvidenceTool } from "#@/mastra/tools/search-evidence.tool";
 import { sendApplyOutreachTool } from "#@/mastra/tools/send-apply-outreach.tool";
@@ -126,7 +135,14 @@ export function createHubSupervisor() {
       addApplicationNote: addApplicationNoteTool,
       trackJob: trackJobTool,
       dismissJob: dismissJobTool,
+      restoreApplication: restoreApplicationTool,
       updateApplicationStage: updateApplicationStageTool,
+      proposeApplicationFieldChange: proposeApplicationFieldChangeTool,
+      proposeSetOutcome: proposeSetOutcomeTool,
+      proposeDeleteApplication: proposeDeleteApplicationTool,
+      proposeDeleteNote: proposeDeleteNoteTool,
+      proposeBatchTrackingChange: proposeBatchTrackingChangeTool,
+      proposeRefreshFromUrl: proposeRefreshFromUrlTool,
       listExperiences: listExperiencesTool,
       getExperience: getExperienceTool,
       listProjects: listProjectsTool,

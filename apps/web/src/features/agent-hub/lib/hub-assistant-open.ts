@@ -55,6 +55,19 @@ export function requestHubInterviewRehearsal(input: {
   emit();
 }
 
+export function hubCreateSkillFromInspectText(token: string): string {
+  const name = token.trim() || "this skill";
+  return `I have ${name}. Add it as a new skill in my catalog. Interview the required fields, then call proposeEvidenceChange to create the stack (op create). Do not silent-create. Do not write analysis.`;
+}
+
+/** Empty-catalog inspect “I have it” — open hub and interview a create-skill Confirm. */
+export function requestHubCreateSkillFromInspect(token: string) {
+  requestOpenHubAssistant();
+  pendingPlant = null;
+  pendingInterviewText = hubCreateSkillFromInspectText(token);
+  emit();
+}
+
 export function consumeHubInterviewRehearsal(): string | null {
   const text = pendingInterviewText;
   pendingInterviewText = null;

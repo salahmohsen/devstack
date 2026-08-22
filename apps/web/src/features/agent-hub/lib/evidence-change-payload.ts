@@ -22,7 +22,8 @@ export type EvidenceWrite =
   | { mode: "create"; kind: "experience"; input: CreateExperienceInput }
   | { mode: "update"; kind: "experience"; id: string; data: UpdateExperienceInput }
   | { mode: "create"; kind: "stack"; input: StackCreateInput }
-  | { mode: "update"; kind: "stack"; id: string; data: StackUpdateInput };
+  | { mode: "update"; kind: "stack"; id: string; data: StackUpdateInput }
+  | { mode: "delete"; kind: EvidenceKind; id: string };
 
 /** Merge current row + patch. Never pass `patch` alone into `evidenceGoalsReady` on edit. */
 export function mergeEvidenceRecord(
@@ -32,8 +33,22 @@ export function mergeEvidenceRecord(
   return currentRow ? { ...currentRow, ...patch } : { ...patch };
 }
 
-export function evidenceApprovalTitle(kind: EvidenceKind, id?: string): string {
+export function evidenceApprovalTitle(
+  kind: EvidenceKind,
+  id?: string,
+  op?: "create" | "update" | "delete"
+): string {
+  if (op === "delete") return `Confirm delete ${kind}`;
   return id ? `Confirm ${kind} change` : `Confirm new ${kind}`;
+}
+
+function omitAnalysisKeys(record: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (/analysis/i.test(key)) continue;
+    out[key] = value;
+  }
+  return out;
 }
 
 export function rowToRecord(row: object | null | undefined): Record<string, unknown> | null {
@@ -66,11 +81,18 @@ export function resolveExperienceDate(merged: unknown, fallback?: unknown): stri
 export function buildEvidenceWrite(input: {
   kind: EvidenceKind;
   id?: string;
+  op?: "create" | "update" | "delete";
   record: Record<string, unknown>;
   patch: Record<string, unknown>;
   currentRow?: Record<string, unknown> | null;
 }): EvidenceWrite | null {
-  const { kind, id, record, patch, currentRow } = input;
+  const { kind, id, record, currentRow } = input;
+  const op = input.op ?? (id ? "update" : "create");
+  const patch = omitAnalysisKeys(input.patch);
+  if (op === "delete") {
+    const deleteId = id?.trim();
+    return deleteId ? { mode: "delete", kind, id: deleteId } : null;
+  }
   if (id) {
     if (kind === "project") {
       const data = buildUpdateProject(patch);
@@ -97,53 +119,55 @@ export function buildEvidenceWrite(input: {
 }
 
 function buildCreateProject(record: Record<string, unknown>): CreateProjectInput | null {
-  const title = asNonEmptyString(record.title);
-  const year = asYear(record.year);
-  const summary = asString(record.summary);
+  const clean = omitAnalysisKeys(record);
+  const title = asNonEmptyString(clean.title);
+  const year = asYear(clean.year);
+  const summary = asString(clean.summary);
   if (!title || year === undefined || summary === undefined) return null;
 
   const parsed = CreateProjectInputSchema.safeParse({
     title,
     year,
     summary,
-    description: asString(record.description) ?? "",
-    ...optionalField("repos", asUrlList(record.repos)),
-    ...optionalField("demoUrl", asUrlOrNull(record.demoUrl)),
-    ...optionalField("includedInPortfolio", asBoolean(record.includedInPortfolio)),
-    ...optionalField("isPresent", asBoolean(record.isPresent)),
-    ...optionalField("experienceId", asNullableString(record.experienceId))
+    description: asString(clean.description) ?? "",
+    ...optionalField("repos", asUrlList(clean.repos)),
+    ...optionalField("demoUrl", asUrlOrNull(clean.demoUrl)),
+    ...optionalField("includedInPortfolio", asBoolean(clean.includedInPortfolio)),
+    ...optionalField("isPresent", asBoolean(clean.isPresent)),
+    ...optionalField("experienceId", asNullableString(clean.experienceId))
   });
   return parsed.success ? parsed.data : null;
 }
 
 function buildUpdateProject(patch: Record<string, unknown>): UpdateProjectInput | null {
   const data: Record<string, unknown> = {};
-  if ("title" in patch) {
-    const title = asNonEmptyString(patch.title);
+  const clean = omitAnalysisKeys(patch);
+  if ("title" in clean) {
+    const title = asNonEmptyString(clean.title);
     if (title) data.title = title;
   }
-  if ("year" in patch) {
-    const year = asYear(patch.year);
+  if ("year" in clean) {
+    const year = asYear(clean.year);
     if (year !== undefined) data.year = year;
   }
-  if ("summary" in patch && typeof patch.summary === "string") data.summary = patch.summary;
-  if ("description" in patch && typeof patch.description === "string") {
-    data.description = patch.description;
+  if ("summary" in clean && typeof clean.summary === "string") data.summary = clean.summary;
+  if ("description" in clean && typeof clean.description === "string") {
+    data.description = clean.description;
   }
-  if ("repos" in patch) {
-    const repos = asUrlList(patch.repos);
+  if ("repos" in clean) {
+    const repos = asUrlList(clean.repos);
     if (repos && repos.length > 0) data.repos = repos;
   }
-  if ("demoUrl" in patch) {
-    const demoUrl = asUrlOrNull(patch.demoUrl);
+  if ("demoUrl" in clean) {
+    const demoUrl = asUrlOrNull(clean.demoUrl);
     if (demoUrl !== undefined) data.demoUrl = demoUrl;
   }
-  if (typeof patch.includedInPortfolio === "boolean") {
-    data.includedInPortfolio = patch.includedInPortfolio;
+  if (typeof clean.includedInPortfolio === "boolean") {
+    data.includedInPortfolio = clean.includedInPortfolio;
   }
-  if (typeof patch.isPresent === "boolean") data.isPresent = patch.isPresent;
-  if ("experienceId" in patch) {
-    const experienceId = asNullableString(patch.experienceId);
+  if (typeof clean.isPresent === "boolean") data.isPresent = clean.isPresent;
+  if ("experienceId" in clean) {
+    const experienceId = asNullableString(clean.experienceId);
     if (experienceId !== undefined) data.experienceId = experienceId;
   }
 

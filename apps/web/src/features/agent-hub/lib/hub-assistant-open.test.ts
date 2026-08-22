@@ -11,8 +11,10 @@ import {
   getHubCreateIntent,
   getHubInterviewRehearsal,
   hubInterviewRehearsalText,
+  hubCreateSkillFromInspectText,
   requestHubApplicationMention,
   requestHubCreateInterview,
+  requestHubCreateSkillFromInspect,
   requestHubInterviewRehearsal,
   requestOpenHubAssistant,
   resetHubAssistantOpenForTests,
@@ -70,6 +72,13 @@ describe("hub application plant + interview rehearsal", () => {
     const text = getHubInterviewRehearsal();
     expect(text).toMatch(APPLICATION_MENTION_RE);
     expect(text).toContain("application {app-1}");
+  });
+
+  it("requestHubCreateSkillFromInspect opens hub with a create-skill send", () => {
+    requestHubCreateSkillFromInspect("Rust");
+    expect(getHubAssistantOpenPending()).toBe(true);
+    expect(getHubInterviewRehearsal()).toBe(hubCreateSkillFromInspectText("Rust"));
+    expect(getHubInterviewRehearsal()).toContain("proposeEvidenceChange");
   });
 
   it("requestHubApplicationMention sets pendingOpen and plant seed without interview text", () => {

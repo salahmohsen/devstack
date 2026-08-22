@@ -119,7 +119,19 @@ export const HUB_CLIENT_HITL_TOOL_NAMES = new Set([
   "open-daily-brief",
   "openDailyBrief",
   "propose-mail-crm-change",
-  "proposeMailCrmChange"
+  "proposeMailCrmChange",
+  "propose-application-field-change",
+  "proposeApplicationFieldChange",
+  "propose-set-outcome",
+  "proposeSetOutcome",
+  "propose-delete-application",
+  "proposeDeleteApplication",
+  "propose-delete-note",
+  "proposeDeleteNote",
+  "propose-batch-tracking-change",
+  "proposeBatchTrackingChange",
+  "propose-refresh-from-url",
+  "proposeRefreshFromUrl"
 ]);
 
 export function isHubClientHitlToolName(name: string): boolean {
@@ -580,6 +592,44 @@ export function isProposeEvidenceChangeToolName(name: string): boolean {
 
 export function isProposeHardPreferenceChangeToolName(name: string): boolean {
   return name === "propose-hard-preference-change" || name === "proposeHardPreferenceChange";
+}
+
+export function isProposeApplicationFieldChangeToolName(name: string): boolean {
+  return name === "propose-application-field-change" || name === "proposeApplicationFieldChange";
+}
+
+export function isProposeSetOutcomeToolName(name: string): boolean {
+  return name === "propose-set-outcome" || name === "proposeSetOutcome";
+}
+
+export function isProposeDeleteApplicationToolName(name: string): boolean {
+  return name === "propose-delete-application" || name === "proposeDeleteApplication";
+}
+
+export function isProposeDeleteNoteToolName(name: string): boolean {
+  return name === "propose-delete-note" || name === "proposeDeleteNote";
+}
+
+export function isProposeBatchTrackingChangeToolName(name: string): boolean {
+  return name === "propose-batch-tracking-change" || name === "proposeBatchTrackingChange";
+}
+
+export function isProposeRefreshFromUrlToolName(name: string): boolean {
+  return name === "propose-refresh-from-url" || name === "proposeRefreshFromUrl";
+}
+
+/** Evidence, hard-stop, and CRM Confirm cards — no same-turn listNewJobs/triage. */
+export function isHubPostEvidenceLikeConfirmToolName(name: string): boolean {
+  return (
+    isProposeEvidenceChangeToolName(name) ||
+    isProposeHardPreferenceChangeToolName(name) ||
+    isProposeApplicationFieldChangeToolName(name) ||
+    isProposeSetOutcomeToolName(name) ||
+    isProposeDeleteApplicationToolName(name) ||
+    isProposeDeleteNoteToolName(name) ||
+    isProposeBatchTrackingChangeToolName(name) ||
+    isProposeRefreshFromUrlToolName(name)
+  );
 }
 
 /**

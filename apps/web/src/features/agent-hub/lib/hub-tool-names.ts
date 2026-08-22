@@ -4,23 +4,47 @@ import {
   ApplicationApplyMethodSchema,
   ApplicationSourceSchema,
   EmploymentTypeSchema,
+  ProposeApplicationFieldChangeInputSchema,
+  ProposeApplicationFieldChangeOutputSchema,
+  ProposeBatchTrackingChangeInputSchema,
+  ProposeBatchTrackingChangeOutputSchema,
+  ProposeDeleteApplicationInputSchema,
+  ProposeDeleteApplicationOutputSchema,
+  ProposeDeleteNoteInputSchema,
+  ProposeDeleteNoteOutputSchema,
   ProposeEvidenceChangeInputSchema,
   ProposeEvidenceChangeOutputSchema,
   ProposeHardPreferenceChangeInputSchema,
   ProposeHardPreferenceChangeOutputSchema,
   ProposeMailCrmChangeInputSchema,
   ProposeMailCrmChangeOutputSchema,
+  ProposeRefreshFromUrlInputSchema,
+  ProposeRefreshFromUrlOutputSchema,
+  ProposeSetOutcomeInputSchema,
+  ProposeSetOutcomeOutputSchema,
   WorkModeSchema,
   type ApplicationApplyMethod,
   type ApplicationSource,
   type EmploymentType,
+  type ProposeApplicationFieldChangeInput,
+  type ProposeApplicationFieldChangeOutput,
   type ProposeApplicationFromJdOutput,
+  type ProposeBatchTrackingChangeInput,
+  type ProposeBatchTrackingChangeOutput,
+  type ProposeDeleteApplicationInput,
+  type ProposeDeleteApplicationOutput,
+  type ProposeDeleteNoteInput,
+  type ProposeDeleteNoteOutput,
   type ProposeEvidenceChangeInput,
   type ProposeEvidenceChangeOutput,
   type ProposeHardPreferenceChangeInput,
   type ProposeHardPreferenceChangeOutput,
   type ProposeMailCrmChangeInput,
   type ProposeMailCrmChangeOutput,
+  type ProposeRefreshFromUrlInput,
+  type ProposeRefreshFromUrlOutput,
+  type ProposeSetOutcomeInput,
+  type ProposeSetOutcomeOutput,
   type ProposeNewJobsTriageOutput,
   type ProposeNewJobsTriageRow,
   type WorkMode
@@ -181,6 +205,36 @@ export const HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES = new Set([
   "proposeEvidenceChange"
 ]);
 
+export const HUB_PROPOSE_APPLICATION_FIELD_CHANGE_TOOL_NAMES = new Set([
+  "propose-application-field-change",
+  "proposeApplicationFieldChange"
+]);
+
+export const HUB_PROPOSE_SET_OUTCOME_TOOL_NAMES = new Set([
+  "propose-set-outcome",
+  "proposeSetOutcome"
+]);
+
+export const HUB_PROPOSE_DELETE_APPLICATION_TOOL_NAMES = new Set([
+  "propose-delete-application",
+  "proposeDeleteApplication"
+]);
+
+export const HUB_PROPOSE_DELETE_NOTE_TOOL_NAMES = new Set([
+  "propose-delete-note",
+  "proposeDeleteNote"
+]);
+
+export const HUB_PROPOSE_BATCH_TRACKING_CHANGE_TOOL_NAMES = new Set([
+  "propose-batch-tracking-change",
+  "proposeBatchTrackingChange"
+]);
+
+export const HUB_PROPOSE_REFRESH_FROM_URL_TOOL_NAMES = new Set([
+  "propose-refresh-from-url",
+  "proposeRefreshFromUrl"
+]);
+
 export const HUB_LIST_NEW_JOBS_TOOL_NAMES = new Set(["list-new-jobs", "listNewJobs"]);
 
 export const HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES = new Set([
@@ -339,6 +393,41 @@ export function isGetSearchBriefToolName(name: string): boolean {
 
 export function isProposeEvidenceChangeToolName(name: string): boolean {
   return HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name);
+}
+
+export function isProposeApplicationFieldChangeToolName(name: string): boolean {
+  return HUB_PROPOSE_APPLICATION_FIELD_CHANGE_TOOL_NAMES.has(name);
+}
+
+export function isProposeSetOutcomeToolName(name: string): boolean {
+  return HUB_PROPOSE_SET_OUTCOME_TOOL_NAMES.has(name);
+}
+
+export function isProposeDeleteApplicationToolName(name: string): boolean {
+  return HUB_PROPOSE_DELETE_APPLICATION_TOOL_NAMES.has(name);
+}
+
+export function isProposeDeleteNoteToolName(name: string): boolean {
+  return HUB_PROPOSE_DELETE_NOTE_TOOL_NAMES.has(name);
+}
+
+export function isProposeBatchTrackingChangeToolName(name: string): boolean {
+  return HUB_PROPOSE_BATCH_TRACKING_CHANGE_TOOL_NAMES.has(name);
+}
+
+export function isProposeRefreshFromUrlToolName(name: string): boolean {
+  return HUB_PROPOSE_REFRESH_FROM_URL_TOOL_NAMES.has(name);
+}
+
+export function isHubCrmWriteConfirmToolName(name: string): boolean {
+  return (
+    isProposeApplicationFieldChangeToolName(name) ||
+    isProposeSetOutcomeToolName(name) ||
+    isProposeDeleteApplicationToolName(name) ||
+    isProposeDeleteNoteToolName(name) ||
+    isProposeBatchTrackingChangeToolName(name) ||
+    isProposeRefreshFromUrlToolName(name)
+  );
 }
 
 export function isUpsertSoftJobPreferencesToolName(name: string): boolean {
@@ -949,6 +1038,80 @@ export function parseProposeEvidenceChangeOutput(
   return parsed.success ? parsed.data : null;
 }
 
+export function parseProposeApplicationFieldChangeInput(
+  input: unknown
+): ProposeApplicationFieldChangeInput | null {
+  const parsed = ProposeApplicationFieldChangeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeApplicationFieldChangeOutput(
+  output: unknown
+): ProposeApplicationFieldChangeOutput | null {
+  const parsed = ProposeApplicationFieldChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeSetOutcomeInput(input: unknown): ProposeSetOutcomeInput | null {
+  const parsed = ProposeSetOutcomeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeSetOutcomeOutput(output: unknown): ProposeSetOutcomeOutput | null {
+  const parsed = ProposeSetOutcomeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeDeleteApplicationInput(
+  input: unknown
+): ProposeDeleteApplicationInput | null {
+  const parsed = ProposeDeleteApplicationInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeDeleteApplicationOutput(
+  output: unknown
+): ProposeDeleteApplicationOutput | null {
+  const parsed = ProposeDeleteApplicationOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeDeleteNoteInput(input: unknown): ProposeDeleteNoteInput | null {
+  const parsed = ProposeDeleteNoteInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeDeleteNoteOutput(output: unknown): ProposeDeleteNoteOutput | null {
+  const parsed = ProposeDeleteNoteOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeBatchTrackingChangeInput(
+  input: unknown
+): ProposeBatchTrackingChangeInput | null {
+  const parsed = ProposeBatchTrackingChangeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeBatchTrackingChangeOutput(
+  output: unknown
+): ProposeBatchTrackingChangeOutput | null {
+  const parsed = ProposeBatchTrackingChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeRefreshFromUrlInput(input: unknown): ProposeRefreshFromUrlInput | null {
+  const parsed = ProposeRefreshFromUrlInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeRefreshFromUrlOutput(
+  output: unknown
+): ProposeRefreshFromUrlOutput | null {
+  const parsed = ProposeRefreshFromUrlOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
 export function parseProposeMailCrmChangeInput(input: unknown): ProposeMailCrmChangeInput | null {
   const parsed = ProposeMailCrmChangeInputSchema.safeParse(input);
   return parsed.success ? parsed.data : null;
@@ -1055,6 +1218,10 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     }
     if (isProposeMailCrmChangeToolName(name)) {
       if (parseProposeMailCrmChangeOutput(part.output)) continue;
+      return "client";
+    }
+    if (isHubCrmWriteConfirmToolName(name)) {
+      if (part.output != null) continue;
       return "client";
     }
   }

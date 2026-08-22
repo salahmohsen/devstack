@@ -50,8 +50,7 @@ import {
   isHubJobPageExtractToolName,
   isListNewJobsToolName,
   isProposeApplicationFromJdToolName,
-  isProposeEvidenceChangeToolName,
-  isProposeHardPreferenceChangeToolName,
+  isHubPostEvidenceLikeConfirmToolName,
   isProposeNewJobsTriageToolName,
   isTrackJobToolName,
   isUrlOnlyJobListingPaste
@@ -695,10 +694,7 @@ export function messagesHaveEvidenceOrHardStopResultThisTurn(
       if (!raw || typeof raw !== "object") continue;
       const part = raw as Record<string, unknown>;
       const name = mastraPartToolName(part);
-      if (
-        (isProposeEvidenceChangeToolName(name) || isProposeHardPreferenceChangeToolName(name)) &&
-        mastraPartHasToolResult(part)
-      ) {
+      if (isHubPostEvidenceLikeConfirmToolName(name) && mastraPartHasToolResult(part)) {
         sawResult = true;
       }
     }

@@ -10,11 +10,17 @@ import * as React from "react";
 import { z } from "zod";
 
 import {
+  ProposeApplicationFieldChangeInputSchema,
   ProposeApplicationFromJdInputSchema,
+  ProposeBatchTrackingChangeInputSchema,
+  ProposeDeleteApplicationInputSchema,
+  ProposeDeleteNoteInputSchema,
   ProposeEvidenceChangeInputSchema,
   ProposeHardPreferenceChangeInputSchema,
   ProposeMailCrmChangeInputSchema,
   ProposeNewJobsTriageInputSchema,
+  ProposeRefreshFromUrlInputSchema,
+  ProposeSetOutcomeInputSchema,
   normalizeAgentTakeText,
   type ProposeApplicationFromJdOutput,
   type ProposeNewJobsTriageOutput
@@ -76,6 +82,7 @@ import {
 } from "@/features/agent-hub/lib/jd-card-action-memory";
 
 import { AgentHubToolApproval } from "./agent-hub-tool-approval";
+import { ApplicationFieldChangeToolUI } from "./application-field-change-tool-ui";
 import {
   ApplicationFromJdCard,
   type ApplicationFromJdCardAction
@@ -86,6 +93,13 @@ import { FindJobsNowToolUI } from "./find-jobs-now-tool-ui";
 import { GetDailyBriefToolUI } from "./get-daily-brief-tool-ui";
 import { GetSearchBriefToolUI } from "./get-search-brief-tool-ui";
 import { HardPreferenceChangeToolUI } from "./hard-preference-change-tool-ui";
+import {
+  ProposeBatchTrackingChangeToolUI,
+  ProposeDeleteApplicationToolUI,
+  ProposeDeleteNoteToolUI,
+  ProposeRefreshFromUrlToolUI,
+  ProposeSetOutcomeToolUI
+} from "./hub-crm-confirm-tool-ui";
 import { JobListingPreludeStatus } from "./job-listing-prelude-status";
 import { MailCrmChangeToolUI } from "./mail-crm-change-tool-ui";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
@@ -731,9 +745,51 @@ const proposeHardPreferenceChangeTool = {
 const proposeEvidenceChangeTool = {
   type: "human" as const,
   description:
-    "Propose an evidence create/edit. Wait for Confirm/Cancel. The card writes on confirm.",
+    "Propose an evidence create/edit/delete. Wait for Confirm/Cancel. The card writes on confirm.",
   parameters: ProposeEvidenceChangeInputSchema,
   render: EvidenceChangeToolUI
+};
+
+const proposeApplicationFieldChangeTool = {
+  type: "human" as const,
+  description: "Propose an application field update. Wait for Confirm. The card writes on confirm.",
+  parameters: ProposeApplicationFieldChangeInputSchema,
+  render: ApplicationFieldChangeToolUI
+};
+
+const proposeSetOutcomeTool = {
+  type: "human" as const,
+  description: "Propose closing an application. Wait for Confirm.",
+  parameters: ProposeSetOutcomeInputSchema,
+  render: ProposeSetOutcomeToolUI
+};
+
+const proposeDeleteApplicationTool = {
+  type: "human" as const,
+  description: "Propose deleting an application. Wait for Confirm.",
+  parameters: ProposeDeleteApplicationInputSchema,
+  render: ProposeDeleteApplicationToolUI
+};
+
+const proposeDeleteNoteTool = {
+  type: "human" as const,
+  description: "Propose deleting an activity note. Wait for Confirm.",
+  parameters: ProposeDeleteNoteInputSchema,
+  render: ProposeDeleteNoteToolUI
+};
+
+const proposeBatchTrackingChangeTool = {
+  type: "human" as const,
+  description: "Propose a batch track/dismiss/restore. Wait for Confirm.",
+  parameters: ProposeBatchTrackingChangeInputSchema,
+  render: ProposeBatchTrackingChangeToolUI
+};
+
+const proposeRefreshFromUrlTool = {
+  type: "human" as const,
+  description: "Propose refreshing a listing from URL. Wait for Confirm.",
+  parameters: ProposeRefreshFromUrlInputSchema,
+  render: ProposeRefreshFromUrlToolUI
 };
 
 const EmptyToolArgsSchema = z.object({});
@@ -815,6 +871,18 @@ export const hubAssistantToolkit = defineToolkit({
   proposeHardPreferenceChange: proposeHardPreferenceChangeTool,
   "propose-evidence-change": proposeEvidenceChangeTool,
   proposeEvidenceChange: proposeEvidenceChangeTool,
+  "propose-application-field-change": proposeApplicationFieldChangeTool,
+  proposeApplicationFieldChange: proposeApplicationFieldChangeTool,
+  "propose-set-outcome": proposeSetOutcomeTool,
+  proposeSetOutcome: proposeSetOutcomeTool,
+  "propose-delete-application": proposeDeleteApplicationTool,
+  proposeDeleteApplication: proposeDeleteApplicationTool,
+  "propose-delete-note": proposeDeleteNoteTool,
+  proposeDeleteNote: proposeDeleteNoteTool,
+  "propose-batch-tracking-change": proposeBatchTrackingChangeTool,
+  proposeBatchTrackingChange: proposeBatchTrackingChangeTool,
+  "propose-refresh-from-url": proposeRefreshFromUrlTool,
+  proposeRefreshFromUrl: proposeRefreshFromUrlTool,
   "find-jobs-now": findJobsNowToolEntry,
   findJobsNow: findJobsNowToolEntry,
   "get-search-brief": getSearchBriefToolEntry,

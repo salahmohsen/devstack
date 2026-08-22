@@ -16,6 +16,7 @@ import {
   isHubToolUiPart,
   isOpenEntityFormToolName,
   isOpenSurfaceToolName,
+  isHubCrmWriteConfirmToolName,
   isProposeApplicationFromJdToolName,
   isProposeEvidenceChangeToolName,
   isProposeNewJobsTriageToolName,
@@ -46,6 +47,7 @@ export function isHubChoiceToolName(name: string): boolean {
     isProposeApplicationFromJdToolName(name) ||
     isProposeNewJobsTriageToolName(name) ||
     isProposeEvidenceChangeToolName(name) ||
+    isHubCrmWriteConfirmToolName(name) ||
     isOpenSurfaceToolName(name) ||
     isHubApprovalToolName(name) ||
     isOpenEntityFormToolName(name) ||

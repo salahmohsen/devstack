@@ -50,6 +50,7 @@ export type ApprovalCardProps = {
   onRequestChanges?: () => void;
   onDismiss?: () => void;
   approveLabel?: ReactNode;
+  approveVariant?: "default" | "destructive";
   rejectLabel?: ReactNode;
   submitLabel?: ReactNode;
   result?: ReactNode;

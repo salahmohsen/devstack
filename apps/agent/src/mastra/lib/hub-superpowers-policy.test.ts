@@ -274,7 +274,14 @@ describe("shouldStopHubLoopAfterClientHitl", () => {
     "propose-evidence-change",
     "proposeEvidenceChange",
     "open-daily-brief",
-    "propose-mail-crm-change"
+    "propose-mail-crm-change",
+    "propose-application-field-change",
+    "proposeApplicationFieldChange",
+    "propose-set-outcome",
+    "proposeDeleteApplication",
+    "propose-delete-note",
+    "propose-batch-tracking-change",
+    "propose-refresh-from-url"
   ])("stops while %s is waiting", (name) => {
     expect(
       shouldStopHubLoopAfterClientHitl({
@@ -295,6 +302,8 @@ describe("shouldStopHubLoopAfterClientHitl", () => {
 
   it("does not stop on server CRM tools", () => {
     expect(isHubClientHitlToolName("trackJob")).toBe(false);
+    expect(isHubClientHitlToolName("restoreApplication")).toBe(false);
+    expect(isHubClientHitlToolName("restore-application")).toBe(false);
     expect(
       shouldStopHubLoopAfterClientHitl({
         toolCalls: [{ id: "c1", name: "listNewJobs" }],

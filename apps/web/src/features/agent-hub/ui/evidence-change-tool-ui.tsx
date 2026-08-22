@@ -68,6 +68,8 @@ export function EvidenceChangeToolUI({
   const completed = parseProposeEvidenceChangeOutput(result);
   const kind = proposal?.kind;
   const id = proposal?.id;
+  const op = proposal?.op ?? (id ? "update" : "create");
+  const isDelete = op === "delete";
   const hideAsSuperseded =
     isLaterEvidenceAfterSameEntityConfirm(messages, toolCallId) ||
     isExtraWaitingEvidenceCard(messages, toolCallId);
@@ -105,9 +107,11 @@ export function EvidenceChangeToolUI({
           : null
         : mergeEvidenceRecord(null, proposal.patch);
   const markdownEmpty = !proposal || proposal.proposedMarkdown.trim().length === 0;
-  const ready = Boolean(kind && record && evidenceGoalsReady(kind, record));
+  const ready = isDelete
+    ? Boolean(kind && id)
+    : Boolean(kind && record && evidenceGoalsReady(kind, record));
   const analysisGrounding =
-    kind === "project" && proposal
+    !isDelete && kind === "project" && proposal
       ? projectPatchGroundedInAnalysis({
           mode: id ? "update" : "create",
           analysis:
@@ -189,12 +193,33 @@ export function EvidenceChangeToolUI({
         });
         return;
       }
+      if (isDelete) {
+        if (!id || currentMissing) {
+          throw new Error("Current row not loaded");
+        }
+        const write = buildEvidenceWrite({
+          kind,
+          id,
+          op: "delete",
+          record: currentRow ?? {},
+          patch: {}
+        });
+        if (!write) {
+          throw new Error("Evidence change is not ready to write");
+        }
+        const writtenId = await persistEvidenceWrite(write);
+        await invalidateEvidenceQueries(queryClient, kind, writtenId);
+        cancelSiblingCards();
+        complete({ action: "confirm", kind, id: writtenId });
+        return;
+      }
       if (!record) {
         throw new Error("Current row not loaded");
       }
       const write = buildEvidenceWrite({
         kind,
         id,
+        op,
         record,
         patch: proposal.patch,
         currentRow
@@ -207,7 +232,19 @@ export function EvidenceChangeToolUI({
       cancelSiblingCards();
       complete({ action: "confirm", kind, id: writtenId });
     },
-    [cancelSiblingCards, complete, currentRow, id, kind, proposal, queryClient, record]
+    [
+      cancelSiblingCards,
+      complete,
+      currentMissing,
+      currentRow,
+      id,
+      isDelete,
+      kind,
+      op,
+      proposal,
+      queryClient,
+      record
+    ]
   );
 
   React.useEffect(() => {
@@ -238,7 +275,11 @@ export function EvidenceChangeToolUI({
     if (!proposal) {
       return (
         <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-          {receiptAction === "confirm" ? "Saved evidence change." : "No longer pending."}
+          {receiptAction === "confirm"
+            ? isDelete
+              ? "Deleted evidence."
+              : "Saved evidence change."
+            : "No longer pending."}
         </p>
       );
     }
@@ -247,6 +288,7 @@ export function EvidenceChangeToolUI({
         toolCallId={toolCallId}
         kind={proposal.kind}
         id={proposal.id}
+        op={op}
         currentMarkdown={proposal.currentMarkdown}
         proposedMarkdown={proposal.proposedMarkdown}
         confirmDisabled
@@ -287,11 +329,14 @@ export function EvidenceChangeToolUI({
       proposedMarkdown={proposal.proposedMarkdown}
       confirmDisabled={confirmDisabled}
       loading={currentLoading}
+      op={op}
       hint={
         !analysisGrounding.ok
           ? analysisGrounding.reason === "missing_analysis"
-            ? "This rewrite needs the project analysis notes (or facts you just added)."
-            : "This rewrite is not backed by the project analysis notes."
+            ? "This rewrite needs the project analysis notes."
+            : analysisGrounding.reason === "analysis_form_only"
+              ? "Analysis is form-only. Remove analysis keys from the patch."
+              : "This rewrite is not backed by the project analysis notes."
           : undefined
       }
       disabled={result != null || !toolCallId}
@@ -301,6 +346,18 @@ export function EvidenceChangeToolUI({
 }
 
 async function persistEvidenceWrite(write: EvidenceWrite): Promise<string> {
+  if (write.mode === "delete") {
+    if (write.kind === "project") {
+      await orpcClient.projects.delete({ id: write.id });
+      return write.id;
+    }
+    if (write.kind === "experience") {
+      await orpcClient.experiences.delete({ id: write.id });
+      return write.id;
+    }
+    await orpcClient.stacks.delete({ id: write.id });
+    return write.id;
+  }
   if (write.kind === "project") {
     if (write.mode === "create") {
       const created = await orpcClient.projects.create(write.input);

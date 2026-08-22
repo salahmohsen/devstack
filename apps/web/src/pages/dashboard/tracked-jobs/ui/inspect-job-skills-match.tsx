@@ -20,6 +20,7 @@ import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-appli
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { JobSkillsMatch, type JobSkillChipHaveItKind } from "@/shared/ui/job-card-marks";
 
+import { requestHubCreateSkillFromInspect } from "@/features/agent-hub";
 import {
   useGetJobPreferenceQuery,
   useUpsertJobPreferenceMutation
@@ -146,7 +147,10 @@ export function InspectJobSkillsMatch({
       toast("Close, not the same skill.");
       return;
     }
-    if (catalog.length === 0) return;
+    if (catalog.length === 0) {
+      requestHubCreateSkillFromInspect(token);
+      return;
+    }
     setPickerToken(token);
   }
 
