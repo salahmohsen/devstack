@@ -3,7 +3,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { FileTextIcon, LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore
+} from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -21,6 +29,8 @@ import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
+import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
 
@@ -54,6 +64,11 @@ import {
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
+import {
+  peekSidePanelFrame,
+  popSidePanelFrame,
+  subscribeSidePanelStack
+} from "@/pages/dashboard/_lib/side-panel-stack";
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { useApplicationsView } from "@/pages/dashboard/tracked-jobs/_lib/use-applications-view";
 import { ApplicationsBoard } from "@/pages/dashboard/tracked-jobs/ui/board";
@@ -63,6 +78,13 @@ const ApplicationFormSheet = lazy(() =>
   import("@/pages/dashboard/tracked-jobs/application-form-sheet").then((m) => {
     return {
       default: m.ApplicationFormSheet
+    };
+  })
+);
+const StackForm = lazy(() =>
+  import("@/pages/dashboard/stacks/ui/stack-form").then((m) => {
+    return {
+      default: m.StackForm
     };
   })
 );
@@ -171,6 +193,11 @@ export function TrackedJobsPage() {
   // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
   const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && sheetOpen) closeSheet();
+  const frame = useSyncExternalStore(
+    subscribeSidePanelStack,
+    peekSidePanelFrame,
+    peekSidePanelFrame
+  );
 
   const listApplications = useMemo(
     () => flattenApplicationsPages(listQuery.data),
@@ -491,7 +518,7 @@ export function TrackedJobsPage() {
 
         <Suspense fallback={null}>
           <ItemsInspectHost
-            open={isAnyOpen && !sheetOpen && !hostOwnsPanel}
+            open={isAnyOpen && !sheetOpen && frame?.type !== "stack-create" && !hostOwnsPanel}
             item={liveViewItem}
             title="Application"
             onOpenChange={(next) => {
@@ -500,6 +527,24 @@ export function TrackedJobsPage() {
           >
             {(item) => <ApplicationInfoPanel item={item} onEdit={() => openEdit(item)} />}
           </ItemsInspectHost>
+
+          {frame?.type === "stack-create" && !hostOwnsPanel ? (
+            <StackForm
+              key={`stack-create-${frame.name}`}
+              open
+              createSeed={{ name: frame.name }}
+              onOpenChange={(open) => {
+                if (!open) popSidePanelFrame();
+              }}
+              onSaved={() => {
+                void invalidateStacksListQueries(queryClient);
+                void queryClient.invalidateQueries({
+                  queryKey: orpcQueryClient.applications.get.key()
+                });
+                void invalidateApplicationsListQueries(queryClient);
+              }}
+            />
+          ) : null}
 
           {sheetOpen && !hostOwnsPanel ? (
             <ApplicationFormSheet

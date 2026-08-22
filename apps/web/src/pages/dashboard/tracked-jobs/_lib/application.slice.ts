@@ -6,6 +6,8 @@ import { expandDashboardSidePanel, subscribeSidePanelClose } from "@/shared/lib/
 
 import { type ApplicationMaterialKind } from "@/features/applications";
 
+import { peekSidePanelFrame } from "@/pages/dashboard/_lib/side-panel-stack";
+
 export type { ApplicationMaterialKind };
 
 type SheetMode = "create" | "edit";
@@ -135,6 +137,8 @@ const actions: ApplicationUIActions = {
 };
 
 subscribeSidePanelClose(() => {
+  // Create-skill form is popped by dismiss guard; keep the job inspect open.
+  if (peekSidePanelFrame()?.type === "stack-create") return;
   if (state.viewItem != null) setState({ viewItem: null });
 });
 

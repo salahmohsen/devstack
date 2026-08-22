@@ -75,9 +75,10 @@ export function useSidePanelSlot() {
   }, []);
   const close = useCallback(() => {
     setCollapsed(false);
+    // Form guards may consume dismiss (dirty confirm) — keep inspect open.
+    if (dismissDashboardSidePanel()) return;
     inspectCountRef.current = 0;
     setInspectOpen(false);
-    dismissDashboardSidePanel();
   }, []);
   useEffect(() => subscribeSidePanelExpand(() => setCollapsed(false)), []);
   return {

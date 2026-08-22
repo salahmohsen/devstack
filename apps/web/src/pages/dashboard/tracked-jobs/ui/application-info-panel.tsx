@@ -428,6 +428,7 @@ export function ApplicationInfoPanel({
               <div className="space-y-4">
                 {showSkillsMatch ? (
                   <InspectJobSkillsMatch
+                    applicationId={item.id}
                     jobSkills={jobSkills}
                     held={heldSkills}
                     listingMinYears={item.experienceYearsMin}

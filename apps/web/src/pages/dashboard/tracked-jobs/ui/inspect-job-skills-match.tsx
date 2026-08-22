@@ -13,6 +13,7 @@ import {
   type HeldSkill,
   type HeldSkillWithId
 } from "@tsu-stack/core";
+import { Button } from "@tsu-stack/ui/components/button";
 import { PromptDialog } from "@tsu-stack/ui/components/prompt-dialog";
 
 import { useAppForm } from "@/shared/form";
@@ -20,11 +21,12 @@ import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-appli
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { JobSkillsMatch, type JobSkillChipHaveItKind } from "@/shared/ui/job-card-marks";
 
-import { requestHubCreateSkillFromInspect } from "@/features/agent-hub";
 import {
   useGetJobPreferenceQuery,
   useUpsertJobPreferenceMutation
 } from "@/features/job-preference";
+
+import { pushSidePanelFrame } from "@/pages/dashboard/_lib/side-panel-stack";
 
 function catalogFromHeld(held: readonly HeldSkill[] | undefined): HeldSkillWithId[] {
   const rows: HeldSkillWithId[] = [];
@@ -59,13 +61,15 @@ function AliasSkillPickerDialog({
   catalog,
   pending,
   onOpenChange,
-  onConfirm
+  onConfirm,
+  onCreateSkill
 }: {
   token: string;
   catalog: readonly HeldSkillWithId[];
   pending: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (skillId: string) => void;
+  onCreateSkill: () => void;
 }) {
   const items = useMemo(
     () =>
@@ -112,16 +116,35 @@ function AliasSkillPickerDialog({
           />
         )}
       </form.AppField>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="self-start text-muted-foreground"
+        onClick={onCreateSkill}
+      >
+        Create skill
+      </Button>
     </PromptDialog>
   );
 }
 
+function pushCreateSkillFromInspect(token: string, applicationId: string) {
+  pushSidePanelFrame({
+    type: "stack-create",
+    name: token,
+    returnTo: { type: "job-inspect", applicationId }
+  });
+}
+
 export function InspectJobSkillsMatch({
+  applicationId,
   jobSkills,
   held,
   listingMinYears,
   seekerYears
 }: {
+  applicationId: string;
   jobSkills: readonly string[];
   held?: readonly HeldSkill[];
   listingMinYears?: number | null;
@@ -148,7 +171,7 @@ export function InspectJobSkillsMatch({
       return;
     }
     if (catalog.length === 0) {
-      requestHubCreateSkillFromInspect(token);
+      pushCreateSkillFromInspect(token, applicationId);
       return;
     }
     setPickerToken(token);
@@ -246,6 +269,11 @@ export function InspectJobSkillsMatch({
             if (!open) setPickerToken(null);
           }}
           onConfirm={handleConfirmAlias}
+          onCreateSkill={() => {
+            const token = pickerToken;
+            setPickerToken(null);
+            pushCreateSkillFromInspect(token, applicationId);
+          }}
         />
       ) : null}
     </>

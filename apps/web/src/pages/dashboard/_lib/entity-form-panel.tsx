@@ -16,6 +16,7 @@ import {
 import { Sheet, SheetDescription, SheetPopup, SheetTitle } from "@tsu-stack/ui/components/sheet";
 
 import { setCommandEnabled } from "@/shared/lib/commands";
+import { registerSidePanelDismissGuard } from "@/shared/lib/side-panel-control";
 import { useIsClient, useMediaQuery } from "@/shared/lib/use-media-query";
 
 import { ItemInfoPanel, PanelCancelButton } from "@/widgets/items-page";
@@ -104,6 +105,16 @@ export function EntityFormSheet({
       setCommandEnabled("panel.close", inspectOpen);
     };
   }, [inspectOpen, open, useSheet]);
+
+  // Chevron close: confirm dirty discard, then onOpenChange(false). Consumes dismiss
+  // so inspect hosts keep the underlying job when stack-create is showing.
+  useEffect(() => {
+    if (!open || useSheet) return;
+    return registerSidePanelDismissGuard(() => {
+      requestClose();
+      return true;
+    });
+  }, [open, requestClose, useSheet]);
 
   const chrome = (
     <ItemInfoPanel

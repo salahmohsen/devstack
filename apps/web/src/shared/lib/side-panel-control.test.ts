@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   dismissDashboardSidePanel,
   expandDashboardSidePanel,
+  registerSidePanelDismissGuard,
   subscribeSidePanelClose,
   subscribeSidePanelExpand
 } from "./side-panel-control";
@@ -13,15 +14,27 @@ describe("side-panel-control", () => {
     const expanded: string[] = [];
     const offClose = subscribeSidePanelClose(() => closed.push("c"));
     const offExpand = subscribeSidePanelExpand(() => expanded.push("e"));
-    dismissDashboardSidePanel();
+    expect(dismissDashboardSidePanel()).toBe(false);
     expandDashboardSidePanel();
     expect(closed).toEqual(["c"]);
     expect(expanded).toEqual(["e"]);
     offClose();
     offExpand();
-    dismissDashboardSidePanel();
+    expect(dismissDashboardSidePanel()).toBe(false);
     expandDashboardSidePanel();
     expect(closed).toEqual(["c"]);
     expect(expanded).toEqual(["e"]);
+  });
+
+  it("dismiss guard consumes close and skips listeners", () => {
+    const closed: string[] = [];
+    const offClose = subscribeSidePanelClose(() => closed.push("c"));
+    const offGuard = registerSidePanelDismissGuard(() => true);
+    expect(dismissDashboardSidePanel()).toBe(true);
+    expect(closed).toEqual([]);
+    offGuard();
+    expect(dismissDashboardSidePanel()).toBe(false);
+    expect(closed).toEqual(["c"]);
+    offClose();
   });
 });
