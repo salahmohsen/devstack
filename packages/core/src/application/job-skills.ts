@@ -22,6 +22,25 @@ const MIN_SKILL_MENTION_CHARS = 3;
 /** Languages/fundamentals that are not portfolio "products" but show up in JDs. */
 const WEB_FUNDAMENTAL_SKILL_NAMES = ["HTML", "CSS", "JavaScript"] as const;
 
+/** Extra JD tools not in canonical stack names / aliases. Match case-insensitively. */
+export const EXTRA_JD_TOOL_SKILLS = [
+  "AWS",
+  "GCP",
+  "Azure",
+  "HTTP",
+  "REST",
+  "GraphQL",
+  "Docker",
+  "Kubernetes",
+  "Postman",
+  "Git",
+  "GitHub",
+  "GitLab",
+  "CI/CD",
+  "Linux",
+  "SQL"
+] as const;
+
 /**
  * Alternate JD spellings → canonical display name.
  * Longest pattern wins at match time (`React Query` before `React`).
@@ -40,6 +59,88 @@ export const CANONICAL_SKILL_ALIASES: Readonly<Record<string, readonly string[]>
   PostgreSQL: ["Postgres"],
   "Framer Motion": ["Framer-Motion"]
 };
+
+type ListingSkillAllowlistSurface = {
+  surface: string;
+  display: string;
+};
+
+/** Duty-like listing phrases. Only consulted after an allowlist miss. */
+function looksLikeDutyPhrase(token: string): boolean {
+  const trimmed = token.trim();
+  if (!trimmed) return false;
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length >= 3) return true;
+  if (words.length >= 2 && /\b(development|design|skills)\b/i.test(trimmed)) return true;
+  if (/\bbuilding and\b/i.test(trimmed)) return true;
+  return false;
+}
+
+/**
+ * Allowlist surfaces for listing tokens. Longest surface first (same idea as
+ * `buildJobSkillMentionPatterns`). Held overwrites catalog for the same key.
+ */
+function buildListingSkillAllowlistSurfaces(
+  held: readonly { name: string; aliases?: readonly string[] }[] = []
+): ListingSkillAllowlistSurface[] {
+  const byKey = new Map<string, ListingSkillAllowlistSurface>();
+
+  const add = (surface: string, display: string) => {
+    const key = normalizeJobSkillName(surface);
+    if (!key) return;
+    byKey.set(key, { surface, display: display.trim().slice(0, 80) });
+  };
+
+  // Lowest priority first; held last so tenant spelling wins.
+  for (const name of EXTRA_JD_TOOL_SKILLS) add(name, name);
+  for (const name of WEB_FUNDAMENTAL_SKILL_NAMES) add(name, name);
+  for (const name of parseCanonicalStackNames()) add(name, name);
+  for (const [canonical, extras] of Object.entries(CANONICAL_SKILL_ALIASES)) {
+    add(canonical, canonical);
+    for (const extra of extras) add(extra, canonical);
+  }
+  for (const row of held) {
+    add(row.name, row.name);
+    for (const alias of row.aliases ?? []) add(alias, row.name);
+  }
+
+  return [...byKey.values()].toSorted((a, b) => b.surface.length - a.surface.length);
+}
+
+export function canonicalizeListingSkillToken(
+  token: string,
+  held: readonly { name: string; aliases?: readonly string[] }[] = []
+): { keep: true; display: string } | { keep: false } {
+  const key = normalizeJobSkillName(token);
+  if (!key) return { keep: false };
+
+  for (const { surface, display } of buildListingSkillAllowlistSurfaces(held)) {
+    if (normalizeJobSkillName(surface) === key) {
+      return { keep: true, display: display || token.trim().slice(0, 80) };
+    }
+  }
+
+  // Allowlist wins first; duty backup only runs on miss (still drops today).
+  if (looksLikeDutyPhrase(token)) return { keep: false };
+  return { keep: false };
+}
+
+export function canonicalizeListingSkillNames(
+  tokens: readonly string[],
+  held: readonly { name: string; aliases?: readonly string[] }[] = []
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const token of tokens) {
+    const result = canonicalizeListingSkillToken(token, held);
+    if (!result.keep) continue;
+    const displayKey = normalizeJobSkillName(result.display);
+    if (!displayKey || seen.has(displayKey)) continue;
+    seen.add(displayKey);
+    out.push(result.display);
+  }
+  return out;
+}
 
 /** Related-but-not-equal families. Membership is Close, never Have. */
 export const CLOSE_SKILL_FAMILIES: readonly (readonly string[])[] = [

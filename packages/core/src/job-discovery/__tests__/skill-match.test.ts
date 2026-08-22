@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { canonicalizeListingSkillNames } from "#@/application/job-skills";
 import { classifyJobSkills, preselectHeldSkillForAlias } from "#@/job-discovery/skill-match";
 
 describe("classifyJobSkills", () => {
@@ -80,12 +81,37 @@ describe("classifyJobSkills", () => {
     expect(result.missing).toEqual(["Java"]);
   });
 
-  it("leaves capability phrases in Missing", () => {
+  it("does not see dropped phrases when the caller canonicalizes first", () => {
+    const jobSkills = canonicalizeListingSkillNames(
+      ["React", "frontend development"],
+      [{ name: "React" }]
+    );
+    const result = classifyJobSkills({ jobSkills, held: [{ name: "React" }] });
+    expect(jobSkills).toEqual(["React"]);
+    expect(result.missing).toEqual([]);
+    expect(result.percent).toBe(100);
+  });
+
+  it("percent is Have over checkable tokens only", () => {
+    const jobSkills = canonicalizeListingSkillNames(
+      [
+        "React",
+        "TypeScript",
+        "JavaScript",
+        "frontend development",
+        "ui/ux design",
+        "Postman",
+        "HTTP"
+      ],
+      [{ name: "React" }, { name: "TypeScript" }, { name: "JavaScript" }]
+    );
     const result = classifyJobSkills({
-      jobSkills: ["frontend development"],
-      held: [{ name: "React" }]
+      jobSkills,
+      held: [{ name: "React" }, { name: "TypeScript" }, { name: "JavaScript" }]
     });
-    expect(result.missing).toEqual(["frontend development"]);
+    expect(result.have).toHaveLength(3);
+    expect(result.missing).toEqual(["Postman", "HTTP"]);
+    expect(result.percent).toBe(60);
   });
 });
 

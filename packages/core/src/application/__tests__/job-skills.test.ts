@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildJobSkillLinkPrompt,
+  canonicalizeListingSkillNames,
+  canonicalizeListingSkillToken,
   extractSkillMentions,
   LinkedJobSkillsPayloadSchema,
   resolveJobSkillTags,
@@ -93,6 +95,55 @@ describe("extractSkillMentions", () => {
     ]);
     expect(skills.required).toEqual(expect.arrayContaining(["React Query", "Next.js"]));
     expect(skills.required).not.toContain("TanStack Query");
+  });
+});
+
+describe("canonicalizeListingSkillToken", () => {
+  it("keeps React.js as React via canonical aliases", () => {
+    expect(canonicalizeListingSkillToken("React.js")).toEqual({ keep: true, display: "React" });
+  });
+  it("keeps Tailwind CSS and Postman and HTTP and CI/CD", () => {
+    expect(canonicalizeListingSkillToken("Tailwind CSS").keep).toBe(true);
+    expect(canonicalizeListingSkillToken("postman")).toEqual({ keep: true, display: "Postman" });
+    expect(canonicalizeListingSkillToken("HTTP")).toEqual({ keep: true, display: "HTTP" });
+    expect(canonicalizeListingSkillToken("CI/CD").keep).toBe(true);
+  });
+  it("keeps a held accessibility alias", () => {
+    expect(
+      canonicalizeListingSkillToken("a11y", [{ name: "Accessibility", aliases: ["a11y"] }])
+    ).toEqual({ keep: true, display: "Accessibility" });
+  });
+  it("drops role and duty phrases", () => {
+    for (const token of [
+      "frontend development",
+      "ui/ux design",
+      "responsive ui",
+      "accessibility",
+      "api building and testing",
+      "strong communication skills",
+      "cobol"
+    ]) {
+      expect(canonicalizeListingSkillToken(token)).toEqual({ keep: false });
+    }
+  });
+});
+
+describe("canonicalizeListingSkillNames", () => {
+  it("drops phrases and does not count them in the remaining list", () => {
+    expect(
+      canonicalizeListingSkillNames(
+        [
+          "react",
+          "javascript",
+          "typescript",
+          "frontend development",
+          "ui/ux design",
+          "postman",
+          "http"
+        ],
+        [{ name: "React" }, { name: "JavaScript" }, { name: "TypeScript" }]
+      )
+    ).toEqual(["React", "JavaScript", "TypeScript", "Postman", "HTTP"]);
   });
 });
 
