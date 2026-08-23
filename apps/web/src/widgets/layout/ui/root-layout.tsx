@@ -88,6 +88,7 @@ export function RootLayout({ children }: PropsWithChildren) {
             collapsed: sidePanel.collapsed,
             hasContent: sidePanel.hasContent,
             inspectOpen: sidePanel.inspectOpen,
+            width: panelWidth,
             requestInspectOpen: sidePanel.requestInspectOpen,
             releaseInspectOpen: sidePanel.releaseInspectOpen,
             toggle: sidePanel.toggle,

@@ -23,6 +23,7 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
@@ -396,48 +397,24 @@ export function TrackedJobsPage() {
           title="Tracked jobs"
           description="Pipeline board and list for roles you are actively tracking."
           actions={
-            <>
-              <Group>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={view === "board" ? "default" : "outline"}
-                  onClick={() => {
-                    setView("board");
-                  }}
-                >
-                  <LayoutGridIcon />
-                  Board
-                </Button>
-                <GroupSeparator />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={view === "list" ? "default" : "outline"}
-                  onClick={() => setView("list")}
-                >
-                  <ListIcon />
-                  List
-                </Button>
-              </Group>
-              <Group>
-                <Button type="button" size="sm" onClick={openCreate}>
-                  <PlusIcon />
-                  New
-                </Button>
-                <GroupSeparator />
-                <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
-                  <FileTextIcon />
-                  Import
-                </Button>
-              </Group>
-            </>
+            <Group>
+              <Button type="button" size="sm" onClick={openCreate}>
+                <PlusIcon />
+                New
+              </Button>
+              <GroupSeparator />
+              <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
+                <FileTextIcon />
+                Import
+              </Button>
+            </Group>
           }
         />
 
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <ListSearchBar
             variant="tracked-jobs"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={filterFields}
             value={filterValues}
             onValueChange={(next: FilterValue[]) => {
@@ -450,6 +427,44 @@ export function TrackedJobsPage() {
             sortOptions={TRACKED_SORT_OPTIONS}
             onSortChange={(next) => patchListSearch(next)}
             onJobsClear={clearListSearch}
+            status={
+              view === "list" && listApplications.length > 0 && listTotalCount != null
+                ? listTotalCount > listApplications.length
+                  ? `${listApplications.length} of ${listTotalCount} jobs`
+                  : `${listApplications.length} job${listApplications.length === 1 ? "" : "s"}`
+                : view === "board" && boardApplications.length > 0
+                  ? boardTotalCount > boardApplications.length
+                    ? `${boardApplications.length} of ${boardTotalCount} jobs`
+                    : `${boardApplications.length} job${boardApplications.length === 1 ? "" : "s"}`
+                  : undefined
+            }
+            beforeSort={
+              <Group aria-label="View">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={view === "board" ? "default" : "outline"}
+                  aria-pressed={view === "board"}
+                  onClick={() => {
+                    setView("board");
+                  }}
+                >
+                  <LayoutGridIcon aria-hidden="true" />
+                  {view === "board" ? "Board" : <span className="sr-only">Board</span>}
+                </Button>
+                <GroupSeparator />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={view === "list" ? "default" : "outline"}
+                  aria-pressed={view === "list"}
+                  onClick={() => setView("list")}
+                >
+                  <ListIcon aria-hidden="true" />
+                  {view === "list" ? "List" : <span className="sr-only">List</span>}
+                </Button>
+              </Group>
+            }
             labels={{
               searchPlaceholder: "Search jobs",
               searchAriaLabel: "Search jobs"
@@ -466,26 +481,17 @@ export function TrackedJobsPage() {
               onClearFilters={clearListSearch}
             />
           ) : (
-            <>
-              <ApplicationsList
-                applications={listApplications}
-                isLoading={listQuery.isLoading}
-                listRef={containerRef}
-                narrowed={narrowed}
-                trackedTotal={trackedTotal}
-                onClearFilters={clearListSearch}
-                sentinelRef={sentinelRef}
-                isFetchingNextPage={listQuery.isFetchingNextPage}
-                hasNextPage={listQuery.hasNextPage}
-              />
-              {listTotalCount != null && listApplications.length > 0 ? (
-                <p className="pb-2 text-center text-xs text-muted-foreground">
-                  Showing {listApplications.length}
-                  {listTotalCount > listApplications.length ? ` of ${listTotalCount}` : ""} job
-                  {listTotalCount === 1 ? "" : "s"}
-                </p>
-              ) : null}
-            </>
+            <ApplicationsList
+              applications={listApplications}
+              isLoading={listQuery.isLoading}
+              listRef={containerRef}
+              narrowed={narrowed}
+              trackedTotal={trackedTotal}
+              onClearFilters={clearListSearch}
+              sentinelRef={sentinelRef}
+              isFetchingNextPage={listQuery.isFetchingNextPage}
+              hasNextPage={listQuery.hasNextPage}
+            />
           )}
         </div>
 

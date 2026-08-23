@@ -36,6 +36,7 @@ import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ItemAvatar } from "@/shared/ui/item-avatar";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 import { ListItemContent, type ListItemMeta } from "@/shared/ui/list-item-content";
 import { SortableList } from "@/shared/ui/sortable-list";
 
@@ -552,9 +553,9 @@ export function ExperiencesPage() {
               leading={
                 <ItemAvatar
                   name={experience.organization}
-                  size={40}
+                  size={56}
                   selected={selected}
-                  className="size-10"
+                  className="size-full"
                   aria-label={experience.organization}
                 />
               }
@@ -617,6 +618,7 @@ export function ExperiencesPage() {
         {!isSort ? (
           <ListSearchBar
             variant="catalog"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={EXPERIENCE_FILTER_FIELDS}
             value={filterValues as FilterValue[]}
             onValueChange={(value) => {

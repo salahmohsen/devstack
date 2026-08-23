@@ -38,6 +38,8 @@ type SidePanelState = {
   hasContent: boolean;
   /** True as soon as a portal mounts (before MutationObserver). */
   inspectOpen: boolean;
+  /** Live xl+ panel column width (px), including during resize. */
+  width: number;
   requestInspectOpen: () => void;
   releaseInspectOpen: () => void;
   /** Hide-only (legacy). Prefer `close` so inspect state unmounts. */
@@ -51,6 +53,7 @@ const SidePanelContext = createContext<SidePanelState>({
   collapsed: false,
   hasContent: false,
   inspectOpen: false,
+  width: DASHBOARD_SIDE_PANEL_WIDTH,
   requestInspectOpen: () => {},
   releaseInspectOpen: () => {},
   toggle: () => {},

@@ -42,6 +42,7 @@ import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
 import { ItemAvatar } from "@/shared/ui/item-avatar";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 import { ListItemContent, type ListItemTag } from "@/shared/ui/list-item-content";
 import { SortableList } from "@/shared/ui/sortable-list";
 
@@ -607,9 +608,9 @@ export function ProjectsPage() {
                 <ItemAvatar
                   name={project.title}
                   imageSrc={project.logo}
-                  size={40}
+                  size={56}
                   selected={selected}
-                  className="size-10"
+                  className="size-full"
                   aria-label={project.title}
                 />
               }
@@ -672,6 +673,7 @@ export function ProjectsPage() {
         {!isSort ? (
           <ListSearchBar
             variant="catalog"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={filterFields}
             value={filterValues as FilterValue[]}
             onValueChange={(value) => {

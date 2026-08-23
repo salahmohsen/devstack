@@ -65,6 +65,7 @@ import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspe
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -772,6 +773,7 @@ export function NewJobsPage() {
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <ListSearchBar
             variant="new-jobs"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={filterFields}
             value={filterValues}
             onValueChange={(next: FilterValue[]) => {
@@ -784,6 +786,13 @@ export function NewJobsPage() {
             sortOptions={NEW_JOBS_SORT_OPTIONS}
             onSortChange={(next) => patchListSearch(next)}
             onJobsClear={clearListSearch}
+            status={
+              jobs.length > 0 && totalCount != null
+                ? totalCount > jobs.length
+                  ? `${jobs.length} of ${totalCount} jobs`
+                  : `${jobs.length} job${jobs.length === 1 ? "" : "s"}`
+                : undefined
+            }
             labels={{
               searchPlaceholder: "Search jobs",
               searchAriaLabel: "Search jobs"
@@ -935,14 +944,15 @@ export function NewJobsPage() {
                             batchSelectActive={isBatchSelectActive(selectedIds)}
                             onToggleSelect={rowActions.onToggleSelect}
                             tags={newJobTags(job)}
+                            tagsPlacement="after"
                             meta={newJobMeta(job)}
                             leading={
                               <JobIdentityMark
                                 companyName={job.companyName}
                                 logoUrl={job.companyLogoUrl}
-                                size={40}
+                                size={56}
                                 selected={selected}
-                                className="size-10"
+                                className="size-full"
                               />
                             }
                             actions={
@@ -992,13 +1002,6 @@ export function NewJobsPage() {
                 </li>
               </ul>
             )}
-            {totalCount != null && jobs.length > 0 ? (
-              <p className="pb-2 text-center text-xs text-muted-foreground">
-                Showing {jobs.length}
-                {totalCount > jobs.length ? ` of ${totalCount}` : ""} job
-                {totalCount === 1 ? "" : "s"}
-              </p>
-            ) : null}
           </div>
         </div>
 
