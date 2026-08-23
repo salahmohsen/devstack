@@ -17,6 +17,17 @@
 
 ---
 
+## 2026-08-23 — Match canonicalize: prove this worktree’s :3000, not a healthy foreign tunnel
+
+- **Trigger:** Match skill canonicalize harness (chips omit role phrases; Postman/HTTP stay; `%` = Have/checkable; Create skill in-panel; regenerate take)
+- **Finding:** `HTTP 200` on `:3000`/`:5200`/`:4111` is not this branch when another checkout’s `pnpm dev:tunnel` owns the ports. Probe listener `cwd` (or a feature-only procedure) before trusting Match UI. Wrong binary still showed `3 of 10` with `frontend development` Missing; this worktree showed `2 of 4` / later `3 of 4` with phrases gone and Postman/HTTP as tools
+- **Finding:** SIGSTOP the foreign tunnel **parent and** `scripts/dev.sh` restart wrappers, then kill product listeners. Stopping only the top zsh leaves children `S` and they rebind `:3000`
+- **Finding:** All-phrase listings (e.g. Lucidya `Frontend Development` / `Software Development`) hide the Match chip bar (`percent: null`), while Details may still show the raw stored strings. That is canonicalize-on-read for chips, not a Details bug
+- **Finding:** Held aliases change the checkable set. `TypeScript.aliases` including `JavaScript` makes listing `JavaScript` display/dedupe as TypeScript in canonicalize — DualEntry looked like 4 tools not 5. Inspect catalog aliases before treating “missing JS chip” as a drop bug
+- **Finding:** Dashboard Create skill from Missing → `StackForm` push → Save → pop same job works: toast `Skill created.`, Postman moved Have, `%` 50→75. Regenerate via `applications.regenerateAgentTake` can mention frontend role when React/TS are Have without listing dropped duty phrases as missing
+- **User preference:** Grill lock on allowlist canonicalize; do not reopen matchScore math
+- **Evidence class:** Core job-skills 22 unit; `vp check` core/api/agent 0 errors; Chrome DualEntry New + Lucidya Tracked; oRPC regenerateAgentTake 200; unauth `:4111/chat/hub-supervisor` 401
+
 ## 2026-08-22 — Hub job context: mention force vs dump; Avoid is prefs not HITL
 
 - **Trigger:** Hub job-context plan (Open in agent mention, thickened getApplication, Avoid, apply-kit replace)
