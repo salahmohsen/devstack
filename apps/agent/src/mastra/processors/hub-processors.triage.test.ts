@@ -12,6 +12,8 @@ import {
   messagesNeedGetSearchBrief,
   shouldStopAfterStackCatalog,
   shouldStopAfterTodayLetter,
+  messagesNeedGenerateApplyPackage,
+  messagesNeedListOpenForApplyPackages,
   messagesNeedProposeTriage,
   messagesNeedSearchBriefAnswer,
   messagesNeedTriageWrites
@@ -67,7 +69,70 @@ describe("messagesNeedProposeTriage", () => {
       ] as never)
     ).toBe(false);
   });
+});
 
+describe("messagesNeedGenerateApplyPackage (batch propose)", () => {
+  it("needs listOpenApplications first", () => {
+    expect(
+      messagesNeedListOpenForApplyPackages([
+        {
+          role: "user",
+          content: { parts: [{ type: "text", text: "generate packages for all tracked" }] }
+        }
+      ] as never)
+    ).toBe(true);
+  });
+
+  it("after list, needs proposeBatchGeneratePackages", () => {
+    const messages = [
+      {
+        role: "user",
+        content: { parts: [{ type: "text", text: "generate packages for all tracked" }] }
+      },
+      assistantWithParts([
+        {
+          type: "tool-list-open-applications",
+          toolName: "listOpenApplications",
+          state: "output-available",
+          output: {
+            applications: [{ id: "a1", companyName: "Acme", title: "Eng", stage: "saved" }]
+          }
+        }
+      ])
+    ] as never;
+    expect(messagesNeedListOpenForApplyPackages(messages)).toBe(false);
+    expect(messagesNeedGenerateApplyPackage(messages)).toBe(true);
+  });
+
+  it("clears after proposeBatchGeneratePackages", () => {
+    expect(
+      messagesNeedGenerateApplyPackage([
+        {
+          role: "user",
+          content: { parts: [{ type: "text", text: "generate packages for all tracked" }] }
+        },
+        assistantWithParts([
+          {
+            type: "tool-list-open-applications",
+            toolName: "listOpenApplications",
+            state: "output-available",
+            output: {
+              applications: [{ id: "a1", companyName: "Acme", title: "Eng", stage: "saved" }]
+            }
+          },
+          {
+            type: "tool-propose-batch-generate-packages",
+            toolName: "proposeBatchGeneratePackages",
+            state: "input-available",
+            input: { ids: ["a1"] }
+          }
+        ])
+      ] as never)
+    ).toBe(false);
+  });
+});
+
+describe("messagesNeedProposeTriage (continued)", () => {
   it("is false after propose-new-jobs-triage is called", () => {
     expect(
       messagesNeedProposeTriage([

@@ -49,11 +49,12 @@ import {
   HUB_PILE_MUST_LIST_FEEDBACK,
   HUB_NEW_JOBS_MUST_LIST_FEEDBACK,
   HUB_APPLY_PACKAGES_MUST_LIST_FEEDBACK,
-  HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK,
+  HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK,
   HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
   filterHubApplyPackageActiveTools,
   isListOpenApplicationsToolName,
   isGenerateApplyPackageToolName,
+  isProposeBatchGeneratePackagesToolName,
   isHubClientHitlToolName,
   isHubInspectLookupToolName,
   isOpenEntityInspectToolName,
@@ -715,7 +716,10 @@ export function messagesNeedListOpenForApplyPackages(
   return true;
 }
 
-/** After open applications are listed, force one generateApplyPackage (Approve card). */
+/**
+ * After open applications are listed, force one proposeBatchGeneratePackages
+ * (single Confirm → AI island). Do not force per-id generateApplyPackage.
+ */
 export function messagesNeedGenerateApplyPackage(
   messages: ProcessInputStepArgs["messages"]
 ): boolean {
@@ -728,6 +732,8 @@ export function messagesNeedGenerateApplyPackage(
       if (!raw || typeof raw !== "object") continue;
       const part = raw as Record<string, unknown>;
       const name = mastraPartToolName(part);
+      if (isProposeBatchGeneratePackagesToolName(name)) return false;
+      // Legacy one-by-one Approve still clears the force.
       if (isGenerateApplyPackageToolName(name)) return false;
     }
   }
@@ -990,10 +996,10 @@ export class HubApplyPackageProcessor implements Processor {
     if (messagesNeedGenerateApplyPackage(messages)) {
       await sendSignal?.({
         type: "reactive",
-        contents: HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK,
-        attributes: { reason: "apply-packages-must-generate" }
+        contents: HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK,
+        attributes: { reason: "apply-packages-must-propose" }
       });
-      const activeTools = filterHubApplyPackageActiveTools(names, "generate");
+      const activeTools = filterHubApplyPackageActiveTools(names, "propose");
       return {
         toolChoice: "required" as const,
         ...(activeTools.length > 0 ? { activeTools } : {})
@@ -1286,7 +1292,7 @@ export function hubSupervisorOnIterationComplete(ctx: HubSupervisorIterationCtx)
     if (textOnly && pastFirstForceRetry) {
       return { continue: false };
     }
-    return { continue: true, feedback: HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK };
+    return { continue: true, feedback: HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK };
   }
   if (messagesNeedDailyBriefFacts(ctx.messages)) {
     if (textOnly && pastFirstForceRetry) {

@@ -110,6 +110,34 @@ export type ProposeBatchTrackingChangeOutput = z.infer<
   typeof ProposeBatchTrackingChangeOutputSchema
 >;
 
+/**
+ * One Confirm for generate-apply-package across many tracked jobs.
+ * Client Confirm opens the AI island and runs generate per id (no per-id Approve).
+ */
+export const ProposeBatchGeneratePackagesInputSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(20),
+  labels: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        title: z.string().max(300).optional(),
+        companyName: z.string().max(200).optional()
+      })
+    )
+    .optional()
+});
+export type ProposeBatchGeneratePackagesInput = z.infer<
+  typeof ProposeBatchGeneratePackagesInputSchema
+>;
+
+export const ProposeBatchGeneratePackagesOutputSchema = z.object({
+  action: HubCrmConfirmActionSchema,
+  ids: z.array(z.string())
+});
+export type ProposeBatchGeneratePackagesOutput = z.infer<
+  typeof ProposeBatchGeneratePackagesOutputSchema
+>;
+
 export const ProposeRefreshFromUrlInputSchema = z.object({
   applicationId: z.string().min(1),
   url: z.string().url().max(2_000),

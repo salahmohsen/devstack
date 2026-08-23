@@ -6,6 +6,8 @@ import {
   EmploymentTypeSchema,
   ProposeApplicationFieldChangeInputSchema,
   ProposeApplicationFieldChangeOutputSchema,
+  ProposeBatchGeneratePackagesInputSchema,
+  ProposeBatchGeneratePackagesOutputSchema,
   ProposeBatchTrackingChangeInputSchema,
   ProposeBatchTrackingChangeOutputSchema,
   ProposeDeleteApplicationInputSchema,
@@ -29,6 +31,8 @@ import {
   type ProposeApplicationFieldChangeInput,
   type ProposeApplicationFieldChangeOutput,
   type ProposeApplicationFromJdOutput,
+  type ProposeBatchGeneratePackagesInput,
+  type ProposeBatchGeneratePackagesOutput,
   type ProposeBatchTrackingChangeInput,
   type ProposeBatchTrackingChangeOutput,
   type ProposeDeleteApplicationInput,
@@ -230,6 +234,11 @@ export const HUB_PROPOSE_BATCH_TRACKING_CHANGE_TOOL_NAMES = new Set([
   "proposeBatchTrackingChange"
 ]);
 
+export const HUB_PROPOSE_BATCH_GENERATE_PACKAGES_TOOL_NAMES = new Set([
+  "propose-batch-generate-packages",
+  "proposeBatchGeneratePackages"
+]);
+
 export const HUB_PROPOSE_REFRESH_FROM_URL_TOOL_NAMES = new Set([
   "propose-refresh-from-url",
   "proposeRefreshFromUrl"
@@ -417,6 +426,10 @@ export function isProposeBatchTrackingChangeToolName(name: string): boolean {
   return HUB_PROPOSE_BATCH_TRACKING_CHANGE_TOOL_NAMES.has(name);
 }
 
+export function isProposeBatchGeneratePackagesToolName(name: string): boolean {
+  return HUB_PROPOSE_BATCH_GENERATE_PACKAGES_TOOL_NAMES.has(name);
+}
+
 export function isProposeRefreshFromUrlToolName(name: string): boolean {
   return HUB_PROPOSE_REFRESH_FROM_URL_TOOL_NAMES.has(name);
 }
@@ -428,6 +441,7 @@ export function isHubCrmWriteConfirmToolName(name: string): boolean {
     isProposeDeleteApplicationToolName(name) ||
     isProposeDeleteNoteToolName(name) ||
     isProposeBatchTrackingChangeToolName(name) ||
+    isProposeBatchGeneratePackagesToolName(name) ||
     isProposeRefreshFromUrlToolName(name)
   );
 }
@@ -1114,6 +1128,20 @@ export function parseProposeBatchTrackingChangeOutput(
   output: unknown
 ): ProposeBatchTrackingChangeOutput | null {
   const parsed = ProposeBatchTrackingChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeBatchGeneratePackagesInput(
+  input: unknown
+): ProposeBatchGeneratePackagesInput | null {
+  const parsed = ProposeBatchGeneratePackagesInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeBatchGeneratePackagesOutput(
+  output: unknown
+): ProposeBatchGeneratePackagesOutput | null {
+  const parsed = ProposeBatchGeneratePackagesOutputSchema.safeParse(output);
   return parsed.success ? parsed.data : null;
 }
 

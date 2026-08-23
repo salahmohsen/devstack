@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ProposeApplicationFieldChangeInputSchema,
+  ProposeBatchGeneratePackagesInputSchema,
   ProposeBatchTrackingChangeInputSchema,
   ProposeDeleteNoteInputSchema,
   ProposeSetOutcomeInputSchema
@@ -69,6 +70,18 @@ describe("ProposeBatchTrackingChangeInputSchema", () => {
       ProposeBatchTrackingChangeInputSchema.safeParse({
         trackingAction: "restore",
         ids: ["a"]
+      }).success
+    ).toBe(true);
+  });
+});
+
+describe("ProposeBatchGeneratePackagesInputSchema", () => {
+  it("requires at least one id and accepts labels", () => {
+    expect(ProposeBatchGeneratePackagesInputSchema.safeParse({ ids: [] }).success).toBe(false);
+    expect(
+      ProposeBatchGeneratePackagesInputSchema.safeParse({
+        ids: ["a", "b"],
+        labels: [{ id: "a", title: "Eng", companyName: "Acme" }]
       }).success
     ).toBe(true);
   });

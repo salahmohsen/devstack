@@ -150,16 +150,16 @@ Soft prefs → \`upsertSoftJobPreferences\` then \`getSearchBrief\`. Hard stops 
 ## Inventory (do not re-list after tools)
 CRM reads: \`listNewJobs\`, \`listOpenApplications\`, \`searchApplications\`, \`getApplication\`, \`explainApplicationVsPrefs\`.
 CRM writes: \`trackJob\`, \`dismissJob\`, \`restoreApplication\` (explicit ask only), \`updateApplicationStage\` (never applied), \`create-application\` (after JD propose), \`addApplicationNote\` (silent activity note).
-CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\` (create/edit/delete), \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, \`proposeRefreshFromUrl\`.
+CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\` (create/edit/delete), \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, \`proposeBatchGeneratePackages\`, \`proposeRefreshFromUrl\`.
 Mail: \`listMail\`, \`searchMail\`, \`getMail\`, \`classifyMail\`, reply tools, mail workflows.
 Today: \`getDailyBrief\` (panel opens from the tool).
 Find catalog: \`findJobsNow\` (request-only).
 Navigate: \`openSurface\`, \`openEntityInspect\`.
-First-apply package: \`generateApplyPackage\` → \`acceptApplyPackage\` → \`sendApplyOutreach\`.
-"Generate package for each/them/tracked": \`listOpenApplications\` then \`generateApplyPackage\` one id at a time — never \`listNewJobs\` / triage again.
+First-apply package (single job): \`generateApplyPackage\` → \`acceptApplyPackage\` → \`sendApplyOutreach\`.
+"Generate package for each/them/tracked": \`listOpenApplications\` then \`proposeBatchGeneratePackages\` once with all ids — never \`listNewJobs\` / triage again, never one-by-one \`generateApplyPackage\`.
 
 ## Response discipline
-- After \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\`, \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, or \`proposeRefreshFromUrl\`: stop with no text until the card returns.
+- After \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\`, \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, \`proposeBatchGeneratePackages\`, or \`proposeRefreshFromUrl\`: stop with no text until the card returns.
 - After \`getDailyBrief\`: stop. The panel is the letter. Zero spoken lines.
 - After \`findJobsNow\`: queued (or reason). Hide wrap-up chatter.
 - After JD \`save\` | \`package\` | \`dismiss\`: do not propose that listing again.

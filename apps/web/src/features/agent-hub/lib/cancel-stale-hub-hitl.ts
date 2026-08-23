@@ -8,6 +8,8 @@ import {
   isOpenEntityInspectToolName,
   isProposeApplicationFromJdToolName,
   isHubCrmWriteConfirmToolName,
+  isProposeBatchGeneratePackagesToolName,
+  isProposeBatchTrackingChangeToolName,
   isProposeEvidenceChangeToolName,
   isProposeHardPreferenceChangeToolName,
   isProposeMailCrmChangeToolName,
@@ -144,6 +146,12 @@ export function cancelOutputForHubHitl(toolName: string): unknown {
   }
   if (isOpenDailyBriefToolName(toolName)) {
     return { opened: false, markdown: "" };
+  }
+  if (isProposeBatchGeneratePackagesToolName(toolName)) {
+    return { action: "cancel", ids: [] };
+  }
+  if (isProposeBatchTrackingChangeToolName(toolName)) {
+    return { action: "cancel", trackingAction: "track", ids: [] };
   }
   return { action: "cancel" };
 }
