@@ -5,6 +5,8 @@ import * as React from "react";
 
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
+import { dismissDashboardSidePanel } from "@/shared/lib/side-panel-control";
+
 import { fetchHubMessagesPage } from "@/features/agent-hub/api/list-hub-messages.query";
 import {
   createHubChat,
@@ -45,6 +47,9 @@ import {
 
 import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 
+/** Silent retries while the agent/API is briefly down — never fake an empty welcome mid-retry. */
+const HISTORY_RETRY_DELAYS_MS = [500, 1000, 2000, 4000] as const;
+
 /**
  * Owns the single dashboard hub `Chat` instance and hydrates Mastra memory once.
  * Mount on the dashboard layout so Hub home and job surfaces share the same thread.
@@ -76,6 +81,8 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const nextHistoryPageRef = React.useRef(1);
   const loadingOlderRef = React.useRef(false);
   const historyLoadRef = React.useRef<Promise<void> | null>(null);
+  const historyRetryAttemptRef = React.useRef(0);
+  const historyRetryTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelledStaleIdsRef = React.useRef(new Set<string>());
   const remountCancelDoneRef = React.useRef(false);
   const allMessagesRef = React.useRef<typeof messages>([]);
@@ -115,32 +122,84 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     setMessagesRef.current(linear.length > 0 ? linear : uiMessages);
   }, []);
 
-  const ensureHistory = React.useCallback(() => {
-    if (historyLoadRef.current) return;
-    historyLoadRef.current = fetchHubMessagesPage(0)
-      .then((page) => {
-        const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(page.uiMessages));
-        markHubHitlRemountSeen();
-        markHubHitlAbandonedOnRemount(
-          waitingHubConfirmCards(linear.length > 0 ? linear : page.uiMessages).map(
-            (card) => card.toolCallId
-          )
-        );
-        importHistory(page.uiMessages, false);
-        setHasMoreHistory(page.hasMore);
-        nextHistoryPageRef.current = 1;
-        setHistoryReady(true);
-      })
-      .catch(() => {
-        setHistoryReady(true);
-      });
+  const ensureHistory = React.useCallback((): Promise<void> => {
+    if (historyLoadRef.current) return historyLoadRef.current;
+    const loadPromise = (async () => {
+      let attempt = 0;
+      for (;;) {
+        try {
+          const page = await fetchHubMessagesPage(0);
+          historyRetryAttemptRef.current = 0;
+          const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(page.uiMessages));
+          markHubHitlRemountSeen();
+          markHubHitlAbandonedOnRemount(
+            waitingHubConfirmCards(linear.length > 0 ? linear : page.uiMessages).map(
+              (card) => card.toolCallId
+            )
+          );
+          // Initial hydrate must replace — a stale empty Chat path must not block import.
+          importHistory(page.uiMessages, true);
+          setHasMoreHistory(page.hasMore);
+          nextHistoryPageRef.current = 1;
+          setHistoryReady(true);
+          return;
+        } catch {
+          // Keep historyReady false so HubWelcome does not paint over a real
+          // thread while the agent is restarting (silent auto-retry).
+          if (attempt >= HISTORY_RETRY_DELAYS_MS.length) {
+            historyLoadRef.current = null;
+            setHistoryReady(true);
+            return;
+          }
+          const delay = HISTORY_RETRY_DELAYS_MS[attempt] ?? 4000;
+          attempt += 1;
+          historyRetryAttemptRef.current = attempt;
+          await new Promise<void>((resolve) => {
+            historyRetryTimerRef.current = setTimeout(() => {
+              historyRetryTimerRef.current = null;
+              resolve();
+            }, delay);
+          });
+        }
+      }
+    })();
+    historyLoadRef.current = loadPromise;
+    return loadPromise;
   }, [importHistory]);
+
+  React.useEffect(
+    () => () => {
+      if (historyRetryTimerRef.current != null) {
+        clearTimeout(historyRetryTimerRef.current);
+        historyRetryTimerRef.current = null;
+      }
+    },
+    []
+  );
+
+  // Tab focus: if we painted empty after a failed hydrate, try again once the
+  // agent may be back. Genuine empty threads just re-confirm empty.
+  React.useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (messagesRef.current.length > 0) return;
+      if (historyRetryTimerRef.current != null) return;
+      historyLoadRef.current = null;
+      historyRetryAttemptRef.current = 0;
+      setHistoryReady(false);
+      void ensureHistory();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [ensureHistory]);
 
   // List `+` starts a spoken create interview. Clear kind only — never
   // consumeOpenHubAssistant (floater stays open via pendingOpen).
   React.useEffect(() => {
     if (!pendingCreateKind) return;
-    ensureHistory();
+    void ensureHistory();
     if (!historyReady) return;
     if (status === "submitted" || status === "streaming") return;
     const kind = consumeHubCreateIntent();
@@ -150,7 +209,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!pendingInterview) return;
-    ensureHistory();
+    void ensureHistory();
     if (!historyReady) return;
     if (status === "submitted" || status === "streaming") return;
     const text = consumeHubInterviewRehearsal();
@@ -236,8 +295,15 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
         // Best-effort cancel; new epoch still proceeds.
       }
     }
+    // Drop inspect / Today / form panels from the previous thread.
+    dismissDashboardSidePanel({ force: true });
     const result = await orpcClient.agent.startNewHubChat({});
+    if (historyRetryTimerRef.current != null) {
+      clearTimeout(historyRetryTimerRef.current);
+      historyRetryTimerRef.current = null;
+    }
     historyLoadRef.current = null;
+    historyRetryAttemptRef.current = 0;
     remountCancelDoneRef.current = false;
     cancelledStaleIdsRef.current.clear();
     allMessagesRef.current = [];
@@ -245,20 +311,10 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     setHasMoreHistory(false);
     nextHistoryPageRef.current = 1;
     setHistoryReady(false);
-    // Re-hydrate empty history for the new epoch thread.
-    historyLoadRef.current = fetchHubMessagesPage(0)
-      .then((page) => {
-        importHistory(page.uiMessages, true);
-        setHasMoreHistory(page.hasMore);
-        nextHistoryPageRef.current = 1;
-        setHistoryReady(true);
-      })
-      .catch(() => {
-        setHistoryReady(true);
-      });
-    await historyLoadRef.current;
+    // Re-hydrate empty history for the new epoch thread (retry on transient fail).
+    await ensureHistory();
     return { epoch: result.epoch, threadId: result.threadId };
-  }, [addToolOutput, importHistory]);
+  }, [addToolOutput, ensureHistory]);
 
   // Open in agent: fresh thread, then plant (composer-side). Never send.
   React.useEffect(() => {

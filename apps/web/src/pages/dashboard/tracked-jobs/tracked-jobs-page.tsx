@@ -27,6 +27,7 @@ import {
 import { Button } from "@tsu-stack/ui/components/button";
 import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
@@ -531,7 +532,17 @@ export function TrackedJobsPage() {
               if (!next) closeView();
             }}
           >
-            {(item) => <ApplicationInfoPanel item={item} onEdit={() => openEdit(item)} />}
+            {(item) => (
+              <Suspense
+                fallback={
+                  <div className="flex min-h-48 items-center justify-center py-10">
+                    <Spinner className="size-6" aria-label="Loading application" />
+                  </div>
+                }
+              >
+                <ApplicationInfoPanel item={item} onEdit={() => openEdit(item)} />
+              </Suspense>
+            )}
           </ItemsInspectHost>
 
           {frame?.type === "stack-create" && !hostOwnsPanel ? (

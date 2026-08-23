@@ -46,10 +46,11 @@ export function useSettingsDirtyGuard(dirty: boolean, options?: UseSettingsDirty
       onOpenChange={(open) => {
         if (!open) reset?.();
       }}
-      title="Unsaved changes"
-      description="You have unsaved changes. Are you sure you want to discard them?"
+      title="Discard edits?"
+      description="Changes on this form will be lost."
       cancelLabel="Keep editing"
-      confirmLabel="Discard"
+      confirmLabel="Discard edits"
+      confirmVariant="destructive"
       onConfirm={() => {
         // Clear draft before proceed so remount/return is not dirty.
         onDiscardRef.current?.();

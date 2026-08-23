@@ -33,10 +33,13 @@ export function registerSidePanelDismissGuard(guard: () => boolean): () => void 
 /**
  * Unmount inspect/item hosts. Call on chevron close and route change.
  * @returns true when a dismiss guard consumed the event (e.g. dirty form).
+ * Pass `{ force: true }` to skip dirty-form guards (e.g. hub `/new` session).
  */
-export function dismissDashboardSidePanel(): boolean {
-  for (const guard of dismissGuards) {
-    if (guard()) return true;
+export function dismissDashboardSidePanel(opts?: { force?: boolean }): boolean {
+  if (!opts?.force) {
+    for (const guard of dismissGuards) {
+      if (guard()) return true;
+    }
   }
   for (const listener of closeListeners) listener();
   return false;

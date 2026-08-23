@@ -5,6 +5,9 @@ import { subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
 
 export type EntityFormKind = "experience" | "project" | "stack";
 
+/** Inspect host also opens job listings (application) in-panel. */
+export type EntityInspectKind = EntityFormKind | "application";
+
 export type EntityFormHostRequest = {
   requestId: string;
   kind: EntityFormKind;

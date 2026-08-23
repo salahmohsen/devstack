@@ -63,6 +63,7 @@ import {
 import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
@@ -88,7 +89,7 @@ import {
   type ListItemMenuSlots
 } from "@/shared/ui/list-item-menu-slots";
 
-import { useEntityPanelHostActive } from "@/features/agent-hub";
+import { releaseEntityPanelHosts, useEntityPanelHostActive } from "@/features/agent-hub";
 import {
   ApplicationMatchScoreBadge,
   clearPendingOpenApplicationId,
@@ -639,6 +640,7 @@ export function NewJobsPage() {
     if (!pendingOpenApplicationId) return;
     const job = jobs.find((j) => j.id === pendingOpenApplicationId);
     if (!job) return;
+    releaseEntityPanelHosts();
     expandDashboardSidePanel();
     // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from external job toast
     setViewItem(job);
@@ -663,7 +665,10 @@ export function NewJobsPage() {
   const isAnyOpen = isAnyOpened(isItemOpen);
 
   const setOpenedItem = useCallback((item: ApplicationOutput | null) => {
-    if (item) expandDashboardSidePanel();
+    if (item) {
+      releaseEntityPanelHosts();
+      expandDashboardSidePanel();
+    }
     setViewItem(item);
   }, []);
 
@@ -970,6 +975,7 @@ export function NewJobsPage() {
                             onSelect={() =>
                               setViewItem((current) => {
                                 if (current?.id === job.id) return null;
+                                releaseEntityPanelHosts();
                                 expandDashboardSidePanel();
                                 return job;
                               })
@@ -1049,11 +1055,19 @@ export function NewJobsPage() {
             }}
           >
             {(item) => (
-              <ApplicationInfoPanel
-                item={item}
-                variant="discovery"
-                onEdit={() => setEditApp(item)}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex min-h-48 items-center justify-center py-10">
+                    <Spinner className="size-6" aria-label="Loading job" />
+                  </div>
+                }
+              >
+                <ApplicationInfoPanel
+                  item={item}
+                  variant="discovery"
+                  onEdit={() => setEditApp(item)}
+                />
+              </Suspense>
             )}
           </ItemsInspectHost>
 

@@ -164,9 +164,14 @@ export {
   useEntityFormHostActive,
   useEntityFormHostSelector
 } from "./lib/entity-form-host-store";
-export type { EntityFormHostRequest, EntityFormKind } from "./lib/entity-form-host-store";
+export type {
+  EntityFormHostRequest,
+  EntityFormKind,
+  EntityInspectKind
+} from "./lib/entity-form-host-store";
 export {
   clearEntityInspectRequest,
+  releaseEntityPanelHosts,
   requestEntityInspect,
   useEntityInspectHostActive,
   useEntityInspectHostSelector,

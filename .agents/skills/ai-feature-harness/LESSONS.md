@@ -17,6 +17,49 @@
 
 ---
 
+## 2026-08-23 — Open job listing searched CRM then never opened the same-page panel
+
+- **Trigger:** “open Front-End Software Developer / ExeQut · Match 88%”; agent searched Evidence or searched Applications then said the side panel was stuck
+- **Finding:** `filterHubUnionForcedReadActiveTools` defers client `openEntityInspect` whenever any server lookup tool is also allowed. After `searchApplications` succeeds, lookup tools stay in the allowlist every step, so the open tool is deferred forever. Add `inspectLookupDone` and force **only** `openEntityInspect` once a successful list/search/get ran this turn
+- **Finding:** Job-title opens (Match N%, “listing”, role/job wording) must prefer CRM lookup (`searchApplications` / `listNewJobs` / `listOpenApplications`) — drop `searchEvidence` from that phase via `inspectJobListing`
+- **Finding:** Agent calling `openEntityInspect({ kind: "application", id })` is not enough. The client toolkit Zod schema still said `experience|project|stack` only, so the human tool UI never mounted/completed and the part stayed `input-available`. Keep agent tool schema, `parseOpenEntityInspectInput`, **and** `OpenEntityInspectParametersSchema` in sync when adding a kind
+- **Finding:** Navigate with `openSurface` only when they ask to leave the page. Same-page inspect is `openEntityInspect` + dashboard `EntityInspectHost` / `ApplicationInfoPanel`
+- **Evidence class:** Chrome — `search Applications ExeQut` then `tool-openEntityInspect` input-available (pre-schema); unit policy 105; post-schema retest for panel on `/dashboard`
+
+## 2026-08-23 — "Generate package for each of them" reopened New jobs triage
+
+- **Trigger:** After a triage card, user said “start generating package for each of them”; agent ran `listNewJobs` + `proposeNewJobsTriage` again
+- **Finding:** `messagesNeedProposeTriage` forced the card whenever `listNewJobs` returned rows this turn, with no triage-intent check. Any mistaken `listNewJobs` on a generate-package ask reopened triage
+- **Finding:** Require `userTurnAsksNewJobsTriage` for propose force. Separate `userTurnAsksGenerateApplyPackages` (“package for each/them/tracked”) → `listOpenApplications` then one `generateApplyPackage` (Approve). Never `listNewJobs` on that path
+- **Evidence class:** Chrome — `list Open Applications` + “Generate apply package” Approve / Waiting for approval; unit 100 pass
+
+## 2026-08-23 — Hub Welcome over a real thread (empty history hydrate)
+
+- **Trigger:** Dashboard sometimes opens to “Welcome back…” while `listHubMessages` later returns the full transcript
+- **Finding:** API treated upstream agent `401`/`403` (and non-JSON) as **successful empty** history. During agent restart that paints HubWelcome. Fix: only `404` (missing thread) → empty; auth/5xx/non-JSON must throw
+- **Finding:** Client `ensureHistory` catch set `historyReady=true` and kept `historyLoadRef`, so a failed hydrate never retried and stuck on Welcome. Silent auto-retry with backoff while keeping `historyReady=false`; clear the ref after exhausted failure so focus can try again; initial import uses `replacePath: true`
+- **Evidence class:** Chrome network `listHubMessages` 200 body `uiMessages:[]` at load while later same-cookie fetch had 23 rows; agent memory unauth 401
+
+## 2026-08-23 — "Filter my new jobs" prelude dies with zero tools
+
+- **Trigger:** User ask “filter my new jobs and start generating package…”; assistant spoke “Let me pull up…” then stream ended
+- **Finding:** `hubSupervisorOnIterationComplete` treats text-only + `finishReason: stop` as terminal unless a forced-read flag matches. Triage intent was only enforced _after_ `listNewJobs` returned rows (`HubNewJobsTriageProcessor`), so a spoken prelude never forced the list
+- **Finding:** Expand `userTurnAsksNewJobsTriage` for `filter my new jobs` / package-from-pile phrasing. `messagesNeedPileStatus` must also cover triage asks until a successful `listNewJobs` (status-only stays non-triage after the list). Use triage-specific feedback + `toolChoice: required` on the pile processor
+- **Evidence class:** `listHubMessages` (reasoning+text, no tools); Chrome retry showed `list New Jobs` then New jobs triage Confirm; agent policy unit 97 pass
+
+## 2026-08-23 — Packed hub ask: client HITL in activeTools suspends the whole server batch
+
+- **Trigger:** Conversation-cycle harness (everyday packed Today+pile+DualEntry+skills+looking-for; Ment'ech inspect; bells)
+- **Finding:** `getSearchBrief` / `openEntityInspect` have no server `execute`. When Mastra co-emits them with server tools (`getDailyBrief`, `listStacks`, `searchApplications`, …), the step finishes at `tool-input-available` with **zero** `tool-output` — every sibling stuck. Diff `chatStream` SSE: `finish-step` right after inputs. **Defer client HITL from `filterHubUnionForcedReadActiveTools` whenever any server tool is also allowed**; next step forces the client tool alone
+- **Finding:** Do not `sendSignal` “Call getSearchBrief now” while that tool is deferred from `activeTools` — the model still calls it and gets `Tool not found. Available tools: listNewJobs…`
+- **Finding:** `messagesNeedCompanyRead` must require `mastraPartHasSuccessfulToolResult`. A failed / not-found `searchApplications` must not clear the company force
+- **Finding:** Everyday “what's the deal with X” / “what's going on with X” is a company ask without mail/stage words — expand `userTurnAsksCompanyStatus`. “what i'm even looking for” needs a 0–2 word gap in the looking-for regex. Pile “still a mess” needs `HubPileStatusProcessor` + `pile` union flag
+- **Finding:** `Ment’ech` (U+2019) vs typed `Ment'ech` (ASCII) makes `rankEvidenceHits` miss org titles. Normalize curly apostrophes in the ranker. **Restart the agent after `rebuild:core-cache`** — a running Node process keeps the old ESM cache in memory
+- **Finding:** DualEntry can be `trackingStatus: inbox` and `stage: saved` at once. Speaking only “saved” sounds tracked; prefer pile vs tracked from `trackingStatus`
+- **Finding:** Bells / unread notifications still have no force processor — model invents “outside my toolkit” or `searchMail` for “unread” while `listNotifications` exists (gap still open)
+- **User preference:** Everyday multi-ask; do not coach tool names; stress-test inside one conversation
+- **Evidence class:** Chrome hub Thread epochs 20–22; `chatStream` SSE (no tool-output); `listHubMessages` stuck input-available then post-fix outputs; core evidence unit; agent policy 64 pass; unauth `:4111/chat` 401
+
 ## 2026-08-23 — Match canonicalize: prove this worktree’s :3000, not a healthy foreign tunnel
 
 - **Trigger:** Match skill canonicalize harness (chips omit role phrases; Postman/HTTP stay; `%` = Have/checkable; Create skill in-panel; regenerate take)

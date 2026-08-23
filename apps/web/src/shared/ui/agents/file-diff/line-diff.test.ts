@@ -56,12 +56,15 @@ describe("lineDiff", () => {
     ]);
   });
 
-  it("marks a replacement as removed + added", () => {
+  it("marks a replacement as removed + added with inline word segments", () => {
     const lines = lineDiff("remote EU", "remote MENA");
-    expect(lines).toEqual([
-      { id: "1", type: "removed", oldLine: 1, content: "remote EU" },
-      { id: "2", type: "added", newLine: 1, content: "remote MENA" }
+    expect(lines.map((line) => [line.type, line.content])).toEqual([
+      ["removed", "remote EU"],
+      ["added", "remote MENA"]
     ]);
+    expect(lines[0]?.segments?.some((segment) => segment.type === "equal")).toBe(true);
+    expect(lines[0]?.segments?.some((segment) => segment.type === "removed")).toBe(true);
+    expect(lines[1]?.segments?.some((segment) => segment.type === "added")).toBe(true);
   });
 
   it("keeps shared lines and diffs the rest", () => {
@@ -73,6 +76,10 @@ describe("lineDiff", () => {
       ["added", "Remote MENA"],
       ["context", "Frontend"]
     ]);
+  });
+
+  it("treats trimmed-equal lines as context", () => {
+    expect(lineDiff("hello  ", "hello").map((line) => line.type)).toEqual(["context"]);
   });
 
   it("treats an empty previous as all additions", () => {

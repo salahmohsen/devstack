@@ -39,14 +39,25 @@ import {
   userTurnAsksSearchBrief,
   userTurnRetriesStackCatalog,
   userTurnAsksPileStatusOnly,
+  userTurnAsksNewJobsTriage,
+  userTurnAsksGenerateApplyPackages,
   userTurnAsksCompanyStatus,
   userTurnAsksEntityInspect,
+  userTurnAsksJobListingInspect,
   userTurnRetriesDailyBrief,
   HUB_COMPANY_MUST_READ_FEEDBACK,
+  HUB_PILE_MUST_LIST_FEEDBACK,
+  HUB_NEW_JOBS_MUST_LIST_FEEDBACK,
+  HUB_APPLY_PACKAGES_MUST_LIST_FEEDBACK,
+  HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK,
   HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
+  filterHubApplyPackageActiveTools,
+  isListOpenApplicationsToolName,
+  isGenerateApplyPackageToolName,
   isHubClientHitlToolName,
+  isHubInspectLookupToolName,
   isOpenEntityInspectToolName,
-  HUB_INSPECT_MUST_OPEN_FEEDBACK,
+  hubInspectForceFeedback,
   isHubJobPageExtractToolName,
   isListNewJobsToolName,
   isProposeApplicationFromJdToolName,
@@ -174,12 +185,16 @@ export function mastraPartHasSuccessfulToolResult(part: Record<string, unknown>)
 }
 
 function hubForcedReadFlags(messages: ProcessInputStepArgs["messages"]): HubForcedReadFlags {
+  const inspect = messagesNeedEntityInspect(messages);
   return {
     today: messagesNeedDailyBriefFacts(messages),
     stacks: messagesNeedListStacks(messages),
     searchBrief: messagesNeedGetSearchBrief(messages),
     company: messagesNeedCompanyRead(messages),
-    inspect: messagesNeedEntityInspect(messages),
+    pile: messagesNeedPileStatus(messages),
+    inspect,
+    inspectLookupDone: inspect && messagesHaveInspectLookupThisTurn(messages),
+    inspectJobListing: inspect && userTurnAsksJobListingInspect(latestUserText(messages)),
     application: messagesNeedGetApplication(messages)
   };
 }
@@ -399,9 +414,16 @@ export function latestUserTurnTriageState(messages: ProcessInputStepArgs["messag
   };
 }
 
-/** listNewJobs returned inbox rows this turn and the triage card is still missing. */
+/**
+ * listNewJobs returned inbox rows this turn and the triage card is still missing.
+ * Only when the user asked to filter/triage — never after a generate-package-for-tracked ask
+ * (that used to re-open triage whenever the model touched listNewJobs).
+ */
 export function messagesNeedProposeTriage(messages: ProcessInputStepArgs["messages"]): boolean {
-  if (userTurnAsksPileStatusOnly(latestUserText(messages))) return false;
+  const text = latestUserText(messages);
+  if (userTurnAsksPileStatusOnly(text)) return false;
+  if (userTurnAsksGenerateApplyPackages(text)) return false;
+  if (!userTurnAsksNewJobsTriage(text)) return false;
   const state = latestUserTurnTriageState(messages);
   return state.listHasJobs && !state.sawPropose;
 }
@@ -571,6 +593,7 @@ export function shouldStopAfterStackCatalog(messages: ProcessInputStepArgs["mess
     messagesNeedEntityInspect(messages) ||
     messagesNeedGetSearchBrief(messages) ||
     messagesNeedCompanyRead(messages) ||
+    messagesNeedPileStatus(messages) ||
     messagesNeedGetApplication(messages)
   ) {
     return false;
@@ -616,6 +639,7 @@ export function shouldStopAfterTodayLetter(messages: ProcessInputStepArgs["messa
   if (
     messagesNeedEntityInspect(messages) ||
     messagesNeedCompanyRead(messages) ||
+    messagesNeedPileStatus(messages) ||
     messagesNeedListStacks(messages) ||
     messagesNeedGetSearchBrief(messages) ||
     messagesNeedGetApplication(messages)
@@ -632,11 +656,88 @@ export function messagesNeedCompanyRead(messages: ProcessInputStepArgs["messages
     const parts = message.content?.parts ?? [];
     for (const raw of parts) {
       if (!raw || typeof raw !== "object") continue;
-      const name = mastraPartToolName(raw as Record<string, unknown>);
-      if (/searchApplications|search-applications|searchMail|search-mail/i.test(name)) return false;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (
+        /searchApplications|search-applications|searchMail|search-mail/i.test(name) &&
+        mastraPartHasSuccessfulToolResult(part)
+      ) {
+        return false;
+      }
     }
   }
   return true;
+}
+
+/**
+ * Need a successful listNewJobs this turn for:
+ * - pile yes/no status (speak count, never triage), or
+ * - filter/sort/file/track new-jobs asks (list first; triage processor follows).
+ * Without this, a spoken "Let me pull up your new jobs…" prelude is treated as
+ * a finished answer and the stream ends with zero tools.
+ */
+export function messagesNeedPileStatus(messages: ProcessInputStepArgs["messages"]): boolean {
+  const text = latestUserText(messages);
+  if (userTurnAsksGenerateApplyPackages(text) && !userTurnAsksNewJobsTriage(text)) return false;
+  if (!userTurnAsksPileStatusOnly(text) && !userTurnAsksNewJobsTriage(text)) return false;
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isListNewJobsToolName(name) && mastraPartHasSuccessfulToolResult(part)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/** Generate-package-for-tracked: need listOpenApplications before generating. */
+export function messagesNeedListOpenForApplyPackages(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  if (!userTurnAsksGenerateApplyPackages(latestUserText(messages))) return false;
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isListOpenApplicationsToolName(name) && mastraPartHasSuccessfulToolResult(part)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/** After open applications are listed, force one generateApplyPackage (Approve card). */
+export function messagesNeedGenerateApplyPackage(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  if (!userTurnAsksGenerateApplyPackages(latestUserText(messages))) return false;
+  if (messagesNeedListOpenForApplyPackages(messages)) return false;
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isGenerateApplyPackageToolName(name)) return false;
+    }
+  }
+  return true;
+}
+
+function hubListNewJobsForceFeedback(messages: ProcessInputStepArgs["messages"]): string {
+  return userTurnAsksNewJobsTriage(latestUserText(messages))
+    ? HUB_NEW_JOBS_MUST_LIST_FEEDBACK
+    : HUB_PILE_MUST_LIST_FEEDBACK;
 }
 
 export function messagesNeedEntityInspect(messages: ProcessInputStepArgs["messages"]): boolean {
@@ -656,6 +757,25 @@ export function messagesNeedEntityInspect(messages: ProcessInputStepArgs["messag
     }
   }
   return true;
+}
+
+/** Successful list/search/get this turn — enough to call openEntityInspect with an id. */
+export function messagesHaveInspectLookupThisTurn(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isHubInspectLookupToolName(name) && mastraPartHasSuccessfulToolResult(part)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /** Brief already loaded this turn — next step must be a spoken answer, not another tool. */
@@ -827,6 +947,61 @@ export class HubCompanyStatusProcessor implements Processor {
   }
 }
 
+export class HubPileStatusProcessor implements Processor {
+  readonly id = "hub-pile-status";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedPileStatus(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: hubListNewJobsForceFeedback(messages),
+      attributes: { reason: "pile-must-list" }
+    });
+    const activeTools = hubForcedReadActiveTools(tools, messages);
+    return {
+      toolChoice: "required" as const,
+      ...(activeTools.length > 0 ? { activeTools } : {})
+    };
+  }
+}
+
+export class HubApplyPackageProcessor implements Processor {
+  readonly id = "hub-apply-package";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    const names = tools ? Object.keys(tools) : [];
+
+    if (messagesNeedListOpenForApplyPackages(messages)) {
+      await sendSignal?.({
+        type: "reactive",
+        contents: HUB_APPLY_PACKAGES_MUST_LIST_FEEDBACK,
+        attributes: { reason: "apply-packages-must-list" }
+      });
+      const activeTools = filterHubApplyPackageActiveTools(names, "list");
+      return {
+        toolChoice: "required" as const,
+        ...(activeTools.length > 0 ? { activeTools } : {})
+      };
+    }
+
+    if (messagesNeedGenerateApplyPackage(messages)) {
+      await sendSignal?.({
+        type: "reactive",
+        contents: HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK,
+        attributes: { reason: "apply-packages-must-generate" }
+      });
+      const activeTools = filterHubApplyPackageActiveTools(names, "generate");
+      return {
+        toolChoice: "required" as const,
+        ...(activeTools.length > 0 ? { activeTools } : {})
+      };
+    }
+  }
+}
+
 export class HubInspectProcessor implements Processor {
   readonly id = "hub-inspect";
 
@@ -834,13 +1009,20 @@ export class HubInspectProcessor implements Processor {
     if (mastraMessagesHavePendingClientHitl(messages)) return;
     if (!messagesNeedEntityInspect(messages)) return;
 
+    const lookupDone = messagesHaveInspectLookupThisTurn(messages);
+    const jobListing = userTurnAsksJobListingInspect(latestUserText(messages));
     await sendSignal?.({
       type: "reactive",
-      contents: HUB_INSPECT_MUST_OPEN_FEEDBACK,
-      attributes: { reason: "inspect-must-open" }
+      contents: hubInspectForceFeedback({ lookupDone, jobListing }),
+      attributes: {
+        reason: lookupDone ? "inspect-must-call-open" : "inspect-must-open"
+      }
     });
     const activeTools = hubForcedReadActiveTools(tools, messages);
-    return activeTools.length > 0 ? { activeTools } : {};
+    return {
+      toolChoice: "required" as const,
+      ...(activeTools.length > 0 ? { activeTools } : {})
+    };
   }
 }
 
@@ -892,12 +1074,19 @@ export class HubSearchBriefGatherProcessor implements Processor {
     if (mastraMessagesHavePendingClientHitl(messages)) return;
     if (!messagesNeedGetSearchBrief(messages)) return;
 
+    const activeTools = hubForcedReadActiveTools(tools, messages);
+    // Client HITL is deferred while server forced reads are still in the union.
+    // Do not nag "Call getSearchBrief" when it is not actually allowed this step.
+    const briefAllowed = activeTools.some((name) => isGetSearchBriefToolName(name));
+    if (!briefAllowed) {
+      return activeTools.length > 0 ? { activeTools } : {};
+    }
+
     await sendSignal?.({
       type: "reactive",
       contents: HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
       attributes: { reason: "search-brief-must-load" }
     });
-    const activeTools = hubForcedReadActiveTools(tools, messages);
     return {
       toolChoice: "required" as const,
       ...(activeTools.length > 0 ? { activeTools } : {})
@@ -1017,6 +1206,8 @@ export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_S
     new HubSearchBriefGatherProcessor(),
     new HubApplicationMentionProcessor(),
     new HubCompanyStatusProcessor(),
+    new HubPileStatusProcessor(),
+    new HubApplyPackageProcessor(),
     new HubInspectProcessor(),
     new HubJobUrlImportProcessor(),
     new HubNewJobsTriageProcessor(),
@@ -1085,6 +1276,18 @@ export function hubSupervisorOnIterationComplete(ctx: HubSupervisorIterationCtx)
   // iteration is 1-based. Allow one force-feedback retry, then stop so
   // text-only "pulling it now" history contamination cannot maxSteps-spam.
   const pastFirstForceRetry = ctx.iteration >= 2;
+  if (messagesNeedListOpenForApplyPackages(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_APPLY_PACKAGES_MUST_LIST_FEEDBACK };
+  }
+  if (messagesNeedGenerateApplyPackage(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK };
+  }
   if (messagesNeedDailyBriefFacts(ctx.messages)) {
     if (textOnly && pastFirstForceRetry) {
       return { continue: false };
@@ -1107,13 +1310,24 @@ export function hubSupervisorOnIterationComplete(ctx: HubSupervisorIterationCtx)
     if (textOnly && pastFirstForceRetry) {
       return { continue: false };
     }
-    return { continue: true, feedback: HUB_INSPECT_MUST_OPEN_FEEDBACK };
+    const lookupDone = messagesHaveInspectLookupThisTurn(ctx.messages);
+    const jobListing = userTurnAsksJobListingInspect(latestUserText(ctx.messages));
+    return {
+      continue: true,
+      feedback: hubInspectForceFeedback({ lookupDone, jobListing })
+    };
   }
   if (messagesNeedCompanyRead(ctx.messages)) {
     if (textOnly && pastFirstForceRetry) {
       return { continue: false };
     }
     return { continue: true, feedback: HUB_COMPANY_MUST_READ_FEEDBACK };
+  }
+  if (messagesNeedPileStatus(ctx.messages)) {
+    if (textOnly && pastFirstForceRetry) {
+      return { continue: false };
+    }
+    return { continue: true, feedback: hubListNewJobsForceFeedback(ctx.messages) };
   }
   if (messagesNeedGetApplication(ctx.messages)) {
     if (textOnly && pastFirstForceRetry) {

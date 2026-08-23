@@ -37,4 +37,14 @@ describe("side-panel-control", () => {
     expect(closed).toEqual(["c"]);
     offClose();
   });
+
+  it("force dismiss skips dirty-form guards", () => {
+    const closed: string[] = [];
+    const offClose = subscribeSidePanelClose(() => closed.push("c"));
+    const offGuard = registerSidePanelDismissGuard(() => true);
+    expect(dismissDashboardSidePanel({ force: true })).toBe(false);
+    expect(closed).toEqual(["c"]);
+    offGuard();
+    offClose();
+  });
 });

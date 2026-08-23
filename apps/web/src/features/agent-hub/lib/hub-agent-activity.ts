@@ -144,7 +144,9 @@ export function humanizeHubToolName(name: string, input?: unknown): string {
         ? (input as { kind?: string }).kind
         : undefined;
     return openEntityInspectActivityLabel(
-      kind === "experience" || kind === "stack" || kind === "project" ? kind : "project"
+      kind === "experience" || kind === "stack" || kind === "project" || kind === "application"
+        ? kind
+        : "project"
     );
   }
   if (/openEntityForm|open-entity-form/i.test(bare)) {

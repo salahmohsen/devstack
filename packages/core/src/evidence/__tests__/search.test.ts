@@ -28,6 +28,14 @@ describe("rankEvidenceHits", () => {
     expect(rankEvidenceHits({ query: "ACME", rows })).toEqual([]);
   });
 
+  it("matches curly apostrophes in org names against ASCII queries", () => {
+    const rows = [row("ment", "Senior Frontend Engineer @ Ment\u2019ech", "workplace")];
+    expect(rankEvidenceHits({ query: "Ment'ech", rows }).map((hit) => hit.id)).toEqual(["ment"]);
+    expect(rankEvidenceHits({ query: "Ment\u2019ech", rows }).map((hit) => hit.id)).toEqual([
+      "ment"
+    ]);
+  });
+
   it("caps results at 8 by default", () => {
     const rows = Array.from({ length: 12 }, (_, index) =>
       row(`p${String(index).padStart(2, "0")}`, `Dev Hub ${index}`)

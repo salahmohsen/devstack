@@ -125,7 +125,7 @@ export function HubElementsComposer({
     formatter: unstable_defaultDirectiveFormatter
   });
 
-  const inputPlaceholder = disabled ? placeholder : `${placeholder} · / commands · @ tools`;
+  const inputPlaceholder = placeholder;
 
   return (
     <ComposerPrimitive.Unstable_TriggerPopoverRoot>

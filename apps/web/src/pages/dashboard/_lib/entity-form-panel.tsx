@@ -1,18 +1,9 @@
 "use client";
 
-import { FilePenLineIcon } from "lucide-react";
+import { FilePenLineIcon, TriangleAlertIcon } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useEffectEvent, useState } from "react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@tsu-stack/ui/components/alert-dialog";
+import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import { Sheet, SheetDescription, SheetPopup, SheetTitle } from "@tsu-stack/ui/components/sheet";
 
 import { setCommandEnabled } from "@/shared/lib/commands";
@@ -116,6 +107,11 @@ export function EntityFormSheet({
     });
   }, [open, requestClose, useSheet]);
 
+  // Closing the form must also dismiss a pending dirty confirm (e.g. host stole the panel).
+  useEffect(() => {
+    if (!open) setShowAlert(false);
+  }, [open]);
+
   const chrome = (
     <ItemInfoPanel
       title={title}
@@ -137,20 +133,17 @@ export function EntityFormSheet({
   );
 
   const dirtyAlert = (
-    <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
-          <AlertDialogDescription>
-            You have unsaved changes. Are you sure you want to discard them?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Keep editing</AlertDialogCancel>
-          <AlertDialogAction onClick={confirmDiscard}>Discard</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmDialog
+      open={showAlert}
+      onOpenChange={setShowAlert}
+      icon={<TriangleAlertIcon className="size-4" strokeWidth={1.75} />}
+      title="Discard edits?"
+      description="Changes on this form will be lost."
+      cancelLabel="Keep editing"
+      confirmLabel="Discard edits"
+      confirmVariant="destructive"
+      onConfirm={confirmDiscard}
+    />
   );
 
   if (!open && !useSheet) return dirtyAlert;

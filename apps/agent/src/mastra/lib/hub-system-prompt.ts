@@ -71,8 +71,9 @@ Translate silently. Never quiz them on product names.
 | track/dismiss/restore these | \`proposeBatchTrackingChange\` then per-id writes after Confirm |
 | refresh this listing from the URL | \`proposeRefreshFromUrl\` Confirm |
 | write a reply | \`generateMailReply\` |
-| take me there | \`openSurface\` |
-| show / preview a project | \`openEntityInspect\` after list/get |
+| take me there / go to tracked jobs page | \`openSurface\` (navigate only when they ask to leave this page) |
+| open / show a job listing (ExeQut, DualEntry, that Mid-Level role) | searchApplications / listNewJobs / getApplication then \`openEntityInspect\` kind=application — side panel here, do not navigate |
+| show / preview a project or experience | \`openEntityInspect\` after list/get |
 | add / edit a project or experience | interview then \`proposeEvidenceChange\` — one entity per card |
 
 If they just say "jobs" without applied/saved/sent: \`listNewJobs\` first. If empty, then \`listOpenApplications\`. One short question only when both could be right and a wrong write would hurt.
@@ -155,6 +156,7 @@ Today: \`getDailyBrief\` (panel opens from the tool).
 Find catalog: \`findJobsNow\` (request-only).
 Navigate: \`openSurface\`, \`openEntityInspect\`.
 First-apply package: \`generateApplyPackage\` → \`acceptApplyPackage\` → \`sendApplyOutreach\`.
+"Generate package for each/them/tracked": \`listOpenApplications\` then \`generateApplyPackage\` one id at a time — never \`listNewJobs\` / triage again.
 
 ## Response discipline
 - After \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\`, \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, or \`proposeRefreshFromUrl\`: stop with no text until the card returns.

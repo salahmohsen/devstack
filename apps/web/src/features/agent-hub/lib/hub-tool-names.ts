@@ -244,6 +244,8 @@ export const HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES = new Set([
 
 export type OpenEntityFormKind = "experience" | "project" | "stack";
 
+export type OpenEntityInspectKind = OpenEntityFormKind | "application";
+
 export type OpenEntityFormInput = {
   kind: OpenEntityFormKind;
   id: string | null;
@@ -251,13 +253,13 @@ export type OpenEntityFormInput = {
 };
 
 export type OpenEntityInspectInput = {
-  kind: OpenEntityFormKind;
+  kind: OpenEntityInspectKind;
   id: string;
 };
 
 export type OpenEntityInspectOutput = {
   ok: boolean;
-  kind: OpenEntityFormKind;
+  kind: OpenEntityInspectKind;
   id?: string;
   opened: boolean;
 };
@@ -440,7 +442,8 @@ export function openEntityFormActivityLabel(kind: OpenEntityFormKind): string {
   return "Opening experience form";
 }
 
-export function openEntityInspectActivityLabel(kind: OpenEntityFormKind): string {
+export function openEntityInspectActivityLabel(kind: OpenEntityInspectKind): string {
+  if (kind === "application") return "Opening job";
   if (kind === "project") return "Opening project";
   if (kind === "stack") return "Opening stack";
   return "Opening experience";
@@ -459,7 +462,14 @@ export function parseOpenEntityFormInput(input: unknown): OpenEntityFormInput | 
 export function parseOpenEntityInspectInput(input: unknown): OpenEntityInspectInput | null {
   if (!input || typeof input !== "object" || Array.isArray(input)) return null;
   const o = input as { kind?: unknown; id?: unknown };
-  if (o.kind !== "experience" && o.kind !== "project" && o.kind !== "stack") return null;
+  if (
+    o.kind !== "experience" &&
+    o.kind !== "project" &&
+    o.kind !== "stack" &&
+    o.kind !== "application"
+  ) {
+    return null;
+  }
   const id = typeof o.id === "string" ? o.id.trim() : "";
   if (!id) return null;
   return { kind: o.kind, id };
@@ -469,7 +479,14 @@ export function parseOpenEntityInspectOutput(output: unknown): OpenEntityInspect
   if (!output || typeof output !== "object" || Array.isArray(output)) return null;
   const o = output as { ok?: unknown; kind?: unknown; id?: unknown; opened?: unknown };
   if (typeof o.opened !== "boolean") return null;
-  if (o.kind !== "experience" && o.kind !== "project" && o.kind !== "stack") return null;
+  if (
+    o.kind !== "experience" &&
+    o.kind !== "project" &&
+    o.kind !== "stack" &&
+    o.kind !== "application"
+  ) {
+    return null;
+  }
   return {
     ok: o.ok !== false,
     kind: o.kind,

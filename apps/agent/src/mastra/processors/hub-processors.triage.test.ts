@@ -7,6 +7,7 @@ import {
   messagesNeedDailyBriefFacts,
   messagesNeedDailyBriefOpen,
   messagesNeedEntityInspect,
+  messagesHaveInspectLookupThisTurn,
   messagesNeedListStacks,
   messagesNeedGetSearchBrief,
   shouldStopAfterStackCatalog,
@@ -46,6 +47,25 @@ describe("messagesNeedProposeTriage", () => {
         ])
       ] as never)
     ).toBe(true);
+  });
+
+  it("is false when generate-package-for-tracked even if listNewJobs returned rows", () => {
+    expect(
+      messagesNeedProposeTriage([
+        {
+          role: "user",
+          content: { parts: [{ type: "text", text: "start generating package for each of them" }] }
+        },
+        assistantWithParts([
+          {
+            type: "tool-list-new-jobs",
+            toolName: "listNewJobs",
+            state: "output-available",
+            output: { jobs: [{ id: "j1", title: "Eng", companyName: "Acme" }] }
+          }
+        ])
+      ] as never)
+    ).toBe(false);
   });
 
   it("is false after propose-new-jobs-triage is called", () => {
@@ -367,6 +387,27 @@ describe("messagesNeedDailyBrief", () => {
         ])
       ] as never)
     ).toBe(false);
+  });
+
+  it("keeps needing inspect after searchApplications until openEntityInspect", () => {
+    const afterSearch = [
+      {
+        role: "user",
+        content: {
+          parts: [{ type: "text", text: "open the ExeQut Front-End Software Developer listing" }]
+        }
+      },
+      assistantWithParts([
+        {
+          type: "tool-search-applications",
+          toolName: "searchApplications",
+          state: "output-available",
+          output: { items: [{ id: "app-exequt", title: "Front-End Software Developer" }] }
+        }
+      ])
+    ] as never;
+    expect(messagesNeedEntityInspect(afterSearch)).toBe(true);
+    expect(messagesHaveInspectLookupThisTurn(afterSearch)).toBe(true);
   });
 
   it("registers hub-today before job-url import", () => {

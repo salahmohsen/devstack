@@ -14,21 +14,33 @@ export function useDashboardApplyPackage() {
   const reviewApplyKit = prefs.data?.reviewApplyKit ?? true;
   const generateMutation = useGenerateApplyPackageMutation();
   const acceptMutation = useAcceptApplyPackageMutation();
-  const { openPackageSheet } = useApplicationStore();
-  const pending = generateMutation.isPending || acceptMutation.isPending;
+  const { openPackageSheet, applyPackageInFlightIds, markApplyPackageInFlight } =
+    useApplicationStore();
+
+  function isPendingFor(applicationId: string): boolean {
+    return Boolean(applyPackageInFlightIds[applicationId]);
+  }
 
   function runGenerate(applicationId: string, onGenerated?: () => void) {
+    markApplyPackageInFlight(applicationId, true);
     generateMutation.mutate(
       { applicationId },
       {
         onSuccess: (data) => {
           onGenerated?.();
           if (reviewApplyKit) {
+            markApplyPackageInFlight(applicationId, false);
             openPackageSheet(data.id);
             return;
           }
-          acceptMutation.mutate({ applicationId: data.id });
-        }
+          acceptMutation.mutate(
+            { applicationId: data.id },
+            {
+              onSettled: () => markApplyPackageInFlight(applicationId, false)
+            }
+          );
+        },
+        onError: () => markApplyPackageInFlight(applicationId, false)
       }
     );
   }
@@ -38,7 +50,13 @@ export function useDashboardApplyPackage() {
       openPackageSheet(applicationId);
       return;
     }
-    acceptMutation.mutate({ applicationId });
+    markApplyPackageInFlight(applicationId, true);
+    acceptMutation.mutate(
+      { applicationId },
+      {
+        onSettled: () => markApplyPackageInFlight(applicationId, false)
+      }
+    );
   }
 
   return {
@@ -47,6 +65,6 @@ export function useDashboardApplyPackage() {
     runReview,
     generateMutation,
     acceptMutation,
-    pending
+    isPendingFor
   };
 }

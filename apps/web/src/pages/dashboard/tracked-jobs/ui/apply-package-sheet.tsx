@@ -51,6 +51,8 @@ import {
   useGenerateApplyPackageMutation
 } from "@/features/applications";
 
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+
 type ApplyPackageSheetProps = {
   open: boolean;
   application: ApplicationOutput | null;
@@ -355,8 +357,9 @@ function ApplyPackageSheetForm({
                             description: live.description
                           })}
                           snapshot={experienceSnapshotMarkdown({
-                            title: exp.title,
-                            companyName: exp.companyName,
+                            // Same identity as master so only rewritten bullets show as edits.
+                            title: live.title,
+                            companyName: live.organization,
                             rewrittenBullets: exp.rewrittenBullets
                           })}
                         />
@@ -424,7 +427,8 @@ function ApplyPackageSheetForm({
                             description: live.description
                           })}
                           snapshot={projectSnapshotMarkdown({
-                            name: project.name,
+                            // Same identity as master so only rewritten body shows as edits.
+                            name: live.title,
                             rewrittenSummary: project.rewrittenSummary,
                             rewrittenBullets: project.rewrittenBullets
                           })}
@@ -594,6 +598,7 @@ function ApplyPackageSheetForm({
 export function ApplyPackageSheet({ open, application, onOpenChange }: ApplyPackageSheetProps) {
   const acceptMutation = useAcceptApplyPackageMutation();
   const generateMutation = useGenerateApplyPackageMutation();
+  const { markApplyPackageInFlight } = useApplicationStore();
 
   const serverDraft = useMemo(
     () => (application ? parseApplyPackageDraft(application.applyPackageDraft) : null),
@@ -606,9 +611,11 @@ export function ApplyPackageSheet({ open, application, onOpenChange }: ApplyPack
 
   function handleAccept(draft: ApplyPackageDraft) {
     if (!application) return;
+    const applicationId = application.id;
+    markApplyPackageInFlight(applicationId, true);
     acceptMutation.mutate(
       {
-        applicationId: application.id,
+        applicationId,
         draft: {
           ...draft,
           proposedRecruiterEmail: draft.proposedRecruiterEmail?.trim()
@@ -617,14 +624,22 @@ export function ApplyPackageSheet({ open, application, onOpenChange }: ApplyPack
         }
       },
       {
-        onSuccess: () => onOpenChange(false)
+        onSuccess: () => onOpenChange(false),
+        onSettled: () => markApplyPackageInFlight(applicationId, false)
       }
     );
   }
 
   function handleRegenerate() {
     if (!application) return;
-    generateMutation.mutate({ applicationId: application.id });
+    const applicationId = application.id;
+    markApplyPackageInFlight(applicationId, true);
+    generateMutation.mutate(
+      { applicationId },
+      {
+        onSettled: () => markApplyPackageInFlight(applicationId, false)
+      }
+    );
   }
 
   return (

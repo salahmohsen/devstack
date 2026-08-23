@@ -67,7 +67,7 @@ export function AgentHubThread({ variant = "home" }: { variant?: "home" | "float
   } = useHubChat();
 
   React.useEffect(() => {
-    ensureHistory();
+    void ensureHistory();
   }, [ensureHistory]);
 
   const clearedTodayAskRef = React.useRef<string | null>(null);

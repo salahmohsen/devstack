@@ -4,6 +4,7 @@ import { type ApplicationOutput } from "@tsu-stack/core";
 
 import { expandDashboardSidePanel, subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
 
+import { releaseEntityPanelHosts } from "@/features/agent-hub";
 import { type ApplicationMaterialKind } from "@/features/applications";
 
 import { peekSidePanelFrame } from "@/pages/dashboard/_lib/side-panel-stack";
@@ -21,6 +22,8 @@ type ApplicationUIState = {
   viewItem: ApplicationOutput | null;
   selectedIds: string[];
   stageInFlightIds: Record<string, true>;
+  /** Prepare / accept apply-package in flight (keyed by application id). */
+  applyPackageInFlightIds: Record<string, true>;
   /** Apply package draft review sheet (application id). */
   packageSheetAppId: string | null;
   /** Send outreach confirm dialog (application id). */
@@ -54,6 +57,7 @@ type ApplicationUIActions = {
   selectAll: (ids: string[]) => void;
   clearSelection: () => void;
   markStageInFlight: (id: string, inFlight: boolean) => void;
+  markApplyPackageInFlight: (id: string, inFlight: boolean) => void;
   openPackageSheet: (applicationId: string) => void;
   closePackageSheet: () => void;
   openSendOutreach: (applicationId: string) => void;
@@ -73,6 +77,7 @@ let state: ApplicationUIState = {
   viewItem: null,
   selectedIds: [],
   stageInFlightIds: {},
+  applyPackageInFlightIds: {},
   packageSheetAppId: null,
   sendOutreachAppId: null,
   deleteConfirmAppId: null,
@@ -101,10 +106,12 @@ const actions: ApplicationUIActions = {
       setState({ viewItem: null });
       return;
     }
+    releaseEntityPanelHosts();
     expandDashboardSidePanel();
     setState({ viewItem: item });
   },
   showView: (item) => {
+    releaseEntityPanelHosts();
     expandDashboardSidePanel();
     setState({ viewItem: item });
   },
@@ -122,6 +129,12 @@ const actions: ApplicationUIActions = {
     if (inFlight) next[id] = true;
     else delete next[id];
     setState({ stageInFlightIds: next });
+  },
+  markApplyPackageInFlight: (id, inFlight) => {
+    const next = { ...state.applyPackageInFlightIds };
+    if (inFlight) next[id] = true;
+    else delete next[id];
+    setState({ applyPackageInFlightIds: next });
   },
   openPackageSheet: (applicationId) => setState({ packageSheetAppId: applicationId }),
   closePackageSheet: () => setState({ packageSheetAppId: null }),

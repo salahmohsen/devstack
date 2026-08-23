@@ -58,13 +58,14 @@ export function ApplicationPrimaryActionButton({
 }: ApplicationPrimaryActionButtonProps) {
   const primary = getApplicationPrimaryAction(app);
   const { openEdit, openSendOutreach } = useApplicationStore();
-  const { runGenerate, runReview, pending } = useDashboardApplyPackage();
+  const { runGenerate, runReview, isPendingFor } = useDashboardApplyPackage();
   const open = isApplicationOpen(app.outcome);
 
   if (!primary) return null;
 
   const Icon = PRIMARY_ACTION_ICONS[primary.kind];
-  const generating = pending && (primary.kind === "prepare" || primary.kind === "review");
+  const generating =
+    isPendingFor(app.id) && (primary.kind === "prepare" || primary.kind === "review");
   const disabled = !open || generating;
   const resolvedVariant =
     buttonVariant ?? (primary.kind === "open-listing" && !grouped ? "outline" : "default");

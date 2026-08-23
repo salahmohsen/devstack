@@ -711,13 +711,14 @@ const openEntityFormToolEntry = {
 };
 
 const OpenEntityInspectParametersSchema = z.object({
-  kind: z.enum(["experience", "project", "stack"]),
+  kind: z.enum(["experience", "project", "stack", "application"]),
   id: z.string().min(1)
 });
 
 const openEntityInspectToolEntry = {
   type: "human" as const,
-  description: "Open the original experience, project, or stack inspect view on the current route.",
+  description:
+    "Open the original inspect view on the current dashboard page (do not navigate). kind=application for a New/Tracked job; experience|project|stack for evidence.",
   parameters: OpenEntityInspectParametersSchema,
   render: OpenEntityInspectToolUI
 };

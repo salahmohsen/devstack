@@ -268,11 +268,11 @@ export function ApplyPackageMenuItems({
 }: ApplyPackageMenuItemsProps) {
   const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
   const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
-  const { runGenerate, runReview, pending } = useDashboardApplyPackage();
+  const { runGenerate, runReview, isPendingFor } = useDashboardApplyPackage();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app);
   const open = isApplicationOpen(app.outcome);
-  const generating = pending;
+  const generating = isPendingFor(app.id);
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
 
@@ -401,11 +401,11 @@ type ApplyPackagePanelActionsProps = {
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
   const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
-  const { runGenerate, runReview, pending } = useDashboardApplyPackage();
+  const { runGenerate, runReview, isPendingFor } = useDashboardApplyPackage();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app);
   const open = isApplicationOpen(app.outcome);
-  const generating = pending;
+  const generating = isPendingFor(app.id);
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
 
