@@ -17,6 +17,15 @@
 
 ---
 
+## 2026-08-23 — Apply package: LLM null optionals + humanize dashes at assemble
+
+- **Trigger:** Prepare package harness; DeepSeek letters step crashed; user asked to remove double dashes / AI dash voice from package prose
+- **Finding:** Structured-output schemas must treat optional LLM strings as `.nullish()` (or union null) and coerce to `undefined`. Models often emit `"atsVendor": null` / `"notes": null`; `z.string().optional()` rejects null and aborts the whole generate after expensive rewrite steps
+- **Finding:** Prompt bans alone are not enough for em/en dashes and spaced `--`. Sanitize at **assemble** (`humanizeApplyPackageProse` / bullets) so PDFs stay clean even when the model ignores the skill
+- **Finding:** Review-off Prepare keeps one spinner across generate (~60s DeepSeek) then PDF accept. Split busy labels (`Drafting…` / `Building PDFs…`), parallelize experience+project rewrites and PDF renders, and do not `await` list invalidation before chaining accept
+- **User preference:** Humanizer rules for package copy (no em/en/double dashes); live browser harness once `pnpm_dev` is up and signed in
+- **Evidence class:** Agent stream `STRUCTURED_OUTPUT_SCHEMA_VALIDATION_FAILED` atsVendor null; core unit humanize + letters null coerce; live Prepare UI pending stack up
+
 ## 2026-08-23 — Batch package Confirm must not await generates on the card
 
 - **Trigger:** “Confirm package for 10 tracked jobs” froze on Confirm while `applications.generateApplyPackage` ran ~50s per job; user wanted immediate submit + AI island per-job progress

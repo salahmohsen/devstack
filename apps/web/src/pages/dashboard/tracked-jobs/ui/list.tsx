@@ -33,6 +33,7 @@ import {
 import { ItemsEmpty, ListSkeleton } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useDashboardApplyPackage } from "@/pages/dashboard/tracked-jobs/_lib/use-dashboard-apply-package";
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
@@ -107,6 +108,7 @@ export function ApplicationsList({
   isFetchingNextPage,
   hasNextPage
 }: ApplicationsListProps) {
+  const { reviewApplyKit } = useDashboardApplyPackage();
   const {
     selectedIds,
     toggleSelect,
@@ -238,7 +240,9 @@ export function ApplicationsList({
                   <ApplicationItemActions
                     app={app}
                     slots={applicationContextSlots}
-                    hidePrimaryKind={getApplicationPrimaryAction(app)?.kind ?? null}
+                    hidePrimaryKind={
+                      getApplicationPrimaryAction(app, { reviewApplyKit })?.kind ?? null
+                    }
                   />
                 </ContextMenuPopup>
               </ContextMenu>

@@ -15,8 +15,10 @@ export function useGenerateApplyPackageMutation() {
 
   return useMutation(
     orpcQueryClient.applications.generateApplyPackage.mutationOptions({
-      onSuccess: async (data) => {
-        // Seed list cache so package sheet opens with the new draft immediately.
+      onSuccess: (data) => {
+        // Seed list cache so package sheet / accept can proceed immediately.
+        // Do not await invalidation — Review-off chains accept next and waiting
+        // here added multi-second dead time after a ~60s LLM generate.
         queryClient.setQueryData<ApplicationListOutput>(applicationsQueryKeys.list(), (prev) => {
           if (!prev) return prev;
           return prev.map((row) => (row.id === data.id ? { ...row, ...data } : row));
@@ -25,7 +27,7 @@ export function useGenerateApplyPackageMutation() {
           if (!prev) return prev;
           return { ...prev, ...data };
         });
-        await Promise.all([
+        void Promise.all([
           invalidateApplicationsListQueries(queryClient),
           queryClient.invalidateQueries({
             queryKey: applicationsQueryKeys.get(data.id)

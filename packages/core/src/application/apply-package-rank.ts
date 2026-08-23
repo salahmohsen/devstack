@@ -161,7 +161,10 @@ export type ApplyPackagePdfIncludeResult = {
 
 /**
  * Review **on**: return the draft unchanged (human `include` flags win).
- * Review **off**: hide lowest-ranked whole items until a 1-page, then 2-page, char/bullet budget.
+ * Review **off**: keep every included item that fits a **two-page** char/bullet
+ * budget. Prefer one page when the full draft already fits; never shrink a
+ * normal portfolio down to one experience/project just to force a single page.
+ * Hide lowest-ranked whole items only when content exceeds the two-page budget.
  */
 export function resolveApplyPackagePdfDraft(input: {
   draft: ApplyPackageDraft;
@@ -176,6 +179,35 @@ export function resolveApplyPackagePdfDraft(input: {
       hiddenExperienceCount: 0,
       hiddenProjectCount: 0,
       pageBudget: null
+    };
+  }
+
+  const fullSize = includedBodySize(input.draft);
+  const fitsOnePage = !overBudget(
+    fullSize,
+    APPLY_PACKAGE_ONE_PAGE_CHAR_BUDGET,
+    APPLY_PACKAGE_ONE_PAGE_BULLET_BUDGET
+  );
+  if (fitsOnePage) {
+    return {
+      draft: input.draft,
+      hiddenExperienceCount: 0,
+      hiddenProjectCount: 0,
+      pageBudget: 1
+    };
+  }
+
+  const fitsTwoPages = !overBudget(
+    fullSize,
+    APPLY_PACKAGE_TWO_PAGE_CHAR_BUDGET,
+    APPLY_PACKAGE_TWO_PAGE_BULLET_BUDGET
+  );
+  if (fitsTwoPages) {
+    return {
+      draft: input.draft,
+      hiddenExperienceCount: 0,
+      hiddenProjectCount: 0,
+      pageBudget: 2
     };
   }
 
@@ -238,43 +270,22 @@ export function resolveApplyPackagePdfDraft(input: {
   };
 
   let working = input.draft;
-  let pageBudget: 1 | 2 = 1;
   while (
     overBudget(
       includedBodySize(working),
-      APPLY_PACKAGE_ONE_PAGE_CHAR_BUDGET,
-      APPLY_PACKAGE_ONE_PAGE_BULLET_BUDGET
+      APPLY_PACKAGE_TWO_PAGE_CHAR_BUDGET,
+      APPLY_PACKAGE_TWO_PAGE_BULLET_BUDGET
     )
   ) {
     if (!hideNext()) break;
     working = applyHides(input.draft);
   }
 
-  if (
-    overBudget(
-      includedBodySize(working),
-      APPLY_PACKAGE_ONE_PAGE_CHAR_BUDGET,
-      APPLY_PACKAGE_ONE_PAGE_BULLET_BUDGET
-    )
-  ) {
-    pageBudget = 2;
-    while (
-      overBudget(
-        includedBodySize(working),
-        APPLY_PACKAGE_TWO_PAGE_CHAR_BUDGET,
-        APPLY_PACKAGE_TWO_PAGE_BULLET_BUDGET
-      )
-    ) {
-      if (!hideNext()) break;
-      working = applyHides(input.draft);
-    }
-  }
-
   return {
     draft: working,
     hiddenExperienceCount: hiddenExperiences.size,
     hiddenProjectCount: hiddenProjects.size,
-    pageBudget: hiddenExperiences.size > 0 || hiddenProjects.size > 0 ? pageBudget : 1
+    pageBudget: 2
   };
 }
 

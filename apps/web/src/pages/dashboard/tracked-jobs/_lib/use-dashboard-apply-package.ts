@@ -1,12 +1,19 @@
 "use client";
 
+import { useCallback } from "react";
+
 import {
   useAcceptApplyPackageMutation,
   useGenerateApplyPackageMutation
 } from "@/features/applications";
 import { useGetJobPreferenceQuery } from "@/features/job-preference";
 
-import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import {
+  useApplicationStore,
+  type ApplyPackageBusyPhase
+} from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+
+export type { ApplyPackageBusyPhase };
 
 /** Dashboard generate/review: skip the sheet when Review apply kit is off. */
 export function useDashboardApplyPackage() {
@@ -14,50 +21,105 @@ export function useDashboardApplyPackage() {
   const reviewApplyKit = prefs.data?.reviewApplyKit ?? true;
   const generateMutation = useGenerateApplyPackageMutation();
   const acceptMutation = useAcceptApplyPackageMutation();
-  const { openPackageSheet, applyPackageInFlightIds, markApplyPackageInFlight } =
-    useApplicationStore();
+  const {
+    openPackageSheet,
+    applyPackageInFlightIds,
+    applyPackageBusyPhaseById,
+    markApplyPackageInFlight,
+    setApplyPackageBusyPhase
+  } = useApplicationStore();
 
-  function isPendingFor(applicationId: string): boolean {
-    return Boolean(applyPackageInFlightIds[applicationId]);
-  }
+  const isPendingFor = useCallback(
+    (applicationId: string) => Boolean(applyPackageInFlightIds[applicationId]),
+    [applyPackageInFlightIds]
+  );
 
-  function runGenerate(applicationId: string, onGenerated?: () => void) {
-    markApplyPackageInFlight(applicationId, true);
-    generateMutation.mutate(
-      { applicationId },
-      {
-        onSuccess: (data) => {
-          onGenerated?.();
-          if (reviewApplyKit) {
-            markApplyPackageInFlight(applicationId, false);
-            openPackageSheet(data.id);
-            return;
-          }
-          acceptMutation.mutate(
-            { applicationId: data.id },
-            {
-              onSettled: () => markApplyPackageInFlight(applicationId, false)
+  const busyPhaseFor = useCallback(
+    (applicationId: string): ApplyPackageBusyPhase | null =>
+      applyPackageBusyPhaseById[applicationId] ?? null,
+    [applyPackageBusyPhaseById]
+  );
+
+  const busyLabelFor = useCallback(
+    (applicationId: string): string | null => {
+      const phase = applyPackageBusyPhaseById[applicationId];
+      if (phase === "drafting") return "Drafting…";
+      if (phase === "building-pdfs") return "Building PDFs…";
+      if (applyPackageInFlightIds[applicationId]) return "Preparing…";
+      return null;
+    },
+    [applyPackageBusyPhaseById, applyPackageInFlightIds]
+  );
+
+  const runGenerate = useCallback(
+    (applicationId: string, onGenerated?: () => void) => {
+      markApplyPackageInFlight(applicationId, true);
+      setApplyPackageBusyPhase(applicationId, "drafting");
+      generateMutation.mutate(
+        { applicationId },
+        {
+          onSuccess: (data) => {
+            onGenerated?.();
+            if (reviewApplyKit) {
+              setApplyPackageBusyPhase(applicationId, null);
+              markApplyPackageInFlight(applicationId, false);
+              openPackageSheet(data.id);
+              return;
             }
-          );
-        },
-        onError: () => markApplyPackageInFlight(applicationId, false)
-      }
-    );
-  }
+            setApplyPackageBusyPhase(applicationId, "building-pdfs");
+            acceptMutation.mutate(
+              { applicationId: data.id },
+              {
+                onSettled: () => {
+                  setApplyPackageBusyPhase(applicationId, null);
+                  markApplyPackageInFlight(applicationId, false);
+                }
+              }
+            );
+          },
+          onError: () => {
+            setApplyPackageBusyPhase(applicationId, null);
+            markApplyPackageInFlight(applicationId, false);
+          }
+        }
+      );
+    },
+    [
+      acceptMutation,
+      generateMutation,
+      markApplyPackageInFlight,
+      openPackageSheet,
+      reviewApplyKit,
+      setApplyPackageBusyPhase
+    ]
+  );
 
-  function runReview(applicationId: string) {
-    if (reviewApplyKit) {
-      openPackageSheet(applicationId);
-      return;
-    }
-    markApplyPackageInFlight(applicationId, true);
-    acceptMutation.mutate(
-      { applicationId },
-      {
-        onSettled: () => markApplyPackageInFlight(applicationId, false)
+  const runReview = useCallback(
+    (applicationId: string) => {
+      if (reviewApplyKit) {
+        openPackageSheet(applicationId);
+        return;
       }
-    );
-  }
+      markApplyPackageInFlight(applicationId, true);
+      setApplyPackageBusyPhase(applicationId, "building-pdfs");
+      acceptMutation.mutate(
+        { applicationId },
+        {
+          onSettled: () => {
+            setApplyPackageBusyPhase(applicationId, null);
+            markApplyPackageInFlight(applicationId, false);
+          }
+        }
+      );
+    },
+    [
+      acceptMutation,
+      markApplyPackageInFlight,
+      openPackageSheet,
+      reviewApplyKit,
+      setApplyPackageBusyPhase
+    ]
+  );
 
   return {
     reviewApplyKit,
@@ -65,6 +127,8 @@ export function useDashboardApplyPackage() {
     runReview,
     generateMutation,
     acceptMutation,
-    isPendingFor
+    isPendingFor,
+    busyPhaseFor,
+    busyLabelFor
   };
 }

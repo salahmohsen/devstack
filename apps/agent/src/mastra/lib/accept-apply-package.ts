@@ -292,21 +292,23 @@ export async function acceptApplyPackage(input: {
     let resumeBytes: Uint8Array;
     let coverBytes: Uint8Array;
     try {
-      resumeBytes = await renderResumePdfBytes({
-        portfolio,
-        profile,
-        summary: userRow.summary ?? "",
-        professionalSummary: draft.professionalSummary,
-        headline: draft.headline?.trim() ? draft.headline : undefined
-      });
-      coverBytes = await renderCoverLetterPdfBytes({
-        candidateName: profile.name,
-        body: draft.coverLetterBody,
-        companyName: app.companyName,
-        roleTitle: app.title,
-        contacts: portfolio.contacts,
-        email: profile.email
-      });
+      [resumeBytes, coverBytes] = await Promise.all([
+        renderResumePdfBytes({
+          portfolio,
+          profile,
+          summary: userRow.summary ?? "",
+          professionalSummary: draft.professionalSummary,
+          headline: draft.headline?.trim() ? draft.headline : undefined
+        }),
+        renderCoverLetterPdfBytes({
+          candidateName: profile.name,
+          body: draft.coverLetterBody,
+          companyName: app.companyName,
+          roleTitle: app.title,
+          contacts: portfolio.contacts,
+          email: profile.email
+        })
+      ]);
     } catch (error) {
       return pdfFailure(error);
     }

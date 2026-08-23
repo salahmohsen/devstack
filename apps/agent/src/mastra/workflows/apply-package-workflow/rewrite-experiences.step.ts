@@ -64,12 +64,13 @@ Experiences to rewrite (JSON). Use each experienceId exactly as given:
 ${JSON.stringify(items, null, 2)}
 
 Rules:
-- Return one item per experienceId above — no extras, no omissions.
+- Return one item per experienceId above (no extras, no omissions).
 - rewrittenBullets: 2–5 impact-oriented bullets grounded only in the item description (+ job fit).
 - Do not rename company/organization or title.
 - Do not invent employers, metrics, tools, or achievements not in the source text.
+- Prose: no em dashes, en dashes, or spaced "--" asides. Use commas or periods. Avoid leverage/synergy/utilize/spearheaded/results-driven unless already in the source.
 - Return a single JSON object shaped as { "items": [ { "experienceId", "rewrittenBullets" }, ... ] }.
-- Never return a bare top-level array — always wrap rewrites under "items".`;
+- Never return a bare top-level array; always wrap rewrites under "items".`;
 }
 
 function assertChunkCoverage(

@@ -30,9 +30,10 @@ Phases (one per call):
 
 Rules:
 - Never invent employers, titles, projects, metrics, tools, or achievements.
-- Project analysis is private rewrite signal only — never print as "Analysis:".
+- Project analysis is private rewrite signal only; never print as "Analysis:".
 - Cover letter formal; outreach email short.
 - proposedRecruiterEmail only if a contact email appears in the job text; else null.
+- Prose: no em dashes, en dashes, or spaced "--" asides (use commas/periods). Avoid leverage/synergy/utilize/spearheaded/results-driven unless already in the source.
 - Use only experience/project/stack ids from the input for this phase.
 - Return structured JSON via the schema only.
 - No tools other than skill tools.`,

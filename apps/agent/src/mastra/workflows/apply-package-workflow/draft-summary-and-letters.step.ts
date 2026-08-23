@@ -87,8 +87,10 @@ Rules:
 - proposedRecruiterEmail: only if a plausible contact email appears in the job brief description; else null. Never invent emails.
 - notes: optional short reviewer notes (fit highlights, thin JD caveats). Not an ATS score.
 - Light tweaks only: reorder + mirror phrasing where true. No leverage/synergy/utilize/spearheaded/results-driven unless already in the seeker's text.
+- Prose: never use em dashes (—), en dashes (–), or spaced double hyphens (--). Prefer commas, periods, colons, or parentheses. Plain is/are/has voice.
 - Do not invent employers, titles, metrics, tools, or achievements.
 - Do not rename companies/roles/projects.
+- atsVendor: omit or use a string host guess; never null (use null only for proposedRecruiterEmail / professionalSummary when empty).
 - Return structured output only (professionalSummary, headline, coverLetterBody, outreachSubject, outreachBody, proposedRecruiterEmail, optional notes / jdBuckets / keywordDualForms / atsVendor).`;
 }
 

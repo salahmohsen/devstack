@@ -13,6 +13,9 @@ export type { ApplicationMaterialKind };
 
 type SheetMode = "create" | "edit";
 
+/** What Prepare is waiting on when Review-off chains generate → accept. */
+export type ApplyPackageBusyPhase = "drafting" | "building-pdfs";
+
 type ApplicationUIState = {
   sheetOpen: boolean;
   sheetMode: SheetMode;
@@ -24,6 +27,8 @@ type ApplicationUIState = {
   stageInFlightIds: Record<string, true>;
   /** Prepare / accept apply-package in flight (keyed by application id). */
   applyPackageInFlightIds: Record<string, true>;
+  /** Spinner copy phase while apply-package is in flight. */
+  applyPackageBusyPhaseById: Record<string, ApplyPackageBusyPhase>;
   /** Apply package draft review sheet (application id). */
   packageSheetAppId: string | null;
   /** Send outreach confirm dialog (application id). */
@@ -58,6 +63,7 @@ type ApplicationUIActions = {
   clearSelection: () => void;
   markStageInFlight: (id: string, inFlight: boolean) => void;
   markApplyPackageInFlight: (id: string, inFlight: boolean) => void;
+  setApplyPackageBusyPhase: (id: string, phase: ApplyPackageBusyPhase | null) => void;
   openPackageSheet: (applicationId: string) => void;
   closePackageSheet: () => void;
   openSendOutreach: (applicationId: string) => void;
@@ -78,6 +84,7 @@ let state: ApplicationUIState = {
   selectedIds: [],
   stageInFlightIds: {},
   applyPackageInFlightIds: {},
+  applyPackageBusyPhaseById: {},
   packageSheetAppId: null,
   sendOutreachAppId: null,
   deleteConfirmAppId: null,
@@ -135,6 +142,12 @@ const actions: ApplicationUIActions = {
     if (inFlight) next[id] = true;
     else delete next[id];
     setState({ applyPackageInFlightIds: next });
+  },
+  setApplyPackageBusyPhase: (id, phase) => {
+    const next = { ...state.applyPackageBusyPhaseById };
+    if (phase == null) delete next[id];
+    else next[id] = phase;
+    setState({ applyPackageBusyPhaseById: next });
   },
   openPackageSheet: (applicationId) => setState({ packageSheetAppId: applicationId }),
   closePackageSheet: () => setState({ packageSheetAppId: null }),

@@ -15,15 +15,37 @@ export function parseApplyPackageDraft(
 
 export type ApplyPackageEntryState = "none" | "draft" | "accepted";
 
+export type ApplyPackageEntryStateOptions = {
+  /**
+   * When false, never park on Review: orphan drafts and materials use the
+   * accepted kit CTAs (Prepare again + materials).
+   */
+  reviewApplyKit?: boolean;
+};
+
+function hasAcceptedMaterials(app: ApplicationOutput): boolean {
+  return [app.resumeId, app.coverLetterR2Key, app.coverLetterBody, app.outreachBody].some(Boolean);
+}
+
 /**
  * CTA state for Prepare / Review package / Materials.
- * Draft wins over accepted materials (in-progress regenerate draft).
+ * Draft wins over accepted materials when Review apply kit is on (in-progress regenerate).
+ * When Review is off, drafts never surface Review — materials/draft map to accepted CTAs.
  */
-export function getApplyPackageEntryState(app: ApplicationOutput): ApplyPackageEntryState {
-  if (parseApplyPackageDraft(app.applyPackageDraft)) return "draft";
-  if (app.resumeId || app.coverLetterR2Key || app.coverLetterBody || app.outreachBody) {
-    return "accepted";
+export function getApplyPackageEntryState(
+  app: ApplicationOutput,
+  options?: ApplyPackageEntryStateOptions
+): ApplyPackageEntryState {
+  const hasDraft = parseApplyPackageDraft(app.applyPackageDraft) != null;
+  const hasMaterials = hasAcceptedMaterials(app);
+
+  if (options?.reviewApplyKit === false) {
+    if (hasMaterials || hasDraft) return "accepted";
+    return "none";
   }
+
+  if (hasDraft) return "draft";
+  if (hasMaterials) return "accepted";
   return "none";
 }
 

@@ -5,7 +5,7 @@ description: >
   light snapshot tweaks of portfolio experiences/projects for the role,
   then draft professional summary + cover letter + recruiter outreach email.
   Structured draft only; multi-step (chunked rewrites then letters).
-version: 1.2.0
+version: 1.3.0
 tags:
   - application
   - resume
@@ -42,9 +42,11 @@ Generation is **multi-step**. Each call is one phase; follow the phase rules for
 - Keep facts. Numerals when the source already has a quantity.
 - Dual acronyms when both forms are in the JD ∩ portfolio (e.g. Amazon Web Services (AWS)).
 - Banned cluster unless already in the seeker’s text: leverage, synergy, utilize, spearheaded, results-driven, passionate, world-class, rockstar.
+- **Punctuation:** never use em dashes (—), en dashes (–), or spaced double hyphens (`--`) as asides. Prefer a comma, period, colon, or parentheses. Compound words like `end-to-end` are fine.
+- Prefer plain voice: is/are/has over "serves as" / "stands as" / "showcasing" filler.
 - Do not clone the JD. Do not dump every listing keyword.
 - `headline` is the **target role** line (fair title + optional years/scope). Do **not** rename past employers.
-- Snapshot only — never ask to write these bullets back onto master experience/project/stack rows.
+- Snapshot only: never ask to write these bullets back onto master experience/project/stack rows.
 - **No user-facing ATS score**, Jobscan percent, or trophy. Optional `atsVendor` is a host guess for notes only.
 
 ## PDF include flag

@@ -64,6 +64,7 @@ import {
 import { ItemsEmpty } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useDashboardApplyPackage } from "@/pages/dashboard/tracked-jobs/_lib/use-dashboard-apply-package";
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
@@ -93,6 +94,7 @@ function ApplicationCard({
   isOverlay?: boolean;
   disabled?: boolean;
 }) {
+  const { reviewApplyKit } = useDashboardApplyPackage();
   const { openView, viewItem, selectedIds, toggleSelect } = useApplicationStore();
   const batchSelectActive = isBatchSelectActive(selectedIds);
   const isBatchSelected = selectedIds.includes(app.id);
@@ -225,7 +227,7 @@ function ApplicationCard({
           <ApplicationItemActions
             app={app}
             slots={applicationContextSlots}
-            hidePrimaryKind={getApplicationPrimaryAction(app)?.kind ?? null}
+            hidePrimaryKind={getApplicationPrimaryAction(app, { reviewApplyKit })?.kind ?? null}
           />
         </ContextMenuPopup>
       </ContextMenu>

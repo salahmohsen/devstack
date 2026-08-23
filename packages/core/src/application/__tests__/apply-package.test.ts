@@ -203,6 +203,27 @@ describe("rewrite chunk schemas", () => {
     });
     expect(p.success).toBe(true);
   });
+
+  it("coerces null optional LLM fields (atsVendor, notes, headline) to undefined", () => {
+    const p = ApplyPackageSummaryAndLettersSchema.safeParse({
+      professionalSummary: "x",
+      coverLetterBody: "Dear...",
+      outreachSubject: "Re:",
+      outreachBody: "Hi",
+      proposedRecruiterEmail: null,
+      notes: null,
+      headline: null,
+      keywordDualForms: null,
+      jdBuckets: null,
+      atsVendor: null
+    });
+    expect(p.success).toBe(true);
+    expect(p.data?.atsVendor).toBeUndefined();
+    expect(p.data?.notes).toBeUndefined();
+    expect(p.data?.headline).toBeUndefined();
+    expect(p.data?.keywordDualForms).toBeUndefined();
+    expect(p.data?.jdBuckets).toBeUndefined();
+  });
 });
 
 describe("APPLY_PACKAGE_REWRITE_CHUNK_SIZE", () => {
