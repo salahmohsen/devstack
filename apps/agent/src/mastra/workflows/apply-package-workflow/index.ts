@@ -7,6 +7,10 @@ import { draftSummaryAndLetters } from "#@/mastra/workflows/apply-package-workfl
 import { prepareContext } from "#@/mastra/workflows/apply-package-workflow/prepare.step";
 import { rewriteExperiences } from "#@/mastra/workflows/apply-package-workflow/rewrite-experiences.step";
 import { rewriteProjects } from "#@/mastra/workflows/apply-package-workflow/rewrite-projects.step";
+import {
+  ApplyPackageWorkflowStateSchema,
+  type ApplyPackageWorkflowState
+} from "#@/mastra/workflows/apply-package-workflow/workflow-state";
 
 export const applyPackageWorkflow = createWorkflow({
   id: "apply-package-workflow",
@@ -14,8 +18,18 @@ export const applyPackageWorkflow = createWorkflow({
   outputSchema: ApplyPackageDraftSchema
 })
   .then(prepareContext)
-  .then(rewriteExperiences)
-  .then(rewriteProjects)
+  // Experience and project rewrites only need the portfolio snapshot + job brief.
+  .parallel([rewriteExperiences, rewriteProjects])
+  .map(async ({ inputData }) => {
+    const experiencesState = inputData["rewrite-experiences"] as ApplyPackageWorkflowState;
+    const projectsState = inputData["rewrite-projects"] as ApplyPackageWorkflowState;
+    const merged: ApplyPackageWorkflowState = {
+      ...experiencesState,
+      experienceRewrites: experiencesState.experienceRewrites,
+      projectRewrites: projectsState.projectRewrites
+    };
+    return ApplyPackageWorkflowStateSchema.parse(merged);
+  })
   .then(draftSummaryAndLetters)
   .then(assembleDraft);
 

@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
+import {
+  humanizeApplyPackageBullets,
+  humanizeApplyPackageProse
+} from "#@/application/humanize-apply-package-prose";
 import { ApplicationApplyMethodSchema, ApplicationSourceSchema } from "#@/application/types";
 
 /** Job descriptions shorter than this (after trim) trigger listing page fetch. */
@@ -293,6 +297,27 @@ export const ApplyPackageProjectRewriteChunkSchema = z.preprocess(
 );
 export type ApplyPackageProjectRewriteChunk = z.infer<typeof ApplyPackageProjectRewriteChunkSchema>;
 
+/**
+ * Models often emit `null` for optional JSON fields. Preprocess keeps the key
+ * optional in the inferred type (unlike `.optional().transform(...)`).
+ */
+const optionalLlmString = z.preprocess((value) => {
+  if (value == null) return undefined;
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}, z.string().optional());
+
+const optionalJdBuckets = z.preprocess(
+  (value) => value ?? undefined,
+  ApplyPackageJdBucketsSchema.optional()
+);
+
+const optionalKeywordDualForms = z.preprocess(
+  (value) => value ?? undefined,
+  z.array(z.string()).optional()
+);
+
 /** Intermediate LLM output for summary + cover letter + outreach. */
 export const ApplyPackageSummaryAndLettersSchema = z.object({
   professionalSummary: z
@@ -305,22 +330,20 @@ export const ApplyPackageSummaryAndLettersSchema = z.object({
   proposedRecruiterEmail: optionalNullableEmail
     .nullable()
     .describe("Recruiter email only if present in the JD; otherwise null"),
-  notes: z.string().optional().describe("Internal note for the seeker, not sent"),
-  headline: z
-    .string()
-    .optional()
-    .describe("Target role headline line (not an employer rename). Empty omits."),
-  jdBuckets: ApplyPackageJdBucketsSchema.optional().describe(
+  notes: optionalLlmString.describe("Internal note for the seeker, not sent"),
+  headline: optionalLlmString.describe(
+    "Target role headline line (not an employer rename). Empty omits."
+  ),
+  jdBuckets: optionalJdBuckets.describe(
     "Must / nice / missing / repeated JD buckets for the reviewer — not the PDF"
   ),
-  keywordDualForms: z
-    .array(z.string())
-    .optional()
-    .describe("JD ∩ portfolio dual spellings such as Amazon Web Services (AWS)"),
-  atsVendor: z
-    .string()
-    .optional()
-    .describe("Recognized ATS host if obvious from the listing URL; omit otherwise")
+  keywordDualForms: optionalKeywordDualForms.describe(
+    "JD ∩ portfolio dual spellings such as Amazon Web Services (AWS)"
+  ),
+  // Models frequently return null when no ATS is known; treat as omit.
+  atsVendor: optionalLlmString.describe(
+    "Recognized ATS host if obvious from the listing URL; omit otherwise"
+  )
 });
 export type ApplyPackageSummaryAndLetters = z.infer<typeof ApplyPackageSummaryAndLettersSchema>;
 
@@ -359,7 +382,7 @@ export function assembleApplyPackageDraft(
       include: true as const,
       companyName: e.organization,
       title: e.title,
-      rewrittenBullets: rewrite.rewrittenBullets
+      rewrittenBullets: humanizeApplyPackageBullets(rewrite.rewrittenBullets)
     };
   });
 
@@ -368,12 +391,15 @@ export function assembleApplyPackageDraft(
     if (!rewrite) {
       throw new Error(`missing rewrite for project ${p.id}`);
     }
+    const cleanedBullets = rewrite.rewrittenBullets
+      ? humanizeApplyPackageBullets(rewrite.rewrittenBullets)
+      : undefined;
     return {
       projectId: p.id,
       include: true as const,
       name: p.title,
-      rewrittenSummary: rewrite.rewrittenSummary,
-      ...(rewrite.rewrittenBullets ? { rewrittenBullets: rewrite.rewrittenBullets } : {})
+      rewrittenSummary: humanizeApplyPackageProse(rewrite.rewrittenSummary),
+      ...(cleanedBullets && cleanedBullets.length > 0 ? { rewrittenBullets: cleanedBullets } : {})
     };
   });
 
@@ -387,6 +413,8 @@ export function assembleApplyPackageDraft(
 
   const generatedAtTrimmed = input.generatedAt?.trim();
   const atsVendor = input.letters.atsVendor?.trim() ?? detectAtsVendor(input.jobContext.listingUrl);
+  const notes =
+    input.letters.notes != null ? humanizeApplyPackageProse(input.letters.notes) : undefined;
   const draft = {
     applicationId: input.applicationId,
     generatedAt:
@@ -395,15 +423,18 @@ export function assembleApplyPackageDraft(
         : generatedAtTrimmed,
     jobContext: input.jobContext,
     proposedRecruiterEmail: input.letters.proposedRecruiterEmail ?? null,
-    professionalSummary: input.letters.professionalSummary,
-    headline: input.letters.headline?.trim() ?? "",
+    professionalSummary:
+      input.letters.professionalSummary == null
+        ? null
+        : humanizeApplyPackageProse(input.letters.professionalSummary),
+    headline: humanizeApplyPackageProse(input.letters.headline?.trim() ?? ""),
     experiences,
     projects,
     stacks,
-    coverLetterBody: input.letters.coverLetterBody,
-    outreachSubject: input.letters.outreachSubject,
-    outreachBody: input.letters.outreachBody,
-    ...(input.letters.notes != null ? { notes: input.letters.notes } : {}),
+    coverLetterBody: humanizeApplyPackageProse(input.letters.coverLetterBody),
+    outreachSubject: humanizeApplyPackageProse(input.letters.outreachSubject),
+    outreachBody: humanizeApplyPackageProse(input.letters.outreachBody),
+    ...(notes ? { notes } : {}),
     ...(input.letters.jdBuckets != null ? { jdBuckets: input.letters.jdBuckets } : {}),
     ...(input.letters.keywordDualForms != null
       ? { keywordDualForms: input.letters.keywordDualForms }

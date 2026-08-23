@@ -11,18 +11,9 @@ import {
   type ApplyPackageProjectDraft,
   type ApplyPackageStackDraft
 } from "@tsu-stack/core";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import { Field, FieldLabel } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
 import {
@@ -568,29 +559,18 @@ function ApplyPackageSheetForm({
         </div>
       </SheetFooter>
 
-      <AlertDialog open={regenerateOpen} onOpenChange={setRegenerateOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Regenerate apply package?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This runs AI again and overwrites the current draft. Your accepted resume and cover
-              letter stay until you Accept a new package. Uses your BYO model quota.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={generatePending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              loading={generatePending}
-              onClick={() => {
-                onRegenerate();
-                setRegenerateOpen(false);
-              }}
-            >
-              Regenerate
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={regenerateOpen}
+        onOpenChange={setRegenerateOpen}
+        title="Regenerate apply package?"
+        description="This runs AI again and overwrites the current draft. Your accepted resume and cover letter stay until you Accept a new package. Uses your BYO model quota."
+        confirmLabel="Regenerate"
+        confirmLoading={generatePending}
+        onConfirm={() => {
+          onRegenerate();
+          setRegenerateOpen(false);
+        }}
+      />
     </>
   );
 }

@@ -15,17 +15,8 @@ import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { type ApplicationOutput, isApplicationOpen } from "@tsu-stack/core";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
+import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Dialog,
@@ -268,11 +259,13 @@ export function ApplyPackageMenuItems({
 }: ApplyPackageMenuItemsProps) {
   const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
   const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
-  const { runGenerate, runReview, isPendingFor } = useDashboardApplyPackage();
+  const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
+    useDashboardApplyPackage();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
-  const entryState = getApplyPackageEntryState(app);
+  const entryState = getApplyPackageEntryState(app, { reviewApplyKit });
   const open = isApplicationOpen(app.outcome);
   const generating = isPendingFor(app.id);
+  const busyLabel = busyLabelFor(app.id);
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
 
@@ -288,7 +281,7 @@ export function ApplyPackageMenuItems({
           hidePrimaryKind === "prepare" ? null : (
             <Item disabled={!open || generating} onClick={() => open && generate()}>
               <SparklesIcon aria-hidden="true" />
-              {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
+              {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepare}
             </Item>
           )
         ) : hidePrimaryKind === "add-jd" ? null : (
@@ -348,10 +341,12 @@ export function ApplyPackageMenuItems({
               </SubPopup>
             </Sub>
           ) : null}
-          <Item disabled={!open || generating} onClick={() => open && setRegenerateOpen(true)}>
-            <SparklesIcon aria-hidden="true" />
-            {generating ? "Preparing…" : "Prepare again"}
-          </Item>
+          {hidePrimaryKind === "prepare-again" ? null : (
+            <Item disabled={!open || generating} onClick={() => open && setRegenerateOpen(true)}>
+              <SparklesIcon aria-hidden="true" />
+              {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain}
+            </Item>
+          )}
           {canSendOutreach(app) && hidePrimaryKind !== "send" ? (
             <Item onClick={() => openSendOutreach(app.id)}>
               <MailIcon aria-hidden="true" />
@@ -361,31 +356,23 @@ export function ApplyPackageMenuItems({
         </>
       ) : null}
 
-      <AlertDialog open={regenerateOpen} onOpenChange={setRegenerateOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {entryState === "accepted" ? "Prepare a new package?" : "Regenerate apply package?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {entryState === "accepted"
-                ? "AI will draft a new package. Your current resume and cover letter stay until you Accept the new package."
-                : "This runs AI again and overwrites the current draft. Uses your BYO model quota."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={generating}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              loading={generating}
-              onClick={() => {
-                generate();
-              }}
-            >
-              {entryState === "accepted" ? "Prepare again" : "Regenerate"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={regenerateOpen}
+        onOpenChange={setRegenerateOpen}
+        title={entryState === "accepted" ? "Prepare a new package?" : "Regenerate apply package?"}
+        description={
+          entryState === "accepted"
+            ? "AI will draft a new package. Your current resume and cover letter stay until you Accept the new package."
+            : "This runs AI again and overwrites the current draft. Uses your BYO model quota."
+        }
+        confirmLabel={
+          entryState === "accepted" ? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain : "Regenerate"
+        }
+        confirmLoading={generating}
+        onConfirm={() => {
+          generate();
+        }}
+      />
     </>
   );
 }
@@ -401,11 +388,13 @@ type ApplyPackagePanelActionsProps = {
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
   const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
-  const { runGenerate, runReview, isPendingFor } = useDashboardApplyPackage();
+  const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
+    useDashboardApplyPackage();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
-  const entryState = getApplyPackageEntryState(app);
+  const entryState = getApplyPackageEntryState(app, { reviewApplyKit });
   const open = isApplicationOpen(app.outcome);
   const generating = isPendingFor(app.id);
+  const busyLabel = busyLabelFor(app.id);
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
 
@@ -429,7 +418,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           onClick={() => generate()}
         >
           <SparklesIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
-          {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
+          {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepare}
         </Button>
       );
     } else {
@@ -493,7 +482,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         onClick={() => setRegenerateOpen(true)}
       >
         <SparklesIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
-        Prepare again
+        {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain}
       </Button>
     );
     if (canSendOutreach(app)) {
@@ -595,31 +584,23 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         ) : null
       ) : null}
 
-      <AlertDialog open={regenerateOpen} onOpenChange={setRegenerateOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {entryState === "accepted" ? "Prepare a new package?" : "Regenerate apply package?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {entryState === "accepted"
-                ? "AI will draft a new package. Your current resume and cover letter stay until you Accept the new package."
-                : "This runs AI again and overwrites the current draft. Uses your BYO model quota."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={generating}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              loading={generating}
-              onClick={() => {
-                generate();
-              }}
-            >
-              {entryState === "accepted" ? "Prepare again" : "Regenerate"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={regenerateOpen}
+        onOpenChange={setRegenerateOpen}
+        title={entryState === "accepted" ? "Prepare a new package?" : "Regenerate apply package?"}
+        description={
+          entryState === "accepted"
+            ? "AI will draft a new package. Your current resume and cover letter stay until you Accept the new package."
+            : "This runs AI again and overwrites the current draft. Uses your BYO model quota."
+        }
+        confirmLabel={
+          entryState === "accepted" ? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain : "Regenerate"
+        }
+        confirmLoading={generating}
+        onConfirm={() => {
+          generate();
+        }}
+      />
     </div>
   );
 }

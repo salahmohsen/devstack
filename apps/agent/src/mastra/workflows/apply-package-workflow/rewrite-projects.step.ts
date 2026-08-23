@@ -64,14 +64,15 @@ Projects to rewrite (JSON). Use each projectId exactly as given:
 ${JSON.stringify(items, null, 2)}
 
 Rules:
-- Return one item per projectId above — no extras, no omissions.
+- Return one item per projectId above (no extras, no omissions).
 - rewrittenSummary: short tailored blurb grounded in summary/description (+ private analysis when present).
 - Optional rewrittenBullets only when source text supports them.
 - Keep project title/name as provided (do not rename).
 - Private analysis is rewrite signal only: never print "Analysis:", never quote it as a labeled section, never put "private analysis" into the rewrite text.
 - Do not invent metrics, tools, or achievements not grounded in the source.
+- Prose: no em dashes, en dashes, or spaced "--" asides. Use commas or periods. Avoid leverage/synergy/utilize/spearheaded/results-driven unless already in the source.
 - Return a single JSON object shaped as { "items": [ { "projectId", "rewrittenSummary", optional "rewrittenBullets" }, ... ] }.
-- Never return a bare top-level array — always wrap rewrites under "items".`;
+- Never return a bare top-level array; always wrap rewrites under "items".`;
 }
 
 function assertChunkCoverage(
@@ -119,53 +120,55 @@ export const rewriteProjects = createStep({
       state.applicationId
     );
     const chunks = chunkArray(projects, APPLY_PACKAGE_REWRITE_CHUNK_SIZE);
-    const merged: ProjectRewrite[] = [];
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]!;
-      const stepLabel = `rewrite-projects (chunk ${i + 1}/${chunks.length})`;
-      const chunkIds = new Set(chunk.map((p) => p.id));
-      const prompt = buildProjectChunkPrompt(state.jobBrief, chunk, i + 1, chunks.length);
-      const started = Date.now();
-      let success = false;
+    // Chunks are independent — run concurrently to cut wall-clock for large portfolios.
+    const chunkResults = await Promise.all(
+      chunks.map(async (chunk, i) => {
+        const stepLabel = `rewrite-projects (chunk ${i + 1}/${chunks.length})`;
+        const chunkIds = new Set(chunk.map((p) => p.id));
+        const prompt = buildProjectChunkPrompt(state.jobBrief, chunk, i + 1, chunks.length);
+        const started = Date.now();
+        let success = false;
 
-      try {
-        const result = await raceGenerate(
-          agent,
-          prompt,
-          ApplyPackageProjectRewriteChunkSchema,
-          model,
-          requestContext,
-          {
-            maxOutputTokens: REWRITE_MAX_OUTPUT_TOKENS,
-            timeoutMs: REWRITE_CHUNK_TIMEOUT_MS,
-            stepLabel
-          }
-        );
-
-        assertChunkCoverage(stepLabel, chunkIds, result.items);
-        merged.push(...result.items);
-        success = true;
-      } finally {
         try {
-          const log = createAgentLogger({ operation: "agent__apply_package_rewrite_projects" });
-          log.set({
-            event: "apply_package_rewrite_chunk",
-            stepId: "rewrite-projects",
-            applicationId: state.applicationId,
-            chunkIndex: i + 1,
-            chunkCount: chunks.length,
-            chunkSize: chunk.length,
-            durationMs: Date.now() - started,
-            success
-          });
-          log.emit();
-        } catch {
-          // Logging must not fail the rewrite step.
-        }
-      }
-    }
+          const result = await raceGenerate(
+            agent,
+            prompt,
+            ApplyPackageProjectRewriteChunkSchema,
+            model,
+            requestContext,
+            {
+              maxOutputTokens: REWRITE_MAX_OUTPUT_TOKENS,
+              timeoutMs: REWRITE_CHUNK_TIMEOUT_MS,
+              stepLabel
+            }
+          );
 
+          assertChunkCoverage(stepLabel, chunkIds, result.items);
+          success = true;
+          return result.items;
+        } finally {
+          try {
+            const log = createAgentLogger({ operation: "agent__apply_package_rewrite_projects" });
+            log.set({
+              event: "apply_package_rewrite_chunk",
+              stepId: "rewrite-projects",
+              applicationId: state.applicationId,
+              chunkIndex: i + 1,
+              chunkCount: chunks.length,
+              chunkSize: chunk.length,
+              durationMs: Date.now() - started,
+              success
+            });
+            log.emit();
+          } catch {
+            // Logging must not fail the rewrite step.
+          }
+        }
+      })
+    );
+
+    const merged: ProjectRewrite[] = chunkResults.flat();
     return { ...state, projectRewrites: merged };
   }
 });

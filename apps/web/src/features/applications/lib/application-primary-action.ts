@@ -2,13 +2,15 @@ import { type ApplicationOutput } from "@tsu-stack/core";
 
 import {
   canSendOutreach,
-  getApplyPackageEntryState
+  getApplyPackageEntryState,
+  type ApplyPackageEntryStateOptions
 } from "@/features/applications/lib/apply-package";
 
 export type ApplicationPrimaryActionKind =
   | "prepare"
   | "add-jd"
   | "review"
+  | "prepare-again"
   | "send"
   | "open-listing";
 
@@ -22,6 +24,7 @@ export const APPLICATION_PRIMARY_ACTION_LABELS = {
   prepare: "Prepare",
   addJd: "Add JD",
   review: "Review",
+  prepareAgain: "Prepare again",
   send: "Send",
   openListing: "Open listing"
 } as const;
@@ -35,14 +38,17 @@ export function hasJobDescription(app: ApplicationOutput): boolean {
   return Boolean(app.description?.trim());
 }
 
+export type ApplicationPrimaryActionOptions = ApplyPackageEntryStateOptions;
+
 /**
  * Stage-aware primary CTA for a tracked application card.
- * Priority: prepare/add JD → review draft → send outreach → open listing.
+ * Priority: prepare/add JD → review draft (Review on) → send → prepare again (Review off) → open listing.
  */
 export function getApplicationPrimaryAction(
-  app: ApplicationOutput
+  app: ApplicationOutput,
+  options?: ApplicationPrimaryActionOptions
 ): ApplicationPrimaryAction | null {
-  const entryState = getApplyPackageEntryState(app);
+  const entryState = getApplyPackageEntryState(app, options);
 
   if (entryState === "none") {
     if (hasJobDescription(app)) {
@@ -57,6 +63,15 @@ export function getApplicationPrimaryAction(
 
   if (canSendOutreach(app)) {
     return { kind: "send", label: APPLICATION_PRIMARY_ACTION_LABELS.send };
+  }
+
+  // Review off: after a kit exists, prefer Prepare again over Open listing so the
+  // primary CTA matches the accepted kit panel (never Review).
+  if (options?.reviewApplyKit === false) {
+    return {
+      kind: "prepare-again",
+      label: APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain
+    };
   }
 
   if (listingUrlFor(app)) {

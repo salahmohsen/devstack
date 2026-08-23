@@ -3,6 +3,7 @@ export * from "#@/application/fit-analysis";
 export * from "#@/application/apply-kit-replace";
 export * from "#@/application/apply-package";
 export * from "#@/application/apply-package-rank";
+export * from "#@/application/humanize-apply-package-prose";
 export * from "#@/application/constants";
 export * from "#@/application/hub-get-application";
 export * from "#@/application/job-skills";

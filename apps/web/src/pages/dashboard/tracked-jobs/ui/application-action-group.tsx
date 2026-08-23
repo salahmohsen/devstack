@@ -15,6 +15,7 @@ import {
 } from "@/features/applications";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useDashboardApplyPackage } from "@/pages/dashboard/tracked-jobs/_lib/use-dashboard-apply-package";
 import {
   ApplicationItemActions,
   applicationListMenuSlots,
@@ -40,7 +41,8 @@ export type ApplicationActionGroupProps = {
  */
 export function ApplicationActionGroup({ app, variant, className }: ApplicationActionGroupProps) {
   const { openEdit } = useApplicationStore();
-  const primary = getApplicationPrimaryAction(app);
+  const { reviewApplyKit } = useDashboardApplyPackage();
+  const primary = getApplicationPrimaryAction(app, { reviewApplyKit });
   const listingUrl = listingUrlFor(app);
   const isBoard = variant === "board";
   const showEdit = variant === "panel";
