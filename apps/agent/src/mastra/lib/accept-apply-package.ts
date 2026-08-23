@@ -2,8 +2,13 @@ import { z } from "zod";
 
 import {
   ApplyPackageDraftSchema,
+  applyPackageResumePrompt,
+  defaultJobPreference,
   formatTailoredCoverFilename,
   formatTailoredResumeFilename,
+  isApplyPackageResumePrompt,
+  resolveApplyPackagePdfDraft,
+  runFailClosedApplyKitReplace,
   type AcceptApplyPackageInput,
   type ApplyPackageDraft
 } from "@tsu-stack/core";
@@ -12,6 +17,7 @@ import {
   contactRepository,
   createDb,
   experienceRepository,
+  jobPreferenceRepository,
   projectRepository,
   resumeRepository,
   runWithDb,
@@ -27,6 +33,7 @@ import {
   type ResumePdfPortfolio
 } from "@tsu-stack/pdf";
 
+import { createAgentLogger } from "#@/mastra/agent-logger";
 import { createAgentMediaBucket } from "#@/mastra/lib/media-bucket";
 
 export type AcceptApplyPackageErrorCode =
@@ -35,7 +42,8 @@ export type AcceptApplyPackageErrorCode =
   | "INVALID_DRAFT"
   | "STORAGE_NOT_CONFIGURED"
   | "PDF_ENGINE_UNAVAILABLE"
-  | "PDF_RENDER_FAILED";
+  | "PDF_RENDER_FAILED"
+  | "COMMIT_FAILED";
 
 export type AcceptApplyPackageResult =
   | { ok: true; application: ApplicationEntity }
@@ -112,7 +120,42 @@ export async function acceptApplyPackage(input: {
 
     const resolved = resolveDraft({ applicationId: input.applicationId, draft: input.draft }, app);
     if (!resolved.ok) return resolved;
-    const draft = resolved.draft;
+
+    const prefRow = await jobPreferenceRepository.findByUserId(input.userId);
+    const reviewApplyKit = prefRow?.reviewApplyKit ?? defaultJobPreference().reviewApplyKit;
+    const recencyRows = await Promise.all(
+      resolved.draft.experiences.map((e) =>
+        experienceRepository.findByIdForUser(e.experienceId, input.userId)
+      )
+    );
+    const pdfDraft = resolveApplyPackagePdfDraft({
+      draft: resolved.draft,
+      reviewApplyKit,
+      experiences: recencyRows
+        .filter((row): row is NonNullable<typeof row> => row != null)
+        .map((row) => {
+          return {
+            experienceId: row.id,
+            rewrittenBullets: [],
+            fromDate: row.fromDate ?? null,
+            isPresent: row.isPresent ?? false
+          };
+        }),
+      jobSkills: [...(app.requiredSkills ?? []), ...(app.preferredSkills ?? [])]
+    });
+    const draft = pdfDraft.draft;
+
+    if (pdfDraft.hiddenExperienceCount > 0 || pdfDraft.hiddenProjectCount > 0) {
+      const includeLog = createAgentLogger({ operation: "agent__apply_kit_pdf_include" });
+      includeLog.set({
+        event: "apply_kit_pdf_include",
+        applicationId: app.id,
+        hiddenExperienceCount: pdfDraft.hiddenExperienceCount,
+        hiddenProjectCount: pdfDraft.hiddenProjectCount,
+        pageBudget: pdfDraft.pageBudget
+      });
+      includeLog.emit();
+    }
 
     const includedExperiences = draft.experiences.filter((e) => e.include);
     const includedProjects = draft.projects.filter((p) => p.include);
@@ -236,8 +279,7 @@ export async function acceptApplyPackage(input: {
     });
     const resumeR2Key = `${input.userId}/resumes/${crypto.randomUUID()}.pdf`;
 
-    // Write the new cover object first so DB never points at a deleted key.
-    // Only delete the previous cover after the application row commits.
+    // Write new objects first. Delete the previous kit only after PUT + DB commit.
     const previousCoverKey = app.coverLetterR2Key;
     const coverUuid = crypto.randomUUID();
     const coverFilename = formatTailoredCoverFilename({
@@ -254,7 +296,8 @@ export async function acceptApplyPackage(input: {
         portfolio,
         profile,
         summary: userRow.summary ?? "",
-        professionalSummary: draft.professionalSummary
+        professionalSummary: draft.professionalSummary,
+        headline: draft.headline?.trim() ? draft.headline : undefined
       });
       coverBytes = await renderCoverLetterPdfBytes({
         candidateName: profile.name,
@@ -268,55 +311,143 @@ export async function acceptApplyPackage(input: {
       return pdfFailure(error);
     }
 
-    await mediaBucket.put(resumeR2Key, resumeBytes.slice().buffer as ArrayBuffer, {
-      httpMetadata: { contentType: "application/pdf" }
-    });
-
-    const createdResume = await resumeRepository.create({
-      userId: input.userId,
-      prompt: `apply-package:${app.id}`,
-      author: "agent",
-      filename: resumeFilename,
-      r2Key: resumeR2Key
-    });
-
-    await mediaBucket.put(coverR2Key, coverBytes.slice().buffer as ArrayBuffer, {
-      httpMetadata: { contentType: "application/pdf" }
-    });
-
     const proposedEmail = draft.proposedRecruiterEmail?.trim() ?? null;
     const emailOk = proposedEmail ? emailSchema.safeParse(proposedEmail).success : false;
     const recruiterEmail = emailOk ? proposedEmail : (app.recruiterEmail ?? null);
 
-    const updated = await applicationRepository.update(app.id, input.userId, {
-      resumeId: createdResume.id,
-      coverLetterBody: draft.coverLetterBody,
-      coverLetterR2Key: coverR2Key,
-      coverLetterFilename: coverFilename,
-      outreachSubject: draft.outreachSubject,
-      outreachBody: draft.outreachBody,
-      recruiterEmail,
-      applyPackageDraft: null,
-      applyPackageDraftedAt: null
+    const previousResume =
+      app.resumeId != null
+        ? await resumeRepository.findByIdForUser(app.resumeId, input.userId)
+        : null;
+
+    let createdResumeId: string | null = null;
+    let updated: ApplicationEntity | null = null;
+
+    const replace = await runFailClosedApplyKitReplace({
+      putNew: async () => {
+        await mediaBucket.put(resumeR2Key, resumeBytes.slice().buffer as ArrayBuffer, {
+          httpMetadata: { contentType: "application/pdf" }
+        });
+        try {
+          await mediaBucket.put(coverR2Key, coverBytes.slice().buffer as ArrayBuffer, {
+            httpMetadata: { contentType: "application/pdf" }
+          });
+        } catch (error) {
+          try {
+            await mediaBucket.delete(resumeR2Key);
+          } catch {
+            // best-effort orphan resume object
+          }
+          throw error;
+        }
+      },
+      commitDb: async () => {
+        const createdResume = await resumeRepository.create({
+          userId: input.userId,
+          prompt: applyPackageResumePrompt(app.id),
+          author: "agent",
+          filename: resumeFilename,
+          r2Key: resumeR2Key
+        });
+        createdResumeId = createdResume.id;
+        const row = await applicationRepository.update(app.id, input.userId, {
+          resumeId: createdResume.id,
+          coverLetterBody: draft.coverLetterBody,
+          coverLetterR2Key: coverR2Key,
+          coverLetterFilename: coverFilename,
+          outreachSubject: draft.outreachSubject,
+          outreachBody: draft.outreachBody,
+          recruiterEmail,
+          applyPackageDraft: null,
+          applyPackageDraftedAt: null
+        });
+        if (!row) throw new Error("application update failed after new kit put");
+        updated = row;
+      },
+      deleteNewBestEffort: async () => {
+        if (createdResumeId) {
+          try {
+            await resumeRepository.deleteMany([createdResumeId], input.userId);
+          } catch {
+            // best-effort
+          }
+        }
+        try {
+          await mediaBucket.delete(resumeR2Key);
+        } catch {
+          // best-effort
+        }
+        try {
+          await mediaBucket.delete(coverR2Key);
+        } catch {
+          // best-effort
+        }
+      },
+      deleteOldBestEffort: async () => {
+        if (previousCoverKey && previousCoverKey !== coverR2Key) {
+          try {
+            await mediaBucket.delete(previousCoverKey);
+          } catch {
+            // best-effort
+          }
+        }
+        if (
+          previousResume &&
+          isApplyPackageResumePrompt(previousResume.prompt, app.id) &&
+          previousResume.id !== createdResumeId
+        ) {
+          try {
+            await resumeRepository.deleteMany([previousResume.id], input.userId);
+          } catch {
+            // best-effort
+          }
+          if (previousResume.r2Key && previousResume.r2Key !== resumeR2Key) {
+            try {
+              await mediaBucket.delete(previousResume.r2Key);
+            } catch {
+              // best-effort
+            }
+          }
+        }
+      }
     });
 
-    if (!updated) {
-      try {
-        await mediaBucket.delete(coverR2Key);
-      } catch {
-        // ignore
+    if (!replace.ok) {
+      const failLog = createAgentLogger({ operation: "agent__apply_kit_replace_failed" });
+      failLog.error(replace.error instanceof Error ? replace.error : String(replace.error), {
+        event: "apply_kit_replace_failed",
+        applicationId: app.id,
+        stage: replace.stage
+      });
+      failLog.emit({ _forceKeep: true });
+      if (replace.stage === "commit") {
+        return {
+          ok: false,
+          code: "COMMIT_FAILED" as const,
+          message: "Failed to save the new apply kit. The previous kit is unchanged."
+        };
       }
-      return { ok: false, code: "NOT_FOUND" as const };
+      return {
+        ok: false,
+        code: "PDF_RENDER_FAILED" as const,
+        message: "Failed to store apply package PDFs"
+      };
     }
 
-    if (previousCoverKey && previousCoverKey !== coverR2Key) {
-      try {
-        await mediaBucket.delete(previousCoverKey);
-      } catch {
-        // best-effort
-      }
-    }
+    const deletedResumeId =
+      previousResume && isApplyPackageResumePrompt(previousResume.prompt, app.id)
+        ? previousResume.id
+        : null;
+    const replacedLog = createAgentLogger({ operation: "agent__apply_kit_replaced" });
+    replacedLog.set({
+      event: "apply_kit_replaced",
+      applicationId: app.id,
+      deletedResumeId,
+      reviewApplyKit
+    });
+    replacedLog.emit();
 
+    if (!updated) return { ok: false, code: "NOT_FOUND" as const };
     return { ok: true as const, application: updated };
   });
 }

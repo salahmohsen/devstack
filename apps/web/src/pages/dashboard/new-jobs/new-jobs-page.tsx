@@ -21,7 +21,16 @@ import {
   SquareIcon,
   Trash2Icon
 } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -54,6 +63,7 @@ import {
 import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
@@ -61,10 +71,13 @@ import {
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -76,7 +89,7 @@ import {
   type ListItemMenuSlots
 } from "@/shared/ui/list-item-menu-slots";
 
-import { useEntityPanelHostActive } from "@/features/agent-hub";
+import { releaseEntityPanelHosts, useEntityPanelHostActive } from "@/features/agent-hub";
 import {
   ApplicationMatchScoreBadge,
   clearPendingOpenApplicationId,
@@ -121,6 +134,11 @@ import {
 import { useSidePanelClose } from "@/widgets/layout";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
+import {
+  peekSidePanelFrame,
+  popSidePanelFrame,
+  subscribeSidePanelStack
+} from "@/pages/dashboard/_lib/side-panel-stack";
 import { FixPostingUrlDialog } from "@/pages/dashboard/new-jobs/ui/fix-posting-url-dialog";
 import { NewJobsDiscoveryActions } from "@/pages/dashboard/new-jobs/ui/new-jobs-discovery-actions";
 import { UpdateDescriptionDialog } from "@/pages/dashboard/new-jobs/ui/update-description-dialog";
@@ -129,6 +147,13 @@ const ApplicationFormSheet = lazy(() =>
   import("@/pages/dashboard/tracked-jobs/application-form-sheet").then((m) => {
     return {
       default: m.ApplicationFormSheet
+    };
+  })
+);
+const StackForm = lazy(() =>
+  import("@/pages/dashboard/stacks/ui/stack-form").then((m) => {
+    return {
+      default: m.StackForm
     };
   })
 );
@@ -469,7 +494,13 @@ export function NewJobsPage() {
   const search = newJobsRouteApi.useSearch();
   const deepLinkApplicationId = search.applicationId;
   const [viewItem, setViewItem] = useState<ApplicationOutput | null>(null);
-  useSidePanelClose(useCallback(() => setViewItem(null), []));
+  useSidePanelClose(
+    useCallback(() => {
+      // Create-skill form is popped by dismiss guard; keep the job inspect open.
+      if (peekSidePanelFrame()?.type === "stack-create") return;
+      setViewItem(null);
+    }, [])
+  );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [packageApplication, setPackageApplication] = useState<ApplicationOutput | null>(null);
   const [descriptionApp, setDescriptionApp] = useState<ApplicationOutput | null>(null);
@@ -482,6 +513,11 @@ export function NewJobsPage() {
   // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
   const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && editApp != null) setEditApp(null);
+  const frame = useSyncExternalStore(
+    subscribeSidePanelStack,
+    peekSidePanelFrame,
+    peekSidePanelFrame
+  );
 
   const resolvedFilter = resolveJobsFilterParam({ page: "new-jobs", filter: search.filter });
   const listQueryInput = useMemo(() => {
@@ -604,6 +640,7 @@ export function NewJobsPage() {
     if (!pendingOpenApplicationId) return;
     const job = jobs.find((j) => j.id === pendingOpenApplicationId);
     if (!job) return;
+    releaseEntityPanelHosts();
     expandDashboardSidePanel();
     // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from external job toast
     setViewItem(job);
@@ -628,7 +665,10 @@ export function NewJobsPage() {
   const isAnyOpen = isAnyOpened(isItemOpen);
 
   const setOpenedItem = useCallback((item: ApplicationOutput | null) => {
-    if (item) expandDashboardSidePanel();
+    if (item) {
+      releaseEntityPanelHosts();
+      expandDashboardSidePanel();
+    }
     setViewItem(item);
   }, []);
 
@@ -772,6 +812,7 @@ export function NewJobsPage() {
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <ListSearchBar
             variant="new-jobs"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={filterFields}
             value={filterValues}
             onValueChange={(next: FilterValue[]) => {
@@ -784,6 +825,13 @@ export function NewJobsPage() {
             sortOptions={NEW_JOBS_SORT_OPTIONS}
             onSortChange={(next) => patchListSearch(next)}
             onJobsClear={clearListSearch}
+            status={
+              jobs.length > 0 && totalCount != null
+                ? totalCount > jobs.length
+                  ? `${jobs.length} of ${totalCount} jobs`
+                  : `${jobs.length} job${jobs.length === 1 ? "" : "s"}`
+                : undefined
+            }
             labels={{
               searchPlaceholder: "Search jobs",
               searchAriaLabel: "Search jobs"
@@ -927,6 +975,7 @@ export function NewJobsPage() {
                             onSelect={() =>
                               setViewItem((current) => {
                                 if (current?.id === job.id) return null;
+                                releaseEntityPanelHosts();
                                 expandDashboardSidePanel();
                                 return job;
                               })
@@ -935,14 +984,15 @@ export function NewJobsPage() {
                             batchSelectActive={isBatchSelectActive(selectedIds)}
                             onToggleSelect={rowActions.onToggleSelect}
                             tags={newJobTags(job)}
+                            tagsPlacement="after"
                             meta={newJobMeta(job)}
                             leading={
                               <JobIdentityMark
                                 companyName={job.companyName}
                                 logoUrl={job.companyLogoUrl}
-                                size={40}
+                                size={56}
                                 selected={selected}
-                                className="size-10"
+                                className="size-full"
                               />
                             }
                             actions={
@@ -992,19 +1042,12 @@ export function NewJobsPage() {
                 </li>
               </ul>
             )}
-            {totalCount != null && jobs.length > 0 ? (
-              <p className="pb-2 text-center text-xs text-muted-foreground">
-                Showing {jobs.length}
-                {totalCount > jobs.length ? ` of ${totalCount}` : ""} job
-                {totalCount === 1 ? "" : "s"}
-              </p>
-            ) : null}
           </div>
         </div>
 
         <Suspense fallback={null}>
           <ItemsInspectHost
-            open={isAnyOpen && editApp == null && !hostOwnsPanel}
+            open={isAnyOpen && editApp == null && frame?.type !== "stack-create" && !hostOwnsPanel}
             item={liveViewItem}
             title="Job"
             onOpenChange={(next) => {
@@ -1012,13 +1055,39 @@ export function NewJobsPage() {
             }}
           >
             {(item) => (
-              <ApplicationInfoPanel
-                item={item}
-                variant="discovery"
-                onEdit={() => setEditApp(item)}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex min-h-48 items-center justify-center py-10">
+                    <Spinner className="size-6" aria-label="Loading job" />
+                  </div>
+                }
+              >
+                <ApplicationInfoPanel
+                  item={item}
+                  variant="discovery"
+                  onEdit={() => setEditApp(item)}
+                />
+              </Suspense>
             )}
           </ItemsInspectHost>
+
+          {frame?.type === "stack-create" && !hostOwnsPanel ? (
+            <StackForm
+              key={`stack-create-${frame.name}`}
+              open
+              createSeed={{ name: frame.name }}
+              onOpenChange={(open) => {
+                if (!open) popSidePanelFrame();
+              }}
+              onSaved={() => {
+                void invalidateStacksListQueries(queryClient);
+                void queryClient.invalidateQueries({
+                  queryKey: orpcQueryClient.applications.get.key()
+                });
+                void invalidateApplicationsListQueries(queryClient);
+              }}
+            />
+          ) : null}
 
           {packageApplication ? (
             <ApplyPackageSheet

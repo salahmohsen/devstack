@@ -132,7 +132,7 @@ export const LIST_QUERY_ALLOWLISTS: Record<ListQueryResource, ListQueryAllowlist
       isFeatured,
       projects: projectsField
     },
-    qColumns: ["name", "alternativeNames"],
+    qColumns: ["name", "aliases"],
     sortKeys: ["name", "projectCount", "updatedAt"]
   },
   resumes: {

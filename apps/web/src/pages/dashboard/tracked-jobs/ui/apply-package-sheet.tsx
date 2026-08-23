@@ -1,7 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   type ApplicationOutput,
   type ApplyPackageDraft,
@@ -36,11 +38,20 @@ import { Switch } from "@tsu-stack/ui/components/switch";
 import { Textarea } from "@tsu-stack/ui/components/textarea";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { FileDiff } from "@/shared/ui/agents/file-diff";
+
 import {
+  experienceMasterMarkdown,
+  experienceSnapshotMarkdown,
   parseApplyPackageDraft,
+  projectMasterMarkdown,
+  projectSnapshotMarkdown,
+  snapshotFileDiffLines,
   useAcceptApplyPackageMutation,
   useGenerateApplyPackageMutation
 } from "@/features/applications";
+
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 
 type ApplyPackageSheetProps = {
   open: boolean;
@@ -74,6 +85,33 @@ type ApplyPackageSheetFormProps = {
   onRegenerate: () => void;
 };
 
+function SnapshotDiff({
+  file,
+  master,
+  snapshot
+}: {
+  file: string;
+  master: string;
+  snapshot: string;
+}) {
+  const lines = snapshotFileDiffLines(master, snapshot);
+  if (!lines) return null;
+  return (
+    <FileDiff
+      file={file}
+      lines={lines}
+      status="complete"
+      defaultOpen
+      collapseOnComplete={false}
+      language="text"
+      copyText={snapshot}
+      copyLabel="Copy suggestion"
+      maxHeight={280}
+      className="w-full min-w-0"
+    />
+  );
+}
+
 function ApplyPackageSheetForm({
   application,
   initialDraft,
@@ -86,6 +124,16 @@ function ApplyPackageSheetForm({
 }: ApplyPackageSheetFormProps) {
   const [draft, setDraft] = useState(() => cloneDraft(initialDraft));
   const [regenerateOpen, setRegenerateOpen] = useState(false);
+  const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
+  const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
+  const experienceById = useMemo(
+    () => new Map((experiencesQuery.data ?? []).map((row) => [row.id, row] as const)),
+    [experiencesQuery.data]
+  );
+  const projectById = useMemo(
+    () => new Map((projectsQuery.data ?? []).map((row) => [row.id, row] as const)),
+    [projectsQuery.data]
+  );
 
   function updateDraft(patch: Partial<ApplyPackageDraft>) {
     setDraft((prev) => {
@@ -238,6 +286,16 @@ function ApplyPackageSheetForm({
         <section className="space-y-3">
           <h3 className="text-sm font-semibold">Resume</h3>
           <Field>
+            <FieldLabel htmlFor="apply-headline">Headline</FieldLabel>
+            <Input
+              id="apply-headline"
+              value={draft.headline ?? ""}
+              disabled={busy}
+              placeholder="Target role line (optional)"
+              onChange={(e) => updateDraft({ headline: e.target.value })}
+            />
+          </Field>
+          <Field>
             <FieldLabel htmlFor="apply-summary">Professional summary</FieldLabel>
             <Textarea
               id="apply-summary"
@@ -287,6 +345,26 @@ function ApplyPackageSheetForm({
                         />
                       </div>
                     </div>
+                    {(() => {
+                      const live = experienceById.get(exp.experienceId);
+                      if (!live) return null;
+                      return (
+                        <SnapshotDiff
+                          file={`${exp.title}.md`}
+                          master={experienceMasterMarkdown({
+                            title: live.title,
+                            organization: live.organization,
+                            description: live.description
+                          })}
+                          snapshot={experienceSnapshotMarkdown({
+                            // Same identity as master so only rewritten bullets show as edits.
+                            title: live.title,
+                            companyName: live.organization,
+                            rewrittenBullets: exp.rewrittenBullets
+                          })}
+                        />
+                      );
+                    })()}
                     <Textarea
                       rows={Math.max(3, exp.rewrittenBullets.length || 3)}
                       value={bulletsToText(exp.rewrittenBullets)}
@@ -337,6 +415,26 @@ function ApplyPackageSheetForm({
                         />
                       </div>
                     </div>
+                    {(() => {
+                      const live = projectById.get(project.projectId);
+                      if (!live) return null;
+                      return (
+                        <SnapshotDiff
+                          file={`${project.name}.md`}
+                          master={projectMasterMarkdown({
+                            title: live.title,
+                            summary: live.summary,
+                            description: live.description
+                          })}
+                          snapshot={projectSnapshotMarkdown({
+                            // Same identity as master so only rewritten body shows as edits.
+                            name: live.title,
+                            rewrittenSummary: project.rewrittenSummary,
+                            rewrittenBullets: project.rewrittenBullets
+                          })}
+                        />
+                      );
+                    })()}
                     <Textarea
                       rows={3}
                       value={project.rewrittenSummary}
@@ -500,6 +598,7 @@ function ApplyPackageSheetForm({
 export function ApplyPackageSheet({ open, application, onOpenChange }: ApplyPackageSheetProps) {
   const acceptMutation = useAcceptApplyPackageMutation();
   const generateMutation = useGenerateApplyPackageMutation();
+  const { markApplyPackageInFlight } = useApplicationStore();
 
   const serverDraft = useMemo(
     () => (application ? parseApplyPackageDraft(application.applyPackageDraft) : null),
@@ -512,9 +611,11 @@ export function ApplyPackageSheet({ open, application, onOpenChange }: ApplyPack
 
   function handleAccept(draft: ApplyPackageDraft) {
     if (!application) return;
+    const applicationId = application.id;
+    markApplyPackageInFlight(applicationId, true);
     acceptMutation.mutate(
       {
-        applicationId: application.id,
+        applicationId,
         draft: {
           ...draft,
           proposedRecruiterEmail: draft.proposedRecruiterEmail?.trim()
@@ -523,14 +624,22 @@ export function ApplyPackageSheet({ open, application, onOpenChange }: ApplyPack
         }
       },
       {
-        onSuccess: () => onOpenChange(false)
+        onSuccess: () => onOpenChange(false),
+        onSettled: () => markApplyPackageInFlight(applicationId, false)
       }
     );
   }
 
   function handleRegenerate() {
     if (!application) return;
-    generateMutation.mutate({ applicationId: application.id });
+    const applicationId = application.id;
+    markApplyPackageInFlight(applicationId, true);
+    generateMutation.mutate(
+      { applicationId },
+      {
+        onSettled: () => markApplyPackageInFlight(applicationId, false)
+      }
+    );
   }
 
   return (

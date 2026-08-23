@@ -572,7 +572,7 @@ export function DetectStacksResultsHost() {
               isFeatured: false,
               portfolioEntryId: null,
               includedInPortfolio: false,
-              alternativeNames: [],
+              aliases: [],
               dependencies: [],
               projects: [],
               updatedAt: new Date(),

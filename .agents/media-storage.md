@@ -147,14 +147,16 @@ await files.upload(key, file, { contentType: "application/pdf" });
 - Linked from the resume domain row (`r2Key` column name is historical; storage is S3/MinIO). Each resume row is scoped by `userId`.
 - Delete removes the DB row and the object (synchronized hard delete).
 - **Onboarding promote:** after a successful `onboarding.apply` with a session source key, the API copies the PDF into a durable resume key, creates a resume row for **that session user** with `author: "admin"` (historical enum value for human/user-authored — not a site-admin role), sets it as default for that user, then deletes the temporary `resume-sources/` object (`packages/api/src/lib/onboarding/promote-resume-source.ts`). Skip/discard still only delete the session source.
-- **Apply package accept** also writes a tailored resume under the tenant resume tree (`packages/api/src/lib/application/accept-apply-package.ts`, `author: "agent"`).
+- **Apply package accept** also writes a tailored resume under the tenant resume tree (`packages/api/src/lib/application/accept-apply-package.ts` and `apps/agent/src/mastra/lib/accept-apply-package.ts`, `author: "agent"`, `prompt: apply-package:{applicationId}`).
+- **Kit replace is fail-closed:** PUT the new resume + cover objects, create the new resume row, commit the application to the new keys, **then** `mediaBucket.delete` the previous kit resume object (only when `prompt` is `apply-package:{id}`) and previous cover. If PUT or DB commit fails, leave the old kit; best-effort delete orphan **new** objects. Do not ERROR after a successful replace just because old-object delete is best-effort.
+- **Application delete** also deletes kit resume rows/objects (`prompt: apply-package:{id}`). Non-kit resumes stay.
 
 ### Cover letters (`{userId}/cover-letters/…`)
 
 - Server-only PDFs from **apply package accept** (`packages/api/src/lib/application/accept-apply-package.ts`).
 - Full key: `{userId}/cover-letters/{applicationId}-{uuid}.pdf`.
 - Linked from the application row (`coverLetterR2Key`, `coverLetterFilename`, `coverLetterBody`). Served via `/api/cover-letter/download/`.
-- Re-accept best-effort deletes the prior cover object before writing a new one (synchronized hard delete of the old key).
+- Re-accept deletes the prior cover object **after** the new PUT + DB commit (fail closed; leave the old kit on failure).
 
 ## What Is Not Built Yet
 

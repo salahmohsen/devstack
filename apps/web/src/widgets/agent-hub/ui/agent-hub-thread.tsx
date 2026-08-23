@@ -52,7 +52,7 @@ const HUB_MESSAGE_COMPONENTS = {
  * React hooks stay on this component (outside Viewport children).
  * Viewport children must not mix TAP `useAuiState` with React `useState`.
  */
-export function AgentHubThread() {
+export function AgentHubThread({ variant = "home" }: { variant?: "home" | "floater" }) {
   const {
     messages,
     historyReady,
@@ -67,7 +67,7 @@ export function AgentHubThread() {
   } = useHubChat();
 
   React.useEffect(() => {
-    ensureHistory();
+    void ensureHistory();
   }, [ensureHistory]);
 
   const clearedTodayAskRef = React.useRef<string | null>(null);
@@ -127,7 +127,9 @@ export function AgentHubThread() {
         <MessageScroller
           followOutput
           busy={isRunning}
-          navigation={historyReady && !isEmpty ? "rail" : undefined}
+          navigation={
+            variant === "floater" ? undefined : historyReady && !isEmpty ? "rail" : undefined
+          }
           label="Hub conversation"
           viewportRef={setViewportEl}
           onFollowChange={setFollowing}

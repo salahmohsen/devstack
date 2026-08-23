@@ -76,17 +76,23 @@ export function ConfirmDialog({
         onOpenChange(next);
       }}
     >
-      <AlertDialogContent className={cn(className)}>
-        <AlertDialogHeader>
+      <AlertDialogContent
+        className={cn(
+          // Bottom sheet on small screens: full width, safe-area footer clearance.
+          "max-sm:max-w-none",
+          className
+        )}
+      >
+        <AlertDialogHeader className="max-sm:px-5 max-sm:pt-5 max-sm:text-left">
           {icon ? (
             <div className="flex items-start gap-3">
               <span
                 aria-hidden
-                className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-muted/50 text-muted-foreground"
+                className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border/80 bg-muted/50 text-muted-foreground sm:size-9 sm:rounded-lg"
               >
                 {icon}
               </span>
-              <div className="min-w-0 space-y-1.5">
+              <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
                 <AlertDialogTitle className="text-pretty">{title}</AlertDialogTitle>
                 {description ? (
                   <AlertDialogDescription className="text-pretty">
@@ -106,8 +112,10 @@ export function ConfirmDialog({
             </>
           )}
         </AlertDialogHeader>
-        {children ? <div className="space-y-2 px-6 pb-2 text-sm">{children}</div> : null}
-        <AlertDialogFooter>
+        {children ? (
+          <div className="space-y-2 px-6 pb-2 text-sm max-sm:px-5">{children}</div>
+        ) : null}
+        <AlertDialogFooter className="max-sm:gap-3 max-sm:border-t-0 max-sm:bg-transparent max-sm:px-5 max-sm:pt-1 max-sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] max-sm:*:h-11 max-sm:*:w-full">
           <AlertDialogCancel disabled={confirmLoading}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             variant={confirmVariant}

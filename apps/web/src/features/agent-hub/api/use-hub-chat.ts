@@ -39,10 +39,11 @@ export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
   isLoadingOlder: boolean;
   loadOlderMessages: () => Promise<void>;
   /** Load Mastra history once — call when a thread is actually on screen. */
-  ensureHistory: () => void;
+  ensureHistory: () => Promise<void>;
   /**
    * Start a fresh hub memory thread (server epoch bump) and clear the UI.
-   * Cancels waiting HITL cards first. Used by `/new` slash command.
+   * Cancels waiting HITL cards and force-closes open side panels first.
+   * Used by `/new` slash command.
    */
   startNewChat: () => Promise<{ epoch: number; threadId: string }>;
   /**

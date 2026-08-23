@@ -1,7 +1,5 @@
 :root {
   --container: oklch(96.416% 0.00011 271.152);
-  --surface-1: oklch(96.115% 0.00011 271.152);
-  --surface-2: oklch(96.115% 0.00011 271.152);
   --night: var(--color-neutral-950);
   --night-faded: color-mix(in srgb, var(--color-neutral-950) 50%, transparent);
   --light: var(--color-neutral-50);
@@ -10,8 +8,6 @@
 
 .dark {
   --container: oklch(0.1656 0 0);
-  --surface-1: oklch(15.434% 0.00002 271.152);
-  --surface-2: oklch(0% 0 0);
 }
 
 @theme inline {

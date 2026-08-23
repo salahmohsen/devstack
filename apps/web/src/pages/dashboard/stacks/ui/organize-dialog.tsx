@@ -251,7 +251,7 @@ export function OrganizeDialog({
             </div>
           );
         } else if (action.type === "rename") {
-          const aliases = (action.details.alternativeNames ?? []).filter(Boolean);
+          const aliases = (action.details.aliases ?? []).filter(Boolean);
           summary = `→ ${String(action.details.newName ?? "unknown")}`;
           before = action.stackName;
           after = String(action.details.newName ?? "");

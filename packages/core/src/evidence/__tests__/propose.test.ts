@@ -44,6 +44,50 @@ describe("ProposeEvidenceChangeInputSchema", () => {
     });
     expect(parsed.success).toBe(false);
   });
+
+  it("defaults op to update and patch to {}", () => {
+    const parsed = ProposeEvidenceChangeInputSchema.safeParse(createInput);
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.op).toBe("update");
+  });
+
+  it("parses a delete input with id", () => {
+    const parsed = ProposeEvidenceChangeInputSchema.safeParse({
+      kind: "project",
+      op: "delete",
+      id: "prj_1",
+      currentMarkdown: "# Project: Dev-Hub",
+      proposedMarkdown: "# Project: Dev-Hub\n\n(This row will be deleted.)"
+    });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.op).toBe("delete");
+    expect(parsed.data?.id).toBe("prj_1");
+    expect(parsed.data?.patch).toEqual({});
+  });
+
+  it("rejects delete without id", () => {
+    const parsed = ProposeEvidenceChangeInputSchema.safeParse({
+      kind: "stack",
+      op: "delete",
+      currentMarkdown: "",
+      proposedMarkdown: "# Stack: React\n\n(This row will be deleted.)"
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it.each(["analysis", "analysisMarkdown", "projectAnalysis"] as const)(
+    "parse-fails when patch has %s",
+    (key) => {
+      const parsed = ProposeEvidenceChangeInputSchema.safeParse({
+        ...createInput,
+        patch: { title: "Dev-Hub", [key]: "new facts" }
+      });
+      expect(parsed.success).toBe(false);
+      expect(
+        parsed.success ? [] : parsed.error.issues.map((issue) => issue.path.join("."))
+      ).toContain(`patch.${key}`);
+    }
+  );
 });
 
 describe("ProposeEvidenceChangeOutputSchema", () => {

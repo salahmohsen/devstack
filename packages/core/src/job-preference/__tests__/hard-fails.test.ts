@@ -27,6 +27,20 @@ describe("applyPreferenceHardFails exclude", () => {
     });
     expect(r.failed).toBe(false);
   });
+
+  it("kills a PHP listing when exclude is a typical inspect-chip token", () => {
+    const r = applyPreferenceHardFails(
+      {
+        title: "PHP WordPress Developer",
+        companyName: "Acme",
+        location: "Remote",
+        description: null
+      },
+      { ...defaultJobPreference(), excludeKeywords: ["php"] }
+    );
+    expect(r.failed).toBe(true);
+    expect(r.reasons).toContain("excluded keyword match");
+  });
 });
 
 describe("applyPreferenceHardFails level floor", () => {

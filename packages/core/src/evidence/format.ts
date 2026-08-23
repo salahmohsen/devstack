@@ -63,6 +63,16 @@ function formatExperienceMarkdown(record: Record<string, unknown>): string {
   return lines.join("\n");
 }
 
+/** Short File Diff view for a delete Confirm. Not stored. */
+export function formatEvidenceDeleteMarkdown(
+  kind: EvidenceKind,
+  record: Record<string, unknown>
+): string {
+  const heading = kind === "project" ? "Project" : kind === "experience" ? "Experience" : "Stack";
+  const title = kind === "stack" ? asText(record.name) : asText(record.title);
+  return `# ${heading}: ${title || "Untitled"}\n\n(This row will be deleted.)`;
+}
+
 function formatStackMarkdown(record: Record<string, unknown>): string {
   const lines = [`# Stack: ${asText(record.name)}`];
   const type = asText(record.type);

@@ -65,7 +65,14 @@ export type OrpcContextLogger = {
   warn?(details: unknown): void;
 };
 
-export type OrpcContextSession = { user: { id: string } } | null;
+export type OrpcContextSession = {
+  user: {
+    id: string;
+    role?: string | null;
+    banned?: boolean | null;
+  };
+  impersonatedBy?: string | null;
+} | null;
 
 export type OrpcContextMediaBucket = {
   put(

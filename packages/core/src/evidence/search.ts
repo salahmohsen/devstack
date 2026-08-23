@@ -8,16 +8,24 @@ export type EvidenceSearchRow = {
 const DEFAULT_LIMIT = 8;
 const ONE_LINER_MAX = 120;
 
+/** Fold curly/smart quotes so "Ment'ech" matches stored "Ment’ech". */
+function normalizeEvidenceText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02BC\u2032]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"');
+}
+
 export function rankEvidenceHits(input: {
   query: string;
   rows: EvidenceSearchRow[];
   limit?: number;
 }): EvidenceSearchRow[] {
-  const query = input.query.trim().toLowerCase();
+  const query = normalizeEvidenceText(input.query.trim());
   if (!query) return [];
 
   const scored = input.rows.flatMap((row) => {
-    const title = row.title.toLowerCase();
+    const title = normalizeEvidenceText(row.title);
     const score = scoreTitle(title, query);
     if (score === 0) return [];
     return [{ score, row: { ...row, oneLiner: formatEvidenceOneLiner(row.oneLiner) } }];

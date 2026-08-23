@@ -116,8 +116,16 @@ function ApplicationCard({
     openView(app);
   }
 
+  const showBadges =
+    app.listingClosed ||
+    app.matchScore != null ||
+    app.applyMethod !== "unknown" ||
+    app.hiringUrgency !== "unknown" ||
+    app.experienceYearsMin != null;
+
   const cardBody = (
     <div
+      data-selected={avatarAnimated}
       className={cn(
         "group rounded-lg border border-border bg-card p-2.5 shadow-xs",
         isDragging && "opacity-40",
@@ -146,7 +154,29 @@ function ApplicationCard({
             />
           </div>
         ) : null}
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {showBadges ? (
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              {app.listingClosed ? (
+                <Badge
+                  variant="secondary"
+                  size="xs"
+                  className="font-normal tracking-normal text-muted-foreground normal-case"
+                  title="This posting is no longer on the board."
+                >
+                  Listing closed
+                </Badge>
+              ) : null}
+              <JobYearsBadge years={app.experienceYearsMin} />
+              <ApplicationMatchScoreBadge matchScore={app.matchScore} />
+              <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
+              {app.hiringUrgency !== "unknown" ? (
+                <Badge variant="secondary" size="xs">
+                  {HIRING_URGENCY_LABELS[app.hiringUrgency]}
+                </Badge>
+              ) : null}
+            </div>
+          ) : null}
           <button
             type="button"
             className={cn(
@@ -170,37 +200,8 @@ function ApplicationCard({
             <span className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{app.companyName}</div>
               <div className="truncate text-xs text-muted-foreground">{app.title}</div>
-              {app.experienceYearsMin != null ? (
-                <div className="mt-1">
-                  <JobYearsBadge years={app.experienceYearsMin} />
-                </div>
-              ) : null}
             </span>
           </button>
-          {(app.listingClosed ||
-            app.matchScore != null ||
-            app.applyMethod !== "unknown" ||
-            app.hiringUrgency !== "unknown") && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {app.listingClosed ? (
-                <Badge
-                  variant="secondary"
-                  size="xs"
-                  className="font-normal tracking-normal text-muted-foreground normal-case"
-                  title="This posting is no longer on the board."
-                >
-                  Listing closed
-                </Badge>
-              ) : null}
-              <ApplicationMatchScoreBadge matchScore={app.matchScore} />
-              <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
-              {app.hiringUrgency !== "unknown" ? (
-                <Badge variant="secondary" size="xs">
-                  {HIRING_URGENCY_LABELS[app.hiringUrgency]}
-                </Badge>
-              ) : null}
-            </div>
-          )}
           {!isOverlay ? <ApplicationActionGroup app={app} variant="board" /> : null}
         </div>
       </div>

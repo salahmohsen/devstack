@@ -119,11 +119,27 @@ export const HUB_CLIENT_HITL_TOOL_NAMES = new Set([
   "open-daily-brief",
   "openDailyBrief",
   "propose-mail-crm-change",
-  "proposeMailCrmChange"
+  "proposeMailCrmChange",
+  "propose-application-field-change",
+  "proposeApplicationFieldChange",
+  "propose-set-outcome",
+  "proposeSetOutcome",
+  "propose-delete-application",
+  "proposeDeleteApplication",
+  "propose-delete-note",
+  "proposeDeleteNote",
+  "propose-batch-tracking-change",
+  "proposeBatchTrackingChange",
+  "propose-refresh-from-url",
+  "proposeRefreshFromUrl"
 ]);
 
 export function isHubClientHitlToolName(name: string): boolean {
   return HUB_CLIENT_HITL_TOOL_NAMES.has(name);
+}
+
+export function isOpenEntityInspectToolName(name: string): boolean {
+  return name === "open-entity-inspect" || name === "openEntityInspect";
 }
 
 export function filterHubTodayGatherActiveTools(toolNames: string[]): string[] {
@@ -135,20 +151,51 @@ export function filterHubTodayOpenActiveTools(toolNames: string[]): string[] {
 }
 
 /**
- * Concurrent forced reads (Today + stacks + brief + company + inspect) must
- * share one activeTools allowlist. Exclusive filters overwrite each other in
- * processInputStep order and surface "Tool X not found. Available tools: Y".
+ * Concurrent forced reads (Today + stacks + brief + company + inspect +
+ * application mention) must share one activeTools allowlist. Exclusive
+ * filters overwrite each other in processInputStep order and surface
+ * "Tool X not found. Available tools: Y".
  */
 export type HubForcedReadFlags = {
   today: boolean;
   stacks: boolean;
   searchBrief: boolean;
   company: boolean;
+  /** Yes/no pile status — listNewJobs only, never triage Confirm. */
+  pile: boolean;
+  /** Need openEntityInspect eventually (lookup and/or open phase). */
   inspect: boolean;
+  /**
+   * Successful list/search/get already ran this turn — force openEntityInspect
+   * alone. Without this bit, server lookup tools stay in the allowlist forever
+   * and the client open tool is deferred every step.
+   */
+  inspectLookupDone: boolean;
+  /** Job listing open (Match %, listing, role/job wording) — CRM lookup only. */
+  inspectJobListing: boolean;
+  application: boolean;
 };
 
 export function anyHubForcedRead(flags: HubForcedReadFlags): boolean {
-  return flags.today || flags.stacks || flags.searchBrief || flags.company || flags.inspect;
+  return (
+    flags.today ||
+    flags.stacks ||
+    flags.searchBrief ||
+    flags.company ||
+    flags.pile ||
+    flags.inspect ||
+    flags.application
+  );
+}
+
+const HUB_INSPECT_LOOKUP_TOOL_RE =
+  /searchEvidence|search-evidence|getExperience|get-experience|getProject|get-project|listExperiences|list-experiences|listProjects|list-projects|searchApplications|search-applications|getApplication|get-application|listNewJobs|list-new-jobs|listOpenApplications|list-open-applications/i;
+
+const HUB_INSPECT_JOB_LOOKUP_TOOL_RE =
+  /searchApplications|search-applications|getApplication|get-application|listNewJobs|list-new-jobs|listOpenApplications|list-open-applications/i;
+
+export function isHubInspectLookupToolName(name: string): boolean {
+  return HUB_INSPECT_LOOKUP_TOOL_RE.test(name);
 }
 
 export function filterHubUnionForcedReadActiveTools(
@@ -156,10 +203,27 @@ export function filterHubUnionForcedReadActiveTools(
   flags: HubForcedReadFlags
 ): string[] {
   if (!anyHubForcedRead(flags)) return [];
-  return toolNames.filter((name) => {
+
+  // Inspect open phase alone: client tool only (lookup already returned an id).
+  if (
+    flags.inspect &&
+    flags.inspectLookupDone &&
+    !flags.today &&
+    !flags.stacks &&
+    !flags.pile &&
+    !flags.company &&
+    !flags.application &&
+    !flags.searchBrief
+  ) {
+    return toolNames.filter((name) => isOpenEntityInspectToolName(name));
+  }
+
+  const allowed = toolNames.filter((name) => {
     if (flags.today && isGetDailyBriefToolName(name)) return true;
     if (flags.stacks && isListStacksToolName(name)) return true;
     if (flags.searchBrief && isGetSearchBriefToolName(name)) return true;
+    if (flags.application && isGetApplicationToolName(name)) return true;
+    if (flags.pile && isListNewJobsToolName(name)) return true;
     if (
       flags.company &&
       /searchApplications|search-applications|getApplication|get-application|searchMail|search-mail|getMail|get-mail|listNewJobs|list-new-jobs|classifyMail|classify-mail|explainApplicationVsPrefs|explain-application-vs-prefs/i.test(
@@ -168,16 +232,27 @@ export function filterHubUnionForcedReadActiveTools(
     ) {
       return true;
     }
-    if (
-      flags.inspect &&
-      /openEntityInspect|open-entity-inspect|searchEvidence|search-evidence|getExperience|get-experience|getProject|get-project|listExperiences|list-experiences|listProjects|list-projects/i.test(
-        name
-      )
-    ) {
-      return true;
+    if (flags.inspect) {
+      if (flags.inspectLookupDone) {
+        // Packed with other server forced reads — keep open deferred until those finish.
+        return false;
+      }
+      if (isOpenEntityInspectToolName(name)) return true;
+      if (flags.inspectJobListing) return HUB_INSPECT_JOB_LOOKUP_TOOL_RE.test(name);
+      return HUB_INSPECT_LOOKUP_TOOL_RE.test(name);
     }
     return false;
   });
+  /**
+   * Client HITL tools (getSearchBrief, openEntityInspect, …) have no server
+   * execute. Mastra suspends the whole step when any co-emitted tool lacks
+   * execute — packed getDailyBrief+listStacks+getSearchBrief ends with every
+   * part stuck at input-available. Drop client HITL from the allowlist whenever
+   * a server tool is also allowed; the next step forces the client tool alone.
+   */
+  const hasServer = allowed.some((name) => !isHubClientHitlToolName(name));
+  if (!hasServer) return allowed;
+  return allowed.filter((name) => !isHubClientHitlToolName(name));
 }
 
 /** Everyday “what am I looking for / job rules / show the brief”. */
@@ -188,8 +263,8 @@ export function userTurnAsksSearchBrief(text: string): boolean {
     .replace(/\s+/g, " ")
     .trim();
   if (!t) return false;
-  // "what am I looking for" and contracted "what I'm looking for"
-  if (/\bwhat (am i|i'?m) looking for\b/.test(t)) return true;
+  // "what am I looking for" / "what I'm even looking for" / "what am i looking for again"
+  if (/\bwhat (am i|i'?m)(?: \w+){0,2} looking for\b/.test(t)) return true;
   if (/\blooking for (in )?jobs?\b/.test(t)) return true;
   if (/\blooking for job-wise\b/.test(t)) return true;
   if (/\bwhat are my job (rules|goals|preferences|prefs)\b/.test(t)) return true;
@@ -235,6 +310,13 @@ export function isGetSearchBriefToolName(name: string): boolean {
 export function isGetDailyBriefToolName(name: string): boolean {
   return name === "get-daily-brief" || name === "getDailyBrief";
 }
+
+export function isGetApplicationToolName(name: string): boolean {
+  return name === "get-application" || name === "getApplication";
+}
+
+export const HUB_APPLICATION_MUST_LOAD_FEEDBACK =
+  "<system-reminder>They referenced an application {id}. Call getApplication now. Do not invent the JD or kit from memory. Do not mention this reminder.</system-reminder>";
 
 export function isListStacksToolName(name: string): boolean {
   return name === "list-stacks" || name === "listStacks";
@@ -330,6 +412,10 @@ const TODAY_PACKED_STOPWORDS = new Set([
 const COMPANY_STATUS_SIGNAL_RE =
   /\b(stage|email|emails|mail|quiet|reply|replied|news|heard|applied|status|receipt|write back)\b/i;
 
+/** "what's the deal with DualEntry" / "what's going on with Trivelta" — company without mail/stage words. */
+const COMPANY_DEAL_RE =
+  /\b(what'?s|whats)\s+(the\s+)?(deal|story|latest)\s+(with|on)\b|\b(what'?s|whats)\s+going\s+on\s+with\b|\bhow\s+('?s|is)\s+[\w'’-]{2,}.{0,24}\b(looking|going|doing)\b/i;
+
 function leftoverCompanyStatusTokens(text: string): string[] {
   return text
     .replace(/[^a-z0-9'\s]/gi, " ")
@@ -343,14 +429,16 @@ function leftoverCompanyStatusTokens(text: string): string[] {
 export function userTurnAsksCompanyStatus(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
+  const dealAsk = COMPANY_DEAL_RE.test(t);
   if (
     userTurnRetriesDailyBrief(t) &&
     !userTurnAsksDailyBrief(t) &&
-    !COMPANY_STATUS_SIGNAL_RE.test(t)
+    !COMPANY_STATUS_SIGNAL_RE.test(t) &&
+    !dealAsk
   ) {
     return false;
   }
-  if (!COMPANY_STATUS_SIGNAL_RE.test(t)) return false;
+  if (!COMPANY_STATUS_SIGNAL_RE.test(t) && !dealAsk) return false;
   if (userTurnAsksEntityInspect(t) && leftoverCompanyStatusTokens(t).length === 0) {
     return false;
   }
@@ -382,36 +470,145 @@ export function userTurnAsksEntityInspect(text: string): boolean {
   return /\b(open|show|preview)\s+(my\s+)?(?!me\b|us\b|the\b)[\w'’-]{2,}/i.test(t);
 }
 
-/** "file these / triage / sort the pile" — wants the Confirm card. */
+/**
+ * Open/show a New or Tracked job (not an evidence record). Prefer CRM search
+ * over searchEvidence — triage paste often looks like title + company · Match N%.
+ */
+export function userTurnAsksJobListingInspect(text: string): boolean {
+  if (!userTurnAsksEntityInspect(text)) return false;
+  const t = text.trim();
+  if (/\bmatch\s*\d{1,3}\s*%/i.test(t)) return true;
+  if (/[·•]\s*match\b/i.test(t)) return true;
+  if (/\blisting\b/i.test(t)) return true;
+  if (/\b(open|show|preview)\b[\s\S]{0,100}\b(job|role|position|opening)\b/i.test(t)) return true;
+  if (/\b(job|role|position|opening)\b[\s\S]{0,60}\b(open|show|preview)\b/i.test(t)) return true;
+  return false;
+}
+
+/** "file these / triage / sort / filter the pile" — wants the Confirm card. */
 export function userTurnAsksNewJobsTriage(text: string): boolean {
-  return /\b(triage|track these|file (these|them)|sort (the )?(pile|inbox|new jobs)|screen (the )?(pile|new jobs))\b/i.test(
-    text
-  );
+  const t = text.trim();
+  if (!t) return false;
+  if (
+    userTurnAsksGenerateApplyPackages(t) &&
+    !/\b(filter|sort|screen|triage|track(?:ing|ed)?)\b/i.test(t)
+  ) {
+    // "generate package for each of them" is tracked-CRM, not a New jobs triage.
+    return false;
+  }
+  if (
+    /\b(triage|track these|file (these|them)|sort (the )?(pile|inbox|new jobs)|screen (the )?(pile|new jobs)|filter (my |the )?(pile|inbox|new jobs)|filter new jobs)\b/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  // "filter/track my new jobs and … package for the one that suits me"
+  if (
+    /\b(new jobs|the pile|inbox)\b/i.test(t) &&
+    /\b(filter|sort|screen|triage|track(?:ing|ed)?)\b/i.test(t)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * "generate package for each/them/tracked" — apply kits for already-tracked jobs.
+ * Must not reopen New jobs triage.
+ */
+export function userTurnAsksGenerateApplyPackages(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (
+    /\b(package|packages|apply kit|apply-kit)s?\b/i.test(t) &&
+    /\b(each|all|them|these|those|tracked|every|pipeline)\b/i.test(t)
+  ) {
+    return true;
+  }
+  if (
+    /\b(generate|make|start|prep|prepare).{0,48}(package|packages|apply kit|apply-kit)s?\b/i.test(
+      t
+    ) &&
+    !/\b(new jobs|the pile|inbox)\b/i.test(t)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export const HUB_APPLY_PACKAGES_MUST_LIST_FEEDBACK =
+  "<system-reminder>They asked to generate apply packages for tracked/already-triaged jobs. Call listOpenApplications({ limit: 20 }) now. Do not call listNewJobs or proposeNewJobsTriage. Do not mention this reminder.</system-reminder>";
+
+export const HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK =
+  "<system-reminder>Tracked applications are listed. Call generateApplyPackage for one applicationId now (best fit first). After Approve, continue with the next id until they stop you. Do not reopen New jobs triage. Do not mention this reminder.</system-reminder>";
+
+export function isListOpenApplicationsToolName(name: string): boolean {
+  return name === "list-open-applications" || name === "listOpenApplications";
+}
+
+export function isGenerateApplyPackageToolName(name: string): boolean {
+  return name === "generate-apply-package" || name === "generateApplyPackage";
+}
+
+export function filterHubApplyPackageActiveTools(
+  toolNames: string[],
+  phase: "list" | "generate"
+): string[] {
+  return toolNames.filter((name) => {
+    if (phase === "list") {
+      return (
+        isListOpenApplicationsToolName(name) ||
+        /getApplication|get-application|searchApplications|search-applications/i.test(name)
+      );
+    }
+    return isGenerateApplyPackageToolName(name);
+  });
 }
 
 /** "pile empty or not" — list and speak, do not open Confirm. */
 export function userTurnAsksPileStatusOnly(text: string): boolean {
   const t = text.trim();
   if (!t || userTurnAsksNewJobsTriage(t)) return false;
-  return /\bpile\b.{0,24}\b(empty|or not)\b|\b(empty|anything|any(?:thing)? new)\b.{0,24}\bpile\b|\bis the pile\b/i.test(
+  return /\bpile\b.{0,40}\b(empty|or not|mess|messy|full|still)\b|\b(empty|anything|any(?:thing)? new|still a mess)\b.{0,40}\bpile\b|\bis the pile\b/i.test(
     t
   );
 }
 
-export function isOpenEntityInspectToolName(name: string): boolean {
-  return name === "open-entity-inspect" || name === "openEntityInspect";
-}
+export const HUB_PILE_MUST_LIST_FEEDBACK =
+  "<system-reminder>They asked whether the pile is empty/messy. Call listNewJobs now and speak the count. Do not open triage Confirm. Do not mention this reminder.</system-reminder>";
 
-export function filterHubInspectActiveTools(toolNames: string[]): string[] {
-  return toolNames.filter((name) =>
-    /openEntityInspect|open-entity-inspect|searchEvidence|search-evidence|getExperience|get-experience|getProject|get-project|listExperiences|list-experiences|listProjects|list-projects/i.test(
-      name
-    )
-  );
+export const HUB_NEW_JOBS_MUST_LIST_FEEDBACK =
+  "<system-reminder>They asked to filter/sort/file new jobs or start an apply package from the pile. Call listNewJobs now. Do not only say you are pulling them. Do not mention this reminder.</system-reminder>";
+
+export function filterHubInspectActiveTools(
+  toolNames: string[],
+  opts?: { lookupDone?: boolean; jobListing?: boolean }
+): string[] {
+  if (opts?.lookupDone) {
+    return toolNames.filter((name) => isOpenEntityInspectToolName(name));
+  }
+  const lookupRe = opts?.jobListing ? HUB_INSPECT_JOB_LOOKUP_TOOL_RE : HUB_INSPECT_LOOKUP_TOOL_RE;
+  return toolNames.filter((name) => isOpenEntityInspectToolName(name) || lookupRe.test(name));
 }
 
 export const HUB_INSPECT_MUST_OPEN_FEEDBACK =
-  "<system-reminder>They asked to open/show a record. Search or get it, then call openEntityInspect with the real id. Do not only say you opened it. Do not mention this reminder.</system-reminder>";
+  '<system-reminder>They asked to open/show a record. For a job listing (company/title from New or Tracked), searchApplications or listNewJobs/listOpenApplications then openEntityInspect({ kind: "application", id }). For projects/experience/skills, searchEvidence or get then openEntityInspect with that kind. Stay on this page — do not openSurface for preview. Do not only say you opened it. Do not mention this reminder.</system-reminder>';
+
+export const HUB_INSPECT_JOB_MUST_LOOKUP_FEEDBACK =
+  "<system-reminder>They asked to open a job listing. Call searchApplications (or listNewJobs / listOpenApplications) for that company/title now. Do not searchEvidence. Do not say tools are missing. Do not mention this reminder.</system-reminder>";
+
+export const HUB_INSPECT_MUST_CALL_OPEN_FEEDBACK =
+  '<system-reminder>Lookup already returned an id. Call openEntityInspect({ kind, id }) now — kind="application" for a job. Stay on this page — do not openSurface. Do not say the panel is stuck. Do not mention this reminder.</system-reminder>';
+
+export function hubInspectForceFeedback(opts: {
+  lookupDone: boolean;
+  jobListing: boolean;
+}): string {
+  if (opts.lookupDone) return HUB_INSPECT_MUST_CALL_OPEN_FEEDBACK;
+  if (opts.jobListing) return HUB_INSPECT_JOB_MUST_LOOKUP_FEEDBACK;
+  return HUB_INSPECT_MUST_OPEN_FEEDBACK;
+}
 
 export const HUB_TODAY_MUST_OPEN_FEEDBACK =
   "<system-reminder>getDailyBrief already returned markdown. Call openDailyBrief({ markdown }) with that markdown. Do not rewrite it. One short spoken line after. Do not paste the letter. Do not triage. Do not mention this reminder.</system-reminder>";
@@ -563,6 +760,44 @@ export function isProposeEvidenceChangeToolName(name: string): boolean {
 
 export function isProposeHardPreferenceChangeToolName(name: string): boolean {
   return name === "propose-hard-preference-change" || name === "proposeHardPreferenceChange";
+}
+
+export function isProposeApplicationFieldChangeToolName(name: string): boolean {
+  return name === "propose-application-field-change" || name === "proposeApplicationFieldChange";
+}
+
+export function isProposeSetOutcomeToolName(name: string): boolean {
+  return name === "propose-set-outcome" || name === "proposeSetOutcome";
+}
+
+export function isProposeDeleteApplicationToolName(name: string): boolean {
+  return name === "propose-delete-application" || name === "proposeDeleteApplication";
+}
+
+export function isProposeDeleteNoteToolName(name: string): boolean {
+  return name === "propose-delete-note" || name === "proposeDeleteNote";
+}
+
+export function isProposeBatchTrackingChangeToolName(name: string): boolean {
+  return name === "propose-batch-tracking-change" || name === "proposeBatchTrackingChange";
+}
+
+export function isProposeRefreshFromUrlToolName(name: string): boolean {
+  return name === "propose-refresh-from-url" || name === "proposeRefreshFromUrl";
+}
+
+/** Evidence, hard-stop, and CRM Confirm cards — no same-turn listNewJobs/triage. */
+export function isHubPostEvidenceLikeConfirmToolName(name: string): boolean {
+  return (
+    isProposeEvidenceChangeToolName(name) ||
+    isProposeHardPreferenceChangeToolName(name) ||
+    isProposeApplicationFieldChangeToolName(name) ||
+    isProposeSetOutcomeToolName(name) ||
+    isProposeDeleteApplicationToolName(name) ||
+    isProposeDeleteNoteToolName(name) ||
+    isProposeBatchTrackingChangeToolName(name) ||
+    isProposeRefreshFromUrlToolName(name)
+  );
 }
 
 /**

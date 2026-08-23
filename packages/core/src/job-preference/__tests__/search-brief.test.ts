@@ -25,14 +25,15 @@ function sourceWith(prefs = defaultJobPreference()): SearchBriefSource {
 }
 
 describe("search brief source payload", () => {
-  it("ignores jobsPerRun, dailyBoardScoreCap, minMatchScore, and importFromEmail", () => {
+  it("ignores jobsPerRun, dailyBoardScoreCap, minMatchScore, importFromEmail, and reviewApplyKit", () => {
     const base = sourceWith(defaultJobPreference());
     const ignored = sourceWith({
       ...defaultJobPreference(),
       jobsPerRun: 40,
       dailyBoardScoreCap: 80,
       minMatchScore: 99,
-      importFromEmail: true
+      importFromEmail: true,
+      reviewApplyKit: false
     });
     expect(stableSearchBriefSourceJson(base)).toBe(stableSearchBriefSourceJson(ignored));
   });

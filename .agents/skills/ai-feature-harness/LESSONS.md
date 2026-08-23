@@ -17,6 +17,73 @@
 
 ---
 
+## 2026-08-23 — Open job listing searched CRM then never opened the same-page panel
+
+- **Trigger:** “open Front-End Software Developer / ExeQut · Match 88%”; agent searched Evidence or searched Applications then said the side panel was stuck
+- **Finding:** `filterHubUnionForcedReadActiveTools` defers client `openEntityInspect` whenever any server lookup tool is also allowed. After `searchApplications` succeeds, lookup tools stay in the allowlist every step, so the open tool is deferred forever. Add `inspectLookupDone` and force **only** `openEntityInspect` once a successful list/search/get ran this turn
+- **Finding:** Job-title opens (Match N%, “listing”, role/job wording) must prefer CRM lookup (`searchApplications` / `listNewJobs` / `listOpenApplications`) — drop `searchEvidence` from that phase via `inspectJobListing`
+- **Finding:** Agent calling `openEntityInspect({ kind: "application", id })` is not enough. The client toolkit Zod schema still said `experience|project|stack` only, so the human tool UI never mounted/completed and the part stayed `input-available`. Keep agent tool schema, `parseOpenEntityInspectInput`, **and** `OpenEntityInspectParametersSchema` in sync when adding a kind
+- **Finding:** Navigate with `openSurface` only when they ask to leave the page. Same-page inspect is `openEntityInspect` + dashboard `EntityInspectHost` / `ApplicationInfoPanel`
+- **Evidence class:** Chrome — `search Applications ExeQut` then `tool-openEntityInspect` input-available (pre-schema); unit policy 105; post-schema retest for panel on `/dashboard`
+
+## 2026-08-23 — "Generate package for each of them" reopened New jobs triage
+
+- **Trigger:** After a triage card, user said “start generating package for each of them”; agent ran `listNewJobs` + `proposeNewJobsTriage` again
+- **Finding:** `messagesNeedProposeTriage` forced the card whenever `listNewJobs` returned rows this turn, with no triage-intent check. Any mistaken `listNewJobs` on a generate-package ask reopened triage
+- **Finding:** Require `userTurnAsksNewJobsTriage` for propose force. Separate `userTurnAsksGenerateApplyPackages` (“package for each/them/tracked”) → `listOpenApplications` then one `generateApplyPackage` (Approve). Never `listNewJobs` on that path
+- **Evidence class:** Chrome — `list Open Applications` + “Generate apply package” Approve / Waiting for approval; unit 100 pass
+
+## 2026-08-23 — Hub Welcome over a real thread (empty history hydrate)
+
+- **Trigger:** Dashboard sometimes opens to “Welcome back…” while `listHubMessages` later returns the full transcript
+- **Finding:** API treated upstream agent `401`/`403` (and non-JSON) as **successful empty** history. During agent restart that paints HubWelcome. Fix: only `404` (missing thread) → empty; auth/5xx/non-JSON must throw
+- **Finding:** Client `ensureHistory` catch set `historyReady=true` and kept `historyLoadRef`, so a failed hydrate never retried and stuck on Welcome. Silent auto-retry with backoff while keeping `historyReady=false`; clear the ref after exhausted failure so focus can try again; initial import uses `replacePath: true`
+- **Evidence class:** Chrome network `listHubMessages` 200 body `uiMessages:[]` at load while later same-cookie fetch had 23 rows; agent memory unauth 401
+
+## 2026-08-23 — "Filter my new jobs" prelude dies with zero tools
+
+- **Trigger:** User ask “filter my new jobs and start generating package…”; assistant spoke “Let me pull up…” then stream ended
+- **Finding:** `hubSupervisorOnIterationComplete` treats text-only + `finishReason: stop` as terminal unless a forced-read flag matches. Triage intent was only enforced _after_ `listNewJobs` returned rows (`HubNewJobsTriageProcessor`), so a spoken prelude never forced the list
+- **Finding:** Expand `userTurnAsksNewJobsTriage` for `filter my new jobs` / package-from-pile phrasing. `messagesNeedPileStatus` must also cover triage asks until a successful `listNewJobs` (status-only stays non-triage after the list). Use triage-specific feedback + `toolChoice: required` on the pile processor
+- **Evidence class:** `listHubMessages` (reasoning+text, no tools); Chrome retry showed `list New Jobs` then New jobs triage Confirm; agent policy unit 97 pass
+
+## 2026-08-23 — Packed hub ask: client HITL in activeTools suspends the whole server batch
+
+- **Trigger:** Conversation-cycle harness (everyday packed Today+pile+DualEntry+skills+looking-for; Ment'ech inspect; bells)
+- **Finding:** `getSearchBrief` / `openEntityInspect` have no server `execute`. When Mastra co-emits them with server tools (`getDailyBrief`, `listStacks`, `searchApplications`, …), the step finishes at `tool-input-available` with **zero** `tool-output` — every sibling stuck. Diff `chatStream` SSE: `finish-step` right after inputs. **Defer client HITL from `filterHubUnionForcedReadActiveTools` whenever any server tool is also allowed**; next step forces the client tool alone
+- **Finding:** Do not `sendSignal` “Call getSearchBrief now” while that tool is deferred from `activeTools` — the model still calls it and gets `Tool not found. Available tools: listNewJobs…`
+- **Finding:** `messagesNeedCompanyRead` must require `mastraPartHasSuccessfulToolResult`. A failed / not-found `searchApplications` must not clear the company force
+- **Finding:** Everyday “what's the deal with X” / “what's going on with X” is a company ask without mail/stage words — expand `userTurnAsksCompanyStatus`. “what i'm even looking for” needs a 0–2 word gap in the looking-for regex. Pile “still a mess” needs `HubPileStatusProcessor` + `pile` union flag
+- **Finding:** `Ment’ech` (U+2019) vs typed `Ment'ech` (ASCII) makes `rankEvidenceHits` miss org titles. Normalize curly apostrophes in the ranker. **Restart the agent after `rebuild:core-cache`** — a running Node process keeps the old ESM cache in memory
+- **Finding:** DualEntry can be `trackingStatus: inbox` and `stage: saved` at once. Speaking only “saved” sounds tracked; prefer pile vs tracked from `trackingStatus`
+- **Finding:** Bells / unread notifications still have no force processor — model invents “outside my toolkit” or `searchMail` for “unread” while `listNotifications` exists (gap still open)
+- **User preference:** Everyday multi-ask; do not coach tool names; stress-test inside one conversation
+- **Evidence class:** Chrome hub Thread epochs 20–22; `chatStream` SSE (no tool-output); `listHubMessages` stuck input-available then post-fix outputs; core evidence unit; agent policy 64 pass; unauth `:4111/chat` 401
+
+## 2026-08-23 — Match canonicalize: prove this worktree’s :3000, not a healthy foreign tunnel
+
+- **Trigger:** Match skill canonicalize harness (chips omit role phrases; Postman/HTTP stay; `%` = Have/checkable; Create skill in-panel; regenerate take)
+- **Finding:** `HTTP 200` on `:3000`/`:5200`/`:4111` is not this branch when another checkout’s `pnpm dev:tunnel` owns the ports. Probe listener `cwd` (or a feature-only procedure) before trusting Match UI. Wrong binary still showed `3 of 10` with `frontend development` Missing; this worktree showed `2 of 4` / later `3 of 4` with phrases gone and Postman/HTTP as tools
+- **Finding:** SIGSTOP the foreign tunnel **parent and** `scripts/dev.sh` restart wrappers, then kill product listeners. Stopping only the top zsh leaves children `S` and they rebind `:3000`
+- **Finding:** All-phrase listings (e.g. Lucidya `Frontend Development` / `Software Development`) hide the Match chip bar (`percent: null`), while Details may still show the raw stored strings. That is canonicalize-on-read for chips, not a Details bug
+- **Finding:** Held aliases change the checkable set. `TypeScript.aliases` including `JavaScript` makes listing `JavaScript` display/dedupe as TypeScript in canonicalize — DualEntry looked like 4 tools not 5. Inspect catalog aliases before treating “missing JS chip” as a drop bug
+- **Finding:** Dashboard Create skill from Missing → `StackForm` push → Save → pop same job works: toast `Skill created.`, Postman moved Have, `%` 50→75. Regenerate via `applications.regenerateAgentTake` can mention frontend role when React/TS are Have without listing dropped duty phrases as missing
+- **User preference:** Grill lock on allowlist canonicalize; do not reopen matchScore math
+- **Evidence class:** Core job-skills 22 unit; `vp check` core/api/agent 0 errors; Chrome DualEntry New + Lucidya Tracked; oRPC regenerateAgentTake 200; unauth `:4111/chat/hub-supervisor` 401
+
+## 2026-08-22 — Hub job context: mention force vs dump; Avoid is prefs not HITL
+
+- **Trigger:** Hub job-context plan (Open in agent mention, thickened getApplication, Avoid, apply-kit replace)
+- **Finding:** Planted `:application[label]{name=id}` must expand to `application {id}` **and** `anyHubForcedRead` must OR the new `application` bit. Flags alone do not set `activeTools` — the mention processor still has to run. `onIterationComplete` must continue text-only mention turns or the model speaks instead of calling `getApplication`
+- **Finding:** Interview rehearsal without braces (`application ${id}`) never trips the gather regex. Live template tests must use `APPLICATION_MENTION_RE` on the **actual** `requestHubInterviewRehearsal` string
+- **Finding:** Inspect **Avoid** is a silent `excludeKeywords` upsert, not `proposeHardPreferenceChange`. Hub spoken “exclude RN” stays Confirm File Diff
+- **Finding:** Alias picker must not prefix-match (`Java` ↛ `JavaScript`). Preselect is exact name/alias or unique `CANONICAL_SKILL_ALIASES` hit only
+- **Finding:** Kit replace must PUT new resume+cover and commit DB **before** deleting old `apply-package:{id}` resume objects. Fail closed leave the old kit. Application delete must also drop those kit objects
+- **Finding:** Hub keeps generate+accept Approval even when Job settings Review apply kit is off. Off only skips the dashboard sheet
+- **Finding:** Local `:3000`/`:5200`/`:4111` were down this pass — live Open-in-agent / Avoid undo / kit regenerate were not browser-proven. Unit seams: mention expand, union allowlist, iteration continue, ranker current-role, fail-PUT keep old kit
+- **User preference:** Grill locks stay frozen; do not dump JD into the composer
+- **Evidence class:** Core/agent/web unit; `vp run -w fix` 0 errors; React Doctor changed-scope 78 (HITL useMemo matches existing cards); unauth chat not probed (agent down)
+
 ## 2026-08-21 — Resume PDF generate/Accept: prove this binary, then engines on its PATH
 
 - **Trigger:** Typst/RenderCV resume PDF harness (dashboard generate + apply-package Accept)

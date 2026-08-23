@@ -84,7 +84,10 @@ const evidenceCreateInput = {
 
 describe("parseProposeEvidenceChangeInput", () => {
   it("parses a create input without id via core schema", () => {
-    expect(parseProposeEvidenceChangeInput(evidenceCreateInput)).toEqual(evidenceCreateInput);
+    expect(parseProposeEvidenceChangeInput(evidenceCreateInput)).toEqual({
+      ...evidenceCreateInput,
+      op: "update"
+    });
   });
 
   it("parses an edit input with id", () => {
@@ -97,7 +100,27 @@ describe("parseProposeEvidenceChangeInput", () => {
     ).toEqual({
       ...evidenceCreateInput,
       kind: "experience",
-      id: "exp_1"
+      id: "exp_1",
+      op: "update"
+    });
+  });
+
+  it("parses a delete input", () => {
+    expect(
+      parseProposeEvidenceChangeInput({
+        kind: "project",
+        op: "delete",
+        id: "prj_1",
+        currentMarkdown: "# Project: Dev-Hub",
+        proposedMarkdown: "# Project: Dev-Hub\n\n(This row will be deleted.)"
+      })
+    ).toEqual({
+      kind: "project",
+      op: "delete",
+      id: "prj_1",
+      patch: {},
+      currentMarkdown: "# Project: Dev-Hub",
+      proposedMarkdown: "# Project: Dev-Hub\n\n(This row will be deleted.)"
     });
   });
 

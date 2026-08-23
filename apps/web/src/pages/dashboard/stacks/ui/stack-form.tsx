@@ -6,9 +6,10 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
+  normalizeJobSkillName,
   sanitizeSvg,
-  STACK_ALTERNATIVE_NAME_MAX_LENGTH,
-  STACK_ALTERNATIVE_NAMES_MAX,
+  STACK_ALIAS_MAX_LENGTH,
+  STACK_ALIASES_MAX,
   StackCreateInputSchema,
   StackUpdateInputSchema,
   type StackOutput
@@ -32,6 +33,8 @@ type StackFormSeed = { id: string } | StackOutput;
 
 type StackFormProps = {
   initialData?: StackFormSeed | null;
+  /** Create-mode name seed (e.g. job match token). Edit uses `initialData`. */
+  createSeed?: { name: string };
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved?: (id: string) => void;
@@ -41,11 +44,18 @@ function isStackOutput(data: StackFormSeed): data is StackOutput {
   return "name" in data;
 }
 
-export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFormProps) {
+export function StackForm({
+  initialData,
+  createSeed,
+  open,
+  onOpenChange,
+  onSaved
+}: StackFormProps) {
   const queryClient = useQueryClient();
   const isEdit = Boolean(initialData?.id);
   const id = initialData?.id;
   const seed = initialData && isStackOutput(initialData) ? initialData : undefined;
+  const createSeedName = createSeed?.name;
 
   const stackQuery = useQuery({
     ...orpcQueryClient.stacks.get.queryOptions({
@@ -105,13 +115,13 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
 
   const form = useAppForm({
     defaultValues: {
-      name: stack?.name ?? "",
+      name: stack?.name ?? createSeedName ?? "",
       description: stack?.description ?? "",
       icon: stack?.icon ?? "",
       type: stack?.type ?? "",
       includedInPortfolio: !!stack?.portfolioEntryId,
       isFeatured: !!stack?.isFeatured,
-      alternativeNames: stack?.alternativeNames ?? [],
+      aliases: stack?.aliases ?? [],
       dependencies: (stack?.dependencies ?? []).map((d) => {
         return {
           npmPackage: d.npmPackage,
@@ -135,12 +145,23 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             type: value.type || null,
             includedInPortfolio: value.includedInPortfolio,
             isFeatured: value.isFeatured,
-            alternativeNames: value.alternativeNames,
+            aliases: value.aliases,
             dependencies: value.dependencies,
             projectIds: value.projectIds
           }
         });
       } else {
+        const aliases = [...value.aliases];
+        const seedTrimmed = createSeedName?.trim() ?? "";
+        const seedKey = normalizeJobSkillName(seedTrimmed);
+        const nameKey = normalizeJobSkillName(value.name);
+        if (
+          seedKey &&
+          seedKey !== nameKey &&
+          !aliases.some((alias) => normalizeJobSkillName(alias) === seedKey)
+        ) {
+          aliases.push(seedTrimmed);
+        }
         createMutation.mutate({
           name: value.name,
           description: value.description ?? null,
@@ -148,7 +169,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
           type: value.type || null,
           includedInPortfolio: value.includedInPortfolio,
           isFeatured: value.isFeatured,
-          alternativeNames: value.alternativeNames,
+          aliases,
           dependencies: value.dependencies,
           projectIds: value.projectIds
         });
@@ -168,7 +189,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
         type: stack.type ?? "",
         includedInPortfolio: !!stack.portfolioEntryId,
         isFeatured: !!stack.isFeatured,
-        alternativeNames: stack.alternativeNames ?? [],
+        aliases: stack.aliases ?? [],
         dependencies: stack.dependencies.map((d) => {
           return {
             npmPackage: d.npmPackage,
@@ -180,18 +201,18 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
       });
     } else if (!isEdit) {
       form.reset({
-        name: "",
+        name: createSeedName ?? "",
         description: "",
         icon: "",
         type: "",
         includedInPortfolio: false,
         isFeatured: false,
-        alternativeNames: [],
+        aliases: [],
         dependencies: [],
         projectIds: []
       });
     }
-  }, [open, stack, isEdit, form]);
+  }, [open, stack, isEdit, form, createSeedName]);
 
   const isDirty = useEntityFormDirty(form, open);
 
@@ -214,14 +235,14 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
             {(field) => <field.InputField label="Name" placeholder="e.g. React" />}
           </form.AppField>
 
-          <form.AppField name="alternativeNames">
+          <form.AppField name="aliases">
             {(field) => (
               <field.TagsField
-                label="Alternative names"
+                label="Aliases"
                 description="Other names for this skill (React.js, ReactJS). Helps matching and search."
                 placeholder="Type a name and press Enter"
-                maxItems={STACK_ALTERNATIVE_NAMES_MAX}
-                maxItemLength={STACK_ALTERNATIVE_NAME_MAX_LENGTH}
+                maxItems={STACK_ALIASES_MAX}
+                maxItemLength={STACK_ALIAS_MAX_LENGTH}
               />
             )}
           </form.AppField>

@@ -1,6 +1,8 @@
 import {
   applyYearsCap,
   assessAgentTakeReadiness,
+  canonicalizeListingSkillNames,
+  classifyJobSkills,
   formatSearchBriefForPrompt,
   formatSeekerEvidenceForPrompt,
   llmLogFields,
@@ -14,6 +16,7 @@ import {
   applicationActivityRepository,
   applicationRepository,
   experienceRepository,
+  stackRepository,
   type ApplicationEntity
 } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -50,6 +53,13 @@ export type GenerateAgentTakeTextResult =
   | { ok: true; text: string; hasExclude: boolean; hasBrief: boolean }
   | { ok: false; code: Exclude<GenerateAgentTakeErrorCode, "NOT_FOUND">; message?: string };
 
+export type AgentTakeSkillsMatch = {
+  have: string[];
+  close: { name: string; via: string }[];
+  missing: string[];
+  percent: number | null;
+};
+
 export type AgentTakeJobInput = {
   title: string;
   companyName: string;
@@ -61,6 +71,7 @@ export type AgentTakeJobInput = {
   experienceYearsMin?: number | null;
   seekerYears?: number | null;
   yearsCapped?: boolean;
+  skillsMatch?: AgentTakeSkillsMatch | null;
 };
 
 function buildPrompt(
@@ -92,6 +103,10 @@ Rules:
 - Do not invent employers, skills, or years.
 - If fit is weak, say so. Do not sell the job.
 - Prefer under 800 characters.
+- Skills chips (deterministic; do not recompute or invent tools):
+${JSON.stringify(job.skillsMatch ?? null)}
+- Do not list dropped role phrases as missing skills.
+- You may mention the role (e.g. frontend) only if Have chips support it.
 
 Job (JSON):
 ${JSON.stringify(listing, null, 2)}
@@ -316,13 +331,33 @@ export async function generateAgentTake(input: {
     ? meta.matchReasons.filter((reason): reason is string => typeof reason === "string")
     : [];
 
-  const experiences = await experienceRepository.findAllByUserId(input.userId);
+  const [experiences, stacks] = await Promise.all([
+    experienceRepository.findAllByUserId(input.userId),
+    stackRepository.findAllByUserId(input.userId)
+  ]);
   const seekerYears = mergeExperienceYears(experiences);
   const years = applyYearsCap({
     aiScore: owned.matchScore ?? 0,
     listingMinYears: owned.experienceYearsMin,
     seekerYears
   });
+  const held = stacks.map((stack) => {
+    return { id: stack.id, name: stack.name, aliases: stack.aliases ?? [] };
+  });
+  const jobSkills = canonicalizeListingSkillNames(
+    [
+      ...owned.requiredSkills.map((skill) => skill.name),
+      ...owned.preferredSkills.map((skill) => skill.name)
+    ],
+    held
+  );
+  const classified = classifyJobSkills({ jobSkills, held });
+  const skillsMatch: AgentTakeSkillsMatch = {
+    have: classified.have,
+    close: classified.close,
+    missing: classified.missing,
+    percent: classified.percent
+  };
   const text = await generateAgentTakeText({
     userId: input.userId,
     job: {
@@ -335,7 +370,8 @@ export async function generateAgentTake(input: {
       description: owned.description,
       experienceYearsMin: owned.experienceYearsMin,
       seekerYears,
-      yearsCapped: owned.matchScore != null && years.capped
+      yearsCapped: owned.matchScore != null && years.capped,
+      skillsMatch
     },
     matchReasons
   });

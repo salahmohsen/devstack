@@ -49,7 +49,6 @@ import { ITEM_AVATAR_EYEBROW_CLASSNAME } from "@/shared/ui/item-avatar";
 import {
   AgentTakeMarkdown,
   JobIdentityMark,
-  JobSkillsMatch,
   JobYearsBadge,
   listingSkillNames,
   yearsRequirementNote
@@ -57,7 +56,7 @@ import {
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
-import { requestHubInterviewRehearsal } from "@/features/agent-hub";
+import { requestHubApplicationMention, requestHubInterviewRehearsal } from "@/features/agent-hub";
 import {
   ApplicationActivitySection,
   ApplicationApplyMethodBadge,
@@ -81,6 +80,7 @@ import {
   ApplicationKitMaterials,
   ApplyPackagePanelActions
 } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
+import { InspectJobSkillsMatch } from "@/pages/dashboard/tracked-jobs/ui/inspect-job-skills-match";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";
@@ -205,6 +205,26 @@ function JobDescriptionBody({ value }: { value: string }) {
   );
 }
 
+function OpenInAgentButton({ item }: { item: ApplicationOutput }) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      onClick={() => {
+        requestHubApplicationMention({
+          id: item.id,
+          title: item.title,
+          companyName: item.companyName
+        });
+      }}
+    >
+      <SparklesIcon aria-hidden />
+      Open in agent
+    </Button>
+  );
+}
+
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 text-sm">
@@ -251,8 +271,14 @@ export function ApplicationInfoPanel({
 
   const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
   const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
-  const jobSkills = listingSkillNames(item.requiredSkills, item.preferredSkills);
-  const stackNames = (stacksQuery.data ?? []).map((stack) => stack.name);
+  const heldSkills = (stacksQuery.data ?? []).map((stack) => {
+    return {
+      id: stack.id,
+      name: stack.name,
+      aliases: stack.aliases ?? []
+    };
+  });
+  const jobSkills = listingSkillNames(item.requiredSkills, item.preferredSkills, heldSkills);
   const seekerYears = mergeExperienceYears(experiencesQuery.data ?? []);
   const showSkillsMatch =
     stacksQuery.isSuccess &&
@@ -364,44 +390,86 @@ export function ApplicationInfoPanel({
           </div>
         }
         actions={
-          !isDiscovery ? (
-            <ApplicationActionGroup app={item} variant="panel" />
-          ) : (
-            <>
-              {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
-              {item.url ? (
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="outline"
-                  className="active:scale-[0.96]"
-                  render={
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Open job posting (${postingHost(item.url)})`}
-                    />
-                  }
-                >
-                  <ExternalLinkIcon strokeWidth={1.75} />
-                </Button>
-              ) : null}
-            </>
-          )
+          <>
+            <OpenInAgentButton item={item} />
+            {!isDiscovery ? (
+              <ApplicationActionGroup app={item} variant="panel" />
+            ) : (
+              <>
+                {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
+                {item.url ? (
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    className="active:scale-[0.96]"
+                    render={
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Open job posting (${postingHost(item.url)})`}
+                      />
+                    }
+                  >
+                    <ExternalLinkIcon strokeWidth={1.75} />
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </>
         }
         updatedAt={item.updatedAt}
         createdAt={item.createdAt}
       >
         <ItemInfoSections>
-          {showSkillsMatch ? (
-            <ItemInfoSection title="Skills" icon={<LayersIcon />}>
-              <JobSkillsMatch
-                jobSkills={jobSkills}
-                stackNames={stackNames}
-                listingMinYears={item.experienceYearsMin}
-                seekerYears={seekerYears}
-              />
+          {showSkillsMatch || takeReady.ok || item.agentTake?.trim() ? (
+            <ItemInfoSection title="Match" icon={<LayersIcon />}>
+              <div className="space-y-4">
+                {showSkillsMatch ? (
+                  <InspectJobSkillsMatch
+                    applicationId={item.id}
+                    jobSkills={jobSkills}
+                    held={heldSkills}
+                    listingMinYears={item.experienceYearsMin}
+                    seekerYears={seekerYears}
+                  />
+                ) : null}
+                <div>
+                  {takeReady.ok && item.agentTake?.trim() ? (
+                    <AgentTakeMarkdown text={item.agentTake} />
+                  ) : (
+                    <p className="italic">
+                      {takeReady.ok
+                        ? "No agent take yet."
+                        : "Agent take stays off until this listing has enough detail."}
+                    </p>
+                  )}
+                  {!takeReady.ok ? (
+                    <p className="mt-2 text-sm text-muted-foreground">{takeReady.message}</p>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    disabled={!takeReady.ok}
+                    loading={regenerateTake.isPending}
+                    onClick={() => {
+                      if (!takeReady.ok) return;
+                      void regenerateTake.mutateAsync({
+                        id: item.id,
+                        title: item.title,
+                        companyName: item.companyName,
+                        trackingStatus: item.trackingStatus
+                      });
+                    }}
+                  >
+                    <RefreshCwIcon className="size-3.5" aria-hidden />
+                    {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
+                  </Button>
+                </div>
+              </div>
             </ItemInfoSection>
           ) : null}
 
@@ -446,41 +514,6 @@ export function ApplicationInfoPanel({
                 );
               })()
             : null}
-
-          <ItemInfoSection title="Agent's take" icon={<SparklesIcon />}>
-            {takeReady.ok && item.agentTake?.trim() ? (
-              <AgentTakeMarkdown text={item.agentTake} />
-            ) : (
-              <p className="italic">
-                {takeReady.ok
-                  ? "No agent take yet."
-                  : "Agent take stays off until this listing has enough detail."}
-              </p>
-            )}
-            {!takeReady.ok ? (
-              <p className="mt-2 text-sm text-muted-foreground">{takeReady.message}</p>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              disabled={!takeReady.ok}
-              loading={regenerateTake.isPending}
-              onClick={() => {
-                if (!takeReady.ok) return;
-                void regenerateTake.mutateAsync({
-                  id: item.id,
-                  title: item.title,
-                  companyName: item.companyName,
-                  trackingStatus: item.trackingStatus
-                });
-              }}
-            >
-              <RefreshCwIcon className="size-3.5" aria-hidden />
-              {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
-            </Button>
-          </ItemInfoSection>
 
           {!isDiscovery && item.trackingStatus === "tracked" ? (
             <ItemInfoSection title="Interview" icon={<SparklesIcon />}>

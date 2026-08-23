@@ -44,6 +44,7 @@ function baseInput(overrides: Partial<ResumePdfInput> = {}): ResumePdfInput {
     profile: overrides.profile ?? { name: "Salah Mohsen", email: "salah@example.com" },
     summary: overrides.summary ?? "I build typed products.",
     professionalSummary: overrides.professionalSummary,
+    headline: overrides.headline,
     portfolio: {
       experiences: [],
       projects: [],
@@ -156,6 +157,56 @@ describe("headline", () => {
     const { doc, yaml } = parseYaml(baseInput());
     expect(doc.cv.headline).toBeUndefined();
     expect(yaml).not.toMatch(/^\s*headline:/m);
+  });
+
+  it("uses draft.headline when present and non-empty", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        headline: "Senior Frontend Engineer",
+        portfolio: {
+          experiences: [
+            {
+              organization: "Acme",
+              title: "Staff Engineer",
+              fromDate: "2024-01-01",
+              toDate: null,
+              isPresent: true,
+              description: "",
+              includedInPortfolio: true
+            }
+          ],
+          projects: [],
+          stacks: [],
+          contacts: []
+        }
+      })
+    );
+    expect(doc.cv.headline).toBe("Senior Frontend Engineer");
+  });
+
+  it("falls back to resumeHeadline when draft.headline is empty", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        headline: "   ",
+        portfolio: {
+          experiences: [
+            {
+              organization: "Acme",
+              title: "Staff Engineer",
+              fromDate: "2024-01-01",
+              toDate: null,
+              isPresent: true,
+              description: "",
+              includedInPortfolio: true
+            }
+          ],
+          projects: [],
+          stacks: [],
+          contacts: []
+        }
+      })
+    );
+    expect(doc.cv.headline).toBe("Staff Engineer");
   });
 });
 

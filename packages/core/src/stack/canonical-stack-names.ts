@@ -44,7 +44,7 @@ RENAME RULES:
 - Do not invent new products; only fix spelling/casing/spacing of known libraries
 - NEVER rename a stack to a name that another stack in the list already has — those are merges, not renames
 - Do not suggest a rename when the current name is already correct (same spelling/casing)
-- alternativeNames: other spellings people use for the same skill (current name if it differs, abbreviations, npm-style). Do not repeat newName. Keep existing aliases.`;
+- aliases: other spellings people use for the same skill (current name if it differs, abbreviations, npm-style). Do not repeat newName. Keep existing aliases.`;
 }
 
 /** Short fragment for AI categorize display-name guidance. */

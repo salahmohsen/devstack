@@ -86,6 +86,13 @@ export {
   type ApplyPackageEntryState
 } from "@/features/applications/lib/apply-package";
 export {
+  experienceMasterMarkdown,
+  experienceSnapshotMarkdown,
+  projectMasterMarkdown,
+  projectSnapshotMarkdown,
+  snapshotFileDiffLines
+} from "@/features/applications/lib/apply-package-master-diff";
+export {
   materialsFor,
   actionsFor,
   formatCoverLetterCopy,

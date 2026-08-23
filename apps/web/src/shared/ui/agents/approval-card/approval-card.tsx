@@ -55,6 +55,7 @@ export function ApprovalCard({
   onRequestChanges,
   onDismiss,
   approveLabel = "Approve",
+  approveVariant = "default",
   rejectLabel = "Reject",
   result,
   className,
@@ -130,6 +131,7 @@ export function ApprovalCard({
           {onApprove ? (
             <Button
               size="sm"
+              variant={approveVariant === "destructive" ? "destructive" : "default"}
               animate={false}
               disabled={busy || approveDisabled}
               loading={busy}

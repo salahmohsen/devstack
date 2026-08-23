@@ -65,7 +65,6 @@ import {
   hasJobDescription,
   materialsFor,
   resumeDownloadUrl,
-  useGenerateApplyPackageMutation,
   writeClipboardText,
   type ApplicationMaterialKind,
   type ApplicationPrimaryActionKind,
@@ -73,6 +72,7 @@ import {
 } from "@/features/applications";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useDashboardApplyPackage } from "@/pages/dashboard/tracked-jobs/_lib/use-dashboard-apply-package";
 import { type ApplicationActionSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 
 type ApplyPackageMenuItemsProps = {
@@ -267,26 +267,17 @@ export function ApplyPackageMenuItems({
   hidePrimaryKind = null
 }: ApplyPackageMenuItemsProps) {
   const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
-  const { openPackageSheet, openSendOutreach, openEdit, openMaterialPreview } =
-    useApplicationStore();
-  const generateMutation = useGenerateApplyPackageMutation();
+  const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
+  const { runGenerate, runReview, isPendingFor } = useDashboardApplyPackage();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app);
   const open = isApplicationOpen(app.outcome);
-  const generating = generateMutation.isPending;
+  const generating = isPendingFor(app.id);
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
 
-  function runGenerate() {
-    generateMutation.mutate(
-      { applicationId: app.id },
-      {
-        onSuccess: (data) => {
-          setRegenerateOpen(false);
-          openPackageSheet(data.id);
-        }
-      }
-    );
+  function generate() {
+    runGenerate(app.id, () => setRegenerateOpen(false));
   }
 
   return (
@@ -295,7 +286,7 @@ export function ApplyPackageMenuItems({
       {entryState === "none" ? (
         hasDescription ? (
           hidePrimaryKind === "prepare" ? null : (
-            <Item disabled={!open || generating} onClick={() => open && runGenerate()}>
+            <Item disabled={!open || generating} onClick={() => open && generate()}>
               <SparklesIcon aria-hidden="true" />
               {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
             </Item>
@@ -310,7 +301,7 @@ export function ApplyPackageMenuItems({
       {entryState === "draft" ? (
         <>
           {hidePrimaryKind === "review" ? null : (
-            <Item disabled={generating} onClick={() => openPackageSheet(app.id)}>
+            <Item disabled={generating} onClick={() => runReview(app.id)}>
               <PackageIcon aria-hidden="true" />
               {APPLICATION_PRIMARY_ACTION_LABELS.review}
             </Item>
@@ -387,7 +378,7 @@ export function ApplyPackageMenuItems({
             <AlertDialogAction
               loading={generating}
               onClick={() => {
-                runGenerate();
+                generate();
               }}
             >
               {entryState === "accepted" ? "Prepare again" : "Regenerate"}
@@ -409,26 +400,17 @@ type ApplyPackagePanelActionsProps = {
  * Joined coss Group of filled `default` buttons — separators use bg-primary/72 (coss p-group-6).
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
-  const { openPackageSheet, openSendOutreach, openEdit, openMaterialPreview } =
-    useApplicationStore();
-  const generateMutation = useGenerateApplyPackageMutation();
+  const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
+  const { runGenerate, runReview, isPendingFor } = useDashboardApplyPackage();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app);
   const open = isApplicationOpen(app.outcome);
-  const generating = generateMutation.isPending;
+  const generating = isPendingFor(app.id);
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
 
-  function runGenerate() {
-    generateMutation.mutate(
-      { applicationId: app.id },
-      {
-        onSuccess: (data) => {
-          setRegenerateOpen(false);
-          openPackageSheet(data.id);
-        }
-      }
-    );
+  function generate() {
+    runGenerate(app.id, () => setRegenerateOpen(false));
   }
 
   const segments: React.ReactNode[] = [];
@@ -444,7 +426,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           disabled={!open || generating}
           loading={generating}
           className="min-w-0 flex-1 active:scale-[0.96]"
-          onClick={() => runGenerate()}
+          onClick={() => generate()}
         >
           <SparklesIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
           {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
@@ -476,7 +458,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         size="sm"
         variant="default"
         className="min-w-0 flex-1 active:scale-[0.96]"
-        onClick={() => openPackageSheet(app.id)}
+        onClick={() => runReview(app.id)}
       >
         <PackageIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
         {APPLICATION_PRIMARY_ACTION_LABELS.review}
@@ -630,7 +612,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
             <AlertDialogAction
               loading={generating}
               onClick={() => {
-                runGenerate();
+                generate();
               }}
             >
               {entryState === "accepted" ? "Prepare again" : "Regenerate"}

@@ -76,7 +76,7 @@ describe("projectPatchGroundedInAnalysis", () => {
     ).toEqual({ ok: false, reason: "ungrounded" });
   });
 
-  it("treats an analysis patch as extra basis for user-stated facts", () => {
+  it("rejects analysis keys as form-only even when stored analysis exists", () => {
     expect(
       projectPatchGroundedInAnalysis({
         mode: "update",
@@ -86,6 +86,25 @@ describe("projectPatchGroundedInAnalysis", () => {
           summary: "Career OS with Hono, oRPC, and a Redis job queue."
         }
       })
-    ).toEqual({ ok: true });
+    ).toEqual({ ok: false, reason: "analysis_form_only" });
+    expect(
+      projectPatchGroundedInAnalysis({
+        mode: "create",
+        analysis: null,
+        patch: { analysisMarkdown: "notes", title: "New" }
+      })
+    ).toEqual({ ok: false, reason: "analysis_form_only" });
+  });
+
+  it("does not use patch.analysis as extra basis", () => {
+    expect(
+      projectPatchGroundedInAnalysis({
+        mode: "update",
+        analysis,
+        patch: {
+          summary: "Career OS with a Redis job queue."
+        }
+      })
+    ).toEqual({ ok: false, reason: "ungrounded" });
   });
 });

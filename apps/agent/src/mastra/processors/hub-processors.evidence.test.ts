@@ -23,6 +23,7 @@ const POST_CONFIRM_TOOLS = {
   getStack: {},
   listProjects: {},
   proposeEvidenceChange: {},
+  proposeApplicationFieldChange: {},
   openEntityInspect: {},
   getSearchBrief: {}
 };
@@ -61,6 +62,22 @@ describe("messagesHaveEvidenceOrHardStopResultThisTurn", () => {
             toolName: "propose-evidence-change",
             state: "output-available",
             output: { action: "confirm", kind: "project", id: "p1" }
+          }
+        ])
+      ] as never)
+    ).toBe(true);
+  });
+
+  it("is true after propose-application-field-change output this turn", () => {
+    expect(
+      messagesHaveEvidenceOrHardStopResultThisTurn([
+        { role: "user", content: { parts: [{ type: "text", text: "change location" }] } },
+        assistantWithParts([
+          {
+            type: "tool-propose-application-field-change",
+            toolName: "proposeApplicationFieldChange",
+            state: "output-available",
+            output: { action: "confirm", applicationId: "app_1" }
           }
         ])
       ] as never)
@@ -127,6 +144,38 @@ describe("HubPostEvidenceConfirmProcessor", () => {
         "getStack",
         "listProjects",
         "proposeEvidenceChange",
+        "proposeApplicationFieldChange",
+        "openEntityInspect",
+        "getSearchBrief"
+      ]
+    });
+  });
+
+  it("returns filtered activeTools after an application-field confirm this turn", async () => {
+    const result = await processor.processInputStep({
+      messages: [
+        { role: "user", content: { parts: [{ type: "text", text: "set location to remote" }] } },
+        assistantWithParts([
+          {
+            type: "tool-propose-application-field-change",
+            toolName: "proposeApplicationFieldChange",
+            state: "output-available",
+            output: { action: "confirm", applicationId: "app_1" }
+          }
+        ])
+      ],
+      tools: POST_CONFIRM_TOOLS
+    } as never);
+
+    expect(result).toEqual({
+      activeTools: [
+        "searchEvidence",
+        "getProject",
+        "getExperience",
+        "getStack",
+        "listProjects",
+        "proposeEvidenceChange",
+        "proposeApplicationFieldChange",
         "openEntityInspect",
         "getSearchBrief"
       ]

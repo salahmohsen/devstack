@@ -22,11 +22,30 @@ const MIN_SKILL_MENTION_CHARS = 3;
 /** Languages/fundamentals that are not portfolio "products" but show up in JDs. */
 const WEB_FUNDAMENTAL_SKILL_NAMES = ["HTML", "CSS", "JavaScript"] as const;
 
+/** Extra JD tools not in canonical stack names / aliases. Match case-insensitively. */
+export const EXTRA_JD_TOOL_SKILLS = [
+  "AWS",
+  "GCP",
+  "Azure",
+  "HTTP",
+  "REST",
+  "GraphQL",
+  "Docker",
+  "Kubernetes",
+  "Postman",
+  "Git",
+  "GitHub",
+  "GitLab",
+  "CI/CD",
+  "Linux",
+  "SQL"
+] as const;
+
 /**
  * Alternate JD spellings → canonical display name.
  * Longest pattern wins at match time (`React Query` before `React`).
  */
-const CANONICAL_SKILL_ALIASES: Readonly<Record<string, readonly string[]>> = {
+export const CANONICAL_SKILL_ALIASES: Readonly<Record<string, readonly string[]>> = {
   React: ["React.js", "ReactJS"],
   Vue: ["Vue.js", "VueJS"],
   Angular: ["Angular.js", "AngularJS"],
@@ -40,6 +59,147 @@ const CANONICAL_SKILL_ALIASES: Readonly<Record<string, readonly string[]>> = {
   PostgreSQL: ["Postgres"],
   "Framer Motion": ["Framer-Motion"]
 };
+
+type ListingSkillAllowlistSurface = {
+  surface: string;
+  display: string;
+};
+
+/** Duty-like listing phrases. Only consulted after an allowlist miss. */
+function looksLikeDutyPhrase(token: string): boolean {
+  const trimmed = token.trim();
+  if (!trimmed) return false;
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length >= 3) return true;
+  if (words.length >= 2 && /\b(development|design|skills)\b/i.test(trimmed)) return true;
+  if (/\bbuilding and\b/i.test(trimmed)) return true;
+  return false;
+}
+
+/**
+ * Allowlist surfaces for listing tokens. Longest surface first (same idea as
+ * `buildJobSkillMentionPatterns`). Held overwrites catalog for the same key.
+ */
+function buildListingSkillAllowlistSurfaces(
+  held: readonly { name: string; aliases?: readonly string[] }[] = []
+): ListingSkillAllowlistSurface[] {
+  const byKey = new Map<string, ListingSkillAllowlistSurface>();
+
+  const add = (surface: string, display: string) => {
+    const key = normalizeJobSkillName(surface);
+    if (!key) return;
+    byKey.set(key, { surface, display: display.trim().slice(0, 80) });
+  };
+
+  // Lowest priority first; held last so tenant spelling wins.
+  for (const name of EXTRA_JD_TOOL_SKILLS) add(name, name);
+  for (const name of WEB_FUNDAMENTAL_SKILL_NAMES) add(name, name);
+  for (const name of parseCanonicalStackNames()) add(name, name);
+  for (const [canonical, extras] of Object.entries(CANONICAL_SKILL_ALIASES)) {
+    add(canonical, canonical);
+    for (const extra of extras) add(extra, canonical);
+  }
+  for (const row of held) {
+    add(row.name, row.name);
+    for (const alias of row.aliases ?? []) add(alias, row.name);
+  }
+
+  return [...byKey.values()].toSorted((a, b) => b.surface.length - a.surface.length);
+}
+
+export function canonicalizeListingSkillToken(
+  token: string,
+  held: readonly { name: string; aliases?: readonly string[] }[] = []
+): { keep: true; display: string } | { keep: false } {
+  const key = normalizeJobSkillName(token);
+  if (!key) return { keep: false };
+
+  for (const { surface, display } of buildListingSkillAllowlistSurfaces(held)) {
+    if (normalizeJobSkillName(surface) === key) {
+      return { keep: true, display: display || token.trim().slice(0, 80) };
+    }
+  }
+
+  // Allowlist wins first; duty backup only runs on miss (still drops today).
+  if (looksLikeDutyPhrase(token)) return { keep: false };
+  return { keep: false };
+}
+
+export function canonicalizeListingSkillNames(
+  tokens: readonly string[],
+  held: readonly { name: string; aliases?: readonly string[] }[] = []
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const token of tokens) {
+    const result = canonicalizeListingSkillToken(token, held);
+    if (!result.keep) continue;
+    const displayKey = normalizeJobSkillName(result.display);
+    if (!displayKey || seen.has(displayKey)) continue;
+    seen.add(displayKey);
+    out.push(result.display);
+  }
+  return out;
+}
+
+/** Name + alias + matching `CANONICAL_SKILL_ALIASES` family keys for one skill. */
+export function collectSurfaceKeys(name: string, aliases: readonly string[] = []): Set<string> {
+  const keys = new Set<string>();
+  const add = (raw: string) => {
+    const key = normalizeJobSkillName(raw);
+    if (key) keys.add(key);
+  };
+  add(name);
+  for (const alias of aliases) add(alias);
+  const nameKey = normalizeJobSkillName(name);
+  for (const [canonical, extras] of Object.entries(CANONICAL_SKILL_ALIASES)) {
+    const family = [canonical, ...extras].map(normalizeJobSkillName);
+    if (
+      family.includes(nameKey) ||
+      extras.some((extra) => keys.has(normalizeJobSkillName(extra)))
+    ) {
+      for (const member of family) keys.add(member);
+    }
+  }
+  return keys;
+}
+
+export type JobSkillStackRef = {
+  id: string;
+  name: string;
+  aliases?: readonly string[];
+};
+
+/**
+ * Exact name/alias or a unique `CANONICAL_SKILL_ALIASES` hit onto one catalog
+ * row. Never prefix/suffix (`Java` ↛ `JavaScript`). Collisions and empty
+ * catalog return null — Enter must not confirm a guess.
+ */
+export function preselectHeldSkillForAlias(
+  token: string,
+  held: readonly JobSkillStackRef[]
+): string | null {
+  if (held.length === 0) return null;
+  const tokenKey = normalizeJobSkillName(token);
+  if (!tokenKey) return null;
+
+  const hits = new Set<string>();
+  for (const row of held) {
+    if (collectSurfaceKeys(row.name, row.aliases ?? []).has(tokenKey)) {
+      hits.add(row.id);
+      if (hits.size > 1) return null;
+    }
+  }
+  if (hits.size !== 1) return null;
+  return hits.values().next().value ?? null;
+}
+
+/** Related-but-not-equal families. Membership is Close, never Have. */
+export const CLOSE_SKILL_FAMILIES: readonly (readonly string[])[] = [
+  ["javascript", "typescript"],
+  ["aws", "gcp", "azure"],
+  ["react", "vue", "angular"]
+];
 
 type SkillMentionPattern = {
   display: string;
@@ -141,29 +301,24 @@ export function extractSkillMentions(
 }
 
 /**
- * Resolve extracted skill names against the user's stacks.
- * Exact normalized name only — never auto-creates stacks. First stack wins on collisions.
+ * Canonicalize listing names, drop misses, unique-link `stackId`.
+ * Never auto-creates stacks. Never appends aliases. Collision → `stackId: null`.
  */
 export function resolveJobSkillTags(
   names: { name: string; band: JobSkillBand }[],
-  stacks: { id: string; name: string }[]
+  stacks: readonly JobSkillStackRef[]
 ): JobSkillTag[] {
-  const stackIdByNormalizedName = new Map<string, string>();
-  for (const stack of stacks) {
-    const key = normalizeJobSkillName(stack.name);
-    if (!key || stackIdByNormalizedName.has(key)) continue;
-    stackIdByNormalizedName.set(key, stack.id);
-  }
-
-  return names.map((entry) => {
-    const key = normalizeJobSkillName(entry.name);
-    const stackId = key ? (stackIdByNormalizedName.get(key) ?? null) : null;
-    return {
-      name: entry.name,
-      stackId,
+  const out: JobSkillTag[] = [];
+  for (const entry of names) {
+    const result = canonicalizeListingSkillToken(entry.name, stacks);
+    if (!result.keep) continue;
+    out.push({
+      name: result.display,
+      stackId: preselectHeldSkillForAlias(result.display, stacks),
       band: entry.band
-    };
-  });
+    });
+  }
+  return out;
 }
 
 export const LinkedJobSkillInputSchema = z.object({
@@ -220,12 +375,12 @@ function asSkillList(raw: unknown): unknown[] {
 }
 
 /**
- * Trust LLM names + catalog `stackId`s only. Unknown ids become null.
- * Does not create stacks.
+ * Parse → canonicalize (drop misses) → keep trusted catalog `stackId`s;
+ * unique-link only when `stackId` is null. Does not create stacks.
  */
 export function sanitizeLinkedJobSkills(
   raw: unknown,
-  stacks: { id: string; name: string }[]
+  stacks: readonly JobSkillStackRef[]
 ): JobSkillTag[] {
   const allowedIds = new Set(stacks.map((stack) => stack.id));
   const out: JobSkillTag[] = [];
@@ -237,12 +392,16 @@ export function sanitizeLinkedJobSkills(
     if (!name) continue;
     const band = coerceJobSkillBand(rec.band);
     if (!band) continue;
-    const key = `${band}:${normalizeJobSkillName(name)}`;
+    const canonical = canonicalizeListingSkillToken(name, stacks);
+    if (!canonical.keep) continue;
+    const display = canonical.display;
+    const key = `${band}:${normalizeJobSkillName(display)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const stackId =
+    const trustedId =
       typeof rec.stackId === "string" && allowedIds.has(rec.stackId) ? rec.stackId : null;
-    out.push({ name, stackId, band });
+    const stackId = trustedId ?? preselectHeldSkillForAlias(display, stacks);
+    out.push({ name: display, stackId, band });
     if (out.length >= MAX_LINKED_SKILLS) break;
   }
   return out;

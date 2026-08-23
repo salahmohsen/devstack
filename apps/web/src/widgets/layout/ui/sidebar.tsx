@@ -1,6 +1,8 @@
 import { useLocation } from "@tanstack/react-router";
 
 import { useAuthSuspense } from "@tsu-stack/auth/react";
+import { authClient } from "@tsu-stack/auth/react/auth-client";
+import { isSuperAdminRole } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import {
   Sidebar001,
@@ -34,8 +36,13 @@ const DashboardItems = [
   {
     href: "/dashboard/settings/profile",
     label: "Settings",
-    /** Keep Settings active across profile/account/invites/domain tabs. */
+    /** Keep Settings active across profile/account/domain tabs. */
     matchPrefix: "/dashboard/settings"
+  },
+  {
+    href: "/dashboard/admin/users",
+    label: "Admin",
+    matchPrefix: "/dashboard/admin"
   }
 ] as const;
 
@@ -57,7 +64,9 @@ type DashboardSidebarProps = {
 export function DashboardSidebar({ className, resizable = true }: DashboardSidebarProps) {
   const pathname = useLocation().pathname;
   const { user } = useAuthSuspense();
+  const { data: session } = authClient.useSession();
   const isSignedIn = !!user;
+  const showAdmin = isSuperAdminRole(user?.role) && !session?.session?.impersonatedBy;
 
   const inboxCountQuery = useCountApplicationsQuery("inbox", {
     enabled: isSignedIn,
@@ -88,6 +97,7 @@ export function DashboardSidebar({ className, resizable = true }: DashboardSideb
       <Sidebar001Content className="pt-0 pb-3">
         <Sidebar001Section>
           {DashboardItems.map((item: NavItem) => {
+            if (item.href === "/dashboard/admin/users" && !showAdmin) return null;
             const isNewJobs = item.href === "/dashboard/new-jobs";
             const showInboxBadge = isNewJobs && inboxCount > 0;
             return (

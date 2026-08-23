@@ -3,7 +3,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { FileTextIcon, LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore
+} from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -19,10 +27,14 @@ import {
 import { Button } from "@tsu-stack/ui/components/button";
 import { type FilterValue } from "@tsu-stack/ui/components/filters";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
+import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
@@ -54,6 +66,11 @@ import {
 } from "@/widgets/items-page";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
+import {
+  peekSidePanelFrame,
+  popSidePanelFrame,
+  subscribeSidePanelStack
+} from "@/pages/dashboard/_lib/side-panel-stack";
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { useApplicationsView } from "@/pages/dashboard/tracked-jobs/_lib/use-applications-view";
 import { ApplicationsBoard } from "@/pages/dashboard/tracked-jobs/ui/board";
@@ -63,6 +80,13 @@ const ApplicationFormSheet = lazy(() =>
   import("@/pages/dashboard/tracked-jobs/application-form-sheet").then((m) => {
     return {
       default: m.ApplicationFormSheet
+    };
+  })
+);
+const StackForm = lazy(() =>
+  import("@/pages/dashboard/stacks/ui/stack-form").then((m) => {
+    return {
+      default: m.StackForm
     };
   })
 );
@@ -171,6 +195,11 @@ export function TrackedJobsPage() {
   // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
   const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && sheetOpen) closeSheet();
+  const frame = useSyncExternalStore(
+    subscribeSidePanelStack,
+    peekSidePanelFrame,
+    peekSidePanelFrame
+  );
 
   const listApplications = useMemo(
     () => flattenApplicationsPages(listQuery.data),
@@ -396,48 +425,24 @@ export function TrackedJobsPage() {
           title="Tracked jobs"
           description="Pipeline board and list for roles you are actively tracking."
           actions={
-            <>
-              <Group>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={view === "board" ? "default" : "outline"}
-                  onClick={() => {
-                    setView("board");
-                  }}
-                >
-                  <LayoutGridIcon />
-                  Board
-                </Button>
-                <GroupSeparator />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={view === "list" ? "default" : "outline"}
-                  onClick={() => setView("list")}
-                >
-                  <ListIcon />
-                  List
-                </Button>
-              </Group>
-              <Group>
-                <Button type="button" size="sm" onClick={openCreate}>
-                  <PlusIcon />
-                  New
-                </Button>
-                <GroupSeparator />
-                <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
-                  <FileTextIcon />
-                  Import
-                </Button>
-              </Group>
-            </>
+            <Group>
+              <Button type="button" size="sm" onClick={openCreate}>
+                <PlusIcon />
+                New
+              </Button>
+              <GroupSeparator />
+              <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
+                <FileTextIcon />
+                Import
+              </Button>
+            </Group>
           }
         />
 
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <ListSearchBar
             variant="tracked-jobs"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={filterFields}
             value={filterValues}
             onValueChange={(next: FilterValue[]) => {
@@ -450,6 +455,44 @@ export function TrackedJobsPage() {
             sortOptions={TRACKED_SORT_OPTIONS}
             onSortChange={(next) => patchListSearch(next)}
             onJobsClear={clearListSearch}
+            status={
+              view === "list" && listApplications.length > 0 && listTotalCount != null
+                ? listTotalCount > listApplications.length
+                  ? `${listApplications.length} of ${listTotalCount} jobs`
+                  : `${listApplications.length} job${listApplications.length === 1 ? "" : "s"}`
+                : view === "board" && boardApplications.length > 0
+                  ? boardTotalCount > boardApplications.length
+                    ? `${boardApplications.length} of ${boardTotalCount} jobs`
+                    : `${boardApplications.length} job${boardApplications.length === 1 ? "" : "s"}`
+                  : undefined
+            }
+            beforeSort={
+              <Group aria-label="View">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={view === "board" ? "default" : "outline"}
+                  aria-pressed={view === "board"}
+                  onClick={() => {
+                    setView("board");
+                  }}
+                >
+                  <LayoutGridIcon aria-hidden="true" />
+                  {view === "board" ? "Board" : <span className="sr-only">Board</span>}
+                </Button>
+                <GroupSeparator />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={view === "list" ? "default" : "outline"}
+                  aria-pressed={view === "list"}
+                  onClick={() => setView("list")}
+                >
+                  <ListIcon aria-hidden="true" />
+                  {view === "list" ? "List" : <span className="sr-only">List</span>}
+                </Button>
+              </Group>
+            }
             labels={{
               searchPlaceholder: "Search jobs",
               searchAriaLabel: "Search jobs"
@@ -466,40 +509,59 @@ export function TrackedJobsPage() {
               onClearFilters={clearListSearch}
             />
           ) : (
-            <>
-              <ApplicationsList
-                applications={listApplications}
-                isLoading={listQuery.isLoading}
-                listRef={containerRef}
-                narrowed={narrowed}
-                trackedTotal={trackedTotal}
-                onClearFilters={clearListSearch}
-                sentinelRef={sentinelRef}
-                isFetchingNextPage={listQuery.isFetchingNextPage}
-                hasNextPage={listQuery.hasNextPage}
-              />
-              {listTotalCount != null && listApplications.length > 0 ? (
-                <p className="pb-2 text-center text-xs text-muted-foreground">
-                  Showing {listApplications.length}
-                  {listTotalCount > listApplications.length ? ` of ${listTotalCount}` : ""} job
-                  {listTotalCount === 1 ? "" : "s"}
-                </p>
-              ) : null}
-            </>
+            <ApplicationsList
+              applications={listApplications}
+              isLoading={listQuery.isLoading}
+              listRef={containerRef}
+              narrowed={narrowed}
+              trackedTotal={trackedTotal}
+              onClearFilters={clearListSearch}
+              sentinelRef={sentinelRef}
+              isFetchingNextPage={listQuery.isFetchingNextPage}
+              hasNextPage={listQuery.hasNextPage}
+            />
           )}
         </div>
 
         <Suspense fallback={null}>
           <ItemsInspectHost
-            open={isAnyOpen && !sheetOpen && !hostOwnsPanel}
+            open={isAnyOpen && !sheetOpen && frame?.type !== "stack-create" && !hostOwnsPanel}
             item={liveViewItem}
             title="Application"
             onOpenChange={(next) => {
               if (!next) closeView();
             }}
           >
-            {(item) => <ApplicationInfoPanel item={item} onEdit={() => openEdit(item)} />}
+            {(item) => (
+              <Suspense
+                fallback={
+                  <div className="flex min-h-48 items-center justify-center py-10">
+                    <Spinner className="size-6" aria-label="Loading application" />
+                  </div>
+                }
+              >
+                <ApplicationInfoPanel item={item} onEdit={() => openEdit(item)} />
+              </Suspense>
+            )}
           </ItemsInspectHost>
+
+          {frame?.type === "stack-create" && !hostOwnsPanel ? (
+            <StackForm
+              key={`stack-create-${frame.name}`}
+              open
+              createSeed={{ name: frame.name }}
+              onOpenChange={(open) => {
+                if (!open) popSidePanelFrame();
+              }}
+              onSaved={() => {
+                void invalidateStacksListQueries(queryClient);
+                void queryClient.invalidateQueries({
+                  queryKey: orpcQueryClient.applications.get.key()
+                });
+                void invalidateApplicationsListQueries(queryClient);
+              }}
+            />
+          ) : null}
 
           {sheetOpen && !hostOwnsPanel ? (
             <ApplicationFormSheet

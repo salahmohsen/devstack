@@ -34,6 +34,7 @@ describe("ApplyPackageDraftSchema", () => {
       outreachBody: "Hi..."
     });
     expect(parsed.success).toBe(true);
+    expect(parsed.data?.headline).toBe("");
   });
 
   it("accepts a full draft with experiences, projects, and stacks", () => {
@@ -259,6 +260,29 @@ describe("assembleApplyPackageDraft", () => {
     });
     expect(draft.stacks).toEqual([{ stackId: "s1", include: true, name: "React" }]);
     expect(draft.jobContext.descriptionUsed).toBe("Build things");
+    expect(draft.headline).toBe("");
+  });
+
+  it("copies headline from letters when present", () => {
+    const draft = assembleApplyPackageDraft({
+      applicationId: "app1",
+      jobContext,
+      portfolio,
+      experienceRewrites: [
+        { experienceId: "e1", rewrittenBullets: ["B1"] },
+        { experienceId: "e2", rewrittenBullets: ["B2"] }
+      ],
+      projectRewrites: [{ projectId: "p1", rewrittenSummary: "ok" }],
+      letters: {
+        professionalSummary: null,
+        coverLetterBody: "C",
+        outreachSubject: "S",
+        outreachBody: "B",
+        proposedRecruiterEmail: null,
+        headline: "Senior Frontend Engineer"
+      }
+    });
+    expect(draft.headline).toBe("Senior Frontend Engineer");
   });
 
   it("throws if experience rewrite missing", () => {

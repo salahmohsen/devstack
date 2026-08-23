@@ -3,11 +3,7 @@ import { z } from "zod";
 
 import { createDb, projectRepository, runWithDb } from "@tsu-stack/db";
 
-function outlineFromAnalysis(analysis: string): {
-  headings: string[];
-  excerpt: string;
-  truncated: boolean;
-} {
+function headingsFromAnalysis(analysis: string): string[] {
   const headings: string[] = [];
   for (const match of analysis.matchAll(/^#{1,3}\s+(.+)$/gm)) {
     const heading = match[1]?.trim() ?? "";
@@ -15,11 +11,7 @@ function outlineFromAnalysis(analysis: string): {
     headings.push(heading);
     if (headings.length >= 16) break;
   }
-  return {
-    headings,
-    excerpt: analysis.slice(0, 2400),
-    truncated: analysis.length > 2400
-  };
+  return headings;
 }
 
 /**
@@ -31,7 +23,7 @@ function outlineFromAnalysis(analysis: string): {
 export const getProjectTool = createTool({
   id: "get-project",
   description:
-    "Fetch one project by id (title, year, summary, analysisExcerpt, analysisHeadings, stacks, links). Required: projectId or id from listProjects / searchEvidence. Read analysisExcerpt before rewriting summary or description — do not invent copy. Never dump the full analysis in chat. Never call with {} or a missing id.",
+    "Fetch one project by id (title, year, full summary, description, and analysis, stacks, links). Required: projectId or id from listProjects / searchEvidence. Read analysis before rewriting summary or description — do not invent copy. Never dump analysis in chat. Do not patch analysis. Never call with {} or a missing id.",
   inputSchema: z.object({
     projectId: z
       .string()
@@ -50,11 +42,10 @@ export const getProjectTool = createTool({
         title: z.string(),
         year: z.number().int(),
         summary: z.string().nullable(),
-        descriptionSnippet: z.string().nullable(),
+        description: z.string().nullable(),
+        analysis: z.string().nullable(),
         hasAnalysis: z.boolean(),
         analysisHeadings: z.array(z.string()),
-        analysisExcerpt: z.string().nullable(),
-        analysisTruncated: z.boolean(),
         isArchived: z.boolean(),
         isPresent: z.boolean(),
         experienceId: z.string().nullable(),
@@ -82,20 +73,17 @@ export const getProjectTool = createTool({
     const row = await runWithDb(db, () => projectRepository.findByIdForUser(resolvedId, userId));
     if (!row) return { found: false, project: null };
     const analysisRaw = row.analysis?.trim() ?? "";
-    const outline = analysisRaw.length > 0 ? outlineFromAnalysis(analysisRaw) : null;
     return {
       found: true,
       project: {
         id: row.id,
         title: row.title,
         year: row.year,
-        summary: row.summary ? row.summary.slice(0, 400) : null,
-        // Short snippet only — omit large HTML bodies.
-        descriptionSnippet: row.description ? row.description.slice(0, 400) : null,
-        hasAnalysis: Boolean(outline),
-        analysisHeadings: outline?.headings ?? [],
-        analysisExcerpt: outline?.excerpt ?? null,
-        analysisTruncated: outline?.truncated ?? false,
+        summary: row.summary ?? null,
+        description: row.description ?? null,
+        analysis: analysisRaw.length > 0 ? analysisRaw : null,
+        hasAnalysis: analysisRaw.length > 0,
+        analysisHeadings: headingsFromAnalysis(analysisRaw),
         isArchived: row.isArchived ?? false,
         isPresent: row.isPresent ?? false,
         experienceId: row.experienceId ?? null,

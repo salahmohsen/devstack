@@ -461,8 +461,9 @@ export const agentRouter = {
       );
       const bodyText = await upstream.text();
       if (!upstream.ok) {
-        // Empty / missing thread is fine — return empty history.
-        if (upstream.status === 404 || upstream.status === 401 || upstream.status === 403) {
+        // Missing thread only — never treat auth/5xx as an empty conversation
+        // (that paints HubWelcome over a real thread while the agent restarts).
+        if (upstream.status === 404) {
           return emptyHubMessagesPage(page);
         }
         context.logger.set({
@@ -481,7 +482,7 @@ export const agentRouter = {
           page,
           bodyPreview: bodyText.slice(0, 200)
         });
-        return emptyHubMessagesPage(page);
+        throw new Error(`List hub messages returned non-JSON: ${bodyText.slice(0, 200)}`);
       }
       const data = parsed as {
         messages?: unknown[];
@@ -855,7 +856,7 @@ export const agentRouter = {
             icon: stack.icon,
             projectCount: stack.projectCount ?? 0,
             npmPackages: (stack.dependencies ?? []).map((d) => d.npmPackage),
-            alternativeNames: stack.alternativeNames ?? [],
+            aliases: stack.aliases ?? [],
             isFeatured: Boolean(stack.isFeatured),
             includedInPortfolio: Boolean(stack.portfolioEntryId)
           };

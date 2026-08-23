@@ -17,7 +17,7 @@ export const RenameActionSchema = z.object({
   currentName: z.string(),
   newName: z.string(),
   reason: z.string(),
-  alternativeNames: z.array(z.string()).default([])
+  aliases: z.array(z.string()).default([])
 });
 
 export const EnrichActionSchema = z.object({

@@ -30,4 +30,6 @@ export type CommandItem = {
   meta?: CommandItemMeta;
   /** When true, item is only listed for signed-in users. */
   authRequired?: boolean;
+  /** When true, item is only listed for super admins (not while impersonating). */
+  adminRequired?: boolean;
 };

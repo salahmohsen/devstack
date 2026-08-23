@@ -26,6 +26,8 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { AiLoader } from "@/shared/ui/ai-loader";
 import { LogoIcon } from "@/shared/ui/logo";
 
+import { useSignupPolicyQuery } from "@/features/auth/api/signup-policy.query";
+
 import { appConfig } from "@/config/app.config";
 
 type SocialProvider = "google" | "github";
@@ -71,6 +73,8 @@ export function CreateAnAccountForm({
 }) {
   const { isPending: authPending } = useAuth();
   const inviteCode = inviteCodePrefill.trim();
+  const signupPolicy = useSignupPolicyQuery();
+  const inviteRequired = signupPolicy.data?.inviteRequired ?? true;
 
   const signUpWithSocialMutation = useMutation({
     mutationFn: async (provider: SocialProvider) => {
@@ -135,7 +139,11 @@ export function CreateAnAccountForm({
             {inviteCode ? "You've been invited" : "Create an account"}
           </h1>
           <p className="max-w-sm text-sm leading-relaxed text-pretty text-muted-foreground">
-            Continue with Google or GitHub. Registration is invite-only after the first user.
+            {inviteCode
+              ? "Continue with Google or GitHub to join."
+              : inviteRequired
+                ? "Continue with Google or GitHub. You need an invite after the first user."
+                : "Continue with Google or GitHub."}
           </p>
         </div>
       </div>
@@ -143,12 +151,14 @@ export function CreateAnAccountForm({
       <Card className="w-full border-border/80 shadow-sm">
         <CardHeader className="items-center gap-1 pb-2 text-center">
           <CardTitle className="text-base font-semibold tracking-tight">
-            Accept invitation
+            {inviteCode || inviteRequired ? "Accept invitation" : "Sign up"}
           </CardTitle>
           <CardDescription className="text-sm">
             {inviteCode
               ? "Continue with Google or GitHub to join."
-              : "Use Google or GitHub. Ask an existing member for an invite if signup is closed."}
+              : inviteRequired
+                ? "Use Google or GitHub. Ask an existing member for an invite if signup is closed."
+                : "Use Google or GitHub to create your account."}
           </CardDescription>
         </CardHeader>
 

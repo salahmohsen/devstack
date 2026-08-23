@@ -26,7 +26,7 @@ export const getStackTool = createTool({
         type: z.string().nullable(),
         confidence: z.string().nullable(),
         summary: z.string().nullable(),
-        alternativeNames: z.array(z.string()),
+        aliases: z.array(z.string()),
         projects: z.array(
           z.object({
             id: z.string(),
@@ -54,7 +54,7 @@ export const getStackTool = createTool({
         confidence: row.confidence ?? null,
         // Short text only — omit large description bodies.
         summary: row.description ? row.description.slice(0, 400) : null,
-        alternativeNames: row.alternativeNames ?? [],
+        aliases: row.aliases ?? [],
         projects: (row.projects ?? [])
           .map((ps) => {
             const p = ps.project;

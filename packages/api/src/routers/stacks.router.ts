@@ -13,7 +13,7 @@ import {
   StackListPageOutputSchema,
   StackOutputSchema,
   StackUpdateInputSchema,
-  normalizeStackAlternativeNames,
+  normalizeStackAliases,
   sanitizeSvg
 } from "@tsu-stack/core";
 import { stackDependencyRepository, stackRepository } from "@tsu-stack/db/repositories";
@@ -148,7 +148,7 @@ export const stacksRouter = {
         healthStatus: stack.healthStatus,
         confidence: stack.confidence,
         sortOrder: stack.sortOrder,
-        alternativeNames: stack.alternativeNames ?? [],
+        aliases: stack.aliases ?? [],
         portfolioEntryId: stack.portfolioEntryId,
         projectCount: projects.length,
         dependencies: deps.map((d) => {
@@ -177,7 +177,7 @@ export const stacksRouter = {
         description,
         icon,
         type,
-        alternativeNames,
+        aliases,
         dependencies,
         projectIds
       } = input;
@@ -196,7 +196,7 @@ export const stacksRouter = {
           description: description ?? null,
           icon: icon ?? null,
           type: type ?? null,
-          alternativeNames: normalizeStackAlternativeNames(alternativeNames, name),
+          aliases: normalizeStackAliases(aliases, name),
           sortOrder: nextSortOrder,
           isFeatured: isFeatured ?? false
         },
@@ -254,13 +254,10 @@ export const stacksRouter = {
         {
           ...updateData,
           ...(isFeatured === undefined ? {} : { isFeatured }),
-          ...(updateData.alternativeNames === undefined
+          ...(updateData.aliases === undefined
             ? {}
             : {
-                alternativeNames: normalizeStackAlternativeNames(
-                  updateData.alternativeNames,
-                  canonicalName
-                )
+                aliases: normalizeStackAliases(updateData.aliases, canonicalName)
               })
         },
         {
@@ -388,13 +385,10 @@ export const stacksRouter = {
             data: {
               ...updateData,
               ...(isFeatured === undefined ? {} : { isFeatured }),
-              ...(updateData.alternativeNames === undefined
+              ...(updateData.aliases === undefined
                 ? {}
                 : {
-                    alternativeNames: normalizeStackAlternativeNames(
-                      updateData.alternativeNames,
-                      updateData.name
-                    )
+                    aliases: normalizeStackAliases(updateData.aliases, updateData.name)
                   })
             },
             options: {

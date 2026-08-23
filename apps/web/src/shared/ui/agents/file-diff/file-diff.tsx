@@ -18,11 +18,54 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { SPRING_PRESS, SPRING_SWAP } from "@/shared/lib/ease";
 import { AgentDisclosure } from "@/shared/ui/agents/agent-disclosure";
 
-import { type AgentCodeLanguage, AgentCodeLine, useAgentCodeTokens } from "./agent-code";
-import { type FileDiffLine, type FileDiffLineType } from "./line-diff";
+import {
+  type AgentCodeLanguage,
+  type AgentCodeToken,
+  AgentCodeLine,
+  useAgentCodeTokens
+} from "./agent-code";
+import { type FileDiffLine, type FileDiffLineType, type FileDiffSegment } from "./line-diff";
 
 export type FileDiffStatus = "streaming" | "complete";
-export type { FileDiffLine, FileDiffLineType };
+export type { FileDiffLine, FileDiffLineType, FileDiffSegment };
+
+function DiffLineContent({
+  content,
+  segments,
+  tokens
+}: {
+  content: string;
+  segments?: FileDiffSegment[];
+  tokens?: AgentCodeToken[];
+}) {
+  if (segments && segments.length > 0) {
+    return (
+      <span className="min-w-0 px-1.5 wrap-anywhere whitespace-pre-wrap">
+        {segments.map((segment, index) => (
+          <span
+            key={`${index}-${segment.type}-${segment.text.slice(0, 12)}`}
+            className={cn(
+              segment.type === "added" &&
+                "rounded-sm bg-emerald-500/20 text-emerald-800 dark:text-emerald-300",
+              segment.type === "removed" &&
+                "rounded-sm bg-rose-500/20 text-rose-800 dark:text-rose-300",
+              segment.type === "equal" && "text-muted-foreground"
+            )}
+          >
+            {segment.text}
+          </span>
+        ))}
+      </span>
+    );
+  }
+  return (
+    <AgentCodeLine
+      code={content}
+      tokens={tokens}
+      className="min-w-0 px-1.5 wrap-anywhere whitespace-pre-wrap"
+    />
+  );
+}
 
 export type FileDiffProps = {
   file: ReactNode;
@@ -210,14 +253,18 @@ export function FileDiff({
                 <span className="sr-only">{hasEdits ? "File changes" : "File"}</span>
                 {lines.map((line, index) => {
                   const type = line.type ?? "context";
+                  const hasInline = Boolean(line.segments?.length);
                   return (
                     <div
                       key={line.id}
                       data-diff-line={type}
                       className={cn(
                         "grid grid-cols-[2.25rem_2.25rem_1rem_minmax(0,1fr)] items-start ps-3",
-                        type === "added" && "bg-emerald-500/[0.07]",
-                        type === "removed" && "bg-rose-500/[0.07]"
+                        // Prefer inline word highlights when present; keep a light row wash only
+                        // for whole-line add/remove without segments.
+                        type === "added" &&
+                          (hasInline ? "bg-emerald-500/3" : "bg-emerald-500/[0.07]"),
+                        type === "removed" && (hasInline ? "bg-rose-500/3" : "bg-rose-500/[0.07]")
                       )}
                     >
                       <span className="pe-2 text-end text-muted-foreground/40 tabular-nums select-none">
@@ -235,10 +282,10 @@ export function FileDiff({
                       >
                         {type === "added" ? "+" : type === "removed" ? "−" : ""}
                       </span>
-                      <AgentCodeLine
-                        code={line.content}
+                      <DiffLineContent
+                        content={line.content}
+                        segments={line.segments}
                         tokens={tokens?.[index]}
-                        className="min-w-0 px-1.5 wrap-anywhere whitespace-pre-wrap"
                       />
                     </div>
                   );

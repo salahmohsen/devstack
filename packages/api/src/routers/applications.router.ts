@@ -34,6 +34,7 @@ import {
   refineWorkModeFromDescription,
   scoreJobAgainstPreference,
   GenerateApplyPackageInputSchema,
+  applyPackageResumePrompt,
   ListApplicationActivityInputSchema,
   ListApplicationsInputSchema,
   PreviewListingInputSchema,
@@ -1051,7 +1052,8 @@ export const applicationsRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
 
-      // Load cover keys before deleteMany (returns only ids). Do not delete resume objects.
+      // Load cover keys and kit resume rows before deleteMany (returns only ids).
+      // Non-kit resumes stay; kit resumes (`prompt: apply-package:{id}`) are deleted.
       const owned = (
         await Promise.all(input.ids.map((id) => applicationRepository.findByIdForUser(id, userId)))
       ).filter((row): row is NonNullable<typeof row> => row != null);
@@ -1062,10 +1064,28 @@ export const applicationsRouter = {
           .map((row) => [row.id, row.coverLetterR2Key as string])
       );
 
+      const kitResumeRows = await Promise.all(
+        owned.map((row) =>
+          resumeRepository.findByPromptForUser(userId, applyPackageResumePrompt(row.id))
+        )
+      );
+      const kitResumesById = new Map<string, (typeof kitResumeRows)[number][number]>();
+      for (const rows of kitResumeRows) {
+        for (const resume of rows) kitResumesById.set(resume.id, resume);
+      }
+      const kitResumes = [...kitResumesById.values()];
+
       const deleted = await applicationRepository.deleteMany(input.ids, userId);
 
-      await Promise.all(
-        deleted.map(async ({ id }) => {
+      if (kitResumes.length > 0) {
+        await resumeRepository.deleteMany(
+          kitResumes.map((row) => row.id),
+          userId
+        );
+      }
+
+      await Promise.all([
+        ...deleted.map(async ({ id }) => {
           const key = coverKeyById.get(id);
           if (!key) return;
           try {
@@ -1073,8 +1093,16 @@ export const applicationsRouter = {
           } catch {
             // Best-effort cover cleanup; row is already gone.
           }
+        }),
+        ...kitResumes.map(async (resume) => {
+          if (!resume.r2Key) return;
+          try {
+            await context.mediaBucket.delete(resume.r2Key);
+          } catch {
+            // Best-effort kit resume object; row is already gone.
+          }
         })
-      );
+      ]);
 
       return { success: deleted.length > 0 };
     }),
@@ -1233,6 +1261,9 @@ export const applicationsRouter = {
       },
       PDF_RENDER_FAILED: {
         message: "PDF render failed"
+      },
+      COMMIT_FAILED: {
+        message: "Failed to save the new apply kit. The previous kit is unchanged."
       }
     })
     .handler(async ({ input, context, errors }) => {
@@ -1251,6 +1282,9 @@ export const applicationsRouter = {
         }
         if (result.code === "PDF_RENDER_FAILED") {
           throw errors.PDF_RENDER_FAILED({ message: result.message });
+        }
+        if (result.code === "COMMIT_FAILED") {
+          throw errors.COMMIT_FAILED({ message: result.message });
         }
         throw errors.INVALID_DRAFT({ message: result.message });
       }

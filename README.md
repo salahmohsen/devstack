@@ -32,14 +32,14 @@ Glossary: [CONTEXT.md](./CONTEXT.md). Agent/contributor map: [AGENTS.md](./AGENT
 
 ### Multi-user tenancy
 
-| Surface                       | Behavior                                                         |
-| ----------------------------- | ---------------------------------------------------------------- |
-| **Registration**              | First user bootstraps empty DB; later signups need an **invite** |
-| **Public portfolio (path)**   | `/{username}/…` on primary app host                              |
-| **Public portfolio (domain)** | Verified **custom domain** → that user’s portfolio at `/`        |
-| **Public GitHub**             | `/{username}/repos` (path) or `/repos` on custom domain          |
-| **Dashboard / auth**          | Always on primary host (`VITE_WEB_URL`)                          |
-| **Tenancy**                   | Private rows scoped by Better Auth **`userId`**                  |
+| Surface                       | Behavior                                                                                        |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Registration**              | First user bootstraps empty DB as super admin; later signups follow **invite-only** or **open** |
+| **Public portfolio (path)**   | `/{username}/…` on primary app host                                                             |
+| **Public portfolio (domain)** | Verified **custom domain** → that user’s portfolio at `/`                                       |
+| **Public GitHub**             | `/{username}/repos` (path) or `/repos` on custom domain                                         |
+| **Dashboard / auth**          | Always on primary host (`VITE_WEB_URL`)                                                         |
+| **Tenancy**                   | Private rows scoped by Better Auth **`userId`**                                                 |
 
 Custom domain: app stores hostname + verification; **operator** terminates TLS (Cloudflare/Caddy/etc.). App does not issue certs.
 
@@ -86,7 +86,8 @@ Specs:
 | `/dashboard/experiences   | projects                                                                                   | stacks` | Evidence CRUD (Sheet forms) |
 | `/dashboard/resumes` | Resume library |
 | `/dashboard/onboarding` | Owner onboarding / resume import |
-| `/dashboard/settings/*` | Profile, account, domain, invites, connections, mail, AI, jobs prefs, rules, notifications |
+| `/dashboard/settings/*` | Profile, account, domain, connections, mail, AI, jobs prefs, rules, notifications |
+| `/dashboard/admin/*` | Super admin: users, named invites, signup mode |
 | `/{username}` | Public portfolio |
 | `/{username}/repos` | Public GitHub surface |
 
@@ -99,7 +100,7 @@ Specs:
 | Monorepo         | pnpm workspaces + Vite Plus (`vp`)                                            |
 | Web              | **TanStack Start** (Router, Query, Form, Table), React                        |
 | API              | **Hono** + **oRPC** (typed procedures)                                        |
-| Auth             | **Better Auth** (invite-gated signup, OAuth)                                  |
+| Auth             | **Better Auth** (admin plugin, invite-gated or open signup, OAuth)            |
 | DB               | **Postgres** + **Drizzle** (`packages/db`)                                    |
 | Domain contracts | **Zod** in `packages/core`                                                    |
 | Queues           | **BullMQ** + Redis (mail classify, Gmail sync, harvest, …)                    |

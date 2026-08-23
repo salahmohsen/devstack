@@ -127,7 +127,7 @@ export function StackDetailPanel({
   const item = {
     ...stack,
     ...detailQuery.data,
-    alternativeNames: detailQuery.data?.alternativeNames ?? stack.alternativeNames ?? []
+    aliases: detailQuery.data?.aliases ?? stack.aliases ?? []
   };
   const projectCount = Math.max(item.projectCount, item.projects?.length ?? 0);
 
@@ -170,10 +170,10 @@ export function StackDetailPanel({
           )}
         </ItemInfoSection>
 
-        {(item.alternativeNames ?? []).length > 0 ? (
+        {(item.aliases ?? []).length > 0 ? (
           <ItemInfoSection title="Also known as" icon={<TagsIcon strokeWidth={1.75} />}>
             <div className="flex flex-wrap gap-1.5">
-              {(item.alternativeNames ?? []).map((name) => (
+              {(item.aliases ?? []).map((name) => (
                 <Badge key={name} variant="secondary" size="sm">
                   {name}
                 </Badge>
@@ -452,10 +452,10 @@ export function StacksPage() {
             id: action.stackId,
             data: {
               name: newName,
-              alternativeNames: [
-                ...(current?.alternativeNames ?? []),
+              aliases: [
+                ...(current?.aliases ?? []),
                 action.stackName,
-                ...(action.details.alternativeNames ?? [])
+                ...(action.details.aliases ?? [])
               ]
             }
           });

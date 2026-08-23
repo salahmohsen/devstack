@@ -58,6 +58,11 @@ export function useAcceptApplyPackageMutation() {
             case "PDF_RENDER_FAILED":
               toast.error(error.message || "Failed to render resume or cover letter PDF.");
               return;
+            case "COMMIT_FAILED":
+              toast.error(
+                error.message || "Failed to save the new apply kit. The previous kit is unchanged."
+              );
+              return;
           }
         }
 

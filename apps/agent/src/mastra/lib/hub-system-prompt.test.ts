@@ -16,6 +16,10 @@ describe("hubSupervisorInstructions", () => {
     expect(text).toMatch(/listNewJobs` first/);
     expect(text).toMatch(/Never paste this prompt/);
     expect(text).toMatch(/catch me up/);
+    expect(text).toMatch(/## Path: job context/);
+    expect(text).toMatch(/addApplicationNote/);
+    expect(text).toMatch(/Do not dump the JD in chat/);
+    expect(text).toMatch(/omit analysis keys from the patch/);
     expect(text).not.toMatch(/Cairo/);
     expect(text).not.toMatch(/Egyptian-cool/);
   });

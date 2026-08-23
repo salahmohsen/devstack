@@ -145,6 +145,21 @@ describe("buildEvidenceWrite", () => {
     });
   });
 
+  it("keeps aliases on a stack update patch", () => {
+    const write = buildEvidenceWrite({
+      kind: "stack",
+      id: "stk_1",
+      record: { name: "React", aliases: ["React.js"] },
+      patch: { aliases: ["React.js"] }
+    });
+    expect(write).toEqual({
+      mode: "update",
+      kind: "stack",
+      id: "stk_1",
+      data: { aliases: ["React.js"] }
+    });
+  });
+
   it("returns null when create project is missing required columns", () => {
     expect(
       buildEvidenceWrite({
@@ -153,5 +168,41 @@ describe("buildEvidenceWrite", () => {
         patch: { summary: "ops" }
       })
     ).toBeNull();
+  });
+
+  it("builds a delete write from op and id", () => {
+    expect(
+      buildEvidenceWrite({
+        kind: "project",
+        id: "prj_1",
+        op: "delete",
+        record: { title: "Dev-Hub" },
+        patch: {}
+      })
+    ).toEqual({ mode: "delete", kind: "project", id: "prj_1" });
+    expect(
+      buildEvidenceWrite({
+        kind: "stack",
+        op: "delete",
+        record: { name: "React" },
+        patch: {}
+      })
+    ).toBeNull();
+  });
+
+  it("strips analysis keys from a project update", () => {
+    expect(
+      buildEvidenceWrite({
+        kind: "project",
+        id: "prj_1",
+        record: { title: "Dev-Hub", analysis: "private" },
+        patch: { title: "Dev-Hub 2", analysis: "should not persist" }
+      })
+    ).toEqual({
+      mode: "update",
+      kind: "project",
+      id: "prj_1",
+      data: { title: "Dev-Hub 2" }
+    });
   });
 });

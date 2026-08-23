@@ -5,6 +5,7 @@ import {
   DEFAULT_IMPORT_FROM_EMAIL,
   DEFAULT_JOBS_PER_RUN,
   DEFAULT_MIN_MATCH_SCORE,
+  DEFAULT_REVIEW_APPLY_KIT,
   JobPreferenceFieldsSchema,
   JobTitleIdSchema,
   LEVEL_FLOOR_LABELS,
@@ -55,6 +56,7 @@ export type JobPreferenceFormState = {
   jobsPerRun: number;
   dailyBoardScoreCap: number;
   importFromEmail: boolean;
+  reviewApplyKit: boolean;
 };
 
 export const JobPreferenceFormSchema = JobPreferenceFieldsSchema.pick({
@@ -66,7 +68,8 @@ export const JobPreferenceFormSchema = JobPreferenceFieldsSchema.pick({
   minMatchScore: true,
   jobsPerRun: true,
   dailyBoardScoreCap: true,
-  importFromEmail: true
+  importFromEmail: true,
+  reviewApplyKit: true
 })
   .extend({
     titleId: JobTitleIdSchema.or(z.literal("")),
@@ -149,7 +152,8 @@ export const emptyJobPreferenceForm: JobPreferenceFormState = {
   customTitle: "",
   jobsPerRun: DEFAULT_JOBS_PER_RUN,
   dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
-  importFromEmail: DEFAULT_IMPORT_FROM_EMAIL
+  importFromEmail: DEFAULT_IMPORT_FROM_EMAIL,
+  reviewApplyKit: DEFAULT_REVIEW_APPLY_KIT
 };
 
 export function jobPreferenceFormFromQuery(data: JobPreferenceQueryResult): JobPreferenceFormState {
@@ -167,7 +171,8 @@ export function jobPreferenceFormFromQuery(data: JobPreferenceQueryResult): JobP
     customTitle: data.customTitle ?? "",
     jobsPerRun: data.jobsPerRun,
     dailyBoardScoreCap: data.dailyBoardScoreCap ?? DEFAULT_DAILY_BOARD_SCORE_CAP,
-    importFromEmail: data.importFromEmail
+    importFromEmail: data.importFromEmail,
+    reviewApplyKit: data.reviewApplyKit ?? DEFAULT_REVIEW_APPLY_KIT
   };
 }
 
@@ -235,6 +240,7 @@ export function jobPreferenceInputFromForm(
     customTitle: titleId === "custom" && customTitle.length > 0 ? customTitle : null,
     jobsPerRun: value.jobsPerRun,
     dailyBoardScoreCap: value.dailyBoardScoreCap,
-    importFromEmail: value.importFromEmail
+    importFromEmail: value.importFromEmail,
+    reviewApplyKit: value.reviewApplyKit
   };
 }

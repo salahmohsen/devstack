@@ -44,7 +44,7 @@ function parseLinkedSkillsPayload(body: unknown): unknown {
 
 export function skillsFromLinkedPayload(
   raw: unknown,
-  stacks: { id: string; name: string }[]
+  stacks: { id: string; name: string; aliases?: readonly string[] }[]
 ): LinkedJobSkills {
   return splitJobSkillTags(sanitizeLinkedJobSkills(parseLinkedSkillsPayload(raw), stacks));
 }
@@ -56,7 +56,7 @@ async function generateLinkedSkills(input: {
   companyName: string;
   listingUrl: string | null;
   description: string;
-  stacks: { id: string; name: string }[];
+  stacks: { id: string; name: string; aliases?: readonly string[] }[];
 }): Promise<unknown> {
   if (!ENV_SERVER.AGENT_WORKER_URL?.trim() || !input.llm.apiKey?.trim()) return null;
 
@@ -133,7 +133,7 @@ export async function linkJobSkillsForUser(input: {
   if (description.length < JOB_SKILL_LINK_MIN_DESCRIPTION_CHARS) return EMPTY_SKILLS;
 
   const stacks = (await stackRepository.findAllByUserId(input.userId)).map((stack) => {
-    return { id: stack.id, name: stack.name };
+    return { id: stack.id, name: stack.name, aliases: stack.aliases ?? [] };
   });
 
   const llm = input.llm ?? (await resolveRuntimeAiCredentials(input.userId, "scorer"));

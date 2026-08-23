@@ -18,7 +18,9 @@ import {
   userTurnAsksCompanyStatus,
   userTurnAsksDailyBrief,
   userTurnAsksEntityInspect,
+  userTurnAsksJobListingInspect,
   userTurnAsksNewJobsTriage,
+  userTurnAsksGenerateApplyPackages,
   userTurnAsksPileStatusOnly,
   userTurnAsksSearchBrief,
   userTurnRetriesDailyBrief,
@@ -227,6 +229,16 @@ describe("userTurnAsksCompanyStatus", () => {
       )
     ).toBe(true);
   });
+
+  it("catches deal/going-on phrasing without mail words", () => {
+    expect(userTurnAsksCompanyStatus("what's the deal with DualEntry?")).toBe(true);
+    expect(userTurnAsksCompanyStatus("what's going on with DualEntry")).toBe(true);
+    expect(
+      userTurnAsksCompanyStatus(
+        "wait you skipped half — what's going on with DualEntry, is the pile empty or not"
+      )
+    ).toBe(true);
+  });
 });
 
 describe("userTurnAsksEntityInspect", () => {
@@ -243,13 +255,62 @@ describe("userTurnAsksEntityInspect", () => {
   });
 });
 
+describe("userTurnAsksJobListingInspect", () => {
+  it("catches Match % / listing / job role opens, not evidence opens", () => {
+    expect(
+      userTurnAsksJobListingInspect("open Front-End Software Developer\n\nExeQut · Match 88%")
+    ).toBe(true);
+    expect(
+      userTurnAsksJobListingInspect("open the ExeQut Front-End Software Developer listing")
+    ).toBe(true);
+    expect(userTurnAsksJobListingInspect("open that Mid-Level role")).toBe(true);
+    expect(userTurnAsksEntityInspect("open mentech")).toBe(true);
+    expect(userTurnAsksJobListingInspect("open mentech")).toBe(false);
+    expect(userTurnAsksJobListingInspect("show my latest project")).toBe(false);
+  });
+});
+
 describe("userTurnAsksPileStatusOnly", () => {
   it("treats yes/no pile questions as status, not triage", () => {
     expect(userTurnAsksPileStatusOnly("pile empty or not")).toBe(true);
     expect(userTurnAsksPileStatusOnly("anything new in the pile")).toBe(true);
+    expect(userTurnAsksPileStatusOnly("is the pile still a mess")).toBe(true);
     expect(userTurnAsksNewJobsTriage("pile empty or not")).toBe(false);
     expect(userTurnAsksNewJobsTriage("triage the pile")).toBe(true);
     expect(userTurnAsksPileStatusOnly("triage the pile")).toBe(false);
+  });
+});
+
+describe("userTurnAsksNewJobsTriage", () => {
+  it("catches filter/track new-jobs phrasing", () => {
+    expect(
+      userTurnAsksNewJobsTriage(
+        "nevermind. filter my new jobs and start generating package for the one that really suits me and my experience"
+      )
+    ).toBe(true);
+    expect(
+      userTurnAsksNewJobsTriage(
+        "start tracking and generating package for the most new jobs that relevant to my experience"
+      )
+    ).toBe(true);
+    expect(userTurnAsksNewJobsTriage("filter my new jobs")).toBe(true);
+    expect(userTurnAsksNewJobsTriage("sort the pile")).toBe(true);
+    expect(userTurnAsksNewJobsTriage("what's DualEntry's stage")).toBe(false);
+  });
+
+  it("does not treat generate-package-for-tracked as triage", () => {
+    expect(userTurnAsksNewJobsTriage("start generating package for each of them")).toBe(false);
+    expect(userTurnAsksNewJobsTriage("generate packages for all tracked jobs")).toBe(false);
+  });
+});
+
+describe("userTurnAsksGenerateApplyPackages", () => {
+  it("catches package-for-each / tracked phrasing", () => {
+    expect(userTurnAsksGenerateApplyPackages("start generating package for each of them")).toBe(
+      true
+    );
+    expect(userTurnAsksGenerateApplyPackages("generate packages for all tracked")).toBe(true);
+    expect(userTurnAsksGenerateApplyPackages("filter my new jobs")).toBe(false);
   });
 });
 
@@ -274,7 +335,14 @@ describe("shouldStopHubLoopAfterClientHitl", () => {
     "propose-evidence-change",
     "proposeEvidenceChange",
     "open-daily-brief",
-    "propose-mail-crm-change"
+    "propose-mail-crm-change",
+    "propose-application-field-change",
+    "proposeApplicationFieldChange",
+    "propose-set-outcome",
+    "proposeDeleteApplication",
+    "propose-delete-note",
+    "propose-batch-tracking-change",
+    "propose-refresh-from-url"
   ])("stops while %s is waiting", (name) => {
     expect(
       shouldStopHubLoopAfterClientHitl({
@@ -295,6 +363,8 @@ describe("shouldStopHubLoopAfterClientHitl", () => {
 
   it("does not stop on server CRM tools", () => {
     expect(isHubClientHitlToolName("trackJob")).toBe(false);
+    expect(isHubClientHitlToolName("restoreApplication")).toBe(false);
+    expect(isHubClientHitlToolName("restore-application")).toBe(false);
     expect(
       shouldStopHubLoopAfterClientHitl({
         toolCalls: [{ id: "c1", name: "listNewJobs" }],
@@ -463,19 +533,136 @@ describe("filterHubUnionForcedReadActiveTools", () => {
     "openEntityInspect",
     "listExperiences",
     "findJobsNow",
-    "listNewJobs"
+    "listNewJobs",
+    "getApplication"
   ];
 
-  it("unions Today + stacks + brief so exclusive filters cannot orphan tools", () => {
+  it("unions Today + stacks, deferring client getSearchBrief until server reads finish", () => {
     expect(
       filterHubUnionForcedReadActiveTools(toolNames, {
         today: true,
         stacks: true,
         searchBrief: true,
         company: false,
-        inspect: false
+        pile: false,
+        inspect: false,
+        inspectLookupDone: false,
+        inspectJobListing: false,
+        application: false
       })
-    ).toEqual(["getDailyBrief", "listStacks", "getSearchBrief"]);
+    ).toEqual(["getDailyBrief", "listStacks"]);
+  });
+
+  it("allows getSearchBrief alone once no server forced reads remain", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: true,
+        company: false,
+        pile: false,
+        inspect: false,
+        inspectLookupDone: false,
+        inspectJobListing: false,
+        application: false
+      })
+    ).toEqual(["getSearchBrief"]);
+  });
+
+  it("mention-only allowlists getApplication and not findJobsNow", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        pile: false,
+        inspect: false,
+        inspectLookupDone: false,
+        inspectJobListing: false,
+        application: true
+      })
+    ).toEqual(["getApplication"]);
+  });
+
+  it("unions mention + Today so both getApplication and getDailyBrief stay available", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: true,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        pile: false,
+        inspect: false,
+        inspectLookupDone: false,
+        inspectJobListing: false,
+        application: true
+      })
+    ).toEqual(["getDailyBrief", "getApplication"]);
+  });
+
+  it("pile + brief defer File Diff so listNewJobs can execute this step", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: true,
+        company: false,
+        pile: true,
+        inspect: false,
+        inspectLookupDone: false,
+        inspectJobListing: false,
+        application: false
+      })
+    ).toEqual(["listNewJobs"]);
+  });
+
+  it("inspect allowlists job CRM reads and defers client openEntityInspect", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        pile: false,
+        inspect: true,
+        inspectLookupDone: false,
+        inspectJobListing: false,
+        application: false
+      })
+    ).toEqual(["searchApplications", "listExperiences", "listNewJobs", "getApplication"]);
+  });
+
+  it("job-listing inspect lookup drops evidence tools", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        pile: false,
+        inspect: true,
+        inspectLookupDone: false,
+        inspectJobListing: true,
+        application: false
+      })
+    ).toEqual(["searchApplications", "listNewJobs", "getApplication"]);
+  });
+
+  it("inspect open phase allowlists only openEntityInspect after lookup", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        pile: false,
+        inspect: true,
+        inspectLookupDone: true,
+        inspectJobListing: true,
+        application: false
+      })
+    ).toEqual(["openEntityInspect"]);
   });
 
   it("returns empty when no forced reads are pending", () => {
@@ -485,7 +672,11 @@ describe("filterHubUnionForcedReadActiveTools", () => {
         stacks: false,
         searchBrief: false,
         company: false,
-        inspect: false
+        pile: false,
+        inspect: false,
+        inspectLookupDone: false,
+        inspectJobListing: false,
+        application: false
       })
     ).toEqual([]);
   });
@@ -495,6 +686,8 @@ describe("userTurnAsksSearchBrief", () => {
   it("matches everyday job-rules wording", () => {
     expect(userTurnAsksSearchBrief("what am I looking for?")).toBe(true);
     expect(userTurnAsksSearchBrief("what I'm looking for job-wise")).toBe(true);
+    expect(userTurnAsksSearchBrief("remind me what i'm even looking for these days")).toBe(true);
+    expect(userTurnAsksSearchBrief("what am i looking for again?")).toBe(true);
     expect(userTurnAsksSearchBrief("what are my job rules?")).toBe(true);
     expect(userTurnAsksSearchBrief("looking for in jobs")).toBe(true);
     expect(userTurnAsksSearchBrief("show me the brief")).toBe(true);

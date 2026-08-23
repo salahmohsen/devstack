@@ -39,6 +39,7 @@ import { ComposerTriggerPopover } from "@/shared/ui/composer-trigger-popover";
 
 import {
   cancelOutputForHubHitl,
+  HubApplicationPlantEffect,
   HubComposerDirectiveChip,
   HubComposerModelPicker,
   HubComposerPersonalityPicker,
@@ -124,11 +125,12 @@ export function HubElementsComposer({
     formatter: unstable_defaultDirectiveFormatter
   });
 
-  const inputPlaceholder = disabled ? placeholder : `${placeholder} · / commands · @ tools`;
+  const inputPlaceholder = placeholder;
 
   return (
     <ComposerPrimitive.Unstable_TriggerPopoverRoot>
       <ComposerPrimitive.Root className="relative w-full">
+        <HubApplicationPlantEffect />
         <Composer className="mx-auto w-full max-w-(--thread-max-width)">
           <ComposerBar>
             {/* Lexical so @mentions render as chips (not raw :hub-tool[…]).

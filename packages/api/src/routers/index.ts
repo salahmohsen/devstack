@@ -1,5 +1,6 @@
 import { type RouterClient } from "@orpc/server";
 
+import { adminRouter } from "#@/routers/admin.router";
 import { agentRouter } from "#@/routers/agent.router";
 import { aiSettingsRouter } from "#@/routers/ai-settings.router";
 import { applicationsRouter } from "#@/routers/applications.router";
@@ -9,7 +10,6 @@ import { domainRouter } from "#@/routers/domain.router";
 import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
-import { inviteRouter } from "#@/routers/invite.router";
 import { jobDiscoveryRouter } from "#@/routers/job-discovery.router";
 import { jobPreferenceRouter } from "#@/routers/job-preference.router";
 import { mailSettingsRouter } from "#@/routers/mail-settings.router";
@@ -23,6 +23,7 @@ import { profileRouter } from "#@/routers/profile.router";
 import { projectsRouter } from "#@/routers/projects.router";
 import { resumeRouter } from "#@/routers/resume.router";
 import { searchRouter } from "#@/routers/search.router";
+import { signupPolicyRouter } from "#@/routers/signup-policy.router";
 import { stacksRouter } from "#@/routers/stacks.router";
 
 export const appRouter = {
@@ -40,7 +41,8 @@ export const appRouter = {
   resume: resumeRouter,
   search: searchRouter,
   onboarding: onboardingRouter,
-  invite: inviteRouter,
+  admin: adminRouter,
+  signupPolicy: signupPolicyRouter,
   jobDiscovery: jobDiscoveryRouter,
   jobPreference: jobPreferenceRouter,
   domain: domainRouter,

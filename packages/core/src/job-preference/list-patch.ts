@@ -130,6 +130,7 @@ export function jobPreferencesEqual(left: JobPreference, right: JobPreference): 
     left.jobsPerRun === right.jobsPerRun &&
     left.dailyBoardScoreCap === right.dailyBoardScoreCap &&
     left.importFromEmail === right.importFromEmail &&
+    left.reviewApplyKit === right.reviewApplyKit &&
     sameStringList(left.workModes, right.workModes) &&
     sameStringList(left.locations, right.locations) &&
     sameStringList(left.remoteRegions, right.remoteRegions) &&

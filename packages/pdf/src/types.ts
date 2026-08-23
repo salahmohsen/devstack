@@ -68,6 +68,11 @@ export type ResumePdfInput = {
   summary: string;
   /** Optional tailored professional summary (apply package Accept). */
   professionalSummary?: string | null;
+  /**
+   * Optional apply-package target-role line. When trimmed non-empty, maps to
+   * RenderCV `cv.headline`; otherwise the latest included experience title.
+   */
+  headline?: string | null;
 };
 
 export type CoverLetterPdfInput = {

@@ -18,6 +18,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 const HUB_DIRECTIVE_ICONS: Record<string, LucideIcon> = {
   "hub-tool": WrenchIcon,
   tool: WrenchIcon,
+  application: BriefcaseIcon,
   today: CalendarIcon,
   "job-rules": FileTextIcon,
   skills: WrenchIcon,

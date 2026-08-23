@@ -12,7 +12,8 @@ const ACCEPT_APPLY_PACKAGE_MESSAGES: Record<AcceptApplyPackageErrorCode, string>
   INVALID_DRAFT: "Apply package draft is invalid — regenerate the package",
   STORAGE_NOT_CONFIGURED: "Media storage is not configured",
   PDF_ENGINE_UNAVAILABLE: "PDF engine is unavailable (rendercv or typst missing on PATH)",
-  PDF_RENDER_FAILED: "Failed to render resume or cover letter PDF"
+  PDF_RENDER_FAILED: "Failed to render resume or cover letter PDF",
+  COMMIT_FAILED: "Failed to save the new apply kit. The previous kit is unchanged."
 };
 
 /**

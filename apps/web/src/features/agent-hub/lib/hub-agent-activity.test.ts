@@ -51,6 +51,9 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("get-daily-brief")).toBe(false);
     expect(isHubWorkingStripToolName("open-daily-brief")).toBe(false);
     expect(isHubWorkingStripToolName("propose-mail-crm-change")).toBe(false);
+    expect(isHubWorkingStripToolName("propose-application-field-change")).toBe(false);
+    expect(isHubWorkingStripToolName("proposeSetOutcome")).toBe(false);
+    expect(isHubWorkingStripToolName("propose-delete-application")).toBe(false);
     expect(isHubWorkingStripToolName("classify-mail")).toBe(true);
   });
 

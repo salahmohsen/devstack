@@ -7,6 +7,7 @@ import {
   isOpenEntityFormToolName,
   isOpenEntityInspectToolName,
   isProposeApplicationFromJdToolName,
+  isHubCrmWriteConfirmToolName,
   isProposeEvidenceChangeToolName,
   isProposeHardPreferenceChangeToolName,
   isProposeMailCrmChangeToolName,
@@ -38,6 +39,7 @@ export function isHubConfirmHitlToolName(name: string): boolean {
     isProposeHardPreferenceChangeToolName(name) ||
     isProposeEvidenceChangeToolName(name) ||
     isProposeMailCrmChangeToolName(name) ||
+    isHubCrmWriteConfirmToolName(name) ||
     isOpenEntityFormToolName(name)
   );
 }

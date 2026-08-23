@@ -9,18 +9,26 @@ export {
 } from "./api/use-hub-chat";
 export { HubChatProvider } from "./ui/hub-chat-provider";
 export {
+  consumeHubApplicationPlant,
   consumeHubCreateIntent,
   consumeOpenHubAssistant,
+  getHubApplicationPlant,
   getHubAssistantOpenPending,
   getHubCreateIntent,
   hubCreateInterviewText,
+  hubCreateSkillFromInspectText,
+  hubInterviewRehearsalText,
+  requestHubApplicationMention,
   requestHubCreateInterview,
+  requestHubCreateSkillFromInspect,
   requestHubInterviewRehearsal,
   requestOpenHubAssistant,
+  snapshotHubApplicationPlant,
+  subscribeHubApplicationPlant,
   subscribeHubAssistantOpen,
   subscribeHubCreateIntent
 } from "./lib/hub-assistant-open";
-export type { HubCreateIntent } from "./lib/hub-assistant-open";
+export type { HubApplicationPlant, HubCreateIntent } from "./lib/hub-assistant-open";
 export { hubAssistantAuiConfig, hubAssistantToolkit } from "./ui/hub-assistant-toolkit";
 export {
   ApplicationFromJdCard,
@@ -131,6 +139,7 @@ export { HubUserMessage } from "./ui/hub-user-message";
 export { HubComposerModelPicker } from "./ui/hub-composer-model-picker";
 export { HubComposerPersonalityPicker } from "./ui/hub-composer-personality-picker";
 export { HubComposerDirectiveChip } from "./ui/hub-composer-directive-chip";
+export { HubApplicationPlantEffect } from "./ui/hub-application-plant";
 export {
   getHubComposerPersonality,
   setHubComposerPersonality,
@@ -155,9 +164,14 @@ export {
   useEntityFormHostActive,
   useEntityFormHostSelector
 } from "./lib/entity-form-host-store";
-export type { EntityFormHostRequest, EntityFormKind } from "./lib/entity-form-host-store";
+export type {
+  EntityFormHostRequest,
+  EntityFormKind,
+  EntityInspectKind
+} from "./lib/entity-form-host-store";
 export {
   clearEntityInspectRequest,
+  releaseEntityPanelHosts,
   requestEntityInspect,
   useEntityInspectHostActive,
   useEntityInspectHostSelector,

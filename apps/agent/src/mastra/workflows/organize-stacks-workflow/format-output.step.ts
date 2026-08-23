@@ -54,7 +54,7 @@ export const formatOutput = createStep({
         stackName: r.currentName,
         details: {
           newName: r.newName,
-          ...(r.alternativeNames.length > 0 ? { alternativeNames: r.alternativeNames } : {})
+          ...(r.aliases.length > 0 ? { aliases: r.aliases } : {})
         },
         reason: r.reason
       });

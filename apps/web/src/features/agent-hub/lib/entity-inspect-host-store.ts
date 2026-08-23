@@ -3,12 +3,16 @@ import { useRef, useSyncExternalStore } from "react";
 import { createExternalStore } from "@/shared/lib/ai-job";
 import { subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
 
-import { useDailyBriefHostActive } from "./daily-brief-host-store";
-import { type EntityFormKind, useEntityFormHostActive } from "./entity-form-host-store";
+import { clearDailyBriefRequest, useDailyBriefHostActive } from "./daily-brief-host-store";
+import {
+  clearEntityFormRequest,
+  type EntityInspectKind,
+  useEntityFormHostActive
+} from "./entity-form-host-store";
 
 export type EntityInspectHostRequest = {
   requestId: string;
-  kind: EntityFormKind;
+  kind: EntityInspectKind;
   id: string;
   toolCallId: string;
   toolName: string;
@@ -37,6 +41,13 @@ export function clearEntityInspectRequest(requestId?: string) {
   if (!current) return;
   if (requestId && current.requestId !== requestId) return;
   store.setState({ request: null });
+}
+
+/** Page list/board selection takes the panel — drop hub inspect/form/Today hosts. */
+export function releaseEntityPanelHosts() {
+  clearEntityInspectRequest();
+  clearDailyBriefRequest();
+  clearEntityFormRequest();
 }
 
 export function resetEntityInspectHostForTests() {

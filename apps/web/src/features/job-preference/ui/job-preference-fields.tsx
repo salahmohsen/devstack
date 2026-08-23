@@ -291,6 +291,16 @@ export const JobPreferenceFields = withForm({
               />
             )}
           </form.AppField>
+
+          <form.AppField name="reviewApplyKit">
+            {(field) => (
+              <field.SwitchField
+                label="Review apply kit"
+                description="On = dashboard review sheet before accept. Off = generate+accept from the button without the sheet. Hub chat still asks for approval."
+                layout="card"
+              />
+            )}
+          </form.AppField>
         </FieldGroup>
       </>
     );

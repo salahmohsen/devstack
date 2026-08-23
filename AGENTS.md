@@ -29,7 +29,7 @@ Pick the most specific file for the task. Use links within that file instead of 
 - [Keyboard shortcuts](.agents/hotkeys.md) for TanStack Hotkeys — commands vs bindings, `Mod`, sequences, display. Use this instead of a custom `keydown` matcher.
 - [API fetching patterns](.agents/api-fetching-patterns.md) for slice-local TanStack Query and oRPC client wrappers in `apps/web`.
 - [oRPC patterns](.agents/orpc.md) for server procedures, router shape, typed errors, and request-scoped handler logging.
-- [Auth patterns](.agents/auth.md) for Better Auth architecture, invite-gated signup, auth query behavior, and protected/guest route rules.
+- [Auth patterns](.agents/auth.md) for Better Auth architecture, invite-gated signup, super admin, auth query behavior, and protected/guest route rules.
 - [SEO patterns](.agents/seo.md) for route `head()` usage and `@tsu-stack/seo` integration.
 - [Product glossary](./CONTEXT.md) for multi-user terms (`username`, invite, custom domain, tenant `userId`, public GitHub surface).
 
@@ -46,12 +46,14 @@ Pick the most specific file for the task. Use links within that file instead of 
 
 ### Active program specs
 
+- [Super admin](docs/superpowers/specs/2026-08-22-super-admin-design.md) — platform operator, users table, named invites, signup mode.
 - [Career Inbox + AI platform](docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md) — mail hub, review queue, notifications, AI autonomy, learning, logging/Mastra foundation.
 - [Career Mail Assistant P0](docs/superpowers/specs/2026-07-31-career-mail-assistant-design.md) — design lock + [implementation plan](docs/superpowers/plans/2026-07-31-career-mail-assistant-p0.md).
 - [Seeker applications CRM](docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md) — pipeline board/list that Career Inbox advances.
 - [Job discovery adapters](docs/superpowers/specs/2026-08-14-job-discovery-adapters-design.md) — public board adapters, shared catalog, cheap rank + BYO AI; mail harvest opt-in.
 - [Jobs hardening from Freehire](docs/superpowers/specs/2026-08-20-devhub-jobs-hardening-from-freehire-design.md) — company table, years/logo, score cap, mail-on-job, silence nudges. Grill lock. ADR [0026](docs/adr/0026-job-posting-shared-pool-and-company-table.md).
 - [List search + filters](docs/superpowers/specs/2026-08-22-list-search-filters-design.md) — Cubby chips, `q`, display sort, RSQL URL, palette `search.entities`. Grill lock.
+- [Hub job context](docs/superpowers/specs/2026-08-22-hub-job-context-design.md) — Application mention, rich `getApplication`, evidence/CRM hub writes, apply-kit, Have/Close/Missing. Grill lock. Chip allowlist + in-panel create: [Match skill canonicalize](docs/superpowers/specs/2026-08-23-match-skill-canonicalize-design.md).
 
 ## Task Entry Points
 

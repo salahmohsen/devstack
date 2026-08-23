@@ -22,6 +22,7 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 import { listItemContextSlots, type ListItemMenuSlots } from "@/shared/ui/list-item-menu-slots";
 import { ListItemOverflowMenu } from "@/shared/ui/list-item-overflow-menu";
@@ -215,10 +216,12 @@ export function ListItem({
       }}
       onMouseEnter={onMouseEnter}
       className={cn(
-        "group mx-3 cursor-pointer [contain-intrinsic-size:auto_4.5rem] [content-visibility:auto]",
+        "group cursor-pointer [contain-intrinsic-size:auto_4.5rem] [content-visibility:auto]",
+        LIST_COLUMN_INSET_CLASSNAME,
         "transition-[transform,opacity] duration-200",
         "data-selected:scale-[1.01] data-selected:opacity-100",
         "hover:scale-[1.01] hover:opacity-100",
+        selected && "border-primary/40",
         className
       )}
     >

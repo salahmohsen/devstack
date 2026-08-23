@@ -3,6 +3,7 @@ import {
   applyZeroDollarCandidate,
   buildApplicationSourceTags,
   canonicalizeJobUrl,
+  classifyJobSkills,
   decideTwoAxis,
   dailyAiAttemptCap,
   EmploymentTypeSchema,
@@ -214,8 +215,15 @@ async function resolveSkillsForUser(
   userId: string,
   required: readonly string[],
   preferred: readonly string[] = []
-): Promise<{ requiredSkills: JobSkillTag[]; preferredSkills: JobSkillTag[] }> {
+): Promise<{
+  requiredSkills: JobSkillTag[];
+  preferredSkills: JobSkillTag[];
+  held: { id: string; name: string; aliases: string[] }[];
+}> {
   const stacks = await stackRepository.findAllByUserId(userId);
+  const held = stacks.map((stack) => {
+    return { id: stack.id, name: stack.name, aliases: stack.aliases ?? [] };
+  });
   const tags = resolveJobSkillTags(
     [
       ...required.map((name) => {
@@ -225,13 +233,12 @@ async function resolveSkillsForUser(
         return { name, band: "preferred" as const };
       })
     ],
-    stacks.map((stack) => {
-      return { id: stack.id, name: stack.name };
-    })
+    held
   );
   return {
     requiredSkills: tags.filter((tag) => tag.band === "required"),
-    preferredSkills: tags.filter((tag) => tag.band === "preferred")
+    preferredSkills: tags.filter((tag) => tag.band === "preferred"),
+    held
   };
 }
 
@@ -651,11 +658,21 @@ async function runInboxAiForPosting(input: {
     }
   }
 
-  const { requiredSkills, preferredSkills } = await resolveSkillsForUser(
+  const { requiredSkills, preferredSkills, held } = await resolveSkillsForUser(
     input.userId,
     requiredNames,
     preferredNames
   );
+  const classified = classifyJobSkills({
+    jobSkills: [...requiredSkills, ...preferredSkills].map((skill) => skill.name),
+    held
+  });
+  const skillsMatch = {
+    have: classified.have,
+    close: classified.close,
+    missing: classified.missing,
+    percent: classified.percent
+  };
 
   const baseInsert = {
     userId: input.userId,
@@ -745,7 +762,8 @@ async function runInboxAiForPosting(input: {
         description,
         experienceYearsMin: posting.experienceYearsMin,
         seekerYears: cap.seekerYears,
-        yearsCapped: cap.capped
+        yearsCapped: cap.capped,
+        skillsMatch
       },
       matchReasons: match.reasons
     });

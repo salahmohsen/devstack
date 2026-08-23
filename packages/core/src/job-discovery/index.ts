@@ -3,6 +3,7 @@ export * from "./company-slug";
 export * from "./constants";
 export * from "./seeker-years";
 export * from "./skills-overlap";
+export * from "./skill-match";
 export * from "./years-cap";
 export * from "./hiring-region";
 export * from "./land-budget";

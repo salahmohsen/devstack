@@ -54,7 +54,7 @@ const STOP_TERMS = new Set([
 
 export type ProjectAnalysisGrounding =
   | { ok: true }
-  | { ok: false; reason: "missing_analysis" | "ungrounded" };
+  | { ok: false; reason: "missing_analysis" | "ungrounded" | "analysis_form_only" };
 
 function significantTerms(text: string): Set<string> {
   const terms = new Set<string>();
@@ -95,21 +95,23 @@ export function projectPatchTouchesCopy(patch: Record<string, unknown>): boolean
 }
 
 /**
- * Edit patches that change summary/description must come from analysis
- * (plus any analysis the user just added on the same patch). Title, year,
- * links, and portfolio flags do not need analysis. Creates skip this check —
- * the interview is the source.
+ * Edit patches that change summary/description must come from the stored
+ * analysis column. Hub patches must not include analysis keys — that write
+ * path is form-only. Title, year, links, and portfolio flags do not need
+ * analysis. Creates skip the copy-grounding check — the interview is the
+ * source — but still reject analysis keys.
  */
 export function projectPatchGroundedInAnalysis(input: {
   mode: "create" | "update";
   analysis: string | null | undefined;
   patch: Record<string, unknown>;
 }): ProjectAnalysisGrounding {
+  const analysisKey = Object.keys(input.patch).find((key) => /analysis/i.test(key));
+  if (analysisKey) return { ok: false, reason: "analysis_form_only" };
   if (input.mode === "create") return { ok: true };
   if (!projectPatchTouchesCopy(input.patch)) return { ok: true };
 
-  const analysisPatch = typeof input.patch.analysis === "string" ? input.patch.analysis.trim() : "";
-  const basis = `${input.analysis ?? ""}\n${analysisPatch}`.trim();
+  const basis = (input.analysis ?? "").trim();
   if (!basis) return { ok: false, reason: "missing_analysis" };
 
   const proposed = PROJECT_ANALYSIS_COPY_COLUMNS.map((column) => {

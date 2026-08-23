@@ -20,7 +20,7 @@ import {
 import { useSyncExternalStore } from "react";
 
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { type SearchEntityHit, type SearchEntityType } from "@tsu-stack/core";
+import { isSuperAdminRole, type SearchEntityHit, type SearchEntityType } from "@tsu-stack/core";
 import {
   type IssueSummary,
   type MyIssuesResult,
@@ -128,6 +128,7 @@ export function useCommandItems(q = ""): { items: CommandItem[]; isSearching: bo
 
   const visibleStatic = staticCommands.filter((cmd) => {
     if (cmd.authRequired && !isSignedIn) return false;
+    if (cmd.adminRequired && !isSuperAdminRole(user?.role)) return false;
     return true;
   });
 

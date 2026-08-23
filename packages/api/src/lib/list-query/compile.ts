@@ -169,7 +169,7 @@ function compileSkillsQ(q: string | undefined): SQL | undefined {
   // jsonb_array_elements_text is set-returning — wrap in EXISTS so rows are not duplicated.
   return or(
     ilike(stack.name, pattern),
-    sql`exists (select 1 from jsonb_array_elements_text(${stack.alternativeNames}) as alias(name) where alias.name ilike ${pattern})`
+    sql`exists (select 1 from jsonb_array_elements_text(${stack.aliases}) as alias(name) where alias.name ilike ${pattern})`
   );
 }
 

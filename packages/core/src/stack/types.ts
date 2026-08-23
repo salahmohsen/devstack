@@ -1,16 +1,12 @@
 import { z } from "zod";
 
 import { ListQueryInputSchema } from "#@/list-query/types";
-import {
-  STACK_ALTERNATIVE_NAME_MAX_LENGTH,
-  STACK_ALTERNATIVE_NAMES_MAX,
-  normalizeStackAlternativeNames
-} from "#@/stack/utils";
+import { STACK_ALIAS_MAX_LENGTH, STACK_ALIASES_MAX, normalizeStackAliases } from "#@/stack/utils";
 
-export const StackAlternativeNamesSchema = z
-  .array(z.string().max(STACK_ALTERNATIVE_NAME_MAX_LENGTH))
-  .max(STACK_ALTERNATIVE_NAMES_MAX)
-  .transform((names) => normalizeStackAlternativeNames(names));
+export const StackAliasesSchema = z
+  .array(z.string().max(STACK_ALIAS_MAX_LENGTH))
+  .max(STACK_ALIASES_MAX)
+  .transform((names) => normalizeStackAliases(names));
 
 export const StackDependencyItemSchema = z.object({
   npmPackage: z.string(),
@@ -45,7 +41,7 @@ export const StackOutputSchema = z.object({
   isFeatured: z.boolean(),
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
-  alternativeNames: z.array(z.string()),
+  aliases: z.array(z.string()),
   dependencies: z.array(StackDependencyItemSchema),
   projects: z.array(
     z.object({
@@ -97,7 +93,7 @@ export const StackCreateInputSchema = z.object({
   type: z.string().nullable().optional().describe("Stack type category"),
   includedInPortfolio: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
-  alternativeNames: StackAlternativeNamesSchema.optional(),
+  aliases: StackAliasesSchema.optional(),
   dependencies: z.array(StackDependencyItemSchema).optional(),
   projectIds: z.array(z.string()).optional()
 });
@@ -109,7 +105,7 @@ export const StackUpdateInputSchema = z.object({
   type: z.string().nullable().optional().describe("Stack type category"),
   includedInPortfolio: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
-  alternativeNames: StackAlternativeNamesSchema.optional(),
+  aliases: StackAliasesSchema.optional(),
   dependencies: z.array(StackDependencyItemSchema).optional(),
   projectIds: z.array(z.string()).optional()
 });

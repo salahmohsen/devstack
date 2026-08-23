@@ -30,7 +30,23 @@ const HUB_APPLICATION_MUTATING_TOOLS = new Set([
   "dismiss-job",
   "dismissJob",
   "update-application-stage",
-  "updateApplicationStage"
+  "updateApplicationStage",
+  "add-application-note",
+  "addApplicationNote",
+  "restore-application",
+  "restoreApplication",
+  "propose-application-field-change",
+  "proposeApplicationFieldChange",
+  "propose-set-outcome",
+  "proposeSetOutcome",
+  "propose-delete-application",
+  "proposeDeleteApplication",
+  "propose-delete-note",
+  "proposeDeleteNote",
+  "propose-batch-tracking-change",
+  "proposeBatchTrackingChange",
+  "propose-refresh-from-url",
+  "proposeRefreshFromUrl"
 ]);
 
 function isSuccessfulMutatingToolOutput(toolName: string, output: unknown): boolean {
@@ -39,11 +55,14 @@ function isSuccessfulMutatingToolOutput(toolName: string, output: unknown): bool
     applicationId?: unknown;
     created?: unknown;
     ok?: unknown;
+    action?: unknown;
   };
 
   // Prefer explicit ok when present.
   if (o.ok === false) return false;
   if (o.ok === true) return true;
+  if (o.action === "cancel" || o.action === "dismiss") return false;
+  if (o.action === "confirm") return true;
 
   if (toolName === "create-application" || toolName === "createApplication") {
     const id = typeof o.applicationId === "string" ? o.applicationId.trim() : "";

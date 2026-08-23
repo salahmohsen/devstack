@@ -6,7 +6,12 @@ import {
 } from "#@/job-discovery/constants";
 import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
 
-import { DEFAULT_IMPORT_FROM_EMAIL, DEFAULT_MIN_MATCH_SCORE, WORK_MODES } from "./constants";
+import {
+  DEFAULT_IMPORT_FROM_EMAIL,
+  DEFAULT_MIN_MATCH_SCORE,
+  DEFAULT_REVIEW_APPLY_KIT,
+  WORK_MODES
+} from "./constants";
 import {
   SeekerMatchEvidenceSchema,
   type JobPreference,
@@ -32,7 +37,8 @@ export function defaultJobPreference(): JobPreference {
     customTitle: null,
     jobsPerRun: DEFAULT_JOBS_PER_RUN,
     dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
-    importFromEmail: DEFAULT_IMPORT_FROM_EMAIL
+    importFromEmail: DEFAULT_IMPORT_FROM_EMAIL,
+    reviewApplyKit: DEFAULT_REVIEW_APPLY_KIT
   };
 }
 
@@ -98,7 +104,8 @@ export function mergeJobPreference(
       patch.dailyBoardScoreCap !== undefined
         ? refineDailyBoardScoreCap(patch.dailyBoardScoreCap)
         : current.dailyBoardScoreCap,
-    importFromEmail: patch.importFromEmail ?? current.importFromEmail
+    importFromEmail: patch.importFromEmail ?? current.importFromEmail,
+    reviewApplyKit: patch.reviewApplyKit ?? current.reviewApplyKit
   };
 }
 

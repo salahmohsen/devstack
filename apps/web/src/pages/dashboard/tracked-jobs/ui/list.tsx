@@ -215,14 +215,15 @@ export function ApplicationsList({
                     batchSelectActive={batchSelectActive}
                     onToggleSelect={() => toggleSelect(app.id)}
                     tags={trackedJobTags(app)}
+                    tagsPlacement="after"
                     meta={trackedJobMeta(app)}
                     leading={
                       <JobIdentityMark
                         companyName={app.companyName}
                         logoUrl={app.companyLogoUrl}
-                        size={40}
+                        size={56}
                         selected={selected}
-                        className="size-10"
+                        className="size-full"
                       />
                     }
                     actions={

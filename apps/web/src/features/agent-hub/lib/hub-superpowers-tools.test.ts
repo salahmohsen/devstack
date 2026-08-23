@@ -74,6 +74,10 @@ describe("parseOpenEntityInspectInput", () => {
       kind: "project",
       id: "p1"
     });
+    expect(parseOpenEntityInspectInput({ kind: "application", id: "app-1" })).toEqual({
+      kind: "application",
+      id: "app-1"
+    });
     expect(parseOpenEntityInspectInput({ kind: "project" })).toBeNull();
     expect(parseOpenEntityInspectInput({ kind: "project", id: "  " })).toBeNull();
   });
