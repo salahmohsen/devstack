@@ -818,6 +818,13 @@ export function NewJobsPage() {
             sortOptions={NEW_JOBS_SORT_OPTIONS}
             onSortChange={(next) => patchListSearch(next)}
             onJobsClear={clearListSearch}
+            status={
+              jobs.length > 0 && totalCount != null
+                ? totalCount > jobs.length
+                  ? `${jobs.length} of ${totalCount} jobs`
+                  : `${jobs.length} job${jobs.length === 1 ? "" : "s"}`
+                : undefined
+            }
             labels={{
               searchPlaceholder: "Search jobs",
               searchAriaLabel: "Search jobs"
@@ -1026,13 +1033,6 @@ export function NewJobsPage() {
                 </li>
               </ul>
             )}
-            {totalCount != null && jobs.length > 0 ? (
-              <p className="pb-2 text-center text-xs text-muted-foreground">
-                Showing {jobs.length}
-                {totalCount > jobs.length ? ` of ${totalCount}` : ""} job
-                {totalCount === 1 ? "" : "s"}
-              </p>
-            ) : null}
           </div>
         </div>
 

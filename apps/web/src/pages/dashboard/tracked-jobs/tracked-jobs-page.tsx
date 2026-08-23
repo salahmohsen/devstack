@@ -477,6 +477,17 @@ export function TrackedJobsPage() {
             sortOptions={TRACKED_SORT_OPTIONS}
             onSortChange={(next) => patchListSearch(next)}
             onJobsClear={clearListSearch}
+            status={
+              view === "list" && listApplications.length > 0 && listTotalCount != null
+                ? listTotalCount > listApplications.length
+                  ? `${listApplications.length} of ${listTotalCount} jobs`
+                  : `${listApplications.length} job${listApplications.length === 1 ? "" : "s"}`
+                : view === "board" && boardApplications.length > 0
+                  ? boardTotalCount > boardApplications.length
+                    ? `${boardApplications.length} of ${boardTotalCount} jobs`
+                    : `${boardApplications.length} job${boardApplications.length === 1 ? "" : "s"}`
+                  : undefined
+            }
             labels={{
               searchPlaceholder: "Search jobs",
               searchAriaLabel: "Search jobs"
@@ -493,26 +504,17 @@ export function TrackedJobsPage() {
               onClearFilters={clearListSearch}
             />
           ) : (
-            <>
-              <ApplicationsList
-                applications={listApplications}
-                isLoading={listQuery.isLoading}
-                listRef={containerRef}
-                narrowed={narrowed}
-                trackedTotal={trackedTotal}
-                onClearFilters={clearListSearch}
-                sentinelRef={sentinelRef}
-                isFetchingNextPage={listQuery.isFetchingNextPage}
-                hasNextPage={listQuery.hasNextPage}
-              />
-              {listTotalCount != null && listApplications.length > 0 ? (
-                <p className="pb-2 text-center text-xs text-muted-foreground">
-                  Showing {listApplications.length}
-                  {listTotalCount > listApplications.length ? ` of ${listTotalCount}` : ""} job
-                  {listTotalCount === 1 ? "" : "s"}
-                </p>
-              ) : null}
-            </>
+            <ApplicationsList
+              applications={listApplications}
+              isLoading={listQuery.isLoading}
+              listRef={containerRef}
+              narrowed={narrowed}
+              trackedTotal={trackedTotal}
+              onClearFilters={clearListSearch}
+              sentinelRef={sentinelRef}
+              isFetchingNextPage={listQuery.isFetchingNextPage}
+              hasNextPage={listQuery.hasNextPage}
+            />
           )}
         </div>
 

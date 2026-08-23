@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpDownIcon, SearchIcon, XIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { isCompleteFilterLeaf } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -57,6 +57,11 @@ type ListSearchBarSharedProps = {
   sortDir?: "asc" | "desc";
   sortOptions: readonly ListSearchSortOption[];
   onSortChange: (next: { sortBy?: string; sortDir?: "asc" | "desc" }) => void;
+  /**
+   * Secondary result meta (e.g. “19 jobs”) — trailing toolbar, muted, non-interactive
+   * (better-layout: metadata trails; keep distinct from controls).
+   */
+  status?: ReactNode;
   labels?: ListSearchBarLabels;
   className?: string;
 };
@@ -101,6 +106,7 @@ export function ListSearchBar(props: ListSearchBarProps) {
     sortBy,
     sortOptions,
     onSortChange,
+    status,
     variant,
     labels,
     className
@@ -232,40 +238,49 @@ export function ListSearchBar(props: ListSearchBarProps) {
         </FiltersBar>
       </FiltersProvider>
 
-      {catalogItems.length > 0 ? (
-        <Select
-          aria-label={sortAriaLabel}
-          items={catalogItems}
-          onValueChange={(next) => {
-            if (typeof next !== "string" || next.length === 0) return;
-            handleSortValue(next);
-          }}
-          value={selectedSort}
-        >
-          <SelectTrigger className="ms-auto w-fit max-w-56" size="sm">
-            <ArrowUpDownIcon aria-hidden="true" />
-            <SelectValue placeholder={sortAriaLabel} />
-          </SelectTrigger>
-          <SelectPopup>
-            {variant === "catalog" ? (
-              <>
-                <SelectItem value={CATALOG_DEFAULT_SORT}>{defaultSortLabel}</SelectItem>
-                {sortOptions.length > 0 ? <SelectSeparator /> : null}
-                {sortOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </>
-            ) : (
-              sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))
-            )}
-          </SelectPopup>
-        </Select>
+      {status || catalogItems.length > 0 ? (
+        <div className="ms-auto flex flex-wrap items-center gap-2">
+          {status ? (
+            <span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+              {status}
+            </span>
+          ) : null}
+          {catalogItems.length > 0 ? (
+            <Select
+              aria-label={sortAriaLabel}
+              items={catalogItems}
+              onValueChange={(next) => {
+                if (typeof next !== "string" || next.length === 0) return;
+                handleSortValue(next);
+              }}
+              value={selectedSort}
+            >
+              <SelectTrigger className="w-fit max-w-56" size="sm">
+                <ArrowUpDownIcon aria-hidden="true" />
+                <SelectValue placeholder={sortAriaLabel} />
+              </SelectTrigger>
+              <SelectPopup>
+                {variant === "catalog" ? (
+                  <>
+                    <SelectItem value={CATALOG_DEFAULT_SORT}>{defaultSortLabel}</SelectItem>
+                    {sortOptions.length > 0 ? <SelectSeparator /> : null}
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </>
+                ) : (
+                  sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectPopup>
+            </Select>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
