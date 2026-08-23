@@ -2,10 +2,16 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { APIError, betterAuth } from "better-auth";
 import { getOAuthState } from "better-auth/api";
-import { openAPI, username } from "better-auth/plugins";
+import { admin, openAPI, username } from "better-auth/plugins";
 
-import { USERNAME_MAX, USERNAME_MIN, normalizeUsername, parseUsername } from "@tsu-stack/core";
-import { db, inviteRepository, userRepository } from "@tsu-stack/db";
+import {
+  SUPER_ADMIN_ROLE,
+  USERNAME_MAX,
+  USERNAME_MIN,
+  normalizeUsername,
+  parseUsername
+} from "@tsu-stack/core";
+import { db, inviteRepository, platformSettingRepository, userRepository } from "@tsu-stack/db";
 import * as schema from "@tsu-stack/db/schema";
 import { sendEmail, VerifyEmail } from "@tsu-stack/email";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -146,20 +152,25 @@ export const auth = betterAuth({
           const isBootstrap = (await userRepository.countUsers()) === 0;
 
           if (!isBootstrap) {
+            const signupMode = (await platformSettingRepository.get()).signupMode;
             const inviteCode = await extractInviteCode(ctx as AuthEndpointContext | null);
-            if (!inviteCode) {
+            const inviteOnly = signupMode !== "open";
+
+            if (inviteOnly && !inviteCode) {
               throw new APIError("FORBIDDEN", {
                 code: "INVITE_REQUIRED",
                 message: "An invite code is required to register."
               });
             }
 
-            const invite = await inviteRepository.findValidByCode(inviteCode);
-            if (!invite) {
-              throw new APIError("FORBIDDEN", {
-                code: "INVITE_INVALID",
-                message: "This invite code is invalid or has already been used."
-              });
+            if (inviteCode) {
+              const invite = await inviteRepository.findValidByCode(inviteCode);
+              if (!invite) {
+                throw new APIError("FORBIDDEN", {
+                  code: "INVITE_INVALID",
+                  message: "This invite code is invalid or has already been used."
+                });
+              }
             }
           }
 
@@ -217,7 +228,8 @@ export const auth = betterAuth({
             data: {
               ...rest,
               username: resolvedUsername,
-              displayUsername: resolvedUsername
+              displayUsername: resolvedUsername,
+              ...(isBootstrap ? { role: SUPER_ADMIN_ROLE } : {})
             }
           };
         },
@@ -229,14 +241,20 @@ export const auth = betterAuth({
             return;
           }
 
+          const signupMode = (await platformSettingRepository.get()).signupMode;
+          const inviteOnly = signupMode !== "open";
           const inviteCode = await extractInviteCode(endpointCtx);
+
           if (!inviteCode) {
-            // Fail closed: user was created without a recoverable invite.
-            await userRepository.deleteById(createdUser.id);
-            throw new APIError("FORBIDDEN", {
-              code: "INVITE_REQUIRED",
-              message: "An invite code is required to register."
-            });
+            if (inviteOnly) {
+              await userRepository.deleteById(createdUser.id);
+              throw new APIError("FORBIDDEN", {
+                code: "INVITE_REQUIRED",
+                message: "An invite code is required to register."
+              });
+            }
+            clearInviteCookie(endpointCtx);
+            return;
           }
 
           const invite = await inviteRepository.findValidByCode(inviteCode);
@@ -248,7 +266,7 @@ export const auth = betterAuth({
             });
           }
 
-          const marked = await inviteRepository.markUsed(invite.id, createdUser.id);
+          const marked = await inviteRepository.consume(invite.id, createdUser.id);
           if (!marked) {
             await userRepository.deleteById(createdUser.id);
             throw new APIError("FORBIDDEN", {
@@ -339,7 +357,9 @@ export const auth = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60 // 5 minutes
+      maxAge: 5 * 60, // 5 minutes
+      // Bust cached sessions that predate role / ban / impersonatedBy.
+      version: "admin-1"
     }
   },
 
@@ -377,6 +397,10 @@ export const auth = betterAuth({
       validationOrder: {
         username: "post-normalization"
       }
+    }),
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"]
     }),
     passkey({
       // WebAuthn rpID must match the browser host (no port). Local 127.0.0.1 → localhost.

@@ -76,6 +76,7 @@ import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspe
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 import {
   ListItemContent,
   type ListItemMeta,
@@ -806,6 +807,7 @@ export function NewJobsPage() {
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <ListSearchBar
             variant="new-jobs"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={filterFields}
             value={filterValues}
             onValueChange={(next: FilterValue[]) => {
@@ -976,14 +978,15 @@ export function NewJobsPage() {
                             batchSelectActive={isBatchSelectActive(selectedIds)}
                             onToggleSelect={rowActions.onToggleSelect}
                             tags={newJobTags(job)}
+                            tagsPlacement="after"
                             meta={newJobMeta(job)}
                             leading={
                               <JobIdentityMark
                                 companyName={job.companyName}
                                 logoUrl={job.companyLogoUrl}
-                                size={40}
+                                size={56}
                                 selected={selected}
-                                className="size-10"
+                                className="size-full"
                               />
                             }
                             actions={

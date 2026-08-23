@@ -1,3 +1,4 @@
+export * from "#@/admin/index";
 export * from "#@/ai-settings/index";
 export * from "#@/application/index";
 export * from "#@/common/index";

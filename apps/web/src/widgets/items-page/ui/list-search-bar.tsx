@@ -57,6 +57,8 @@ type ListSearchBarSharedProps = {
   sortDir?: "asc" | "desc";
   sortOptions: readonly ListSearchSortOption[];
   onSortChange: (next: { sortBy?: string; sortDir?: "asc" | "desc" }) => void;
+  /** Renders immediately before the sort control (e.g. board/list view toggle). */
+  beforeSort?: ReactNode;
   /**
    * Secondary result meta (e.g. “19 jobs”) — trailing toolbar, muted, non-interactive
    * (better-layout: metadata trails; keep distinct from controls).
@@ -106,6 +108,7 @@ export function ListSearchBar(props: ListSearchBarProps) {
     sortBy,
     sortOptions,
     onSortChange,
+    beforeSort,
     status,
     variant,
     labels,
@@ -238,13 +241,14 @@ export function ListSearchBar(props: ListSearchBarProps) {
         </FiltersBar>
       </FiltersProvider>
 
-      {status || catalogItems.length > 0 ? (
+      {status || beforeSort || catalogItems.length > 0 ? (
         <div className="ms-auto flex flex-wrap items-center gap-2">
           {status ? (
             <span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
               {status}
             </span>
           ) : null}
+          {beforeSort}
           {catalogItems.length > 0 ? (
             <Select
               aria-label={sortAriaLabel}

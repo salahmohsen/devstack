@@ -1,6 +1,7 @@
 import { ORPCError, os } from "@orpc/server";
 
-import { githubConfigRepository } from "@tsu-stack/db/repositories";
+import { isSuperAdminRole } from "@tsu-stack/core";
+import { githubConfigRepository, userRepository } from "@tsu-stack/db/repositories";
 
 import { type OrpcContext } from "#@/lib/context/types";
 
@@ -28,6 +29,65 @@ export const protectedProcedure = publicProcedure.use(requireAuth).route({
     };
   }
 });
+
+const requireSuperAdmin = o.middleware(async ({ context, next }) => {
+  if (!context.session?.user) {
+    throw new ORPCError("UNAUTHORIZED");
+  }
+  const userId = context.session.user.id;
+  let role = context.session.user.role;
+  let banned = context.session.user.banned;
+  if (role == null || banned == null) {
+    const row = await userRepository.findById(userId);
+    role = row?.role ?? null;
+    banned = row?.banned ?? false;
+  }
+  if (banned) {
+    throw new ORPCError("FORBIDDEN", { message: "This account is disabled" });
+  }
+  if (!isSuperAdminRole(role)) {
+    throw new ORPCError("FORBIDDEN", { message: "Super admin only" });
+  }
+  return next({
+    context: {
+      session: context.session
+    }
+  });
+});
+
+export const superAdminProcedure = publicProcedure
+  .use(requireAuth)
+  .use(requireSuperAdmin)
+  .errors({
+    FORBIDDEN: {
+      message: "Super admin only",
+      status: 403
+    },
+    LAST_ADMIN: {
+      message: "The last super admin cannot be demoted or banned",
+      status: 409
+    },
+    CANNOT_BAN_SELF: {
+      message: "You cannot ban your own account",
+      status: 400
+    },
+    USER_NOT_FOUND: {
+      message: "User not found",
+      status: 404
+    },
+    INVITE_NOT_FOUND: {
+      message: "Invite not found",
+      status: 404
+    }
+  })
+  .route({
+    spec: (spec) => {
+      return {
+        ...spec,
+        security: [{ authCookie: [] }]
+      };
+    }
+  });
 
 /**
  * Session user must have linked GitHub (config and/or OAuth). Used for private

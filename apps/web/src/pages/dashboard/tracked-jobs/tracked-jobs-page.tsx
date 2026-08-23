@@ -33,6 +33,7 @@ import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-appli
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
@@ -423,48 +424,24 @@ export function TrackedJobsPage() {
           title="Tracked jobs"
           description="Pipeline board and list for roles you are actively tracking."
           actions={
-            <>
-              <Group>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={view === "board" ? "default" : "outline"}
-                  onClick={() => {
-                    setView("board");
-                  }}
-                >
-                  <LayoutGridIcon />
-                  Board
-                </Button>
-                <GroupSeparator />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={view === "list" ? "default" : "outline"}
-                  onClick={() => setView("list")}
-                >
-                  <ListIcon />
-                  List
-                </Button>
-              </Group>
-              <Group>
-                <Button type="button" size="sm" onClick={openCreate}>
-                  <PlusIcon />
-                  New
-                </Button>
-                <GroupSeparator />
-                <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
-                  <FileTextIcon />
-                  Import
-                </Button>
-              </Group>
-            </>
+            <Group>
+              <Button type="button" size="sm" onClick={openCreate}>
+                <PlusIcon />
+                New
+              </Button>
+              <GroupSeparator />
+              <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
+                <FileTextIcon />
+                Import
+              </Button>
+            </Group>
           }
         />
 
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <ListSearchBar
             variant="tracked-jobs"
+            className={LIST_COLUMN_INSET_CLASSNAME}
             fields={filterFields}
             value={filterValues}
             onValueChange={(next: FilterValue[]) => {
@@ -487,6 +464,33 @@ export function TrackedJobsPage() {
                     ? `${boardApplications.length} of ${boardTotalCount} jobs`
                     : `${boardApplications.length} job${boardApplications.length === 1 ? "" : "s"}`
                   : undefined
+            }
+            beforeSort={
+              <Group aria-label="View">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={view === "board" ? "default" : "outline"}
+                  aria-pressed={view === "board"}
+                  onClick={() => {
+                    setView("board");
+                  }}
+                >
+                  <LayoutGridIcon aria-hidden="true" />
+                  {view === "board" ? "Board" : <span className="sr-only">Board</span>}
+                </Button>
+                <GroupSeparator />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={view === "list" ? "default" : "outline"}
+                  aria-pressed={view === "list"}
+                  onClick={() => setView("list")}
+                >
+                  <ListIcon aria-hidden="true" />
+                  {view === "list" ? "List" : <span className="sr-only">List</span>}
+                </Button>
+              </Group>
             }
             labels={{
               searchPlaceholder: "Search jobs",

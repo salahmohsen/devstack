@@ -292,7 +292,7 @@ export function SignInForm({
               }
               to="/sign-in/create-an-account"
             >
-              Create one with an invite
+              Create an account
             </Link>
           </p>
         </CardFooter>

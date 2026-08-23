@@ -11,6 +11,8 @@ import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { useMediaQuery } from "@/shared/lib/use-media-query";
+
 import {
   consumeOpenHubAssistant,
   getHubAssistantOpenPending,
@@ -28,14 +30,20 @@ const AgentHubThread = lazy(() =>
   })
 );
 
+/** Viewport padding (layout `p-2`) + gap between floater and panel edge. */
+const FLOATER_PANEL_GUTTER_PX = 24;
+
 /**
  * Official Assistant Modal floater for non-home dashboard routes.
  * Shares HubChatProvider / runtime from layout — do not mount a second provider.
  * Thread + AI settings stay unmounted until the user opens the floater.
+ * When the xl+ side panel is open, the floater sits just to its left (never overlaps).
  */
 export function HubAssistantModal({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
-  const { hasContent } = useSidePanel();
+  const { hasContent, inspectOpen, collapsed, width: panelWidth } = useSidePanel();
+  const isXl = useMediaQuery("(min-width: 1280px)");
+  const panelVisible = isXl && (hasContent || inspectOpen) && !collapsed;
   const aiSettings = useQuery(getAiSettingsQueryOptions());
   const avatarSeed = hubPersonalityAvatarSeed(aiSettings.data?.hubPersonality);
   const pendingOpen = useSyncExternalStore(
@@ -55,12 +63,12 @@ export function HubAssistantModal({ className }: { className?: string }) {
     >
       <AssistantModalPrimitive.Anchor
         className={cn(
-          "fixed z-60",
-          hasContent
-            ? "right-4 bottom-20 sm:bottom-6 xl:right-145 xl:bottom-6"
-            : "right-4 bottom-20 sm:right-6 sm:bottom-6",
+          "fixed bottom-20 z-60 sm:bottom-6",
+          "motion-safe:transition-[right] motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]",
+          !panelVisible && "right-4 sm:right-6",
           className
         )}
+        style={panelVisible ? { right: panelWidth + FLOATER_PANEL_GUTTER_PX } : undefined}
       >
         <AssistantModalPrimitive.Trigger
           render={
@@ -68,7 +76,9 @@ export function HubAssistantModal({ className }: { className?: string }) {
               type="button"
               variant="outline"
               size="icon-xl"
-              className="rounded-full"
+              // Button base uses rounded-lg + matching before:; force both circular
+              // so the outline chrome doesn’t leave a square behind the avatar.
+              className="overflow-hidden rounded-full before:rounded-full"
               aria-label="Open hub assistant"
             />
           }

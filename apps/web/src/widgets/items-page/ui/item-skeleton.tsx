@@ -2,6 +2,8 @@ import { Card } from "@tsu-stack/ui/components/card.js";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
+
 import { ITEMS_GRID_CLASSNAME } from "@/widgets/items-page/lib/items-grid-layout";
 
 type ItemSkeletonProps = {
@@ -13,7 +15,14 @@ export function ListSkeleton({ count = 6 }: ItemSkeletonProps) {
   return (
     <ul className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: count }).map((_, index) => (
-        <Card render={<li />} key={index} className="flex flex-row items-center gap-3 bg-card p-4">
+        <Card
+          render={<li />}
+          key={index}
+          className={cn(
+            "flex flex-row items-center gap-3 bg-card p-4",
+            LIST_COLUMN_INSET_CLASSNAME
+          )}
+        >
           <Skeleton className="size-10 rounded-md" />
           <div className="flex flex-1 flex-col gap-2">
             <Skeleton className="h-4 w-1/3" />
