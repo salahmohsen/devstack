@@ -36,7 +36,6 @@
 - **User preference:** Confirm without loading on the card; island shows the job list with loading/success per row
 - **Evidence class:** Unit (core propose schema, agent processor force→propose, web should-auto-resume); unauth `:4111/chat/hub-supervisor` 401; browser Confirm→island not re-proven this session (Playwright MCP down)
 
-
 ## 2026-08-23 — Open job listing searched CRM then never opened the same-page panel
 
 - **Trigger:** “open Front-End Software Developer / ExeQut · Match 88%”; agent searched Evidence or searched Applications then said the side panel was stuck
