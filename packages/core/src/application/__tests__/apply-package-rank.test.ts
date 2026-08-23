@@ -253,8 +253,9 @@ describe("resolveApplyPackagePdfDraft", () => {
 
   it("hides lowest-ranked whole items only when over the two-page budget, never the current role", () => {
     const huge = "x".repeat(APPLY_PACKAGE_ONE_PAGE_CHAR_BUDGET);
-    const bullets = Array.from({ length: APPLY_PACKAGE_ONE_PAGE_BULLET_BUDGET }, (_, i) => 
-      `Bullet ${i} ${huge}`
+    const bullets = Array.from(
+      { length: APPLY_PACKAGE_ONE_PAGE_BULLET_BUDGET },
+      (_, i) => `Bullet ${i} ${huge}`
     );
     const source = draft({
       experiences: [
