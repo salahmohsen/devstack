@@ -104,6 +104,25 @@ describe("messagesNeedGenerateApplyPackage (batch propose)", () => {
     expect(messagesNeedGenerateApplyPackage(messages)).toBe(true);
   });
 
+  it("after empty list, does not force proposeBatchGeneratePackages", () => {
+    const messages = [
+      {
+        role: "user",
+        content: { parts: [{ type: "text", text: "generate packages for all tracked" }] }
+      },
+      assistantWithParts([
+        {
+          type: "tool-list-open-applications",
+          toolName: "listOpenApplications",
+          state: "output-available",
+          output: { applications: [] }
+        }
+      ])
+    ] as never;
+    expect(messagesNeedListOpenForApplyPackages(messages)).toBe(false);
+    expect(messagesNeedGenerateApplyPackage(messages)).toBe(false);
+  });
+
   it("clears after proposeBatchGeneratePackages", () => {
     expect(
       messagesNeedGenerateApplyPackage([

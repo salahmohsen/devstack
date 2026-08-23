@@ -115,7 +115,13 @@ export type ProposeBatchTrackingChangeOutput = z.infer<
  * Client Confirm opens the AI island and runs generate per id (no per-id Approve).
  */
 export const ProposeBatchGeneratePackagesInputSchema = z.object({
-  ids: z.array(z.string().min(1)).min(1).max(20),
+  ids: z
+    .array(z.string().min(1))
+    .min(1)
+    .max(20)
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "ids must be unique"
+    }),
   labels: z
     .array(
       z.object({

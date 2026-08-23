@@ -716,15 +716,40 @@ export function messagesNeedListOpenForApplyPackages(
   return true;
 }
 
+/** Successful listOpenApplications this turn returned at least one application. */
+export function messagesHaveNonEmptyOpenApplicationsList(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (!isListOpenApplicationsToolName(name) || !mastraPartHasSuccessfulToolResult(part)) {
+        continue;
+      }
+      const value = mastraPartToolResultValue(part);
+      if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+      const applications = (value as { applications?: unknown }).applications;
+      if (Array.isArray(applications) && applications.length > 0) return true;
+    }
+  }
+  return false;
+}
+
 /**
- * After open applications are listed, force one proposeBatchGeneratePackages
+ * After open applications are listed (non-empty), force one proposeBatchGeneratePackages
  * (single Confirm → AI island). Do not force per-id generateApplyPackage.
+ * Empty list clears the list phase but must not force an empty proposal.
  */
 export function messagesNeedGenerateApplyPackage(
   messages: ProcessInputStepArgs["messages"]
 ): boolean {
   if (!userTurnAsksGenerateApplyPackages(latestUserText(messages))) return false;
   if (messagesNeedListOpenForApplyPackages(messages)) return false;
+  if (!messagesHaveNonEmptyOpenApplicationsList(messages)) return false;
   for (const message of messagesAfterLatestUser(messages)) {
     if (message.role !== "assistant") continue;
     const parts = message.content?.parts ?? [];

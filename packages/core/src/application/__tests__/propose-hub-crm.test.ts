@@ -85,4 +85,12 @@ describe("ProposeBatchGeneratePackagesInputSchema", () => {
       }).success
     ).toBe(true);
   });
+
+  it("rejects duplicate ids", () => {
+    expect(
+      ProposeBatchGeneratePackagesInputSchema.safeParse({
+        ids: ["app_1", "app_1"]
+      }).success
+    ).toBe(false);
+  });
 });

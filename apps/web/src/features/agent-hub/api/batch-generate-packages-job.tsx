@@ -37,10 +37,7 @@ function jobLabel(row: BatchGeneratePackageLabel): string {
 function hasExistingDraft(app: ApplicationOutput | null | undefined): boolean {
   if (!app) return false;
   if (ApplyPackageDraftSchema.safeParse(app.applyPackageDraft).success) return true;
-  if (app.resumeId || app.coverLetterR2Key || app.coverLetterBody || app.outreachBody) {
-    return true;
-  }
-  return false;
+  return [app.resumeId, app.coverLetterR2Key, app.coverLetterBody, app.outreachBody].some(Boolean);
 }
 
 function setStepState(
@@ -124,9 +121,27 @@ export function startBatchGeneratePackagesJob(
         try {
           existing = await orpcClient.applications.get({ id: row.id });
         } catch {
-          existing = null;
+          if (signal.aborted || !jobController.isCurrent(generation)) return;
+          // Fail closed: do not generate when we could not verify an existing draft.
+          failed += 1;
+          nextSteps = setStepState(nextSteps, row.id, "done", `${baseLabel} · failed`);
+          patchAiJobIsland(BATCH_PACKAGE_ISLAND_ID, {
+            steps: nextSteps,
+            activeStepLabel: `${baseLabel} · failed`
+          });
+          continue;
         }
         if (signal.aborted || !jobController.isCurrent(generation)) return;
+
+        if (existing == null) {
+          failed += 1;
+          nextSteps = setStepState(nextSteps, row.id, "done", `${baseLabel} · failed`);
+          patchAiJobIsland(BATCH_PACKAGE_ISLAND_ID, {
+            steps: nextSteps,
+            activeStepLabel: `${baseLabel} · failed`
+          });
+          continue;
+        }
 
         if (hasExistingDraft(existing)) {
           skipped += 1;
