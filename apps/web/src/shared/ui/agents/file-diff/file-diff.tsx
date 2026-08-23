@@ -264,8 +264,7 @@ export function FileDiff({
                         // for whole-line add/remove without segments.
                         type === "added" &&
                           (hasInline ? "bg-emerald-500/3" : "bg-emerald-500/[0.07]"),
-                        type === "removed" &&
-                          (hasInline ? "bg-rose-500/3" : "bg-rose-500/[0.07]")
+                        type === "removed" && (hasInline ? "bg-rose-500/3" : "bg-rose-500/[0.07]")
                       )}
                     >
                       <span className="pe-2 text-end text-muted-foreground/40 tabular-nums select-none">
