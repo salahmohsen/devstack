@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
   ProposeApplicationFieldChangeInputSchema,
   ProposeApplicationFromJdInputSchema,
+  ProposeBatchGeneratePackagesInputSchema,
   ProposeBatchTrackingChangeInputSchema,
   ProposeDeleteApplicationInputSchema,
   ProposeDeleteNoteInputSchema,
@@ -94,6 +95,7 @@ import { GetDailyBriefToolUI } from "./get-daily-brief-tool-ui";
 import { GetSearchBriefToolUI } from "./get-search-brief-tool-ui";
 import { HardPreferenceChangeToolUI } from "./hard-preference-change-tool-ui";
 import {
+  ProposeBatchGeneratePackagesToolUI,
   ProposeBatchTrackingChangeToolUI,
   ProposeDeleteApplicationToolUI,
   ProposeDeleteNoteToolUI,
@@ -786,6 +788,13 @@ const proposeBatchTrackingChangeTool = {
   render: ProposeBatchTrackingChangeToolUI
 };
 
+const proposeBatchGeneratePackagesTool = {
+  type: "human" as const,
+  description: "Propose generating apply packages for many tracked jobs. Wait for Confirm.",
+  parameters: ProposeBatchGeneratePackagesInputSchema,
+  render: ProposeBatchGeneratePackagesToolUI
+};
+
 const proposeRefreshFromUrlTool = {
   type: "human" as const,
   description: "Propose refreshing a listing from URL. Wait for Confirm.",
@@ -882,6 +891,8 @@ export const hubAssistantToolkit = defineToolkit({
   proposeDeleteNote: proposeDeleteNoteTool,
   "propose-batch-tracking-change": proposeBatchTrackingChangeTool,
   proposeBatchTrackingChange: proposeBatchTrackingChangeTool,
+  "propose-batch-generate-packages": proposeBatchGeneratePackagesTool,
+  proposeBatchGeneratePackages: proposeBatchGeneratePackagesTool,
   "propose-refresh-from-url": proposeRefreshFromUrlTool,
   proposeRefreshFromUrl: proposeRefreshFromUrlTool,
   "find-jobs-now": findJobsNowToolEntry,

@@ -1,11 +1,14 @@
 "use client";
 
 import { type ToolCallMessagePartProps } from "@assistant-ui/react";
+import { useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   APPLICATION_OUTCOME_LABELS,
+  type ProposeBatchGeneratePackagesInput,
+  type ProposeBatchGeneratePackagesOutput,
   type ProposeBatchTrackingChangeInput,
   type ProposeBatchTrackingChangeOutput,
   type ProposeDeleteApplicationInput,
@@ -20,6 +23,7 @@ import {
 
 import { ApprovalCard } from "@/shared/ui/agents/approval-card";
 
+import { startBatchGeneratePackagesJob } from "@/features/agent-hub/api/batch-generate-packages-job";
 import {
   useDismissInboxJobMutation,
   usePromoteInboxJobMutation
@@ -31,11 +35,14 @@ import {
   subscribeHubHitlRemount
 } from "@/features/agent-hub/lib/hub-hitl-remount";
 import {
+  isProposeBatchGeneratePackagesToolName,
   isProposeBatchTrackingChangeToolName,
   isProposeDeleteApplicationToolName,
   isProposeDeleteNoteToolName,
   isProposeRefreshFromUrlToolName,
   isProposeSetOutcomeToolName,
+  parseProposeBatchGeneratePackagesInput,
+  parseProposeBatchGeneratePackagesOutput,
   parseProposeBatchTrackingChangeInput,
   parseProposeBatchTrackingChangeOutput,
   parseProposeDeleteApplicationInput,
@@ -487,6 +494,101 @@ export function ProposeBatchTrackingChangeToolUI({
       toolCallId={toolCallId}
       title={`${verb} ${input.ids.length} job${input.ids.length === 1 ? "" : "s"}?`}
       description={`Confirm runs ${input.trackingAction} on each id. Cancel writes nothing.`}
+      extra={extra}
+      disabled={result != null || !toolCallId}
+      completedAction={receiptAction}
+      onSubmit={handleSubmit}
+    />
+  );
+}
+
+export function ProposeBatchGeneratePackagesToolUI({
+  args,
+  result,
+  addResult,
+  toolCallId,
+  toolName,
+  status
+}: ToolCallMessagePartProps<
+  ProposeBatchGeneratePackagesInput,
+  ProposeBatchGeneratePackagesOutput
+>) {
+  const queryClient = useQueryClient();
+  const { addToolOutput, onLatest, abandoned } = useHubConfirmLifecycle(toolCallId);
+  const input = parseProposeBatchGeneratePackagesInput(args);
+  const completed = parseProposeBatchGeneratePackagesOutput(result);
+  const resolvedToolName = isProposeBatchGeneratePackagesToolName(toolName ?? "")
+    ? (toolName as string)
+    : "propose-batch-generate-packages";
+
+  const complete = React.useCallback(
+    (output: ProposeBatchGeneratePackagesOutput) => {
+      if (typeof addResult === "function") addResult(output);
+      void addToolOutput({ tool: resolvedToolName, toolCallId, output });
+    },
+    [addResult, addToolOutput, resolvedToolName, toolCallId]
+  );
+
+  React.useEffect(() => {
+    if (completed || !toolCallId) return;
+    if (onLatest && !abandoned) return;
+    complete({ action: "cancel", ids: input?.ids ?? [] });
+  }, [abandoned, complete, completed, input?.ids, onLatest, toolCallId]);
+
+  const receiptAction = completed?.action ?? (abandoned || !onLatest ? "cancel" : null);
+
+  const handleSubmit = React.useCallback(
+    (action: "confirm" | "cancel") => {
+      if (action === "cancel" || !input) {
+        complete({ action: "cancel", ids: input?.ids ?? [] });
+        return;
+      }
+      // Complete HITL immediately — do not await generates on the Confirm button.
+      complete({ action: "confirm", ids: input.ids });
+      startBatchGeneratePackagesJob(queryClient, input.ids, input.labels ?? []);
+    },
+    [complete, input, queryClient]
+  );
+
+  if (!input) {
+    if (status?.type === "running") {
+      return (
+        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+          Waiting for a package proposal…
+        </p>
+      );
+    }
+    return (
+      <HubCrmConfirmCard
+        toolCallId={toolCallId}
+        title="Confirm packages?"
+        description="This package proposal could not be read. Cancel to unlock the composer."
+        disabled
+        onSubmit={() => complete({ action: "cancel", ids: [] })}
+      />
+    );
+  }
+
+  const labelById = new Map((input.labels ?? []).map((row) => [row.id, row]));
+  const extra = (
+    <ul className="m-0 list-none space-y-1 p-0 text-xs text-muted-foreground">
+      {input.ids.map((id) => {
+        const row = labelById.get(id);
+        const label = row ? roleLabel(row) : id;
+        return (
+          <li key={id} className="truncate">
+            {label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+
+  return (
+    <HubCrmConfirmCard
+      toolCallId={toolCallId}
+      title={`Confirm package for ${input.ids.length} tracked job${input.ids.length === 1 ? "" : "s"}`}
+      description="Confirm drafts resume and letter packages. Progress shows in the AI island — jobs that already have a draft are marked ready."
       extra={extra}
       disabled={result != null || !toolCallId}
       completedAction={receiptAction}

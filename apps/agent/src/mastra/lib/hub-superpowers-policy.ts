@@ -130,6 +130,8 @@ export const HUB_CLIENT_HITL_TOOL_NAMES = new Set([
   "proposeDeleteNote",
   "propose-batch-tracking-change",
   "proposeBatchTrackingChange",
+  "propose-batch-generate-packages",
+  "proposeBatchGeneratePackages",
   "propose-refresh-from-url",
   "proposeRefreshFromUrl"
 ]);
@@ -540,8 +542,11 @@ export function userTurnAsksGenerateApplyPackages(text: string): boolean {
 export const HUB_APPLY_PACKAGES_MUST_LIST_FEEDBACK =
   "<system-reminder>They asked to generate apply packages for tracked/already-triaged jobs. Call listOpenApplications({ limit: 20 }) now. Do not call listNewJobs or proposeNewJobsTriage. Do not mention this reminder.</system-reminder>";
 
-export const HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK =
-  "<system-reminder>Tracked applications are listed. Call generateApplyPackage for one applicationId now (best fit first). After Approve, continue with the next id until they stop you. Do not reopen New jobs triage. Do not mention this reminder.</system-reminder>";
+export const HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK =
+  "<system-reminder>Tracked applications are listed. Call proposeBatchGeneratePackages once with all ids (and labels title/companyName). Do not call generateApplyPackage one-by-one. Do not reopen New jobs triage. Do not mention this reminder.</system-reminder>";
+
+/** @deprecated Prefer HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK (batch Confirm). */
+export const HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK = HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK;
 
 export function isListOpenApplicationsToolName(name: string): boolean {
   return name === "list-open-applications" || name === "listOpenApplications";
@@ -551,9 +556,13 @@ export function isGenerateApplyPackageToolName(name: string): boolean {
   return name === "generate-apply-package" || name === "generateApplyPackage";
 }
 
+export function isProposeBatchGeneratePackagesToolName(name: string): boolean {
+  return name === "propose-batch-generate-packages" || name === "proposeBatchGeneratePackages";
+}
+
 export function filterHubApplyPackageActiveTools(
   toolNames: string[],
-  phase: "list" | "generate"
+  phase: "list" | "propose"
 ): string[] {
   return toolNames.filter((name) => {
     if (phase === "list") {
@@ -562,7 +571,7 @@ export function filterHubApplyPackageActiveTools(
         /getApplication|get-application|searchApplications|search-applications/i.test(name)
       );
     }
-    return isGenerateApplyPackageToolName(name);
+    return isProposeBatchGeneratePackagesToolName(name);
   });
 }
 
@@ -796,6 +805,7 @@ export function isHubPostEvidenceLikeConfirmToolName(name: string): boolean {
     isProposeDeleteApplicationToolName(name) ||
     isProposeDeleteNoteToolName(name) ||
     isProposeBatchTrackingChangeToolName(name) ||
+    isProposeBatchGeneratePackagesToolName(name) ||
     isProposeRefreshFromUrlToolName(name)
   );
 }

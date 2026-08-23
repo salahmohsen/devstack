@@ -45,6 +45,8 @@ const HUB_APPLICATION_MUTATING_TOOLS = new Set([
   "proposeDeleteNote",
   "propose-batch-tracking-change",
   "proposeBatchTrackingChange",
+  "propose-batch-generate-packages",
+  "proposeBatchGeneratePackages",
   "propose-refresh-from-url",
   "proposeRefreshFromUrl"
 ]);
@@ -72,6 +74,13 @@ function isSuccessfulMutatingToolOutput(toolName: string, output: unknown): bool
   if (toolName === "generate-apply-package" || toolName === "generateApplyPackage") {
     const id = typeof o.applicationId === "string" ? o.applicationId.trim() : "";
     return id.length > 0;
+  }
+
+  if (
+    toolName === "propose-batch-generate-packages" ||
+    toolName === "proposeBatchGeneratePackages"
+  ) {
+    return o.action === "confirm";
   }
 
   return false;

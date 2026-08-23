@@ -3,6 +3,8 @@ import { createTool } from "@mastra/core/tools";
 import {
   ProposeApplicationFieldChangeInputSchema,
   ProposeApplicationFieldChangeOutputSchema,
+  ProposeBatchGeneratePackagesInputSchema,
+  ProposeBatchGeneratePackagesOutputSchema,
   ProposeBatchTrackingChangeInputSchema,
   ProposeBatchTrackingChangeOutputSchema,
   ProposeDeleteApplicationInputSchema,
@@ -57,6 +59,14 @@ export const proposeBatchTrackingChangeTool = createTool({
     "Propose a batch track | dismiss | restore of application ids for one Confirm card. After Confirm the client loops existing per-id trackJob / dismissJob / restoreApplication. Do not invent a batchTrack tool. After calling, write no user-facing text.",
   inputSchema: ProposeBatchTrackingChangeInputSchema,
   outputSchema: ProposeBatchTrackingChangeOutputSchema
+});
+
+export const proposeBatchGeneratePackagesTool = createTool({
+  id: "propose-batch-generate-packages",
+  description:
+    "Propose generating apply packages for many tracked application ids in one Confirm card. Pass ids (+ optional labels with title/companyName) from listOpenApplications. After Confirm the client runs generate in the AI island — do NOT call generateApplyPackage one-by-one. After calling, write no user-facing text.",
+  inputSchema: ProposeBatchGeneratePackagesInputSchema,
+  outputSchema: ProposeBatchGeneratePackagesOutputSchema
 });
 
 export const proposeRefreshFromUrlTool = createTool({

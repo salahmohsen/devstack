@@ -17,6 +17,16 @@
 
 ---
 
+## 2026-08-23 — Batch package Confirm must not await generates on the card
+
+- **Trigger:** “Confirm package for 10 tracked jobs” froze on Confirm while `applications.generateApplyPackage` ran ~50s per job; user wanted immediate submit + AI island per-job progress
+- **Finding:** Multi-job package asks must use a **client HITL** `proposeBatchGeneratePackages` (one Confirm with ids + labels), not N× `generateApplyPackage` `requireToolApproval` Approves. Confirm completes `addToolOutput` **before** any generate; the AI island owns progress
+- **Finding:** Island steps = one row per application id. Mark **ready** immediately when `applyPackageDraftedAt` / `applyPackageDraft` already exists; otherwise call oRPC `generateApplyPackage` sequentially and mark done/failed. Dismiss cancels client tracking only
+- **Finding:** Force processor after `listOpenApplications` must allowlist `proposeBatchGeneratePackages`, not `generateApplyPackage`. Rebuild `@tsu-stack/core` ESM cache before the agent can import new propose schemas or Mastra crashes on missing export
+- **Finding:** `HubCrmConfirmCard` stays on Submitting until `completedAction` is set — fire-and-forget only works if `complete()` runs synchronously at the start of Confirm (do not `await` generates in `onSubmit`)
+- **User preference:** Confirm without loading on the card; island shows the job list with loading/success per row
+- **Evidence class:** Unit (core propose schema, agent processor force→propose, web should-auto-resume); unauth `:4111/chat/hub-supervisor` 401; browser Confirm→island not re-proven this session (Playwright MCP down)
+
 ## 2026-08-23 — Open job listing searched CRM then never opened the same-page panel
 
 - **Trigger:** “open Front-End Software Developer / ExeQut · Match 88%”; agent searched Evidence or searched Applications then said the side panel was stuck

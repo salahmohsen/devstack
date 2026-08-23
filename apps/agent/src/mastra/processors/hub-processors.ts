@@ -49,11 +49,12 @@ import {
   HUB_PILE_MUST_LIST_FEEDBACK,
   HUB_NEW_JOBS_MUST_LIST_FEEDBACK,
   HUB_APPLY_PACKAGES_MUST_LIST_FEEDBACK,
-  HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK,
+  HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK,
   HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
   filterHubApplyPackageActiveTools,
   isListOpenApplicationsToolName,
   isGenerateApplyPackageToolName,
+  isProposeBatchGeneratePackagesToolName,
   isHubClientHitlToolName,
   isHubInspectLookupToolName,
   isOpenEntityInspectToolName,
@@ -715,12 +716,10 @@ export function messagesNeedListOpenForApplyPackages(
   return true;
 }
 
-/** After open applications are listed, force one generateApplyPackage (Approve card). */
-export function messagesNeedGenerateApplyPackage(
+/** Successful listOpenApplications this turn returned at least one application. */
+export function messagesHaveNonEmptyOpenApplicationsList(
   messages: ProcessInputStepArgs["messages"]
 ): boolean {
-  if (!userTurnAsksGenerateApplyPackages(latestUserText(messages))) return false;
-  if (messagesNeedListOpenForApplyPackages(messages)) return false;
   for (const message of messagesAfterLatestUser(messages)) {
     if (message.role !== "assistant") continue;
     const parts = message.content?.parts ?? [];
@@ -728,6 +727,38 @@ export function messagesNeedGenerateApplyPackage(
       if (!raw || typeof raw !== "object") continue;
       const part = raw as Record<string, unknown>;
       const name = mastraPartToolName(part);
+      if (!isListOpenApplicationsToolName(name) || !mastraPartHasSuccessfulToolResult(part)) {
+        continue;
+      }
+      const value = mastraPartToolResultValue(part);
+      if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+      const applications = (value as { applications?: unknown }).applications;
+      if (Array.isArray(applications) && applications.length > 0) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * After open applications are listed (non-empty), force one proposeBatchGeneratePackages
+ * (single Confirm → AI island). Do not force per-id generateApplyPackage.
+ * Empty list clears the list phase but must not force an empty proposal.
+ */
+export function messagesNeedGenerateApplyPackage(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  if (!userTurnAsksGenerateApplyPackages(latestUserText(messages))) return false;
+  if (messagesNeedListOpenForApplyPackages(messages)) return false;
+  if (!messagesHaveNonEmptyOpenApplicationsList(messages)) return false;
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isProposeBatchGeneratePackagesToolName(name)) return false;
+      // Legacy one-by-one Approve still clears the force.
       if (isGenerateApplyPackageToolName(name)) return false;
     }
   }
@@ -990,10 +1021,10 @@ export class HubApplyPackageProcessor implements Processor {
     if (messagesNeedGenerateApplyPackage(messages)) {
       await sendSignal?.({
         type: "reactive",
-        contents: HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK,
-        attributes: { reason: "apply-packages-must-generate" }
+        contents: HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK,
+        attributes: { reason: "apply-packages-must-propose" }
       });
-      const activeTools = filterHubApplyPackageActiveTools(names, "generate");
+      const activeTools = filterHubApplyPackageActiveTools(names, "propose");
       return {
         toolChoice: "required" as const,
         ...(activeTools.length > 0 ? { activeTools } : {})
@@ -1286,7 +1317,7 @@ export function hubSupervisorOnIterationComplete(ctx: HubSupervisorIterationCtx)
     if (textOnly && pastFirstForceRetry) {
       return { continue: false };
     }
-    return { continue: true, feedback: HUB_APPLY_PACKAGES_MUST_GENERATE_FEEDBACK };
+    return { continue: true, feedback: HUB_APPLY_PACKAGES_MUST_PROPOSE_FEEDBACK };
   }
   if (messagesNeedDailyBriefFacts(ctx.messages)) {
     if (textOnly && pastFirstForceRetry) {

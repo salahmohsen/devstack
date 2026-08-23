@@ -62,6 +62,7 @@ import { proposeEvidenceChangeTool } from "#@/mastra/tools/propose-evidence-chan
 import { proposeHardPreferenceChangeTool } from "#@/mastra/tools/propose-hard-preference-change.tool";
 import {
   proposeApplicationFieldChangeTool,
+  proposeBatchGeneratePackagesTool,
   proposeBatchTrackingChangeTool,
   proposeDeleteApplicationTool,
   proposeDeleteNoteTool,
@@ -142,6 +143,7 @@ export function createHubSupervisor() {
       proposeDeleteApplication: proposeDeleteApplicationTool,
       proposeDeleteNote: proposeDeleteNoteTool,
       proposeBatchTrackingChange: proposeBatchTrackingChangeTool,
+      proposeBatchGeneratePackages: proposeBatchGeneratePackagesTool,
       proposeRefreshFromUrl: proposeRefreshFromUrlTool,
       listExperiences: listExperiencesTool,
       getExperience: getExperienceTool,
