@@ -30,9 +30,10 @@ Route groups live in the file system as pathless layouts. `__protected/` and `(g
 
 ### Guest-only routes (`(guest)/` pathless layout under `(root-layout)/`)
 
-- `sign-in/` and `sign-in/create-an-account/` are wrapped by `(guest)/` to mark them as guest-only
+- `sign-in/` and `sign-up/` are wrapped by `(guest)/route.tsx` to mark them as guest-only (shared chrome + logged-in bounce)
+- Legacy `/sign-in/create-an-account` redirects to `/sign-up` (preserves `invite` / `redirect` search)
 - Authenticated users → redirected to a non-guest route (the `?redirect` param is validated against the route tree and any route whose id contains `(guest)` is excluded)
-- The `?redirect` param is also sanitized to exclude `__protected/` routes (see `sign-in/index.tsx` and `create-an-account/index.tsx`)
+- The `?redirect` param is also sanitized to exclude `__protected/` routes (see `sign-in/index.tsx` and `sign-up/index.tsx`)
 - Registration follows **signup mode** (Admin → Access): invite-only after the first user (default), or open. Create-account and OAuth still accept an invite for attribution. See Gotchas.
 
 ## Middleware

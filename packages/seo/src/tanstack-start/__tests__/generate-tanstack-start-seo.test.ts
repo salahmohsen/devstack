@@ -174,7 +174,7 @@ describe("generateTanStackStartSeo", () => {
       const result = createSubject();
 
       expect(getTitle(result.meta)).toEqual({
-        title: "Example App | Example App"
+        title: "Example App"
       });
       expect(getMetaByName(result.meta, "description")).toEqual({
         content: "Explore guides, builds, and featured articles.",
@@ -422,8 +422,8 @@ describe("generateTanStackStartSeo", () => {
     it("keeps document title, og:title, and twitter:title aligned for every title scenario", () => {
       const cases = [
         {
-          expected: "Example App | Example App",
-          name: "default title with template",
+          expected: "Example App",
+          name: "default title without template doubling",
           title: undefined
         },
         {

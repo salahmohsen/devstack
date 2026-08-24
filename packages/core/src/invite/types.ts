@@ -98,7 +98,7 @@ export const InviteSignupsOutputSchema = z.object({
 export type InviteSignupsOutput = z.infer<typeof InviteSignupsOutputSchema>;
 
 export function inviteSignupPath(code: string): string {
-  return `/sign-in/create-an-account?invite=${encodeURIComponent(code)}`;
+  return `/sign-up?invite=${encodeURIComponent(code)}`;
 }
 
 export function inviteKindFromEmail(email: string | null | undefined): InviteKind {

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { generatePublicPortfolioSeo, portfolioSeoFields } from "@/shared/lib/public-portfolio-seo";
 import { getRequestHostname } from "@/shared/lib/request-host";
 import { generateAppSeo } from "@/shared/lib/seo";
 
@@ -15,8 +16,6 @@ import {
   getGithubSetupStatusQueryOptions,
   HomePage
 } from "@/pages/home-page";
-
-import { appConfig } from "@/config/app.config";
 
 export const Route = createFileRoute("/(root-layout)/")({
   ssr: true,
@@ -33,8 +32,11 @@ export const Route = createFileRoute("/(root-layout)/")({
         if (resolved?.mode === "custom_domain" && resolved.username) {
           const { username } = resolved;
 
+          let portfolio;
           try {
-            await context.queryClient.ensureQueryData(getPortfolioListQueryOptions(username));
+            portfolio = await context.queryClient.ensureQueryData(
+              getPortfolioListQueryOptions(username)
+            );
           } catch {
             return { mode: "landing" as const };
           }
@@ -53,7 +55,11 @@ export const Route = createFileRoute("/(root-layout)/")({
             ]);
           }
 
-          return { mode: "custom_domain" as const, username };
+          return {
+            mode: "custom_domain" as const,
+            username,
+            ...portfolioSeoFields(portfolio)
+          };
         }
       } catch {
         // Fall through to community landing if resolve fails.
@@ -64,22 +70,22 @@ export const Route = createFileRoute("/(root-layout)/")({
   },
   head: ({ loaderData }) => {
     if (loaderData?.mode === "custom_domain" && loaderData.username) {
-      return generateAppSeo({
-        alternates: {
-          canonicalPath: "/"
-        },
-        description: `Public portfolio for @${loaderData.username}`,
-        title: `@${loaderData.username}`
+      return generatePublicPortfolioSeo({
+        username: loaderData.username,
+        name: loaderData.name,
+        image: loaderData.image,
+        summary: loaderData.summary,
+        canonicalPath: "/"
       });
     }
 
+    // Omit title → site.defaultTitle ("DEVSTACK") without template doubling.
     return generateAppSeo({
       alternates: {
         canonicalPath: "/"
       },
       description:
-        "Open-source, self-hostable personal hub. Public portfolios live at /{username} or on a verified custom domain.",
-      title: appConfig.site.shortName
+        "Self-hostable job-apply assistant: job board adapters, New jobs, Tracked jobs, Career Inbox, hub agent with BYO AI, and a public portfolio at /{username}."
     });
   },
   component: RootIndexPage

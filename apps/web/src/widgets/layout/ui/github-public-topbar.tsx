@@ -389,7 +389,7 @@ export function Topbar() {
         title="Home"
       >
         <TextAnimate animation="slideLeft" by="character">
-          DEV-STACK
+          DEVSTACK
         </TextAnimate>
       </Link>
 

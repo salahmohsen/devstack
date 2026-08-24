@@ -3,8 +3,8 @@ import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { parseUsername } from "@tsu-stack/core/profile";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { generatePublicPortfolioSeo, portfolioSeoFields } from "@/shared/lib/public-portfolio-seo";
 import { getRequestHostname } from "@/shared/lib/request-host";
-import { generateAppSeo } from "@/shared/lib/seo";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 import { getPortfolioListQueryOptions } from "@/features/portfolio";
@@ -28,7 +28,8 @@ export const Route = createFileRoute("/(root-layout)/$username/repos/")({
     }
     return {};
   },
-  ssr: false,
+  // SSR so portfolio name/image land in the initial document head for crawlers.
+  ssr: true,
   beforeLoad: ({ params, location }) => {
     if (!parseUsername(params.username).success) {
       throw notFound();
@@ -61,21 +62,21 @@ export const Route = createFileRoute("/(root-layout)/$username/repos/")({
       );
     }
 
-    void context.queryClient.prefetchQuery(getPortfolioListQueryOptions(username));
+    const portfolio = await context.queryClient
+      .ensureQueryData(getPortfolioListQueryOptions(username))
+      .catch(() => null);
 
-    return { filterStore, username };
+    return { filterStore, username, ...portfolioSeoFields(portfolio) };
   },
-  head: ({ params }) =>
-    generateAppSeo({
-      alternates: {
-        canonicalPath: `/${params.username}/repos`
-      },
-      title: `@${params.username} · Repositories`,
-      description: `GitHub repositories for @${params.username}`,
-      robots: {
-        follow: true,
-        index: true
-      }
+  head: ({ loaderData, params }) =>
+    generatePublicPortfolioSeo({
+      username: loaderData?.username ?? params.username,
+      name: loaderData?.name,
+      image: loaderData?.image,
+      summary: loaderData?.summary,
+      canonicalPath: `/${params.username}/repos`,
+      pageLabel: "Repositories",
+      openGraphType: "website"
     }),
   component: UsernameReposIndexPage
 });

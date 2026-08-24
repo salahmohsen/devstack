@@ -290,7 +290,7 @@ export function SignInForm({
                   ? { redirect: redirectTo }
                   : {}
               }
-              to="/sign-in/create-an-account"
+              to="/sign-up"
             >
               Create an account
             </Link>

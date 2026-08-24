@@ -1,94 +1,99 @@
-# DEV-STACK
+# DEVSTACK
 
-Self-hostable job-apply assistant with a public portfolio.
+Self-hostable job-apply assistant: discover roles, track applications, draft packages with a hub agent on your keys, and publish evidence on `/{username}`.
 
-Ingest career mail, track applications, generate apply packages, and talk to a hub agent. The same account publishes opted-in evidence on `/{username}` or a verified custom domain.
+[![CI](https://github.com/salahmohsen/devstack/actions/workflows/ci.yml/badge.svg)](https://github.com/salahmohsen/devstack/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Internal monorepo name: `tsu-stack` (this repo is also called `personal-hub`).
+Live install: **[devstack.salahmohsen.com](https://devstack.salahmohsen.com)** · Apex portfolio: **[salahmohsen.com](https://salahmohsen.com)**
 
-## Highlights
+## About
 
-- **Apply loop** — Career Inbox, applications CRM, resumes, hub chat / apply packages
-- **Public surface** — portfolio + GitHub repos on path or custom domain
-- **BYO keys** — per-tenant AI and optional Resend; no platform model or mail budget
-- **Invite-gated** — first user bootstraps the install; later signup follows invite-only or open
-- **Self-host** — Docker Compose / Dokploy; MIT
+DEVSTACK closes the apply loop on infrastructure you control. Adapters fill **New jobs** from public boards; you promote roles into a tracked CRM; Career Inbox (optional Gmail) can move stages; a Mastra hub agent drafts apply packages with human review; opted-in evidence shows on your public profile or a verified custom domain.
+
+BYO AI and optional BYO Resend mean there is no platform model or mail budget. Missing keys degrade AI steps; CRUD still works.
+
+Built on [tsu-stack](https://github.com/tsu-moe/tsu-stack). Parts of the GitHub browser and cache layer were adapted from [diffkit](https://github.com/stylessh/diffkit).
+
+## Features
+
+- **New jobs** — adapters for Freehire, Himalayas, Arbeitnow, Remotive, RemoteOK; rank against prefs; optional BYO AI scoring
+- **Tracked jobs** — CRM board through offer; Career Inbox can classify hiring mail and move stages with undo
+- **Hub agent** — Mastra chat on sealed per-tenant provider keys; HITL for hard writes
+- **Apply packages** — resume, cover letter, outreach with review gates
+- **Public profile** — experiences, projects, stacks, resumes on `/{username}` or a verified custom domain
+- **Self-host** — Docker Compose / Dokploy; invite-gated signup after the first operator; Host-based custom domains
 
 ## Stack
 
-| Layer   | Choice                                                                          |
-| ------- | ------------------------------------------------------------------------------- |
-| Apps    | TanStack Start (`apps/web`), Hono + oRPC (`apps/server`), Mastra (`apps/agent`) |
-| Data    | Postgres + Drizzle, Redis / BullMQ, S3-compatible storage (MinIO locally)       |
-| Auth    | Better Auth (username, admin, invite / open signup, OAuth)                      |
-| Domain  | Zod contracts in `@tsu-stack/core`                                              |
-| Tooling | pnpm workspaces, Vite Plus (`vp`)                                               |
+| Layer  | Choice                                                           |
+| ------ | ---------------------------------------------------------------- |
+| Web    | TanStack Start, React 19, Tailwind CSS 4, coss / Base UI         |
+| API    | Hono, oRPC, Zod                                                  |
+| Auth   | Better Auth (magic link, GitHub OAuth, passkeys)                 |
+| Data   | Postgres (Drizzle), Redis                                        |
+| AI     | Mastra agents / workflows, BYO provider keys                     |
+| Mail   | Gmail OAuth + optional BYO Resend                                |
+| Deploy | Docker Compose, Dokploy, Cloudflare Tunnel for edge Host routing |
+
+Monorepo layout:
 
 ```text
-apps/web          UI (dashboard + public site)
-apps/server       API, queues, realtime
-apps/agent        Mastra agents and workflows
-packages/core     Shared schemas and helpers
-packages/db       Drizzle schema and repositories
-packages/api      oRPC routers
-packages/auth     Better Auth
-packages/*        ui, env, email, github, pdf, logger, seo, …
+apps/
+  web/      # TanStack Start UI
+  server/   # Hono + oRPC API
+  agent/    # Mastra agent worker
+packages/
+  api/ auth/ core/ db/ email/ env/ github/ logger/ seo/ ui/ …
 ```
 
-## Quick start
+Workspace packages use the `@tsu-stack/*` namespace (inherited from tsu-stack).
+
+## Requirements
+
+- Node.js 22+
+- pnpm 11+
+- Docker (local infra: Postgres, Redis, MinIO)
+- GitHub OAuth app (sign-in + public GitHub surface)
+- Optional: Resend API key, LLM provider keys, Cloudflare Tunnel for public webhook URLs in dev
+
+## Getting started
 
 ```bash
-cp packages/env/.env.example packages/env/.env
-# Set at least VITE_WEB_URL, VITE_SERVER_URL, DATABASE_URL, BETTER_AUTH_SECRET
-
 pnpm install
-pnpm dev          # Postgres / Redis / MinIO + migrate + apps
-```
-
-| Service       | URL                   |
-| ------------- | --------------------- |
-| Web           | http://localhost:3000 |
-| API           | http://localhost:5200 |
-| Mastra studio | http://localhost:4111 |
-
-LLM features need keys under **Settings → AI**. Optional OAuth (GitHub / Google) and Resend live in env / Settings.
-
-### Inbound webhooks
-
-Providers cannot reach `localhost`. For Gmail push, Resend, or GitHub webhooks:
-
-```bash
-pnpm dev:tunnel
-```
-
-Keep `VITE_SERVER_URL` on `http://localhost:5200` so OAuth cookies stay first-party. The tunnel only exposes a public origin for inbound webhooks (`DEV_PUBLIC_SERVER_URL`). See `packages/env/.env.example` and `scripts/cloudflared.tunnel.example.yml`.
-
-### Docker
-
-```bash
-pnpm docker:local       # helper for local full stack
-pnpm docker:up          # compose
-pnpm docker:up:build
-```
-
-## Useful commands
-
-```bash
-pnpm check              # lint / type checks (Vite Plus)
-pnpm fix
-pnpm test:unit:run
+pnpm prepare
+cp packages/env/.env.example packages/env/.env
+# fill DATABASE_URL, BETTER_AUTH_SECRET, VITE_WEB_URL, VITE_SERVER_URL, GitHub OAuth, …
 pnpm db:migrate
-pnpm db:studio
-pnpm mastra:studio
+pnpm dev          # or: pnpm docker:local / docker compose up
 ```
 
-## Docs
+Dev notes:
 
-| Doc                        | When                                                      |
-| -------------------------- | --------------------------------------------------------- |
-| [CONTEXT.md](./CONTEXT.md) | Product glossary (`username`, invite, custom domain, BYO) |
-| [AGENTS.md](./AGENTS.md)   | How to work in the monorepo                               |
-| [PRODUCT.md](./PRODUCT.md) | Product purpose and constraints                           |
-| `.agents/`                 | Pattern playbooks (auth, oRPC, TanStack, media, …)        |
-| `docs/superpowers/specs/`  | Design locks                                              |
-| `docs/adr/`                | Architecture decisions                                    |
+- Web defaults to `http://localhost:3000`; API to `http://localhost:5200`
+- For inbound webhooks in local dev, use `pnpm dev:tunnel` and set `DEV_PUBLIC_SERVER_URL`
+- Keep browser `VITE_SERVER_URL` first-party (`localhost`) so OAuth cookies stay valid
+
+See `packages/env/.env.example` for every variable.
+
+## Production
+
+Typical path: Dokploy Applications for `web`, `server`, and `agent`, plus a compose stack for Postgres/Redis/MinIO. Set `VITE_WEB_URL` to your primary app host (e.g. `https://devstack.salahmohsen.com`) and `VITE_SERVER_URL` to the API host.
+
+Custom domains for tenants: TXT verify + CNAME to the primary app host. Operator edge checklist: [`docs/ops/custom-domains-edge.md`](./docs/ops/custom-domains-edge.md).
+
+## Project conventions
+
+- Shared domain contracts live in `packages/core` and propagate into API and web
+- Protected routes sit under `apps/web/src/routes/(root-layout)/__protected/`
+- Product glossary: [`CONTEXT.md`](./CONTEXT.md) · brand/product truth: [`PRODUCT.md`](./PRODUCT.md)
+- Agent entry: [`AGENTS.md`](./AGENTS.md)
+
+## Acknowledgements
+
+- [diffkit](https://github.com/stylessh/diffkit) — GitHub cache, repo browser, and related public GitHub UI patterns adapted into this product
+- [tsu-stack](https://github.com/tsu-moe/tsu-stack) — monorepo toolchain, packages, and full-stack TypeScript defaults
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

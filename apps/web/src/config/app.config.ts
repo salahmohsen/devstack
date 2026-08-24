@@ -10,12 +10,13 @@ export const appConfig = Object.freeze({
     author: "Salah Mohsen",
     basePath: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
     baseUrl: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).origin,
-    description: "Portfolio",
+    description:
+      "Self-hostable job-apply assistant: discover roles, track applications, draft packages with a hub agent on your keys, and publish evidence on /{username}.",
     emailSupport,
     jurisdictionCountry: "Egypt",
-    longName: "complete job applying solution | DevHub",
+    longName: "DEVSTACK",
     serverLocation: "Japan",
-    shortName: "DevHub",
+    shortName: "DEVSTACK",
     url: ENV_WEB_ISOMORPHIC.VITE_WEB_URL,
     version: __BUILD_SOURCE_COMMIT__
   }

@@ -34,6 +34,7 @@ import {
   type CommandBinding,
   type CommandId
 } from "@/shared/lib/commands";
+import { isPlaygroundCommandId, isPlaygroundEnabled } from "@/shared/lib/playground";
 import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 
 import { SettingsFrame } from "./settings-frame";
@@ -110,7 +111,11 @@ export function ShortcutsSettings() {
   const grouped = useMemo(
     () =>
       GROUP_ORDER.flatMap((group) => {
-        const commands = COMMAND_CATALOG.filter((command) => command.group === group);
+        const commands = COMMAND_CATALOG.filter((command) => {
+          if (command.group !== group) return false;
+          if (!isPlaygroundEnabled && isPlaygroundCommandId(command.id)) return false;
+          return true;
+        });
         return commands.length > 0 ? [{ group, commands }] : [];
       }),
     []

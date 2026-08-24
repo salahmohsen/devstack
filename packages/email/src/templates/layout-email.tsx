@@ -37,7 +37,7 @@ export const EmailLayout = ({
   preview,
   children,
   logoUrl = EMAIL_LOGO_SRC,
-  logoAlt = "DevHub"
+  logoAlt = "DEVSTACK"
 }: EmailLayoutProps) => (
   <Html>
     <Head />

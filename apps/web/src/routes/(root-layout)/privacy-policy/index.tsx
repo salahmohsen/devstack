@@ -12,7 +12,7 @@ export const Route = createFileRoute("/(root-layout)/privacy-policy/")({
       alternates: {
         canonicalPath: "/privacy-policy"
       },
-      description: `Learn how ${appConfig.site.shortName} collects, uses, and protects your account and usage information.`,
+      description: `How ${appConfig.site.shortName} collects, uses, and protects account and usage information on this install.`,
       title: "Privacy Policy"
     }),
   component: PrivacyPolicyPage

@@ -46,7 +46,7 @@ Under `apps/web/src/routes/(root-layout)/`:
 
 | Segment            | Role                                                                                                                              |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| `(guest)/`         | Pathless guest-only shell for `sign-in` and `sign-in/create-an-account`                                                           |
+| `(guest)/`         | Pathless guest-only shell for `sign-in` and `sign-up` (legacy `/sign-in/create-an-account` redirects)                             |
 | `__protected/`     | Auth guard + Suspense; dashboard sidebar via `__protected/dashboard/route.tsx` (no public navbar/footer)                          |
 | `$username/`       | Public path portfolio for a tenant (`/{username}/…`)                                                                              |
 | `$username/repos/` | Public GitHub repos for that profile                                                                                              |

@@ -15,6 +15,7 @@ import { Route as FirebaseMessagingSwDotjsRouteImport } from './routes/firebase-
 import { Route as rootLayoutRouteRouteImport } from './routes/(root-layout)/route'
 import { Route as rootLayoutIndexRouteImport } from './routes/(root-layout)/index'
 import { Route as rootLayout_protectedRouteRouteImport } from './routes/(root-layout)/__protected/route'
+import { Route as rootLayoutguestRouteRouteImport } from './routes/(root-layout)/(guest)/route'
 import { Route as ApiFilesIndexRouteImport } from './routes/api/files/index'
 import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(root-layout)/terms-of-service/index'
 import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
@@ -23,13 +24,14 @@ import { Route as rootLayoutUsernameIndexRouteImport } from './routes/(root-layo
 import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
+import { Route as rootLayout_protectedPlaygroundRouteRouteImport } from './routes/(root-layout)/__protected/playground/route'
 import { Route as rootLayout_protectedDashboardRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/route'
-import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
 import { Route as ApiCoverLetterDownloadIndexRouteImport } from './routes/api/cover-letter/download/index'
 import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
 import { Route as rootLayout_protectedPlaygroundIndexRouteImport } from './routes/(root-layout)/__protected/playground/index'
 import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
+import { Route as rootLayoutguestSignUpIndexRouteImport } from './routes/(root-layout)/(guest)/sign-up/index'
 import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
 import { Route as rootLayoutUsernameReposIndexRouteImport } from './routes/(root-layout)/$username/repos/index'
 import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
@@ -99,6 +101,10 @@ const rootLayout_protectedRouteRoute =
     id: '/__protected',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
+const rootLayoutguestRouteRoute = rootLayoutguestRouteRouteImport.update({
+  id: '/(guest)',
+  getParentRoute: () => rootLayoutRouteRoute,
+} as any)
 const ApiFilesIndexRoute = ApiFilesIndexRouteImport.update({
   id: '/api/files/',
   path: '/api/files/',
@@ -142,17 +148,17 @@ const rootLayoutReposRepoRouteRoute =
     path: '/repos/$repo',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
+const rootLayout_protectedPlaygroundRouteRoute =
+  rootLayout_protectedPlaygroundRouteRouteImport.update({
+    id: '/playground',
+    path: '/playground',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardRouteRoute =
   rootLayout_protectedDashboardRouteRouteImport.update({
     id: '/dashboard',
     path: '/dashboard',
     getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayoutguestSignInRouteRoute =
-  rootLayoutguestSignInRouteRouteImport.update({
-    id: '/(guest)/sign-in',
-    path: '/sign-in',
-    getParentRoute: () => rootLayoutRouteRoute,
   } as any)
 const ApiResumeDownloadIndexRoute = ApiResumeDownloadIndexRouteImport.update({
   id: '/api/resume/download/',
@@ -173,9 +179,9 @@ const rootLayoutReposRepoIndexRoute =
   } as any)
 const rootLayout_protectedPlaygroundIndexRoute =
   rootLayout_protectedPlaygroundIndexRouteImport.update({
-    id: '/playground/',
-    path: '/playground/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => rootLayout_protectedPlaygroundRouteRoute,
   } as any)
 const rootLayout_protectedDashboardIndexRoute =
   rootLayout_protectedDashboardIndexRouteImport.update({
@@ -183,11 +189,17 @@ const rootLayout_protectedDashboardIndexRoute =
     path: '/',
     getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
   } as any)
+const rootLayoutguestSignUpIndexRoute =
+  rootLayoutguestSignUpIndexRouteImport.update({
+    id: '/sign-up/',
+    path: '/sign-up/',
+    getParentRoute: () => rootLayoutguestRouteRoute,
+  } as any)
 const rootLayoutguestSignInIndexRoute =
   rootLayoutguestSignInIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => rootLayoutguestSignInRouteRoute,
+    id: '/sign-in/',
+    path: '/sign-in/',
+    getParentRoute: () => rootLayoutguestRouteRoute,
   } as any)
 const rootLayoutUsernameReposIndexRoute =
   rootLayoutUsernameReposIndexRouteImport.update({
@@ -227,9 +239,9 @@ const rootLayoutUsernameReposRepoRouteRoute =
   } as any)
 const rootLayout_protectedPlaygroundAgentIndexRoute =
   rootLayout_protectedPlaygroundAgentIndexRouteImport.update({
-    id: '/playground/agent/',
-    path: '/playground/agent/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
+    id: '/agent/',
+    path: '/agent/',
+    getParentRoute: () => rootLayout_protectedPlaygroundRouteRoute,
   } as any)
 const rootLayout_protectedDashboardTrackedJobsIndexRoute =
   rootLayout_protectedDashboardTrackedJobsIndexRouteImport.update({
@@ -287,9 +299,9 @@ const rootLayout_protectedDashboardExperiencesIndexRoute =
   } as any)
 const rootLayoutguestSignInCreateAnAccountIndexRoute =
   rootLayoutguestSignInCreateAnAccountIndexRouteImport.update({
-    id: '/create-an-account/',
-    path: '/create-an-account/',
-    getParentRoute: () => rootLayoutguestSignInRouteRoute,
+    id: '/sign-in/create-an-account/',
+    path: '/sign-in/create-an-account/',
+    getParentRoute: () => rootLayoutguestRouteRoute,
   } as any)
 const rootLayoutUsernameReposRepoIndexRoute =
   rootLayoutUsernameReposRepoIndexRouteImport.update({
@@ -417,8 +429,8 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
-  '/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/dashboard': typeof rootLayout_protectedDashboardRouteRouteWithChildren
+  '/playground': typeof rootLayout_protectedPlaygroundRouteRouteWithChildren
   '/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -434,6 +446,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/$username/repos/': typeof rootLayoutUsernameReposIndexRoute
   '/sign-in/': typeof rootLayoutguestSignInIndexRoute
+  '/sign-up/': typeof rootLayoutguestSignUpIndexRoute
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
@@ -487,6 +500,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/$username/repos': typeof rootLayoutUsernameReposIndexRoute
   '/sign-in': typeof rootLayoutguestSignInIndexRoute
+  '/sign-up': typeof rootLayoutguestSignUpIndexRoute
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
   '/playground': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
@@ -530,10 +544,11 @@ export interface FileRoutesById {
   '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/(root-layout)/(guest)': typeof rootLayoutguestRouteRouteWithChildren
   '/(root-layout)/__protected': typeof rootLayout_protectedRouteRouteWithChildren
   '/(root-layout)/': typeof rootLayoutIndexRoute
-  '/(root-layout)/(guest)/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/(root-layout)/__protected/dashboard': typeof rootLayout_protectedDashboardRouteRouteWithChildren
+  '/(root-layout)/__protected/playground': typeof rootLayout_protectedPlaygroundRouteRouteWithChildren
   '/(root-layout)/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -549,6 +564,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/(root-layout)/$username/repos/': typeof rootLayoutUsernameReposIndexRoute
   '/(root-layout)/(guest)/sign-in/': typeof rootLayoutguestSignInIndexRoute
+  '/(root-layout)/(guest)/sign-up/': typeof rootLayoutguestSignUpIndexRoute
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/(root-layout)/__protected/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
@@ -593,8 +609,8 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/'
-    | '/sign-in'
     | '/dashboard'
+    | '/playground'
     | '/repos/$repo'
     | '/_api/health/live'
     | '/api/media/$'
@@ -610,6 +626,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/$username/repos/'
     | '/sign-in/'
+    | '/sign-up/'
     | '/dashboard/'
     | '/playground/'
     | '/repos/$repo/'
@@ -663,6 +680,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/$username/repos'
     | '/sign-in'
+    | '/sign-up'
     | '/dashboard'
     | '/playground'
     | '/repos/$repo'
@@ -705,10 +723,11 @@ export interface FileRouteTypes {
     | '/firebase-messaging-sw.js'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/(root-layout)/(guest)'
     | '/(root-layout)/__protected'
     | '/(root-layout)/'
-    | '/(root-layout)/(guest)/sign-in'
     | '/(root-layout)/__protected/dashboard'
+    | '/(root-layout)/__protected/playground'
     | '/(root-layout)/repos/$repo'
     | '/_api/health/live'
     | '/api/media/$'
@@ -724,6 +743,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings'
     | '/(root-layout)/$username/repos/'
     | '/(root-layout)/(guest)/sign-in/'
+    | '/(root-layout)/(guest)/sign-up/'
     | '/(root-layout)/__protected/dashboard/'
     | '/(root-layout)/__protected/playground/'
     | '/(root-layout)/repos/$repo/'
@@ -818,6 +838,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedRouteRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
+    '/(root-layout)/(guest)': {
+      id: '/(root-layout)/(guest)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof rootLayoutguestRouteRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
     '/api/files/': {
       id: '/api/files/'
       path: '/api/files'
@@ -874,19 +901,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutReposRepoRouteRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
+    '/(root-layout)/__protected/playground': {
+      id: '/(root-layout)/__protected/playground'
+      path: '/playground'
+      fullPath: '/playground'
+      preLoaderRoute: typeof rootLayout_protectedPlaygroundRouteRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
     '/(root-layout)/__protected/dashboard': {
       id: '/(root-layout)/__protected/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof rootLayout_protectedDashboardRouteRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/(guest)/sign-in': {
-      id: '/(root-layout)/(guest)/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof rootLayoutguestSignInRouteRouteImport
-      parentRoute: typeof rootLayoutRouteRoute
     }
     '/api/resume/download/': {
       id: '/api/resume/download/'
@@ -911,10 +938,10 @@ declare module '@tanstack/react-router' {
     }
     '/(root-layout)/__protected/playground/': {
       id: '/(root-layout)/__protected/playground/'
-      path: '/playground'
+      path: '/'
       fullPath: '/playground/'
       preLoaderRoute: typeof rootLayout_protectedPlaygroundIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
+      parentRoute: typeof rootLayout_protectedPlaygroundRouteRoute
     }
     '/(root-layout)/__protected/dashboard/': {
       id: '/(root-layout)/__protected/dashboard/'
@@ -923,12 +950,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardRouteRoute
     }
+    '/(root-layout)/(guest)/sign-up/': {
+      id: '/(root-layout)/(guest)/sign-up/'
+      path: '/sign-up'
+      fullPath: '/sign-up/'
+      preLoaderRoute: typeof rootLayoutguestSignUpIndexRouteImport
+      parentRoute: typeof rootLayoutguestRouteRoute
+    }
     '/(root-layout)/(guest)/sign-in/': {
       id: '/(root-layout)/(guest)/sign-in/'
-      path: '/'
+      path: '/sign-in'
       fullPath: '/sign-in/'
       preLoaderRoute: typeof rootLayoutguestSignInIndexRouteImport
-      parentRoute: typeof rootLayoutguestSignInRouteRoute
+      parentRoute: typeof rootLayoutguestRouteRoute
     }
     '/(root-layout)/$username/repos/': {
       id: '/(root-layout)/$username/repos/'
@@ -974,10 +1008,10 @@ declare module '@tanstack/react-router' {
     }
     '/(root-layout)/__protected/playground/agent/': {
       id: '/(root-layout)/__protected/playground/agent/'
-      path: '/playground/agent'
+      path: '/agent'
       fullPath: '/playground/agent/'
       preLoaderRoute: typeof rootLayout_protectedPlaygroundAgentIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
+      parentRoute: typeof rootLayout_protectedPlaygroundRouteRoute
     }
     '/(root-layout)/__protected/dashboard/tracked-jobs/': {
       id: '/(root-layout)/__protected/dashboard/tracked-jobs/'
@@ -1044,10 +1078,10 @@ declare module '@tanstack/react-router' {
     }
     '/(root-layout)/(guest)/sign-in/create-an-account/': {
       id: '/(root-layout)/(guest)/sign-in/create-an-account/'
-      path: '/create-an-account'
+      path: '/sign-in/create-an-account'
       fullPath: '/sign-in/create-an-account/'
       preLoaderRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRouteImport
-      parentRoute: typeof rootLayoutguestSignInRouteRoute
+      parentRoute: typeof rootLayoutguestRouteRoute
     }
     '/(root-layout)/$username/repos/$repo/': {
       id: '/(root-layout)/$username/repos/$repo/'
@@ -1191,6 +1225,22 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface rootLayoutguestRouteRouteChildren {
+  rootLayoutguestSignInIndexRoute: typeof rootLayoutguestSignInIndexRoute
+  rootLayoutguestSignUpIndexRoute: typeof rootLayoutguestSignUpIndexRoute
+  rootLayoutguestSignInCreateAnAccountIndexRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+}
+
+const rootLayoutguestRouteRouteChildren: rootLayoutguestRouteRouteChildren = {
+  rootLayoutguestSignInIndexRoute: rootLayoutguestSignInIndexRoute,
+  rootLayoutguestSignUpIndexRoute: rootLayoutguestSignUpIndexRoute,
+  rootLayoutguestSignInCreateAnAccountIndexRoute:
+    rootLayoutguestSignInCreateAnAccountIndexRoute,
+}
+
+const rootLayoutguestRouteRouteWithChildren =
+  rootLayoutguestRouteRoute._addFileChildren(rootLayoutguestRouteRouteChildren)
 
 interface rootLayout_protectedDashboardAdminRouteRouteChildren {
   rootLayout_protectedDashboardAdminAccessIndexRoute: typeof rootLayout_protectedDashboardAdminAccessIndexRoute
@@ -1339,42 +1389,40 @@ const rootLayout_protectedDashboardRouteRouteWithChildren =
     rootLayout_protectedDashboardRouteRouteChildren,
   )
 
-interface rootLayout_protectedRouteRouteChildren {
-  rootLayout_protectedDashboardRouteRoute: typeof rootLayout_protectedDashboardRouteRouteWithChildren
+interface rootLayout_protectedPlaygroundRouteRouteChildren {
   rootLayout_protectedPlaygroundIndexRoute: typeof rootLayout_protectedPlaygroundIndexRoute
   rootLayout_protectedPlaygroundAgentIndexRoute: typeof rootLayout_protectedPlaygroundAgentIndexRoute
 }
 
-const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChildren =
+const rootLayout_protectedPlaygroundRouteRouteChildren: rootLayout_protectedPlaygroundRouteRouteChildren =
   {
-    rootLayout_protectedDashboardRouteRoute:
-      rootLayout_protectedDashboardRouteRouteWithChildren,
     rootLayout_protectedPlaygroundIndexRoute:
       rootLayout_protectedPlaygroundIndexRoute,
     rootLayout_protectedPlaygroundAgentIndexRoute:
       rootLayout_protectedPlaygroundAgentIndexRoute,
   }
 
+const rootLayout_protectedPlaygroundRouteRouteWithChildren =
+  rootLayout_protectedPlaygroundRouteRoute._addFileChildren(
+    rootLayout_protectedPlaygroundRouteRouteChildren,
+  )
+
+interface rootLayout_protectedRouteRouteChildren {
+  rootLayout_protectedDashboardRouteRoute: typeof rootLayout_protectedDashboardRouteRouteWithChildren
+  rootLayout_protectedPlaygroundRouteRoute: typeof rootLayout_protectedPlaygroundRouteRouteWithChildren
+}
+
+const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChildren =
+  {
+    rootLayout_protectedDashboardRouteRoute:
+      rootLayout_protectedDashboardRouteRouteWithChildren,
+    rootLayout_protectedPlaygroundRouteRoute:
+      rootLayout_protectedPlaygroundRouteRouteWithChildren,
+  }
+
 const rootLayout_protectedRouteRouteWithChildren =
   rootLayout_protectedRouteRoute._addFileChildren(
     rootLayout_protectedRouteRouteChildren,
-  )
-
-interface rootLayoutguestSignInRouteRouteChildren {
-  rootLayoutguestSignInIndexRoute: typeof rootLayoutguestSignInIndexRoute
-  rootLayoutguestSignInCreateAnAccountIndexRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRoute
-}
-
-const rootLayoutguestSignInRouteRouteChildren: rootLayoutguestSignInRouteRouteChildren =
-  {
-    rootLayoutguestSignInIndexRoute: rootLayoutguestSignInIndexRoute,
-    rootLayoutguestSignInCreateAnAccountIndexRoute:
-      rootLayoutguestSignInCreateAnAccountIndexRoute,
-  }
-
-const rootLayoutguestSignInRouteRouteWithChildren =
-  rootLayoutguestSignInRouteRoute._addFileChildren(
-    rootLayoutguestSignInRouteRouteChildren,
   )
 
 interface rootLayoutReposRepoRouteRouteChildren {
@@ -1417,9 +1465,9 @@ const rootLayoutUsernameReposRepoRouteRouteWithChildren =
   )
 
 interface rootLayoutRouteRouteChildren {
+  rootLayoutguestRouteRoute: typeof rootLayoutguestRouteRouteWithChildren
   rootLayout_protectedRouteRoute: typeof rootLayout_protectedRouteRouteWithChildren
   rootLayoutIndexRoute: typeof rootLayoutIndexRoute
-  rootLayoutguestSignInRouteRoute: typeof rootLayoutguestSignInRouteRouteWithChildren
   rootLayoutReposRepoRouteRoute: typeof rootLayoutReposRepoRouteRouteWithChildren
   rootLayoutUsernameIndexRoute: typeof rootLayoutUsernameIndexRoute
   rootLayoutPrivacyPolicyIndexRoute: typeof rootLayoutPrivacyPolicyIndexRoute
@@ -1430,9 +1478,9 @@ interface rootLayoutRouteRouteChildren {
 }
 
 const rootLayoutRouteRouteChildren: rootLayoutRouteRouteChildren = {
+  rootLayoutguestRouteRoute: rootLayoutguestRouteRouteWithChildren,
   rootLayout_protectedRouteRoute: rootLayout_protectedRouteRouteWithChildren,
   rootLayoutIndexRoute: rootLayoutIndexRoute,
-  rootLayoutguestSignInRouteRoute: rootLayoutguestSignInRouteRouteWithChildren,
   rootLayoutReposRepoRouteRoute: rootLayoutReposRepoRouteRouteWithChildren,
   rootLayoutUsernameIndexRoute: rootLayoutUsernameIndexRoute,
   rootLayoutPrivacyPolicyIndexRoute: rootLayoutPrivacyPolicyIndexRoute,

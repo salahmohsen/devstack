@@ -335,13 +335,13 @@ export const adminRouter = {
           try {
             await sendEmail({
               to: email,
-              subject: `Join ${inviterName} on DevHub`,
+              subject: `Join ${inviterName} on DEVSTACK`,
               template: InviteUserEmail({
                 invitedEmail: email,
                 invitedByName: inviterName,
                 invitedByEmail: inviterEmail,
                 invitedByImageUrl,
-                productName: "DevHub",
+                productName: "DEVSTACK",
                 productImageUrl: EMAIL_LOGO_SRC,
                 inviteUrl,
                 logoUrl: EMAIL_LOGO_SRC

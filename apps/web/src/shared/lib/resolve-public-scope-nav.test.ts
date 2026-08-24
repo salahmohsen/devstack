@@ -18,6 +18,8 @@ describe("pathUsernameFromPathname", () => {
     expect(pathUsernameFromPathname("/repos")).toBeNull();
     expect(pathUsernameFromPathname("/repos/dev-hub")).toBeNull();
     expect(pathUsernameFromPathname("/dashboard")).toBeNull();
+    expect(pathUsernameFromPathname("/sign-in")).toBeNull();
+    expect(pathUsernameFromPathname("/sign-up")).toBeNull();
     expect(pathUsernameFromPathname("/")).toBeNull();
   });
 });
@@ -166,6 +168,17 @@ describe("resolvePublicScopeNav", () => {
     expect(
       resolvePublicScopeNav({
         pathname: "/sign-in",
+        hostname: "app.example.com",
+        isCustomDomain: false,
+        sessionUsername: "me"
+      }).show
+    ).toBe(false);
+  });
+
+  it("hides sign-up", () => {
+    expect(
+      resolvePublicScopeNav({
+        pathname: "/sign-up",
         hostname: "app.example.com",
         isCustomDomain: false,
         sessionUsername: "me"

@@ -4,11 +4,13 @@ import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/qu
 
 import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { generatePublicPortfolioSeo, portfolioSeoFields } from "@/shared/lib/public-portfolio-seo";
 import { getRequestHostname } from "@/shared/lib/request-host";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
 import {
   getGithubRepoBranchesQueryOptions,
@@ -61,17 +63,36 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo")({
     }
 
     // Public surface only. Swallow RPC failures so custom-domain SSR does not 500.
-    await Promise.all([
+    const [overview, portfolio] = await Promise.all([
       context.queryClient
         .ensureQueryData(getGithubRepoOverviewQueryOptions(params.repo, false, username))
         .catch(() => undefined),
-      context.queryClient
-        .ensureQueryData(getGithubRepoBranchesQueryOptions(params.repo, false, username))
-        .catch(() => undefined)
+      context.queryClient.ensureQueryData(getPortfolioListQueryOptions(username)).catch(() => null)
     ]);
+    void context.queryClient
+      .ensureQueryData(getGithubRepoBranchesQueryOptions(params.repo, false, username))
+      .catch(() => undefined);
 
-    return { username, pathUsername: null as string | null };
-  }
+    return {
+      username,
+      pathUsername: null as string | null,
+      repo: params.repo,
+      repoDescription: overview?.description ?? null,
+      repoFullName: overview?.fullName ?? null,
+      ...portfolioSeoFields(portfolio)
+    };
+  },
+  head: ({ loaderData, params }) =>
+    generatePublicPortfolioSeo({
+      username: loaderData?.username ?? "portfolio",
+      name: loaderData?.name,
+      image: loaderData?.image,
+      summary: loaderData?.summary,
+      canonicalPath: `/repos/${params.repo}`,
+      pageLabel: loaderData?.repoFullName ?? params.repo,
+      description: loaderData?.repoDescription,
+      openGraphType: "website"
+    })
 });
 
 function RouteComponent() {

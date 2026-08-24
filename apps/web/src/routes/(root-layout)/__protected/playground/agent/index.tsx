@@ -10,7 +10,7 @@ export const Route = createFileRoute("/(root-layout)/__protected/playground/agen
       alternates: {
         canonicalPath: "/playground/agent"
       },
-      description: "Internal playground for testing the Mastra agent chat integration.",
+      description: "Dev-only playground for testing the Mastra agent chat integration.",
       robots: {
         follow: false,
         index: false

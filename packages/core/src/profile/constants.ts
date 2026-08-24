@@ -10,6 +10,7 @@ export const RESERVED_USERNAME_PATHS = [
   "settings",
   "login",
   "sign-in",
+  "sign-up",
   "signup",
   "create-an-account",
   "admin",
