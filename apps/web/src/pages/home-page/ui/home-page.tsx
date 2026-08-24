@@ -120,8 +120,7 @@ export function HomePage({
         overflow-x:clip (not hidden):
         - Clips screen-line/stripe-divider pseudos (left:-100vw; width:200vw) so they
           don't expand the ScrollArea scroll width (x overflow / horizontal scrollbar).
-        - Unlike overflow-x:hidden, clip does not force overflow-y to auto, so it does
-          not become the sticky containing block for the project card stack.
+        - Unlike overflow-x:hidden, clip does not force overflow-y to auto.
         Graph uses w-full (not w-screen/100vw): 100vw includes the scrollbar gutter and
         is often wider than the main card, which alone causes a few px of x overflow.
         @see https://drafts.csswg.org/css-overflow-3/#overflow-properties
@@ -202,15 +201,22 @@ export function HomePage({
           />
           <ProfileSocialLinks profile={profile} contacts={portfolioContacts} />
 
-          <div className="flex w-full flex-col gap-16 px-4 pt-16 pb-4">
-            <section id="projects" className="flex w-full flex-col">
-              <h2 className="mb-8 text-sm font-medium text-muted-foreground">Projects</h2>
-              <ProjectsSection username={username} surfaceMode={surfaceMode} />
+          {/*
+            Titles stay with their content. Section break is a screen-line on top
+            of the Projects title (not under it, not a separate stripe band).
+            Title → content uses a tight margin (was mb-8).
+          */}
+          <div className="flex w-full flex-col gap-10 px-4 pt-16 pb-4">
+            <section id="experience" className="flex w-full flex-col">
+              <h2 className="mb-3 text-sm font-medium text-muted-foreground">Experience</h2>
+              <Experience username={username} />
             </section>
 
-            <section id="experience" className="flex w-full flex-col">
-              <h2 className="mb-8 text-sm font-medium text-muted-foreground">Experience</h2>
-              <Experience username={username} />
+            <section id="projects" className="flex w-full flex-col">
+              <h2 className="screen-line-top mb-3 pt-3 text-sm font-medium text-muted-foreground">
+                Projects
+              </h2>
+              <ProjectsSection username={username} surfaceMode={surfaceMode} />
             </section>
           </div>
         </div>

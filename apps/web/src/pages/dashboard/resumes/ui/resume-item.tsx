@@ -1,5 +1,13 @@
 import { useNavigate } from "@tanstack/react-router";
-import { BriefcaseIcon, Eye, EyeIcon, SquareCheckIcon, SquareIcon, Trash2 } from "lucide-react";
+import {
+  BriefcaseIcon,
+  Eye,
+  EyeIcon,
+  SquareCheckIcon,
+  SquareIcon,
+  StarIcon,
+  Trash2
+} from "lucide-react";
 import { memo, useState } from "react";
 
 import { type ResumeOutput } from "@tsu-stack/core";
@@ -27,6 +35,7 @@ import {
   resumeCardTitle,
   resumeViewHref
 } from "@/pages/dashboard/resumes/_lib/resume-identity";
+import { useSetDefaultResumeMutation } from "@/pages/dashboard/resumes/api/set-default-resume.mutation";
 
 export function ResumeTypeBadges({
   author,
@@ -68,6 +77,7 @@ export const ResumeItem = memo(function ResumeItem({
 }: ResumeItemProps) {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const setDefaultMutation = useSetDefaultResumeMutation();
   const job = primaryResumeJob(resume);
   const title = resumeCardTitle(resume);
 
@@ -111,16 +121,25 @@ export const ResumeItem = memo(function ResumeItem({
           <EyeIcon strokeWidth={1.75} aria-hidden />
         </Button>
       }
-      renderExtraMenuItems={
-        job
-          ? (slots) => (
-              <slots.Item onClick={openJob}>
-                <BriefcaseIcon aria-hidden />
-                Open job
-              </slots.Item>
-            )
-          : undefined
-      }
+      renderExtraMenuItems={(slots) => (
+        <>
+          {job ? (
+            <slots.Item onClick={openJob}>
+              <BriefcaseIcon aria-hidden />
+              Open job
+            </slots.Item>
+          ) : null}
+          {!resume.default ? (
+            <slots.Item
+              disabled={setDefaultMutation.isPending}
+              onClick={() => setDefaultMutation.mutate({ id: resume.id })}
+            >
+              <StarIcon aria-hidden />
+              Set as default
+            </slots.Item>
+          ) : null}
+        </>
+      )}
     />
   );
 
@@ -157,16 +176,25 @@ export const ResumeItem = memo(function ResumeItem({
           </Button>
         )
       }
-      renderExtraMenuItems={
-        job
-          ? (slots) => (
-              <slots.Item onClick={openPdf}>
-                <EyeIcon aria-hidden />
-                View PDF
-              </slots.Item>
-            )
-          : undefined
-      }
+      renderExtraMenuItems={(slots) => (
+        <>
+          {job ? (
+            <slots.Item onClick={openPdf}>
+              <EyeIcon aria-hidden />
+              View PDF
+            </slots.Item>
+          ) : null}
+          {!resume.default ? (
+            <slots.Item
+              disabled={setDefaultMutation.isPending}
+              onClick={() => setDefaultMutation.mutate({ id: resume.id })}
+            >
+              <StarIcon aria-hidden />
+              Set as default
+            </slots.Item>
+          ) : null}
+        </>
+      )}
     />
   );
 
@@ -237,6 +265,16 @@ export const ResumeItem = memo(function ResumeItem({
             <ContextMenuItem closeOnClick onClick={openJob}>
               <BriefcaseIcon aria-hidden />
               Open job
+            </ContextMenuItem>
+          ) : null}
+          {!resume.default ? (
+            <ContextMenuItem
+              closeOnClick
+              disabled={setDefaultMutation.isPending}
+              onClick={() => setDefaultMutation.mutate({ id: resume.id })}
+            >
+              <StarIcon aria-hidden />
+              Set as default
             </ContextMenuItem>
           ) : null}
           <ContextMenuItem closeOnClick onClick={() => onToggleSelect(resume.id)}>

@@ -22,6 +22,7 @@ import {
 } from "#@/lib/application/search-brief";
 import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { schedulePortfolioDefaultResumeSync } from "#@/lib/resume/sync-portfolio-default-resume";
 import { toExperienceListOutput, toExperienceOutput } from "#@/routers/portfolio.mappers";
 
 export const experiencesRouter = {
@@ -110,6 +111,7 @@ export const experiencesRouter = {
         { includedInPortfolio }
       );
       await invalidateSearchBrief(userId, "form");
+      schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       return toExperienceOutput(exp!);
     }),
   update: protectedProcedure
@@ -127,6 +129,9 @@ export const experiencesRouter = {
       });
       if (exp && shouldInvalidateSearchBriefForEntityPatch(input.data)) {
         await invalidateSearchBrief(userId, "form");
+      }
+      if (exp) {
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return exp ? toExperienceOutput(exp) : null;
     }),
@@ -154,6 +159,7 @@ export const experiencesRouter = {
       const deleted = await experienceRepository.delete(input.id, userId);
       if (deleted !== null) {
         await invalidateSearchBrief(userId, "form");
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return { success: deleted !== null };
     })

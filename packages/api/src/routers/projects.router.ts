@@ -23,6 +23,7 @@ import {
 } from "#@/lib/application/search-brief";
 import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { schedulePortfolioDefaultResumeSync } from "#@/lib/resume/sync-portfolio-default-resume";
 import { toProjectOutput } from "#@/routers/portfolio.mappers";
 
 export const projectsRouter = {
@@ -111,6 +112,7 @@ export const projectsRouter = {
         { includedInPortfolio }
       );
       await invalidateSearchBrief(userId, "form");
+      schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       return toProjectOutput(proj!);
     }),
   update: protectedProcedure
@@ -128,6 +130,9 @@ export const projectsRouter = {
       });
       if (proj && shouldInvalidateSearchBriefForEntityPatch(input.data)) {
         await invalidateSearchBrief(userId, "form");
+      }
+      if (proj) {
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return proj ? toProjectOutput(proj) : null;
     }),
@@ -170,6 +175,7 @@ export const projectsRouter = {
       const deleted = await projectRepository.delete(input.id, userId);
       if (deleted !== null) {
         await invalidateSearchBrief(userId, "form");
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return { success: deleted !== null };
     })

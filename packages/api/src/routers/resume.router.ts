@@ -3,7 +3,6 @@ import { ORPCError } from "@orpc/server";
 import {
   DeleteInputSchema,
   DeleteResponseSchema,
-  formatGeneralResumeFilename,
   ListQueryError,
   PublicUsernameInputSchema,
   ResumeListInputSchema,
@@ -13,43 +12,17 @@ import {
   type ResumeLinkedJob,
   type ResumeOutput
 } from "@tsu-stack/core";
-import { applicationRepository, contactRepository, userRepository } from "@tsu-stack/db";
-import {
-  experienceRepository,
-  projectRepository,
-  resumeRepository,
-  stackRepository,
-  type ResumeEntity
-} from "@tsu-stack/db/repositories";
-import {
-  PdfEngineUnavailableError,
-  PdfRenderFailedError,
-  renderResumePdfBytes
-} from "@tsu-stack/pdf";
+import { applicationRepository } from "@tsu-stack/db";
+import { resumeRepository, type ResumeEntity } from "@tsu-stack/db/repositories";
 
 import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 import {
-  toContactOutput,
-  toExperienceOutput,
-  toProjectOutput,
-  toStackOutput
-} from "#@/routers/portfolio.mappers";
-
-async function fetchPortfolioData(userId: string) {
-  const experiences = await experienceRepository.findOptedInByUserId(userId);
-  const projects = await projectRepository.findOptedInByUserId(userId);
-  const stacks = await stackRepository.findOptedInByUserId(userId);
-  const contacts = await contactRepository.findOptedInByUserId(userId);
-
-  return {
-    experiences: experiences.map((exp) => toExperienceOutput(exp!)),
-    projects: projects.map((proj) => toProjectOutput(proj!)),
-    stacks: stacks.map((stackRow) => toStackOutput(stackRow!)),
-    contacts: contacts.map(toContactOutput)
-  };
-}
+  PdfEngineUnavailableError,
+  PdfRenderFailedError,
+  syncPortfolioDefaultResume
+} from "#@/lib/resume/sync-portfolio-default-resume";
 
 function toResumeOutput(row: ResumeEntity, jobs: ResumeLinkedJob[]): ResumeOutput {
   return {
@@ -221,27 +194,12 @@ export const resumeRouter = {
     })
     .handler(async ({ context, errors }) => {
       const userId = context.session.user.id;
-      const portfolio = await fetchPortfolioData(userId);
-      const userRow = await userRepository.findById(userId);
-      if (!userRow) {
-        throw new ORPCError("NOT_FOUND", { message: "Session user not found" });
-      }
-
-      const profile = {
-        name: userRow.name?.trim() || "Resume",
-        email: userRow.email
-      };
-
-      const filename = formatGeneralResumeFilename({ candidateName: profile.name });
-      const r2Key = `${userId}/resumes/${crypto.randomUUID()}.pdf`;
-
-      let bytes: Uint8Array;
       try {
-        bytes = await renderResumePdfBytes({
-          portfolio,
-          profile,
-          summary: userRow.summary ?? ""
+        const created = await syncPortfolioDefaultResume({
+          userId,
+          mediaBucket: context.mediaBucket
         });
+        return toResumeOutput(created, []);
       } catch (error) {
         if (error instanceof PdfEngineUnavailableError) {
           throw errors.PDF_ENGINE_UNAVAILABLE({ message: error.message });
@@ -249,22 +207,11 @@ export const resumeRouter = {
         if (error instanceof PdfRenderFailedError) {
           throw errors.PDF_RENDER_FAILED({ message: error.message });
         }
+        if (error instanceof Error && error.message === "Session user not found") {
+          throw new ORPCError("NOT_FOUND", { message: "Session user not found" });
+        }
         throw errors.PDF_RENDER_FAILED();
       }
-
-      await context.mediaBucket.put(r2Key, bytes.slice().buffer as ArrayBuffer, {
-        httpMetadata: { contentType: "application/pdf" }
-      });
-
-      const created = await resumeRepository.create({
-        userId,
-        prompt: null,
-        author: "admin",
-        filename,
-        r2Key
-      });
-
-      return toResumeOutput(created, []);
     }),
   delete: protectedProcedure
     .route({
