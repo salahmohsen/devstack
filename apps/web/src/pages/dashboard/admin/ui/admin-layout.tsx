@@ -4,6 +4,7 @@ import { KeyRound, Link2, Users } from "lucide-react";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
+import { DASHBOARD_VIEWPORT_PAGE_CLASSNAME } from "@/shared/ui/dashboard-viewport";
 
 import { PageHeader, PageLayout } from "@/widgets/items-page";
 
@@ -50,7 +51,7 @@ export const AdminLayout = () => {
   const activeNav = ADMIN_NAV.find((item) => item.id === activeId) ?? ADMIN_NAV[0]!;
 
   return (
-    <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
+    <PageLayout className={DASHBOARD_VIEWPORT_PAGE_CLASSNAME}>
       <PageHeader title="Admin" description={activeNav.description} />
 
       <SurfaceIslandLayout

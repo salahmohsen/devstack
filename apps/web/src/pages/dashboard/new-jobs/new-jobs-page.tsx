@@ -76,6 +76,7 @@ import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
+import { DASHBOARD_JOBS_PAGE_CLASSNAME } from "@/shared/ui/dashboard-viewport";
 import { JobIdentityMark, JobYearsBadge } from "@/shared/ui/job-card-marks";
 import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 import {
@@ -802,14 +803,14 @@ export function NewJobsPage() {
 
   return (
     <ItemsNavProvider value={{ handleNext, handlePrev, containerRef: listRef }}>
-      <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
+      <PageLayout className={DASHBOARD_JOBS_PAGE_CLASSNAME}>
         <PageHeader
           title="New jobs"
           description="Matches from public job boards. Track to add to your pipeline, or dismiss."
           actions={<NewJobsDiscoveryActions importFromEmail={importFromEmail} />}
         />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex flex-col gap-3 md:min-h-0 md:flex-1">
           <ListSearchBar
             variant="new-jobs"
             className={LIST_COLUMN_INSET_CLASSNAME}
@@ -868,7 +869,7 @@ export function NewJobsPage() {
             />
           )}
 
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-col md:min-h-0 md:flex-1">
             {listQuery.isLoading ? (
               <ListSkeleton />
             ) : jobs.length === 0 ? (
@@ -906,7 +907,7 @@ export function NewJobsPage() {
             ) : (
               <ul
                 ref={listRef}
-                className="min-h-0 flex-1 space-y-2 overflow-x-clip overflow-y-auto py-1"
+                className="space-y-2 overflow-x-clip py-1 md:min-h-0 md:flex-1 md:overflow-y-auto"
               >
                 {jobs.map((job) => {
                   const selected = viewItem?.id === job.id;

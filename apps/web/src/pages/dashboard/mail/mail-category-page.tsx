@@ -3,6 +3,7 @@
 import { getRouteApi, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import {
+  ArrowLeft,
   Bell,
   BriefcaseBusiness,
   CalendarDays,
@@ -45,6 +46,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { AiLoader } from "@/shared/ui/ai-loader";
 import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
+import { DASHBOARD_VIEWPORT_PAGE_CLASSNAME } from "@/shared/ui/dashboard-viewport";
 
 import {
   useCorrectMailClassificationMutation,
@@ -213,13 +215,26 @@ export function MailCategoryPage() {
 
   const listCount = listQuery.isSuccess ? messages.length : null;
 
+  const clearMessage = () => {
+    void navigate({
+      from: "/dashboard/mail/$category",
+      search: {},
+      replace: true
+    });
+  };
+
   return (
-    <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-3 overflow-hidden p-5">
-      <PageHeader title={category.title} />
+    <PageLayout className={cn(DASHBOARD_VIEWPORT_PAGE_CLASSNAME, "gap-3")}>
+      <div className={cn(activeId && "max-md:hidden")}>
+        <PageHeader title={category.title} />
+      </div>
 
       <SurfaceIslandLayout
         className="min-h-0 flex-1"
-        islandClassName="md:w-44 lg:w-48"
+        islandClassName={cn(
+          "max-h-40 min-h-0 md:max-h-none md:w-44 lg:w-48",
+          activeId && "max-md:hidden"
+        )}
         island={
           <nav
             aria-label="Mail categories"
@@ -256,11 +271,21 @@ export function MailCategoryPage() {
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-background md:flex-row">
           {listQuery.isLoading ? (
-            <div className="flex min-h-0 w-full flex-1 items-center justify-center border-b p-6 md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80">
+            <div
+              className={cn(
+                "flex min-h-0 w-full flex-1 items-center justify-center border-b p-6 md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80",
+                activeId && "max-md:hidden"
+              )}
+            >
               <AiLoader />
             </div>
           ) : listQuery.isError ? (
-            <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-2 border-b p-6 text-center md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80">
+            <div
+              className={cn(
+                "flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-2 border-b p-6 text-center md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80",
+                activeId && "max-md:hidden"
+              )}
+            >
               <p className="text-sm text-muted-foreground">Couldn’t load messages.</p>
               <Button
                 type="button"
@@ -283,6 +308,7 @@ export function MailCategoryPage() {
                 });
               }}
               categoryTitle={category.title}
+              className={cn(activeId && "max-md:hidden")}
             />
           )}
           <MessageReader
@@ -290,6 +316,7 @@ export function MailCategoryPage() {
             listItem={selectedListItem}
             detail={detail}
             isLoadingDetail={Boolean(activeId) && detailQuery.isLoading}
+            onBack={clearMessage}
           />
         </div>
       </SurfaceIslandLayout>
@@ -301,16 +328,23 @@ function MessageList({
   messages,
   selectedId,
   onSelect,
-  categoryTitle
+  categoryTitle,
+  className
 }: {
   messages: MailMessageListItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   categoryTitle: string;
+  className?: string;
 }) {
   if (messages.length === 0) {
     return (
-      <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center border-b p-6 md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80">
+      <div
+        className={cn(
+          "flex min-h-0 w-full flex-1 flex-col items-center justify-center border-b p-6 md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80",
+          className
+        )}
+      >
         <ItemsEmpty
           icon={<Inbox aria-hidden />}
           title="No messages"
@@ -333,7 +367,10 @@ function MessageList({
   return (
     <ul
       aria-label="Messages"
-      className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto border-b md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80"
+      className={cn(
+        "flex min-h-0 w-full flex-1 flex-col overflow-y-auto border-b md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80",
+        className
+      )}
     >
       {messages.map((message) => {
         const active = message.id === selectedId;
@@ -387,11 +424,13 @@ function MessageList({
 function MessageReader({
   listItem,
   detail,
-  isLoadingDetail
+  isLoadingDetail,
+  onBack
 }: {
   listItem: MailMessageListItem | null;
   detail: MailMessageDetail | null;
   isLoadingDetail: boolean;
+  onBack: () => void;
 }) {
   if (!listItem) {
     if (isLoadingDetail) {
@@ -402,14 +441,19 @@ function MessageReader({
       );
     }
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
+      <div className="hidden min-h-0 flex-1 items-center justify-center p-6 text-sm text-muted-foreground md:flex">
         Select a message
       </div>
     );
   }
 
   return (
-    <MessageReaderBody listItem={listItem} detail={detail} isLoadingDetail={isLoadingDetail} />
+    <MessageReaderBody
+      listItem={listItem}
+      detail={detail}
+      isLoadingDetail={isLoadingDetail}
+      onBack={onBack}
+    />
   );
 }
 
@@ -422,11 +466,13 @@ function defaultReplySubject(subject: string): string {
 function MessageReaderBody({
   listItem,
   detail,
-  isLoadingDetail
+  isLoadingDetail,
+  onBack
 }: {
   listItem: MailMessageListItem;
   detail: MailMessageDetail | null;
   isLoadingDetail: boolean;
+  onBack: () => void;
 }) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [replySubject, setReplySubject] = useState("");
@@ -526,7 +572,19 @@ function MessageReaderBody({
   return (
     <article className="flex min-h-0 min-w-0 flex-1 flex-col">
       <header className="shrink-0 space-y-2 border-b px-4 py-3">
-        <h2 className="text-base leading-snug font-semibold">{message.subject}</h2>
+        <div className="flex items-start gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="mt-0.5 shrink-0 md:hidden"
+            aria-label="Back to messages"
+            onClick={onBack}
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+          </Button>
+          <h2 className="min-w-0 flex-1 text-base leading-snug font-semibold">{message.subject}</h2>
+        </div>
         <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{message.fromName}</span>
           <span className="text-xs">&lt;{message.fromEmail}&gt;</span>

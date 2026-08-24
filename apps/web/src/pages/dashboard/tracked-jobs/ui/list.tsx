@@ -190,7 +190,7 @@ export function ApplicationsList({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div className="flex flex-col gap-3 md:min-h-0 md:flex-1">
       <BatchSelectionBar
         selectedCount={selectedCount}
         totalCount={filteredIds.length}
@@ -201,7 +201,10 @@ export function ApplicationsList({
         onClearSelection={clearSelection}
       />
 
-      <ul ref={listRef} className="min-h-0 flex-1 space-y-2 overflow-x-clip overflow-y-auto py-1">
+      <ul
+        ref={listRef}
+        className="space-y-2 overflow-x-clip py-1 md:min-h-0 md:flex-1 md:overflow-y-auto"
+      >
         {applications.map((app) => {
           const selected = viewItem?.id === app.id;
           const batchSelected = selectedIds.includes(app.id);

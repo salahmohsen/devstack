@@ -34,6 +34,7 @@ import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-appli
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { omitSearchKey, scheduleAfterLayoutClose } from "@/shared/lib/list-inspect-search";
 import { AiLoader } from "@/shared/ui/ai-loader";
+import { DASHBOARD_JOBS_PAGE_CLASSNAME } from "@/shared/ui/dashboard-viewport";
 import { LIST_COLUMN_INSET_CLASSNAME } from "@/shared/ui/list-column";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
@@ -420,7 +421,7 @@ export function TrackedJobsPage() {
 
   return (
     <ItemsNavProvider value={{ handleNext, handlePrev, containerRef }}>
-      <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
+      <PageLayout className={DASHBOARD_JOBS_PAGE_CLASSNAME}>
         <PageHeader
           title="Tracked jobs"
           description="Pipeline board and list for roles you are actively tracking."
@@ -439,7 +440,7 @@ export function TrackedJobsPage() {
           }
         />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex flex-col gap-3 md:min-h-0 md:flex-1">
           <ListSearchBar
             variant="tracked-jobs"
             className={LIST_COLUMN_INSET_CLASSNAME}

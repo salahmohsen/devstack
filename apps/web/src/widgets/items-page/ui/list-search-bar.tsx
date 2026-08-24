@@ -195,7 +195,7 @@ export function ListSearchBar(props: ListSearchBarProps) {
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <InputGroup className="w-full max-w-70 min-w-40 sm:w-70">
+      <InputGroup className="w-full max-w-none min-w-0 max-md:basis-full sm:w-70 sm:max-w-70 sm:min-w-40">
         <InputGroupInput
           aria-label={searchAriaLabel}
           onChange={(event) => setLocalQ(event.target.value)}
@@ -242,7 +242,7 @@ export function ListSearchBar(props: ListSearchBarProps) {
       </FiltersProvider>
 
       {status || beforeSort || catalogItems.length > 0 ? (
-        <div className="ms-auto flex flex-wrap items-center gap-2">
+        <div className="ms-auto flex flex-wrap items-center gap-2 max-md:ms-0 max-md:w-full">
           {status ? (
             <span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
               {status}

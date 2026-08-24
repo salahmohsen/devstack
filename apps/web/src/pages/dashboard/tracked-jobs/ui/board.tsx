@@ -440,7 +440,7 @@ export function ApplicationsBoard({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
+        <div className="flex gap-3 overflow-x-auto max-md:h-[min(70dvh,32rem)] md:min-h-0 md:flex-1">
           {APPLICATION_STAGES.map((stage) => (
             <StageColumn key={stage} stage={stage} items={byStage[stage]} overId={overColumn} />
           ))}

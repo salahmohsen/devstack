@@ -216,120 +216,122 @@ export function AdminUsersPage() {
           <AlertDescription>Refresh the page or try again later.</AlertDescription>
         </Alert>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Person</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Invite</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right"> </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.map((user) => (
-              <TableRow
-                key={user.id}
-                className="cursor-pointer"
-                onClick={() => setInspectId(user.id)}
-              >
-                <TableCell>
-                  <div className="flex items-center gap-2.5">
-                    <Avatar className="size-8">
-                      {user.image ? <AvatarImage src={user.image} alt="" /> : null}
-                      <AvatarFallback>{initials(user.name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{user.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm">{user.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.emailVerified ? "Verified" : "Unverified"}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={user.role === SUPER_ADMIN_ROLE ? "brand" : "secondary"}>
-                    {formatUserRole(user.role)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={user.banned ? "destructive" : "success"}>
-                    {user.banned ? "Banned" : "Active"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="max-w-40 truncate text-sm">
-                  {user.invite?.name ?? user.invite?.code ?? (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatAdminDate(user.createdAt)}
-                </TableCell>
-                <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                  <Menu>
-                    <MenuTrigger
-                      render={
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="size-8"
-                          aria-label={`Actions for ${user.name}`}
-                        />
-                      }
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </MenuTrigger>
-                    <MenuPopup align="end">
-                      <MenuItem onClick={() => setInspectId(user.id)}>View</MenuItem>
-                      <MenuItem onClick={() => setConfirm({ kind: "impersonate", user })}>
-                        View as user
-                      </MenuItem>
-                      {user.banned ? (
-                        <MenuItem onClick={() => setConfirm({ kind: "unban", user })}>
-                          Unban
-                        </MenuItem>
-                      ) : (
-                        <MenuItem
-                          variant="destructive"
-                          onClick={() => setConfirm({ kind: "ban", user })}
-                        >
-                          Ban
-                        </MenuItem>
-                      )}
-                      {user.role === SUPER_ADMIN_ROLE ? (
-                        <MenuItem
-                          variant="destructive"
-                          onClick={() => setConfirm({ kind: "demote", user })}
-                        >
-                          Make member
-                        </MenuItem>
-                      ) : (
-                        <MenuItem onClick={() => setConfirm({ kind: "promote", user })}>
-                          Make super admin
-                        </MenuItem>
-                      )}
-                      <MenuItem
-                        variant="destructive"
-                        onClick={() => setConfirm({ kind: "revoke", user })}
-                      >
-                        Revoke sessions
-                      </MenuItem>
-                    </MenuPopup>
-                  </Menu>
-                </TableCell>
+        <div className="max-md:-mx-1 max-md:overflow-x-auto">
+          <Table className="max-md:min-w-160">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Person</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Invite</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right"> </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {items.map((user) => (
+                <TableRow
+                  key={user.id}
+                  className="cursor-pointer"
+                  onClick={() => setInspectId(user.id)}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-2.5">
+                      <Avatar className="size-8">
+                        {user.image ? <AvatarImage src={user.image} alt="" /> : null}
+                        <AvatarFallback>{initials(user.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{user.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm">{user.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {user.emailVerified ? "Verified" : "Unverified"}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={user.role === SUPER_ADMIN_ROLE ? "brand" : "secondary"}>
+                      {formatUserRole(user.role)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={user.banned ? "destructive" : "success"}>
+                      {user.banned ? "Banned" : "Active"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-40 truncate text-sm">
+                    {user.invite?.name ?? user.invite?.code ?? (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {formatAdminDate(user.createdAt)}
+                  </TableCell>
+                  <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                    <Menu>
+                      <MenuTrigger
+                        render={
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="size-8"
+                            aria-label={`Actions for ${user.name}`}
+                          />
+                        }
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </MenuTrigger>
+                      <MenuPopup align="end">
+                        <MenuItem onClick={() => setInspectId(user.id)}>View</MenuItem>
+                        <MenuItem onClick={() => setConfirm({ kind: "impersonate", user })}>
+                          View as user
+                        </MenuItem>
+                        {user.banned ? (
+                          <MenuItem onClick={() => setConfirm({ kind: "unban", user })}>
+                            Unban
+                          </MenuItem>
+                        ) : (
+                          <MenuItem
+                            variant="destructive"
+                            onClick={() => setConfirm({ kind: "ban", user })}
+                          >
+                            Ban
+                          </MenuItem>
+                        )}
+                        {user.role === SUPER_ADMIN_ROLE ? (
+                          <MenuItem
+                            variant="destructive"
+                            onClick={() => setConfirm({ kind: "demote", user })}
+                          >
+                            Make member
+                          </MenuItem>
+                        ) : (
+                          <MenuItem onClick={() => setConfirm({ kind: "promote", user })}>
+                            Make super admin
+                          </MenuItem>
+                        )}
+                        <MenuItem
+                          variant="destructive"
+                          onClick={() => setConfirm({ kind: "revoke", user })}
+                        >
+                          Revoke sessions
+                        </MenuItem>
+                      </MenuPopup>
+                    </Menu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       <Sheet open={Boolean(inspectId)} onOpenChange={(open) => !open && setInspectId(null)}>

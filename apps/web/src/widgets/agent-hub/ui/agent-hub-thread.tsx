@@ -163,7 +163,7 @@ export function AgentHubThread({ variant = "home" }: { variant?: "home" | "float
 
         <ThreadPrimitive.ViewportFooter
           className={cn(
-            "aui-thread-viewport-footer relative shrink-0 bg-background px-5 pb-4 md:pb-6",
+            "aui-thread-viewport-footer relative shrink-0 bg-background px-3 pb-4 md:px-5 md:pb-6",
             !isEmpty && "rounded-t-(--composer-radius)"
           )}
         >
