@@ -78,7 +78,7 @@ export const Route = createFileRoute("/(root-layout)/")({
         canonicalPath: "/"
       },
       description:
-        "Open-source, self-hostable personal hub. Public portfolios live at /{username} or on a verified custom domain.",
+        "Self-hostable job-apply assistant: job board adapters, New jobs, Tracked jobs, Career Inbox, hub agent with BYO AI, and a public portfolio at /{username}.",
       title: appConfig.site.shortName
     });
   },

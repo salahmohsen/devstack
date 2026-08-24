@@ -28,6 +28,9 @@
     "@coss": "https://coss.com/ui/r/{name}.json",
     "@reui": "https://reui.io/r/{name}.json",
     "@assistant-ui": "https://r.assistant-ui.com/styles/{style}/{name}.json",
-    "@beui": "https://beui.dev/r/{name}.json"
+    "@beui": "https://beui.dev/r/{name}.json",
+    "@magicui": "https://magicui.design/r/{name}",
+    "@ncdai": "https://chanhdai.com/r/{name}.json",
+    "@efferd": "https://efferd.com/r/{style}/{name}.json"
   }
 }
