@@ -21,6 +21,7 @@ export type PublicScopeNavResult = {
 /** Paths that never host public portfolio scope nav (except dashboard when signed in). */
 const HIDDEN_PREFIXES = [
   "/sign-in",
+  "/sign-up",
   "/playground",
   "/privacy-policy",
   "/terms-of-service"
@@ -35,6 +36,7 @@ function isDashboardPath(pathname: string): boolean {
 const RESERVED_SEGMENTS = new Set([
   "dashboard",
   "sign-in",
+  "sign-up",
   "repos",
   "playground",
   "privacy-policy",

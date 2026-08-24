@@ -61,11 +61,7 @@ function MainContent({ className }: { className?: string }) {
       </p>
 
       <div className="mb-6 grid grid-cols-2 items-center gap-4 sm:mb-8 sm:flex">
-        <Button
-          className="px-4 sm:px-8"
-          size="lg"
-          render={<Link to="/sign-in/create-an-account" />}
-        >
+        <Button className="px-4 sm:px-8" size="lg" render={<Link to="/sign-up" />}>
           Create an account
         </Button>
         <Button

@@ -53,7 +53,7 @@ function createWebCallbackUrl(redirectTo?: string): string {
 
 function createOAuthErrorCallbackUrl(): string {
   const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
-  return `${baseUrl}/sign-in/create-an-account`;
+  return `${baseUrl}/sign-up`;
 }
 
 const PROVIDER_LABEL: Record<SocialProvider, string> = {

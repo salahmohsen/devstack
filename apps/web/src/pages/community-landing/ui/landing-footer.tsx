@@ -82,6 +82,6 @@ export function LandingFooter({ className }: { className?: string }) {
 }
 
 const productLinks = [
-  { title: "Create account", to: "/sign-in/create-an-account" as const },
+  { title: "Create account", to: "/sign-up" as const },
   { title: "Sign in", to: "/sign-in" as const }
 ];

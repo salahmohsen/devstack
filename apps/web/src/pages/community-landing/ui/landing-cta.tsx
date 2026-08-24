@@ -39,7 +39,7 @@ export function LandingCta({ className }: { className?: string }) {
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-        <Button render={<Link to="/sign-in/create-an-account" />}>
+        <Button render={<Link to="/sign-up" />}>
           Create an account
           <ArrowRight data-icon="inline-end" />
         </Button>

@@ -47,7 +47,7 @@ export function FaqsSection({ className }: { className?: string }) {
       <div className="flex min-h-12 items-center justify-center border-t px-4 py-3">
         <p className="text-center text-sm text-muted-foreground">
           Ready to try this install?{" "}
-          <Link className="text-primary hover:underline" to="/sign-in/create-an-account">
+          <Link className="text-primary hover:underline" to="/sign-up">
             Create an account
           </Link>
         </p>

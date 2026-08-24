@@ -1,40 +1,23 @@
-import { createFileRoute, type NavigateOptions } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import z from "zod";
 
-import { generateAppSeo } from "@/shared/lib/seo";
-
-import { CreateAnAccountForm } from "@/features/auth";
-
-import { appConfig } from "@/config/app.config";
-
-const guestSearchSchema = z.object({
+const legacySignupSearchSchema = z.object({
   redirect: z.string().optional().catch(undefined),
   invite: z.string().optional().catch(undefined)
 });
 
+/** Legacy URL — prefer `/sign-up`. */
 export const Route = createFileRoute("/(root-layout)/(guest)/sign-in/create-an-account/")({
-  validateSearch: zodValidator(guestSearchSchema),
-
-  head: () =>
-    generateAppSeo({
-      alternates: {
-        canonicalPath: "/create-an-account"
+  validateSearch: zodValidator(legacySignupSearchSchema),
+  beforeLoad: ({ search }) => {
+    throw redirect({
+      to: "/sign-up",
+      search: {
+        ...(search.redirect ? { redirect: search.redirect } : {}),
+        ...(search.invite ? { invite: search.invite } : {})
       },
-      description: `Create a ${appConfig.site.shortName} account to save your progress and access personalized features.`,
-      robots: {
-        follow: false,
-        index: false
-      },
-      title: "Create an Account"
-    }),
-  component: RouteComponent
+      replace: true
+    });
+  }
 });
-
-function RouteComponent() {
-  const { redirect, invite } = Route.useSearch();
-
-  return (
-    <CreateAnAccountForm redirectTo={redirect as NavigateOptions["to"]} inviteCode={invite ?? ""} />
-  );
-}

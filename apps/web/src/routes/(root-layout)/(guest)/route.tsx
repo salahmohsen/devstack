@@ -3,17 +3,18 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 
 /**
- * After auth, never bounce back into guest routes (sign-in / create-account).
+ * After auth, never bounce back into guest routes (sign-in / sign-up).
  * Only same-origin relative paths are allowed.
  */
 function resolveLoggedInRedirect(raw: unknown): string {
   if (typeof raw !== "string" || raw.length === 0) return "/dashboard";
   if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
   if (raw === "/sign-in" || raw.startsWith("/sign-in/")) return "/dashboard";
+  if (raw === "/sign-up" || raw.startsWith("/sign-up/")) return "/dashboard";
   return raw;
 }
 
-export const Route = createFileRoute("/(root-layout)/(guest)/sign-in")({
+export const Route = createFileRoute("/(root-layout)/(guest)")({
   beforeLoad: async ({ context, location }) => {
     const user = await context.queryClient.ensureQueryData({
       ...getAuthUserQueryOptions(),
