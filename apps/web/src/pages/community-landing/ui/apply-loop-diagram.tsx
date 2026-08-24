@@ -43,6 +43,8 @@ export function ApplyLoopDiagram({ className }: { className?: string }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const packageRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
+  /** Zero-size anchor on the last card's trailing edge so the final beam reaches the end. */
+  const publishEndRef = useRef<HTMLDivElement>(null);
   const stageRefs: RefObject<HTMLDivElement | null>[] = [
     discoverRef,
     trackRef,
@@ -59,7 +61,13 @@ export function ApplyLoopDiagram({ className }: { className?: string }) {
   }> = [
     { id: "discover-track", from: discoverRef, to: trackRef, curvature: -12, delay: 0 },
     { id: "track-package", from: trackRef, to: packageRef, curvature: 12, delay: 0.35 },
-    { id: "package-publish", from: packageRef, to: publishRef, curvature: -12, delay: 0.7 }
+    {
+      id: "package-publish",
+      from: packageRef,
+      to: publishEndRef,
+      curvature: -12,
+      delay: 0.7
+    }
   ];
 
   return (
@@ -72,12 +80,20 @@ export function ApplyLoopDiagram({ className }: { className?: string }) {
       <div ref={containerRef} className="relative grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {STAGES.map((stage, index) => {
           const Icon = stage.icon;
+          const isLast = index === STAGES.length - 1;
           return (
             <div
               key={stage.id}
               ref={stageRefs[index]}
               className="relative z-10 flex min-w-0 flex-col gap-2 rounded-xl border bg-background/80 p-3 sm:p-4"
             >
+              {isLast ? (
+                <div
+                  ref={publishEndRef}
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 right-0 size-0 -translate-y-1/2"
+                />
+              ) : null}
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[0.65rem] tracking-wider text-muted-foreground tabular-nums">
                   {String(index + 1).padStart(2, "0")}
