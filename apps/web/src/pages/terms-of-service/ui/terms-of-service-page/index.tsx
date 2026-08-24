@@ -1,11 +1,14 @@
-import { Container } from "@/shared/ui/container";
+import { LegalDocument } from "@/shared/ui/legal-document";
 
 import Content from "@/pages/terms-of-service/ui/terms-of-service-page/content.mdx";
 
+const EFFECTIVE_DATE = "March 2, 2026";
+
+/** Kept for deep links; footer points at Privacy policy only. */
 export function TermsOfServicePage() {
   return (
-    <Container className="prose not-dark:prose-invert">
+    <LegalDocument title="Terms of Service" effectiveDate={EFFECTIVE_DATE}>
       <Content />
-    </Container>
+    </LegalDocument>
   );
 }

@@ -1,11 +1,13 @@
-import { Container } from "@/shared/ui/container";
+import { LegalDocument } from "@/shared/ui/legal-document";
 
 import Content from "@/pages/privacy-policy/ui/privacy-policy-page-content.mdx";
 
+const EFFECTIVE_DATE = "February 4, 2026";
+
 export function PrivacyPolicyPage() {
   return (
-    <Container className="prose not-dark:prose-invert">
+    <LegalDocument title="Privacy Policy" effectiveDate={EFFECTIVE_DATE}>
       <Content />
-    </Container>
+    </LegalDocument>
   );
 }
