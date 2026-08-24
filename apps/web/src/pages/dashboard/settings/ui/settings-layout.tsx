@@ -14,6 +14,7 @@ import {
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
+import { DASHBOARD_VIEWPORT_PAGE_CLASSNAME } from "@/shared/ui/dashboard-viewport";
 
 import { PageHeader, PageLayout } from "@/widgets/items-page";
 
@@ -125,7 +126,7 @@ export const SettingsLayout = () => {
   const activeNav = SETTINGS_NAV.find((item) => item.id === activeId) ?? SETTINGS_NAV[0]!;
 
   return (
-    <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
+    <PageLayout className={DASHBOARD_VIEWPORT_PAGE_CLASSNAME}>
       <PageHeader title="Settings" description={activeNav.description} />
 
       <SurfaceIslandLayout

@@ -1,4 +1,7 @@
+import { DownloadIcon } from "lucide-react";
+
 import { sanitizeHtml, type ExperiencePublicOutput } from "@tsu-stack/core";
+import { Button } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useGetDefaultResumeQuery, useGetPortfolioListQuery } from "@/features/portfolio";
@@ -52,18 +55,21 @@ export const Experience = ({ username }: { username: string }) => {
       ) : null}
 
       {defaultResume ? (
-        <div className="mt-10 flex gap-1">
-          <a
-            href={`/api/resume/download/?id=${defaultResume.id}&username=${encodeURIComponent(username)}`}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-accent"
+        <div className={cn("flex", experiences.length > 0 ? "mt-8" : "mt-0")}>
+          <Button
+            variant="outline"
+            size="sm"
+            render={
+              <a
+                href={`/api/resume/download/?id=${defaultResume.id}&username=${encodeURIComponent(username)}`}
+                target="_blank"
+                rel="noreferrer noopener"
+              />
+            }
           >
-            Download Resume
-            <svg className="size-3" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M3.75 2h3.5a.75.75 0 010 1.5H4.5v8h8V8.75a.75.75 0 011.5 0v3.5A1.75 1.75 0 0112.25 14h-8.5A1.75 1.75 0 012 12.25v-8.5C2 2.784 2.784 2 3.75 2zm6.854-1h4.004a.25.25 0 01.177.427l-5.5 5.5a.25.25 0 01-.354 0l-5.5-5.5A.25.25 0 013.596 1h4.004z" />
-            </svg>
-          </a>
+            <DownloadIcon className="size-3.5" strokeWidth={2} aria-hidden />
+            Download resume
+          </Button>
         </div>
       ) : null}
     </>

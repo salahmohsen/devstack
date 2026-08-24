@@ -14,7 +14,7 @@ export const HomeNav = ({ username }: { username: string }) => {
   if (defaultResume) {
     navItems.push([
       "Resume",
-      `/api/resume/download?id=${defaultResume.id}&username=${encodeURIComponent(username)}`
+      `/api/resume/download/?id=${defaultResume.id}&username=${encodeURIComponent(username)}`
     ]);
   }
 

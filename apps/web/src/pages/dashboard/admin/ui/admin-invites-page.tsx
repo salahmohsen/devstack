@@ -204,84 +204,87 @@ export function AdminInvitesPage() {
           description="Name a link to copy, or send emails above."
         />
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Kind</TableHead>
-              <TableHead>Uses</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {invites.map((invite) => {
-              const status = inviteStatus(invite);
-              const isRevoking = revokeInvite.isPending && revokeInvite.variables?.id === invite.id;
-              return (
-                <TableRow
-                  key={invite.id}
-                  className="cursor-pointer"
-                  onClick={() => setSignupsId(invite.id)}
-                >
-                  <TableCell className="max-w-48 truncate text-sm font-medium">
-                    {invite.name ?? (
-                      <span className="font-normal text-muted-foreground">Unnamed</span>
-                    )}
-                    {invite.email ? (
-                      <p className="truncate text-xs font-normal text-muted-foreground">
-                        {invite.email}
-                      </p>
-                    ) : null}
-                  </TableCell>
-                  <TableCell className="capitalize">{invite.kind}</TableCell>
-                  <TableCell className="tabular-nums">
-                    {invite.maxUses == null
-                      ? String(invite.useCount)
-                      : `${invite.useCount} / ${invite.maxUses}`}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant(status)}>{status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatAdminDate(invite.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                    <div className="inline-flex items-center justify-end gap-1">
-                      {status === "open" ? (
-                        <>
-                          <CopyButton
-                            value={inviteSignupHref(invite.code)}
-                            label="Copy invite link"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            onError={() => toast.error("Could not copy link")}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-destructive hover:text-destructive"
-                            title="Revoke invite"
-                            aria-label="Revoke invite"
-                            loading={isRevoking}
-                            onClick={() => handleRevoke(invite.id)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+        <div className="max-md:-mx-1 max-md:overflow-x-auto">
+          <Table className="max-md:min-w-xl">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Kind</TableHead>
+                <TableHead>Uses</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invites.map((invite) => {
+                const status = inviteStatus(invite);
+                const isRevoking =
+                  revokeInvite.isPending && revokeInvite.variables?.id === invite.id;
+                return (
+                  <TableRow
+                    key={invite.id}
+                    className="cursor-pointer"
+                    onClick={() => setSignupsId(invite.id)}
+                  >
+                    <TableCell className="max-w-48 truncate text-sm font-medium">
+                      {invite.name ?? (
+                        <span className="font-normal text-muted-foreground">Unnamed</span>
                       )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                      {invite.email ? (
+                        <p className="truncate text-xs font-normal text-muted-foreground">
+                          {invite.email}
+                        </p>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="capitalize">{invite.kind}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {invite.maxUses == null
+                        ? String(invite.useCount)
+                        : `${invite.useCount} / ${invite.maxUses}`}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant(status)}>{status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatAdminDate(invite.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                      <div className="inline-flex items-center justify-end gap-1">
+                        {status === "open" ? (
+                          <>
+                            <CopyButton
+                              value={inviteSignupHref(invite.code)}
+                              label="Copy invite link"
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onError={() => toast.error("Could not copy link")}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-destructive hover:text-destructive"
+                              title="Revoke invite"
+                              aria-label="Revoke invite"
+                              loading={isRevoking}
+                              onClick={() => handleRevoke(invite.id)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       <PromptDialog

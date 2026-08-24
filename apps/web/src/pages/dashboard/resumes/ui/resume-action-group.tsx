@@ -1,7 +1,14 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { BriefcaseIcon, ChevronDownIcon, DownloadIcon, EyeIcon, Trash2Icon } from "lucide-react";
+import {
+  BriefcaseIcon,
+  ChevronDownIcon,
+  DownloadIcon,
+  EyeIcon,
+  StarIcon,
+  Trash2Icon
+} from "lucide-react";
 
 import { resumeListTitle, type ResumeOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -16,6 +23,8 @@ import {
 } from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { useSetDefaultResumeMutation } from "@/pages/dashboard/resumes/api/set-default-resume.mutation";
+
 function primaryJob(resume: ResumeOutput) {
   return resume.jobs?.[0] ?? null;
 }
@@ -29,7 +38,7 @@ export type ResumeActionGroupProps = {
 
 /**
  * Inspect-panel action cluster matching tracked jobs: primary Open job,
- * Download, then overflow (View PDF / Delete).
+ * Download, then overflow (View PDF / Set default / Delete).
  */
 export function ResumeActionGroup({
   resume,
@@ -41,6 +50,7 @@ export function ResumeActionGroup({
   const title = resumeListTitle({ author: resume.author, jobs: resume.jobs ?? [] });
   const viewHref = `/api/resume/download/?id=${resume.id}&view=1`;
   const downloadHref = `/api/resume/download/?id=${resume.id}`;
+  const setDefaultMutation = useSetDefaultResumeMutation();
 
   return (
     <Group
@@ -96,6 +106,15 @@ export function ResumeActionGroup({
             <EyeIcon aria-hidden />
             View PDF
           </MenuLinkItem>
+          {!resume.default ? (
+            <MenuItem
+              disabled={setDefaultMutation.isPending}
+              onClick={() => setDefaultMutation.mutate({ id: resume.id })}
+            >
+              <StarIcon aria-hidden />
+              Set as default
+            </MenuItem>
+          ) : null}
           <MenuSeparator />
           <MenuItem variant="destructive" disabled={isDeleting} onClick={onDelete}>
             <Trash2Icon aria-hidden />

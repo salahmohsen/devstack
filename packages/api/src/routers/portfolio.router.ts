@@ -21,6 +21,7 @@ import { contact, experience, project, stack } from "@tsu-stack/db/schema";
 import { enrichProjectsWithGithubRepos } from "#@/lib/portfolio/enrich-project-github-repos";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
+import { schedulePortfolioDefaultResumeSync } from "#@/lib/resume/sync-portfolio-default-resume";
 import {
   toContactOutput,
   toExperiencePublicOutput,
@@ -232,12 +233,14 @@ export const PortfolioRouter = {
         }
 
         await syncPortfolioFK(type, entityId, userId, created.id);
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
         return { included: true, entry: created };
       }
 
       if (existing) {
         await portfolioEntryRepository.deleteByTypeAndEntityIdForUser(userId, type, entityId);
         await syncPortfolioFK(type, entityId, userId, null);
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return { included: false, entry: null };
     })

@@ -1,6 +1,14 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
-import { Bell, LogOut, SearchIcon, Settings, UserCircle } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useLocation, useNavigate, useParams, useRouter } from "@tanstack/react-router";
+import {
+  Archive,
+  Bell,
+  LayoutDashboard,
+  LogOut,
+  SearchIcon,
+  Settings,
+  UserCircle
+} from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
@@ -14,6 +22,7 @@ import {
   MenuGroup,
   MenuGroupLabel,
   MenuItem,
+  MenuLinkItem,
   MenuPopup,
   MenuSeparator,
   MenuTrigger
@@ -29,13 +38,23 @@ import {
   useCommandBinding,
   type CommandId
 } from "@/shared/lib/commands";
+import { isCustomDomainHost, primaryAppUrl } from "@/shared/lib/primary-app-url";
+import {
+  publicPortfolioHomeLocation,
+  publicReposListLocation,
+  usePublicSurface
+} from "@/shared/lib/public-surface";
 import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
+import { getRequestHostname } from "@/shared/lib/request-host";
+import { resolvePublicScopeNav } from "@/shared/lib/resolve-public-scope-nav";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
+import { useMediaQuery } from "@/shared/lib/use-media-query";
 import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 import { PrimaryAppMenuLink } from "@/shared/ui/primary-app-menu-link";
 
+import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 import { DashboardMobileNavTrigger } from "@/widgets/layout/ui/dashboard-mobile-nav";
@@ -78,14 +97,37 @@ export function Topbar() {
   // whole nav chrome on some navigations and made the avatar look "missing").
   const { user: admin, isPending: authPending } = useAuth();
   const isClient = useIsClient();
+  /** Below `md` — Profile / Repos / Dashboard move into the account menu. */
+  const isMobile = useMediaQuery("(max-width: 767px)");
   const openTabs = useTabs();
+  const params = useParams({ strict: false }) as { username?: string };
 
   // Prefer session user's profile for GitHub chrome; never a global site owner.
   const sessionUsername = sessionUsernameFromUser(admin) ?? undefined;
+  const ownSurface = usePublicSurface(sessionUsername ?? "");
+  const hostname = getRequestHostname();
+  const customHost = isCustomDomainHost(hostname);
+  const customDomainQuery = useQuery({
+    ...getResolvePublicPortfolioQueryOptions({ host: hostname ?? undefined }),
+    enabled: customHost
+  });
+  const scopeNav = useMemo(
+    () =>
+      resolvePublicScopeNav({
+        pathname,
+        hostname,
+        pathUsername: params.username,
+        customDomainUsername: customDomainQuery.data?.username ?? null,
+        sessionUsername
+      }),
+    [pathname, hostname, params.username, customDomainQuery.data?.username, sessionUsername]
+  );
   const setupStatus = sessionUsername
     ? queryClient.getQueryData(getGithubSetupStatusQueryOptions(sessionUsername).queryKey)
     : undefined;
   const owner = setupStatus?.owner ?? null;
+  const profileLocation = publicPortfolioHomeLocation(scopeNav.surface ?? ownSurface);
+  const reposLocation = publicReposListLocation(scopeNav.surface ?? ownSurface);
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -249,6 +291,49 @@ export function Topbar() {
           </MenuGroupLabel>
         </MenuGroup>
         <MenuSeparator />
+        {/* Mobile-only: Profile / Repos / Dashboard live here (desktop uses PublicScopeNav). */}
+        {isMobile && sessionUsername ? (
+          <>
+            <MenuGroup>
+              <MenuLinkItem
+                render={
+                  <Link
+                    to={profileLocation.to}
+                    params={"params" in profileLocation ? profileLocation.params : undefined}
+                  />
+                }
+              >
+                <UserCircle size={16} strokeWidth={2} />
+                Profile
+              </MenuLinkItem>
+              <MenuLinkItem
+                render={
+                  <Link
+                    to={reposLocation.to}
+                    params={"params" in reposLocation ? reposLocation.params : undefined}
+                  />
+                }
+              >
+                <Archive size={16} strokeWidth={2} />
+                Repos
+              </MenuLinkItem>
+              {scopeNav.showDashboard ? (
+                customHost ? (
+                  <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
+                    <LayoutDashboard size={16} strokeWidth={2} />
+                    Dashboard
+                  </MenuLinkItem>
+                ) : (
+                  <PrimaryAppMenuLink path="/dashboard" label="Dashboard">
+                    <LayoutDashboard size={16} strokeWidth={2} />
+                    Dashboard
+                  </PrimaryAppMenuLink>
+                )
+              ) : null}
+            </MenuGroup>
+            <MenuSeparator />
+          </>
+        ) : null}
         <MenuGroup>
           <PrimaryAppMenuLink path="/dashboard/settings/profile" label="Settings">
             <IconRotate mode="hover">
@@ -314,7 +399,7 @@ export function Topbar() {
         <Tabs tabsReady={isClient} routerRef={routerRef} />
       </div>
 
-      {/* Find → signal → prefs → identity. Avatar lives in the mobile dock. */}
+      {/* Find → signal → prefs → identity. Avatar stays in the topbar on all sizes. */}
       <div className="relative z-10 flex shrink-0 items-center gap-2">
         <Button
           variant="outline"
@@ -337,7 +422,7 @@ export function Topbar() {
           <SoundMuteButton />
         </div>
 
-        <div className="hidden md:contents">{accountControl}</div>
+        {accountControl}
       </div>
     </nav>
   );

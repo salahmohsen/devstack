@@ -10,7 +10,6 @@ import { Button } from "@tsu-stack/ui/components/button";
 import { Card6 } from "@tsu-stack/ui/components/cardcn";
 import { CenterUnderline } from "@tsu-stack/ui/components/fancy/text";
 import { Group } from "@tsu-stack/ui/components/group";
-import { StickyCardStack } from "@tsu-stack/ui/components/skiper-ui";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -78,10 +77,8 @@ export const ProjectsSection = ({
 
   if (projects.length === 0) return null;
 
-  // Skiper 16 card stack scroll — sticky pile + scale-down on scroll.
-  // @see https://skiper-ui.com/v1/skiper16
   return (
-    <StickyCardStack>
+    <div className="flex w-full flex-col gap-4">
       {projects.map((project) => (
         <ProjectsItem
           key={project.id}
@@ -90,7 +87,7 @@ export const ProjectsSection = ({
           isPortfolioOwner={isPortfolioOwner}
         />
       ))}
-    </StickyCardStack>
+    </div>
   );
 };
 

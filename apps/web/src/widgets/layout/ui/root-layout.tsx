@@ -18,7 +18,6 @@ import { DASHBOARD_NAV_DEFAULT_WIDTH, DashboardSidebar } from "@/widgets/layout/
 import { CommandPalette } from "./command-palette";
 import { DashboardBottomBar } from "./dashboard-bottombar";
 import { GitHubAccessDialog } from "./github-access-dialog";
-import { MobileNav } from "./github-public-mobile-nav";
 import { Topbar } from "./github-public-topbar";
 import {
   PUBLIC_SIDE_PANEL_WIDTH,
@@ -121,13 +120,7 @@ export function RootLayout({ children }: PropsWithChildren) {
                 <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                   <main className="relative flex min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-background">
                     <div className="size-full min-h-0 min-w-0">
-                      {/* Bottom pad on mobile so lists clear the floating dock without shrinking the card shell. */}
-                      <ScrollArea
-                        scrollFade
-                        fill
-                        clampContentMinWidth={true}
-                        className="max-md:**:data-[slot=scroll-area-content]:pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
-                      >
+                      <ScrollArea scrollFade fill clampContentMinWidth={true}>
                         {children}
                       </ScrollArea>
                     </div>
@@ -167,7 +160,6 @@ export function RootLayout({ children }: PropsWithChildren) {
         </SidePanelProvider>
 
         <DashboardBottomBar />
-        <MobileNav />
         <GitHubAccessDialog />
         <CommandHotkeys />
         <CommandPalette />

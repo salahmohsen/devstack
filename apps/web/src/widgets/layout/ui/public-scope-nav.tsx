@@ -60,7 +60,7 @@ export function PublicScopeNav({ className }: { className?: string }) {
     <nav
       aria-label="Portfolio"
       className={cn(
-        // Mobile uses the floating dock for Profile / Repos / Dashboard.
+        // Mobile uses the account menu for Profile / Repos / Dashboard.
         "hidden h-8 shrink-0 items-center rounded-lg bg-muted/80 p-0.5 md:flex",
         className
       )}

@@ -24,6 +24,7 @@ import {
 } from "#@/lib/application/search-brief";
 import { compileListQuery } from "#@/lib/list-query/compile";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { schedulePortfolioDefaultResumeSync } from "#@/lib/resume/sync-portfolio-default-resume";
 import { toStackOutput } from "#@/routers/portfolio.mappers";
 
 const NPM_SEARCH_SIZE = 10;
@@ -207,6 +208,7 @@ export const stacksRouter = {
         }
       );
       await invalidateSearchBrief(userId, "form");
+      schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       return toStackOutput({
         ...created!,
         projects: (created!.projects ?? [])
@@ -270,6 +272,9 @@ export const stacksRouter = {
       if (updated && shouldInvalidateSearchBriefForEntityPatch(input.data)) {
         await invalidateSearchBrief(userId, "form");
       }
+      if (updated) {
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
+      }
       return updated ? toStackOutput(updated) : null;
     }),
   reorder: protectedProcedure
@@ -296,6 +301,7 @@ export const stacksRouter = {
       const deleted = await stackRepository.delete(input.id, userId);
       if (deleted !== null) {
         await invalidateSearchBrief(userId, "form");
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return { success: deleted !== null };
     }),
@@ -311,6 +317,7 @@ export const stacksRouter = {
       try {
         const merged = await stackRepository.merge(userId, input.survivorId, input.victimId);
         await invalidateSearchBrief(userId, "form");
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
         return merged;
       } catch (error) {
         throw new Error(error instanceof Error ? error.message : "Failed to merge stacks");
@@ -329,6 +336,7 @@ export const stacksRouter = {
         const merged = await stackRepository.batchMerge(userId, input.items);
         if (input.items.length > 0) {
           await invalidateSearchBrief(userId, "form");
+          schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
         }
         return merged;
       } catch (error) {
@@ -402,6 +410,9 @@ export const stacksRouter = {
       );
       if (input.items.some((item) => shouldInvalidateSearchBriefForEntityPatch(item.data))) {
         await invalidateSearchBrief(userId, "form");
+      }
+      if (input.items.length > 0) {
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return updated;
     }),
@@ -652,6 +663,7 @@ export const stacksRouter = {
 
       if (wroteStack) {
         await invalidateSearchBrief(userId, "form");
+        schedulePortfolioDefaultResumeSync({ userId, mediaBucket: context.mediaBucket });
       }
       return results;
     })

@@ -167,7 +167,10 @@ export function ResumesPage() {
     orpcQueryClient.resume.generate.mutationOptions({
       onSuccess: async () => {
         await invalidateQueries();
-        toast.success("Resume generated");
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.resume.getDefault.key()
+        });
+        toast.success("Default resume updated");
       },
       onError: (error) => {
         if (isDefinedError(error)) {
