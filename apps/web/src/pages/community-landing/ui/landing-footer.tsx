@@ -12,13 +12,7 @@ const GITHUB_REPO = "https://github.com/salahmohsen/devstack";
  */
 export function LandingFooter({ className }: { className?: string }) {
   return (
-    <footer
-      className={cn(
-        "relative mx-auto w-full max-w-5xl min-w-0 border-t",
-        "dark:bg-[radial-gradient(35%_80%_at_15%_0%,--theme(--color-foreground/.08),transparent)]",
-        className
-      )}
-    >
+    <footer className={cn("relative mx-auto w-full max-w-5xl min-w-0 border-t", className)}>
       <div className="grid min-w-0 grid-cols-6 gap-6 px-0 py-8 sm:py-10">
         <div className="col-span-6 flex min-w-0 flex-col gap-3 md:col-span-4">
           <Link className="w-max text-sm font-semibold tracking-tight text-foreground" to="/">
@@ -31,6 +25,7 @@ export function LandingFooter({ className }: { className?: string }) {
             <Button
               size="icon"
               variant="outline"
+              className="text-foreground [&_svg]:fill-current [&_svg]:opacity-100!"
               render={
                 <a
                   href={GITHUB_REPO}

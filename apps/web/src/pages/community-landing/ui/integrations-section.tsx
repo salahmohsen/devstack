@@ -10,7 +10,6 @@ type Integration = {
   name: string;
   description: string;
   icon: ReactNode;
-  invertInDark?: boolean;
   corner?: ReactNode;
 };
 
@@ -64,12 +63,7 @@ function IntegrationCard({
       )}
       {...props}
     >
-      <div
-        className={cn(
-          "flex size-8 shrink-0 items-center justify-center text-foreground [&_svg]:size-7",
-          integration.invertInDark && "dark:invert"
-        )}
-      >
+      <div className="flex size-8 shrink-0 items-center justify-center text-foreground [&_svg]:size-7">
         {integration.icon}
       </div>
       <div className="flex min-w-0 flex-col gap-1">
@@ -95,8 +89,9 @@ const integrations: Integration[] = [
     name: "GitHub",
     description:
       "Public repos and README surfaces use that tenant's OAuth token server-side, never a global PAT.",
-    icon: <SiGithub aria-hidden />,
-    invertInDark: true
+    // Monochrome mark: inherit text-foreground (white in dark, dark in light).
+    // Do not use dark:invert here — that flips an already-light currentColor fill to black.
+    icon: <SiGithub aria-hidden className="fill-current" />
   },
   {
     name: "Freehire",

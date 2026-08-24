@@ -14,7 +14,7 @@ export function LandingCta({ className }: { className?: string }) {
   return (
     <section
       className={cn(
-        "relative mx-auto flex w-full max-w-3xl min-w-0 flex-col justify-between gap-4 border-y px-4 py-8 sm:gap-5 sm:py-10",
+        "relative mx-auto flex w-full max-w-3xl min-w-0 flex-col justify-between gap-4 border-y px-4 pt-12 pb-8 sm:gap-5 sm:pt-14 sm:pb-10",
         "dark:bg-[radial-gradient(35%_80%_at_25%_0%,--theme(--color-foreground/.08),transparent)]",
         className
       )}
@@ -26,7 +26,6 @@ export function LandingCta({ className }: { className?: string }) {
 
       <div className="pointer-events-none absolute -inset-y-6 -left-px w-px border-l" />
       <div className="pointer-events-none absolute -inset-y-6 -right-px w-px border-r" />
-      <div className="pointer-events-none absolute top-0 left-1/2 -z-10 h-full border-l border-dashed" />
 
       <h2 className="text-center text-xl font-semibold tracking-tight sm:text-2xl md:text-3xl">
         Start on your own stack
