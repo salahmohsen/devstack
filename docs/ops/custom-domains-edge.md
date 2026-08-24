@@ -49,33 +49,33 @@ Published applications are **per hostname**. For multi-tenant CNAME, you need a 
 
 ```text
 # Specific (examples)
-hub.example.com     → http://dokploy-traefik:80
-api.example.com     → http://dokploy-traefik:80
+devstack.example.com → http://dokploy-traefik:80
+api.example.com      → http://dokploy-traefik:80
 
 # Catch-all LAST (no hostname / “Catch-all” in Zero Trust UI)
-*                   → http://dokploy-traefik:80
+*                    → http://dokploy-traefik:80
 ```
 
 Service URL must match how Traefik listens (this stack: **HTTP :80**, not HTTPS to the container).
 
 ### Your own apex on the same zone as the app
 
-If the operator’s portfolio uses `example.com` while the primary app is `hub.example.com`:
+If the operator’s portfolio uses `example.com` while the primary app is `devstack.example.com`:
 
 - Prefer Tunnel **Published hostname** `example.com` → `http://dokploy-traefik:80`, **or**
 - Apex CNAME (flatten) → **tunnel hostname** (`dokploy-tunnel` / `*.cfargotunnel.com`)
-- **Avoid** proxied apex CNAME → `hub.example.com` (orange-cloud → orange-cloud) — common CF 502
+- **Avoid** proxied apex CNAME → `devstack.example.com` (orange-cloud → orange-cloud) — common CF 502
 
-Tenants on **other** zones CNAME to `hub.example.com` (or a dedicated `cname.example.com`); that does not require them to open Tunnel.
+Tenants on **other** zones CNAME to `devstack.example.com` (or a dedicated `cname.example.com`); that does not require them to open Tunnel.
 
 ## Operator checklist
 
 - [ ] Web Traefik: primary `Host` + low-priority catch-all + `passHostHeader: true`
 - [ ] Tunnel: catch-all / fallback → `http://dokploy-traefik:80`
-- [ ] Specific tunnel hostnames for hub/api as needed
+- [ ] Specific tunnel hostnames for devstack/api as needed
 - [ ] SSL terminated at Cloudflare (Flexible or Full as appropriate for HTTP origin)
 - [ ] Dashboard Domain settings show TXT + CNAME target = `VITE_WEB_URL` hostname
-- [ ] Smoke: external test domain CNAME → hub, verify TXT, open Host → portfolio
+- [ ] Smoke: external test domain CNAME → devstack, verify TXT, open Host → portfolio
 
 ## Related
 

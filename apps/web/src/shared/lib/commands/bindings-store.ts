@@ -1,5 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 
+import { isPlaygroundCommandId, isPlaygroundEnabled } from "@/shared/lib/playground";
+
 import { COMMAND_BY_ID, COMMAND_CATALOG } from "./catalog";
 import { DEFAULT_COMMAND_BINDINGS } from "./default-bindings";
 import { type CommandBinding, type CommandId, COMMAND_BINDINGS_STORAGE_KEY } from "./types";
@@ -72,6 +74,12 @@ function bindingsEqual(a: CommandBinding, b: CommandBinding): boolean {
 function buildResolvedBindings(): Record<CommandId, CommandBinding | null> {
   const resolved = {} as Record<CommandId, CommandBinding | null>;
   for (const command of COMMAND_CATALOG) {
+    // Production builds keep catalog entries for typing, but must not register
+    // playground sequences (they delay chords like A,G and block rebinding).
+    if (isPlaygroundCommandId(command.id) && !isPlaygroundEnabled) {
+      resolved[command.id] = null;
+      continue;
+    }
     resolved[command.id] = Object.hasOwn(overrides, command.id)
       ? (overrides[command.id] ?? null)
       : DEFAULT_COMMAND_BINDINGS[command.id];
@@ -139,6 +147,7 @@ export function setRecordingCommandId(id: CommandId | null) {
 }
 
 export function getCommandEnabled(id: CommandId): boolean {
+  if (isPlaygroundCommandId(id) && !isPlaygroundEnabled) return false;
   if (COMMAND_BY_ID[id].gated) {
     return enabled[id] ?? false;
   }
@@ -157,6 +166,7 @@ export function findBindingConflict(
 ): CommandId | null {
   for (const command of COMMAND_CATALOG) {
     if (command.id === ignoreId) continue;
+    if (isPlaygroundCommandId(command.id) && !isPlaygroundEnabled) continue;
     const existing = getCommandBinding(command.id);
     if (!existing || existing.kind !== binding.kind) continue;
     if (bindingsEqual(existing, binding)) return command.id;

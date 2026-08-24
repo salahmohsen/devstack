@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useEffect, useId, useState, type RefObject } from "react";
+import { useEffect, useId, useState, type FC, type RefObject } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -27,7 +27,7 @@ export type AnimatedBeamProps = {
   endYOffset?: number;
 };
 
-export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
+export const AnimatedBeam: FC<AnimatedBeamProps> = ({
   className,
   containerRef,
   fromRef,

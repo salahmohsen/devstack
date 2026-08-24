@@ -38,7 +38,7 @@ Built on [tsu-stack](https://github.com/tsu-moe/tsu-stack). Parts of the GitHub 
 
 Monorepo layout:
 
-```
+```text
 apps/
   web/      # TanStack Start UI
   server/   # Hono + oRPC API

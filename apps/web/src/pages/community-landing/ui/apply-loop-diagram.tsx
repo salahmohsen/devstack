@@ -51,27 +51,25 @@ export function ApplyLoopDiagram({ className }: { className?: string }) {
   ];
 
   const beams: Array<{
+    id: string;
     from: RefObject<HTMLDivElement | null>;
     to: RefObject<HTMLDivElement | null>;
     curvature: number;
     delay: number;
   }> = [
-    { from: discoverRef, to: trackRef, curvature: -12, delay: 0 },
-    { from: trackRef, to: packageRef, curvature: 12, delay: 0.35 },
-    { from: packageRef, to: publishRef, curvature: -12, delay: 0.7 }
+    { id: "discover-track", from: discoverRef, to: trackRef, curvature: -12, delay: 0 },
+    { id: "track-package", from: trackRef, to: packageRef, curvature: 12, delay: 0.35 },
+    { id: "package-publish", from: packageRef, to: publishRef, curvature: -12, delay: 0.7 }
   ];
 
   return (
     <div
-      ref={containerRef}
-      className={cn(
-        "relative min-w-0 overflow-hidden rounded-xl border bg-card/60 p-4 sm:p-6",
-        className
-      )}
+      className={cn("min-w-0 overflow-hidden rounded-xl border bg-card/60 p-4 sm:p-6", className)}
     >
       <p className="mb-5 text-sm font-medium text-foreground">How work moves through DEVSTACK</p>
 
-      <div className="relative grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* containerRef = SVG offset parent; must match AnimatedBeam's absolute ancestor */}
+      <div ref={containerRef} className="relative grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {STAGES.map((stage, index) => {
           const Icon = stage.icon;
           return (
@@ -94,9 +92,9 @@ export function ApplyLoopDiagram({ className }: { className?: string }) {
           );
         })}
 
-        {beams.map((beam, index) => (
+        {beams.map((beam) => (
           <AnimatedBeam
-            key={`beam-${index}`}
+            key={beam.id}
             containerRef={containerRef}
             fromRef={beam.from}
             toRef={beam.to}
