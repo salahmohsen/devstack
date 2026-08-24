@@ -184,7 +184,7 @@ head: () =>
 
 If you pass `title: "Articles"` and `titleTemplate: "%s | Example App"`, the output title fields become `Articles | Example App`.
 
-If you omit `title`, the package uses `site.defaultTitle`.
+If you omit `title`, the package uses `site.defaultTitle` as-is (the template is not applied). Use that for the marketing home / site root so you do not get `Example App | Example App`.
 
 ## Limitations
 

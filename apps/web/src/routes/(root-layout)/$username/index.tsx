@@ -3,8 +3,8 @@ import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { parseUsername } from "@tsu-stack/core/profile";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { generatePublicPortfolioSeo, portfolioSeoFields } from "@/shared/lib/public-portfolio-seo";
 import { getRequestHostname } from "@/shared/lib/request-host";
-import { generateAppSeo } from "@/shared/lib/seo";
 
 import { getDefaultResumeQueryOptions, getPortfolioListQueryOptions } from "@/features/portfolio";
 
@@ -42,8 +42,9 @@ export const Route = createFileRoute("/(root-layout)/$username/")({
     void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(username));
 
     // Portfolio is required for this page — missing profile → 404.
+    let portfolio;
     try {
-      await portfolioPromise;
+      portfolio = await portfolioPromise;
     } catch {
       throw notFound();
     }
@@ -59,15 +60,15 @@ export const Route = createFileRoute("/(root-layout)/$username/")({
       ]);
     }
 
-    return { username };
+    return { username, ...portfolioSeoFields(portfolio) };
   },
-  head: ({ params }) =>
-    generateAppSeo({
-      alternates: {
-        canonicalPath: `/${params.username}`
-      },
-      description: `Public portfolio for @${params.username}`,
-      title: `@${params.username}`
+  head: ({ loaderData, params }) =>
+    generatePublicPortfolioSeo({
+      username: loaderData?.username ?? params.username,
+      name: loaderData?.name,
+      image: loaderData?.image,
+      summary: loaderData?.summary,
+      canonicalPath: `/${params.username}`
     }),
   component: PublicProfilePage
 });

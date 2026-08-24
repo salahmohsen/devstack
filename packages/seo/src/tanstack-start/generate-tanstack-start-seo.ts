@@ -25,11 +25,15 @@ export function generateTanStackStartSeo({
 }: GenerateTanStackStartSeoParams): TanStackStartSeoHead {
   const resolvedDescription = description ?? site.defaultDescription;
   const resolvedImages = images?.length ? images : site.defaultImages;
-  const resolvedTitle = title ?? site.defaultTitle;
-  const formattedTitle = formatTanStackStartTitle({
-    site,
-    title: resolvedTitle
-  });
+  // Homepage / site default: use defaultTitle as-is. Apply titleTemplate only when
+  // a route passes an explicit page title (avoids "Site | Site").
+  const formattedTitle =
+    title === undefined
+      ? site.defaultTitle
+      : formatTanStackStartTitle({
+          site,
+          title
+        });
   const links = alternates
     ? generateTanStackStartAlternateLinks({
         ...alternates,

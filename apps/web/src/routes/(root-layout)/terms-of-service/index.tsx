@@ -12,7 +12,7 @@ export const Route = createFileRoute("/(root-layout)/terms-of-service/")({
       alternates: {
         canonicalPath: "/terms-of-service"
       },
-      description: `Review the rules, responsibilities, and terms for using ${appConfig.site.shortName}.`,
+      description: `Rules and responsibilities for using ${appConfig.site.shortName} on this install.`,
       title: "Terms of Service"
     }),
   component: TermsOfServicePage

@@ -3,8 +3,8 @@ import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { generatePublicPortfolioSeo, portfolioSeoFields } from "@/shared/lib/public-portfolio-seo";
 import { getRequestHostname } from "@/shared/lib/request-host";
-import { generateAppSeo } from "@/shared/lib/seo";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
@@ -34,7 +34,8 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
     }
     return {};
   },
-  ssr: false,
+  // SSR so portfolio name/image land in the initial document head for crawlers.
+  ssr: true,
   beforeLoad: async ({ context, location }) => {
     const host = getRequestHostname();
     if (host && isCustomDomainHost(host)) {
@@ -82,21 +83,26 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
       );
     }
 
-    void context.queryClient.prefetchQuery(getPortfolioListQueryOptions(username));
+    const portfolio = await context.queryClient
+      .ensureQueryData(getPortfolioListQueryOptions(username))
+      .catch(() => null);
 
-    return { filterStore, username, pathUsername: null as string | null };
+    return {
+      filterStore,
+      username,
+      pathUsername: null as string | null,
+      ...portfolioSeoFields(portfolio)
+    };
   },
   head: ({ loaderData }) =>
-    generateAppSeo({
-      alternates: {
-        canonicalPath: "/repos"
-      },
-      title: loaderData?.username ? `@${loaderData.username} · Repositories` : "Repositories",
-      description: "GitHub repositories for this portfolio",
-      robots: {
-        follow: true,
-        index: true
-      }
+    generatePublicPortfolioSeo({
+      username: loaderData?.username ?? "portfolio",
+      name: loaderData?.name,
+      image: loaderData?.image,
+      summary: loaderData?.summary,
+      canonicalPath: "/repos",
+      pageLabel: "Repositories",
+      openGraphType: "website"
     }),
   component: ReposIndexPage
 });
