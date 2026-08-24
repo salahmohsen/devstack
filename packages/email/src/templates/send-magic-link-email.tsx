@@ -17,7 +17,7 @@ const SendMagicLinkEmail = ({
   return (
     <EmailLayout preview="Your magic link to sign in" logoUrl={logoUrl}>
       <Heading className="mx-0 my-7.5 p-0 text-center text-[24px] font-normal text-black">
-        Sign in to <strong>DevHub</strong>
+        Sign in to <strong>DEVSTACK</strong>
       </Heading>
       <Text className="text-[14px] leading-6 text-black">Hi {username},</Text>
       <Text className="text-[14px] leading-6 text-black">

@@ -6,11 +6,11 @@ This doc is the **instance operator** checklist so that works after the compose 
 
 ## What broke in the migration
 
-| Layer       | Compose (worked)                         | Separate apps (broke)                                 |
-| ----------- | ---------------------------------------- | ----------------------------------------------------- |
-| Traefik web | `PathPrefix(\`/\`)` priority 1 catch-all | Dokploy only emits `Host(hub…)` per registered domain |
-| Tunnel      | Effectively any Host → Traefik           | Only **Published hostnames** (hub, api, …)            |
-| Tenant      | CNAME + TXT                              | Same — but edge no longer accepted unknown Hosts      |
+| Layer       | Compose (worked)                         | Separate apps (broke)                                      |
+| ----------- | ---------------------------------------- | ---------------------------------------------------------- |
+| Traefik web | `PathPrefix(\`/\`)` priority 1 catch-all | Dokploy only emits `Host(devstack…)` per registered domain |
+| Tunnel      | Effectively any Host → Traefik           | Only **Published hostnames** (devstack, api, …)            |
+| Tenant      | CNAME + TXT                              | Same — but edge no longer accepted unknown Hosts           |
 
 App logic (verify TXT, `Host` → portfolio) did not change.
 
@@ -19,7 +19,7 @@ App logic (verify TXT, `Host` → portfolio) did not change.
 Documented in dashboard Domain settings:
 
 1. **TXT** `_career-verify.<tenant-domain>` = verification token
-2. **CNAME** `<tenant-domain>` → primary app host from `VITE_WEB_URL` (e.g. `hub.example.com`)
+2. **CNAME** `<tenant-domain>` → primary app host from `VITE_WEB_URL` (e.g. `devstack.example.com`)
 3. **Verify** in the app
 
 The app routes by `Host` once traffic reaches the web container with `passHostHeader: true`.
@@ -30,7 +30,7 @@ Compose parity for `apps/web`:
 
 ```yaml
 # Primary app host (dashboard / cookies) — high priority
-Host(`hub.example.com`) → web:3000  priority 100
+Host(`devstack.example.com`) → web:3000  priority 100
 
 # Multi-tenant custom domains — low priority catch-all
 PathPrefix(`/`) → web:3000  priority 1

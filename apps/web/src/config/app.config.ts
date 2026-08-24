@@ -13,9 +13,9 @@ export const appConfig = Object.freeze({
     description: "Portfolio",
     emailSupport,
     jurisdictionCountry: "Egypt",
-    longName: "complete job applying solution | DevHub",
+    longName: "self-hostable job-apply assistant | DEVSTACK",
     serverLocation: "Japan",
-    shortName: "DevHub",
+    shortName: "DEVSTACK",
     url: ENV_WEB_ISOMORPHIC.VITE_WEB_URL,
     version: __BUILD_SOURCE_COMMIT__
   }

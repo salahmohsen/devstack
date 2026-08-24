@@ -17,7 +17,7 @@ The product purpose is the apply assistant. The public site is how that work is 
 
 ## Product Purpose
 
-DEV-STACK is a job-apply assistant: ingest career mail, track applications, generate apply packages, and talk to a hub agent — then publish the resulting evidence on a public portfolio/repos site owned by the same account.
+DEVSTACK is a job-apply assistant: ingest career mail, track applications, generate apply packages, and talk to a hub agent — then publish the resulting evidence on a public portfolio/repos site owned by the same account.
 
 Success is a closed loop: a real hiring signal in mail can become a tracked application, a drafted package, and an up-to-date public profile without leaving the tenant’s own keys and data.
 
@@ -48,9 +48,9 @@ Undecided (do not invent): pricing, licensing, open registration, a single marke
 
 ## Brand Commitments
 
-- **Public name:** DEV-STACK (navbar wordmark).
+- **Public name:** DEVSTACK (navbar wordmark).
 - **Internal/code:** `tsu-stack`, `personal-hub`.
-- **Email copy today still says DevHub** — treat that as current mail wording, not the public product name, until those templates are changed.
+- **Email / SEO:** use DEVSTACK (not DevHub or DEV-STACK).
 - Voice: product UI, short, task-first. Do not add promotional claims.
 
 ## Evidence on Hand

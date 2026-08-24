@@ -75,7 +75,7 @@ InviteUserEmail.PreviewProps = {
   invitedByName: "Salah Mohsen",
   invitedByEmail: "contact@example.com",
   invitedByImageUrl: "https://example.com/logo192.png",
-  productName: "DevHub",
+  productName: "DEVSTACK",
   productImageUrl: "https://example.com/logo192.png",
   inviteUrl: "https://example.com/sign-in/create-an-account?invite=abc123",
   logoUrl: "https://example.com/logo192.png"
