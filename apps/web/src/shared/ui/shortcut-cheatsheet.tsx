@@ -19,6 +19,7 @@ import {
   useShortcutCheatsheetOpen,
   type CommandBinding
 } from "@/shared/lib/commands";
+import { isPlaygroundCommandId, isPlaygroundEnabled } from "@/shared/lib/playground";
 import { HotkeyKbd } from "@/shared/ui/hotkey-kbd";
 
 const GROUP_ORDER = ["Global", "Pages", "Dashboard", "Settings", "Playground", "Tabs"] as const;
@@ -32,6 +33,7 @@ export function ShortcutCheatsheet() {
       GROUP_ORDER.flatMap((group) => {
         const commands = COMMAND_CATALOG.filter((command) => {
           if (command.group !== group) return false;
+          if (!isPlaygroundEnabled && isPlaygroundCommandId(command.id)) return false;
           return bindings[command.id] != null;
         }).map((command) => {
           return { command, binding: bindings[command.id] as CommandBinding };

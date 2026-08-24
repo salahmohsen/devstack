@@ -12,7 +12,7 @@ export const Route = createFileRoute("/(root-layout)/__protected/playground/")({
       alternates: {
         canonicalPath: "/playground"
       },
-      description: `Explore internal demos for images, RPC health checks, toasts, and error handling in ${appConfig.site.shortName}.`,
+      description: `Dev-only demos for images, RPC health checks, toasts, and error handling in ${appConfig.site.shortName}.`,
       robots: {
         follow: false,
         index: false

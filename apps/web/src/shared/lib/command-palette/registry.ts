@@ -302,25 +302,29 @@ registerCommands([
     action: { type: "navigate", to: "/dashboard/settings/shortcuts" }
   },
 
-  // —— Playground (auth) ——
-  {
-    id: "nav:playground",
-    label: "Playground",
-    group: "Playground",
-    icon: FlaskConical,
-    keywords: ["playground", "dev", "experiments"],
-    authRequired: true,
-    action: { type: "navigate", to: "/playground" }
-  },
-  {
-    id: "nav:playground-agent",
-    label: "Agent Playground",
-    group: "Playground",
-    icon: Bot,
-    keywords: ["agent", "playground", "mastra", "chat"],
-    authRequired: true,
-    action: { type: "navigate", to: "/playground/agent" }
-  }
+  // —— Playground (auth, DEV only) ——
+  ...(import.meta.env.DEV
+    ? ([
+        {
+          id: "nav:playground",
+          label: "Playground",
+          group: "Playground",
+          icon: FlaskConical,
+          keywords: ["playground", "dev", "experiments"],
+          authRequired: true,
+          action: { type: "navigate", to: "/playground" }
+        },
+        {
+          id: "nav:playground-agent",
+          label: "Agent Playground",
+          group: "Playground",
+          icon: Bot,
+          keywords: ["agent", "playground", "mastra", "chat"],
+          authRequired: true,
+          action: { type: "navigate", to: "/playground/agent" }
+        }
+      ] satisfies CommandItem[])
+    : [])
 
   // Profile (P R) and Repositories (R E P O) are injected in use-command-items
   // once a username is known so paths resolve correctly.

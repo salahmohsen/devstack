@@ -23,6 +23,7 @@ import { Route as rootLayoutUsernameIndexRouteImport } from './routes/(root-layo
 import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
+import { Route as rootLayout_protectedPlaygroundRouteRouteImport } from './routes/(root-layout)/__protected/playground/route'
 import { Route as rootLayout_protectedDashboardRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
@@ -142,6 +143,12 @@ const rootLayoutReposRepoRouteRoute =
     path: '/repos/$repo',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
+const rootLayout_protectedPlaygroundRouteRoute =
+  rootLayout_protectedPlaygroundRouteRouteImport.update({
+    id: '/playground',
+    path: '/playground',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardRouteRoute =
   rootLayout_protectedDashboardRouteRouteImport.update({
     id: '/dashboard',
@@ -173,9 +180,9 @@ const rootLayoutReposRepoIndexRoute =
   } as any)
 const rootLayout_protectedPlaygroundIndexRoute =
   rootLayout_protectedPlaygroundIndexRouteImport.update({
-    id: '/playground/',
-    path: '/playground/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => rootLayout_protectedPlaygroundRouteRoute,
   } as any)
 const rootLayout_protectedDashboardIndexRoute =
   rootLayout_protectedDashboardIndexRouteImport.update({
@@ -227,9 +234,9 @@ const rootLayoutUsernameReposRepoRouteRoute =
   } as any)
 const rootLayout_protectedPlaygroundAgentIndexRoute =
   rootLayout_protectedPlaygroundAgentIndexRouteImport.update({
-    id: '/playground/agent/',
-    path: '/playground/agent/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
+    id: '/agent/',
+    path: '/agent/',
+    getParentRoute: () => rootLayout_protectedPlaygroundRouteRoute,
   } as any)
 const rootLayout_protectedDashboardTrackedJobsIndexRoute =
   rootLayout_protectedDashboardTrackedJobsIndexRouteImport.update({
@@ -419,6 +426,7 @@ export interface FileRoutesByFullPath {
   '/': typeof rootLayoutIndexRoute
   '/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/dashboard': typeof rootLayout_protectedDashboardRouteRouteWithChildren
+  '/playground': typeof rootLayout_protectedPlaygroundRouteRouteWithChildren
   '/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -534,6 +542,7 @@ export interface FileRoutesById {
   '/(root-layout)/': typeof rootLayoutIndexRoute
   '/(root-layout)/(guest)/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/(root-layout)/__protected/dashboard': typeof rootLayout_protectedDashboardRouteRouteWithChildren
+  '/(root-layout)/__protected/playground': typeof rootLayout_protectedPlaygroundRouteRouteWithChildren
   '/(root-layout)/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -595,6 +604,7 @@ export interface FileRouteTypes {
     | '/'
     | '/sign-in'
     | '/dashboard'
+    | '/playground'
     | '/repos/$repo'
     | '/_api/health/live'
     | '/api/media/$'
@@ -709,6 +719,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/'
     | '/(root-layout)/(guest)/sign-in'
     | '/(root-layout)/__protected/dashboard'
+    | '/(root-layout)/__protected/playground'
     | '/(root-layout)/repos/$repo'
     | '/_api/health/live'
     | '/api/media/$'
@@ -874,6 +885,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutReposRepoRouteRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
+    '/(root-layout)/__protected/playground': {
+      id: '/(root-layout)/__protected/playground'
+      path: '/playground'
+      fullPath: '/playground'
+      preLoaderRoute: typeof rootLayout_protectedPlaygroundRouteRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
     '/(root-layout)/__protected/dashboard': {
       id: '/(root-layout)/__protected/dashboard'
       path: '/dashboard'
@@ -911,10 +929,10 @@ declare module '@tanstack/react-router' {
     }
     '/(root-layout)/__protected/playground/': {
       id: '/(root-layout)/__protected/playground/'
-      path: '/playground'
+      path: '/'
       fullPath: '/playground/'
       preLoaderRoute: typeof rootLayout_protectedPlaygroundIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
+      parentRoute: typeof rootLayout_protectedPlaygroundRouteRoute
     }
     '/(root-layout)/__protected/dashboard/': {
       id: '/(root-layout)/__protected/dashboard/'
@@ -974,10 +992,10 @@ declare module '@tanstack/react-router' {
     }
     '/(root-layout)/__protected/playground/agent/': {
       id: '/(root-layout)/__protected/playground/agent/'
-      path: '/playground/agent'
+      path: '/agent'
       fullPath: '/playground/agent/'
       preLoaderRoute: typeof rootLayout_protectedPlaygroundAgentIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
+      parentRoute: typeof rootLayout_protectedPlaygroundRouteRoute
     }
     '/(root-layout)/__protected/dashboard/tracked-jobs/': {
       id: '/(root-layout)/__protected/dashboard/tracked-jobs/'
@@ -1339,20 +1357,35 @@ const rootLayout_protectedDashboardRouteRouteWithChildren =
     rootLayout_protectedDashboardRouteRouteChildren,
   )
 
-interface rootLayout_protectedRouteRouteChildren {
-  rootLayout_protectedDashboardRouteRoute: typeof rootLayout_protectedDashboardRouteRouteWithChildren
+interface rootLayout_protectedPlaygroundRouteRouteChildren {
   rootLayout_protectedPlaygroundIndexRoute: typeof rootLayout_protectedPlaygroundIndexRoute
   rootLayout_protectedPlaygroundAgentIndexRoute: typeof rootLayout_protectedPlaygroundAgentIndexRoute
+}
+
+const rootLayout_protectedPlaygroundRouteRouteChildren: rootLayout_protectedPlaygroundRouteRouteChildren =
+  {
+    rootLayout_protectedPlaygroundIndexRoute:
+      rootLayout_protectedPlaygroundIndexRoute,
+    rootLayout_protectedPlaygroundAgentIndexRoute:
+      rootLayout_protectedPlaygroundAgentIndexRoute,
+  }
+
+const rootLayout_protectedPlaygroundRouteRouteWithChildren =
+  rootLayout_protectedPlaygroundRouteRoute._addFileChildren(
+    rootLayout_protectedPlaygroundRouteRouteChildren,
+  )
+
+interface rootLayout_protectedRouteRouteChildren {
+  rootLayout_protectedDashboardRouteRoute: typeof rootLayout_protectedDashboardRouteRouteWithChildren
+  rootLayout_protectedPlaygroundRouteRoute: typeof rootLayout_protectedPlaygroundRouteRouteWithChildren
 }
 
 const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChildren =
   {
     rootLayout_protectedDashboardRouteRoute:
       rootLayout_protectedDashboardRouteRouteWithChildren,
-    rootLayout_protectedPlaygroundIndexRoute:
-      rootLayout_protectedPlaygroundIndexRoute,
-    rootLayout_protectedPlaygroundAgentIndexRoute:
-      rootLayout_protectedPlaygroundAgentIndexRoute,
+    rootLayout_protectedPlaygroundRouteRoute:
+      rootLayout_protectedPlaygroundRouteRouteWithChildren,
   }
 
 const rootLayout_protectedRouteRouteWithChildren =
