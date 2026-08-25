@@ -44,7 +44,7 @@ function buildProjectChunkPrompt(
 
   return `Rewrite portfolio projects for this job application (chunk ${chunkIndex}/${chunkCount}).
 
-Activate the **application-apply-package** skill first, then rewrite.
+Follow application-apply-package rewrite rules. Tools are disabled — return JSON only.
 
 Job brief (JSON):
 ${JSON.stringify(

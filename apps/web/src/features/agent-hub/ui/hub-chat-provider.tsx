@@ -17,6 +17,7 @@ import {
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
   cancelOutputForHubHitl,
+  sealWaitingHubHitlOnRemount,
   staleWaitingHubConfirmCards,
   waitingHubConfirmCards
 } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
@@ -119,7 +120,18 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     // gated on Cloud remoteId). joinStrategy concat-content merges consecutive
     // assistants, so persist the latest sibling path — durable history is linear.
     const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(uiMessages));
-    setMessagesRef.current(linear.length > 0 ? linear : uiMessages);
+    const base = linear.length > 0 ? linear : uiMessages;
+    // Seal waiting HITL before first paint — post-paint remount cancel races
+    // live GenUI cards (preview/take queries) and can lock Chrome's main thread.
+    const sealed = sealWaitingHubHitlOnRemount(base);
+    if (sealed.cancelledIds.length > 0) {
+      markHubHitlAbandonedOnRemount(sealed.cancelledIds);
+      for (const id of sealed.cancelledIds) {
+        cancelledStaleIdsRef.current.add(id);
+      }
+      remountCancelDoneRef.current = true;
+    }
+    setMessagesRef.current(sealed.messages as typeof messages);
   }, []);
 
   const ensureHistory = React.useCallback((): Promise<void> => {
@@ -130,13 +142,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
         try {
           const page = await fetchHubMessagesPage(0);
           historyRetryAttemptRef.current = 0;
-          const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(page.uiMessages));
           markHubHitlRemountSeen();
-          markHubHitlAbandonedOnRemount(
-            waitingHubConfirmCards(linear.length > 0 ? linear : page.uiMessages).map(
-              (card) => card.toolCallId
-            )
-          );
           // Initial hydrate must replace — a stale empty Chat path must not block import.
           importHistory(page.uiMessages, true);
           setHasMoreHistory(page.hasMore);

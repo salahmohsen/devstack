@@ -24,13 +24,90 @@ type RaceGenerateAgent = {
   generate: (
     messages: Array<{ role: "user"; content: string }>,
     options: {
-      structuredOutput: { schema: z.ZodTypeAny };
+      structuredOutput: {
+        schema: z.ZodTypeAny;
+        /** Prefer capability-aware injection for BYO models without native SO. */
+        jsonPromptInjection?: boolean | "auto" | "inline" | "system";
+      };
       model: GenerateModelOverride;
       requestContext: RequestContext;
       modelSettings?: { maxOutputTokens?: number };
+      /**
+       * Apply-package agent registers skill tools. Combining tools + structured
+       * output breaks several BYO models (object comes back undefined). Disable
+       * tools for these chunk generates — prompts already carry rewrite rules.
+       */
+      toolChoice?: "auto" | "none" | "required";
     }
-  ) => Promise<{ object?: unknown }>;
+  ) => Promise<{ object?: unknown; text?: string }>;
 };
+
+/** First complete JSON object/array in `text`, ignoring trailing prose. */
+export function extractFirstJsonValue(text: string): unknown {
+  const start = text.search(/[[{]/);
+  if (start < 0) return undefined;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i]!;
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{" || ch === "[") depth += 1;
+    else if (ch === "}" || ch === "]") {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(text.slice(start, i + 1)) as unknown;
+        } catch {
+          return undefined;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+/** Pull JSON from a generate result when `.object` is missing (common with skill tools / prompt-injection SO). */
+export function extractStructuredGeneratePayload(result: {
+  object?: unknown;
+  text?: string;
+}): unknown {
+  if (result.object !== undefined && result.object !== null) {
+    return result.object;
+  }
+  const text = typeof result.text === "string" ? result.text.trim() : "";
+  if (!text) return undefined;
+
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = (fenced?.[1] ?? text).trim();
+  try {
+    return JSON.parse(candidate) as unknown;
+  } catch {
+    return extractFirstJsonValue(candidate);
+  }
+}
+
+function formatSchemaFailure(error: z.ZodError): string {
+  const issue = error.issues[0];
+  if (!issue) return error.message.slice(0, 200);
+  const path = issue.path.length > 0 ? issue.path.join(".") : "(root)";
+  return `${issue.code} at ${path}: ${issue.message}`.slice(0, 200);
+}
 
 /**
  * Structured generate with timeout race + schema safeParse.
@@ -50,13 +127,18 @@ export async function raceGenerate<TSchema extends z.ZodTypeAny>(
 ): Promise<z.infer<TSchema>> {
   const { maxOutputTokens, timeoutMs, stepLabel } = options;
 
-  let result: { object?: unknown };
+  let result: { object?: unknown; text?: string };
   try {
     result = await Promise.race([
       agent.generate([{ role: "user", content: prompt }], {
-        structuredOutput: { schema },
+        structuredOutput: {
+          schema,
+          // opencode-go/minimax-m3 and similar BYO routes lack native SO.
+          jsonPromptInjection: "auto"
+        },
         model,
         requestContext,
+        toolChoice: "none",
         // CallSettings (AI SDK / Mastra in-process) uses maxOutputTokens; HTTP probe uses maxTokens.
         modelSettings: { maxOutputTokens }
       }),
@@ -72,10 +154,21 @@ export async function raceGenerate<TSchema extends z.ZodTypeAny>(
     throw new Error(`${stepLabel}: ${message}`);
   }
 
-  const parsed = schema.safeParse(result.object);
+  const payload = extractStructuredGeneratePayload(result);
+  if (payload === undefined) {
+    const textPreview =
+      typeof result.text === "string" && result.text.trim().length > 0
+        ? result.text.trim().slice(0, 120)
+        : "(empty)";
+    throw new Error(
+      `${stepLabel}: apply_package_schema_failed: no structured object (text=${textPreview})`
+    );
+  }
+
+  const parsed = schema.safeParse(payload);
   if (!parsed.success) {
     throw new Error(
-      `${stepLabel}: apply_package_schema_failed: ${parsed.error.message.slice(0, 200)}`
+      `${stepLabel}: apply_package_schema_failed: ${formatSchemaFailure(parsed.error)}`
     );
   }
 

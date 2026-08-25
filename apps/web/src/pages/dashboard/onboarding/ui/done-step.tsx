@@ -83,7 +83,7 @@ export function DoneStep({ summary, skipped, onImportAnother }: DoneStepProps) {
               Import a resume
             </Button>
           ) : null}
-          <Button render={<Link to="/dashboard" />} size="sm">
+          <Button render={<Link to="/dashboard/agent" />} size="sm">
             <LayoutDashboardIcon />
             Open dashboard
           </Button>

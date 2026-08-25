@@ -185,8 +185,8 @@ export function AdminUsersPage() {
           return;
         }
         setConfirm(null);
-        void navigate({ to: "/dashboard" });
-        window.location.assign("/dashboard");
+        void navigate({ to: "/dashboard/agent" });
+        window.location.assign("/dashboard/agent");
       })
       .catch((error: Error) => onError(error));
   };

@@ -5,7 +5,7 @@ import {
   Tools,
   type ToolCallMessagePartProps
 } from "@assistant-ui/react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import * as React from "react";
 import { z } from "zod";
 
@@ -27,6 +27,8 @@ import {
   type ProposeNewJobsTriageOutput
 } from "@tsu-stack/core";
 
+import { isDashboardAgentPath } from "@/shared/lib/dashboard-paths";
+import { requestPreparePackageHandoff } from "@/shared/lib/prepare-package-handoff";
 import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 
 import { useApplicationsByTrackingQuery } from "@/features/agent-hub/api/applications-by-tracking.query";
@@ -34,7 +36,6 @@ import {
   useCreateApplicationFromJdMutation,
   useDismissApplicationFromJdMutation,
   useDismissInboxJobMutation,
-  useGenerateApplyPackageFromJdMutation,
   usePromoteInboxJobMutation
 } from "@/features/agent-hub/api/create-from-jd.mutation";
 import { HUB_AUI_SUGGESTIONS } from "@/features/agent-hub/api/hub-suggestions";
@@ -49,6 +50,8 @@ import {
   mergeJdProposalWithListingPreview,
   shouldGenerateJdProposalTake
 } from "@/features/agent-hub/lib/complete-jd-proposal";
+import { clearDailyBriefRequest } from "@/features/agent-hub/lib/daily-brief-host-store";
+import { requestEntityInspect } from "@/features/agent-hub/lib/entity-inspect-host-store";
 import {
   findHubApprovalId,
   withApprovalRequested
@@ -146,18 +149,29 @@ function ProposeApplicationFromJdToolUI({
 }: ToolCallMessagePartProps<ProposeArgs, ProposeApplicationFromJdOutput>) {
   const { addToolOutput, messages } = useHubChat();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onDashboardHome = isDashboardAgentPath(pathname);
   const createApplication = useCreateApplicationFromJdMutation();
   const dismissApplication = useDismissApplicationFromJdMutation();
-  const generatePackage = useGenerateApplyPackageFromJdMutation();
   const dismissedList = useApplicationsByTrackingQuery("dismissed");
   const [localAction, setLocalAction] = React.useState<ApplicationFromJdCardAction | null>(null);
+  const abandoned = React.useSyncExternalStore(
+    subscribeHubHitlRemount,
+    () => isHubHitlAbandonedOnRemount(toolCallId),
+    () => false
+  );
   const parsedInput = parseProposeApplicationFromJdInput(args);
   const listingHref = parsedInput.url ?? parsedInput.applyUrl ?? null;
+  const outputActionEarly = parseProposeApplicationFromJdOutputAction(result);
   const listingPreview = usePreviewListingQuery(listingHref);
   const mergedInput = mergeJdProposalWithListingPreview(parsedInput, listingPreview.data);
+  // Remount-abandoned / already-resolved cards must not kick LinkedIn preview takes.
   const takeQuery = usePreviewListingTakeQuery(
     mergedInput,
-    !listingPreview.isLoading && shouldGenerateJdProposalTake(mergedInput)
+    !abandoned &&
+      outputActionEarly == null &&
+      !listingPreview.isLoading &&
+      shouldGenerateJdProposalTake(mergedInput)
   );
   const generatedTake =
     takeQuery.data?.ok === true ? normalizeAgentTakeText(takeQuery.data.text ?? "") : "";
@@ -239,12 +253,9 @@ function ProposeApplicationFromJdToolUI({
   const flushedRef = React.useRef(false);
   React.useEffect(() => {
     if (flushedRef.current || !toolCallId) return;
-    if (outputAction) {
-      if (outputAction === "package" || outputAction === "save" || outputAction === "dismiss") {
-        dismissSiblingProposals();
-      }
-      return;
-    }
+    // Historical tool results must not cancel a newly waiting sibling card.
+    // Sibling dismiss belongs on the completing submit / first-flush paths only.
+    if (outputAction) return;
     if (resolvedElsewhere || superseded) {
       flushedRef.current = true;
       rememberJdCardAction(toolCallId, "dismiss");
@@ -284,19 +295,30 @@ function ProposeApplicationFromJdToolUI({
       }
 
       const created = await createApplication.mutateAsync(createInputFromJdProposal(input));
+      // Package: queue Prepare (layout host starts generate). Do not await generation.
       if (next === "package") {
-        try {
-          await generatePackage.mutateAsync({ applicationId: created.id });
-        } catch {
-          // Job is tracked; package can be retried from the side panel.
-        }
+        requestPreparePackageHandoff(created.id);
       }
 
       setLocalAction(next);
       rememberJdCardAction(toolCallId, next);
       completeProposal(jdProposalOutput(next, created.id));
+
+      // Main hub chat: open inspect in place. Floater: redirect to Tracked jobs.
+      if (onDashboardHome) {
+        clearDailyBriefRequest();
+        requestEntityInspect({
+          requestId: toolCallId,
+          kind: "application",
+          id: created.id,
+          toolCallId,
+          toolName: resolvedToolName
+        });
+        return;
+      }
+
       requestOpenHubAssistant();
-      await navigate({
+      void navigate({
         to: "/dashboard/tracked-jobs",
         search: { applicationId: created.id }
       });
@@ -306,9 +328,10 @@ function ProposeApplicationFromJdToolUI({
       createApplication,
       dismissApplication,
       dismissSiblingProposals,
-      generatePackage,
       input,
       navigate,
+      onDashboardHome,
+      resolvedToolName,
       toolCallId
     ]
   );

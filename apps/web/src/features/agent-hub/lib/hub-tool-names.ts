@@ -637,14 +637,15 @@ export function parseProposeApplicationFromJdInput(
   const o = input as Record<string, unknown>;
   const notes =
     typeof o.notes === "string" ? o.notes : typeof o.agentTake === "string" ? o.agentTake : null;
-  const url =
+  const rawUrl =
     typeof o.url === "string" ? o.url : typeof o.listingUrl === "string" ? o.listingUrl : null;
+  const rawApplyUrl = typeof o.applyUrl === "string" ? o.applyUrl : null;
   return {
     title: typeof o.title === "string" ? o.title : "",
     companyName: typeof o.companyName === "string" ? o.companyName : "",
     description: typeof o.description === "string" ? o.description : "",
-    url,
-    applyUrl: typeof o.applyUrl === "string" ? o.applyUrl : null,
+    url: sanitizeParsedHttpUrl(rawUrl),
+    applyUrl: sanitizeParsedHttpUrl(rawApplyUrl),
     location: typeof o.location === "string" ? o.location : null,
     salaryRange: typeof o.salaryRange === "string" ? o.salaryRange : null,
     applyMethod: parseEnum(o.applyMethod, ApplicationApplyMethodSchema),
@@ -680,6 +681,20 @@ function parseSkillNames(value: unknown): string[] {
     if (out.length >= 24) break;
   }
   return out;
+}
+
+/** Drop LLM sentinels ("None") and non-http(s) strings before the create mutation. */
+function sanitizeParsedHttpUrl(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (trimmed.length === 0) return null;
+  if (/^(none|null|undefined|n\/?a|nil|-)$/i.test(trimmed)) return null;
+  try {
+    const parsed = new URL(trimmed);
+    if (!/^https?:$/i.test(parsed.protocol)) return null;
+    return trimmed;
+  } catch {
+    return null;
+  }
 }
 
 function coerceMatchScore(value: unknown): number | null {

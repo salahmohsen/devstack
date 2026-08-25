@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   cancelOutputForHubHitl,
+  sealWaitingHubHitlOnRemount,
   staleWaitingHubConfirmCards,
   toolCallIsOnLatestAssistant,
   waitingHubConfirmCards
@@ -89,5 +90,25 @@ describe("cancel stale hub HITL", () => {
     const messages = [message("a1", [waitingTriage])];
     expect(waitingHubConfirmCards(messages)).toEqual([]);
     vi.unstubAllGlobals();
+  });
+
+  it("seals every waiting Confirm before first paint (including latest)", () => {
+    const waitingJd = {
+      type: "tool-proposeApplicationFromJd",
+      toolCallId: "jd-latest",
+      toolName: "proposeApplicationFromJd",
+      state: "input-available",
+      input: { title: "Eng", companyName: "Acme", description: "Build", url: null }
+    } as never;
+    const messages = [message("a1", [waitingTriage]), message("a2", [waitingJd])];
+    const sealed = sealWaitingHubHitlOnRemount(messages);
+    expect(sealed.cancelledIds).toEqual(["old", "jd-latest"]);
+    expect(waitingHubConfirmCards(sealed.messages)).toEqual([]);
+    const latestPart = sealed.messages[1]?.parts?.[0] as {
+      state?: string;
+      output?: { action?: string };
+    };
+    expect(latestPart.state).toBe("output-available");
+    expect(latestPart.output).toEqual({ action: "dismiss" });
   });
 });

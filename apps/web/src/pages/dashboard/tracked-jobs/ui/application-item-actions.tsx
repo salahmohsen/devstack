@@ -81,7 +81,9 @@ export function ApplicationItemActions({
   slots,
   density = "full",
   hidePrimaryKind = null,
-  hideOpenListing = false
+  hideOpenListing = false,
+  showBatchSelect = true,
+  showView = true
 }: {
   app: ApplicationOutput;
   slots: ApplicationActionSlots;
@@ -90,6 +92,12 @@ export function ApplicationItemActions({
   hidePrimaryKind?: ApplicationPrimaryActionKind | null;
   /** Omit Open listing when it already appears as a Group segment. */
   hideOpenListing?: boolean;
+  /**
+   * Board/list multi-select. Off for single-item inspect panel menus.
+   */
+  showBatchSelect?: boolean;
+  /** Off for inspect panel — already viewing this job. */
+  showView?: boolean;
 }) {
   const { openEdit, openView, selectedIds, toggleSelect, openDeleteConfirm } =
     useApplicationStore();
@@ -106,35 +114,41 @@ export function ApplicationItemActions({
   const isBatchSelected = selectedIds.includes(app.id);
   const showOpenListing =
     Boolean(openListing) && hidePrimaryKind !== "open-listing" && !hideOpenListing;
+  const showEdit = density === "full";
+  const hasTopActions = showView || showOpenListing || showEdit || showBatchSelect;
 
   return (
     <>
-      <Item onClick={() => openView(app)}>
-        <EyeIcon aria-hidden="true" />
-        View
-      </Item>
+      {showView ? (
+        <Item onClick={() => openView(app)}>
+          <EyeIcon aria-hidden="true" />
+          View
+        </Item>
+      ) : null}
       {showOpenListing ? (
         <Item onClick={openListing}>
           <ExternalLinkIcon aria-hidden="true" />
           {APPLICATION_PRIMARY_ACTION_LABELS.openListing}
         </Item>
       ) : null}
-      {density === "full" ? (
+      {showEdit ? (
         <Item onClick={() => openEdit(app)}>
           <PencilIcon aria-hidden="true" />
           Edit
         </Item>
       ) : null}
-      <Item onClick={() => toggleSelect(app.id)}>
-        {isBatchSelected ? (
-          <SquareCheckIcon aria-hidden="true" />
-        ) : (
-          <SquareIcon aria-hidden="true" />
-        )}
-        {isBatchSelected ? "Deselect" : "Select"}
-      </Item>
+      {showBatchSelect ? (
+        <Item onClick={() => toggleSelect(app.id)}>
+          {isBatchSelected ? (
+            <SquareCheckIcon aria-hidden="true" />
+          ) : (
+            <SquareIcon aria-hidden="true" />
+          )}
+          {isBatchSelected ? "Deselect" : "Select"}
+        </Item>
+      ) : null}
 
-      <Separator />
+      {hasTopActions ? <Separator /> : null}
 
       <Sub>
         <SubTrigger>
@@ -186,7 +200,7 @@ export function ApplicationItemActions({
 
       <Separator />
 
-      <Item variant="destructive" onClick={() => openDeleteConfirm(app.id)}>
+      <Item variant="destructive" onClick={() => openDeleteConfirm(app)}>
         <Trash2Icon aria-hidden="true" />
         Delete
       </Item>

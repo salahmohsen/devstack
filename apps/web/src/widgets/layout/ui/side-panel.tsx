@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 
 import {
   dismissDashboardSidePanel,
+  subscribeSidePanelClose,
   subscribeSidePanelExpand
 } from "@/shared/lib/side-panel-control";
 
@@ -82,8 +83,20 @@ export function useSidePanelSlot() {
     if (dismissDashboardSidePanel()) return;
     inspectCountRef.current = 0;
     setInspectOpen(false);
+    setHasContent(false);
   }, []);
   useEffect(() => subscribeSidePanelExpand(() => setCollapsed(false)), []);
+  // Delete / programmatic dismiss only notifies close listeners — they must
+  // collapse the shell even if the portal unmount is still a tick away.
+  useEffect(
+    () =>
+      subscribeSidePanelClose(() => {
+        inspectCountRef.current = 0;
+        setInspectOpen(false);
+        setHasContent(false);
+      }),
+    []
+  );
   return {
     node,
     setNode,

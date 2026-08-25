@@ -108,7 +108,7 @@ export function HubAssistantModal({ className }: { className?: string }) {
               onClick={() => {
                 consumeOpenHubAssistant();
               }}
-              render={<Link to="/dashboard" />}
+              render={<Link to="/dashboard/agent" />}
             >
               <Maximize2 className="size-4" aria-hidden />
             </Button>

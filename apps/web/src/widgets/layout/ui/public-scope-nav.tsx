@@ -87,14 +87,18 @@ export function PublicScopeNav({ className }: { className?: string }) {
         {nav.showDashboard ? (
           customHost ? (
             <MorphNavItem
-              href={primaryAppUrl("/dashboard")}
+              href={primaryAppUrl("/dashboard/agent")}
               active={nav.active === "dashboard"}
               label="Dashboard"
             >
               <DashboardLabel />
             </MorphNavItem>
           ) : (
-            <MorphNavItem to="/dashboard" active={nav.active === "dashboard"} label="Dashboard">
+            <MorphNavItem
+              to="/dashboard/agent"
+              active={nav.active === "dashboard"}
+              label="Dashboard"
+            >
               <DashboardLabel />
             </MorphNavItem>
           )

@@ -101,7 +101,6 @@ import {
   useDeleteApplicationsMutation,
   useDismissApplicationMutation,
   flattenApplicationsPages,
-  useGenerateApplyPackageMutation,
   useListApplicationsPageInfiniteQuery,
   usePromoteApplicationMutation,
   useRefreshFromListingJob,
@@ -143,6 +142,7 @@ import {
 import { FixPostingUrlDialog } from "@/pages/dashboard/new-jobs/ui/fix-posting-url-dialog";
 import { NewJobsDiscoveryActions } from "@/pages/dashboard/new-jobs/ui/new-jobs-discovery-actions";
 import { UpdateDescriptionDialog } from "@/pages/dashboard/new-jobs/ui/update-description-dialog";
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 
 const ApplicationFormSheet = lazy(() =>
   import("@/pages/dashboard/tracked-jobs/application-form-sheet").then((m) => {
@@ -165,14 +165,6 @@ const ApplicationInfoPanel = lazy(() =>
     };
   })
 );
-const ApplyPackageSheet = lazy(() =>
-  import("@/pages/dashboard/tracked-jobs/ui/apply-package-sheet").then((m) => {
-    return {
-      default: m.ApplyPackageSheet
-    };
-  })
-);
-
 type NewJobsTracking = Extract<ApplicationTrackingStatus, "inbox" | "dismissed">;
 
 const NEW_JOBS_SORT_OPTIONS = [
@@ -503,7 +495,6 @@ export function NewJobsPage() {
     }, [])
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [packageApplication, setPackageApplication] = useState<ApplicationOutput | null>(null);
   const [descriptionApp, setDescriptionApp] = useState<ApplicationOutput | null>(null);
   const [fixUrlApp, setFixUrlApp] = useState<ApplicationOutput | null>(null);
   const [editApp, setEditApp] = useState<ApplicationOutput | null>(null);
@@ -540,10 +531,26 @@ export function NewJobsPage() {
   const restore = useRestoreApplicationMutation();
   const batchDismiss = useBatchDismissApplicationsMutation();
   const batchRestore = useBatchRestoreApplicationsMutation();
-  const generatePackage = useGenerateApplyPackageMutation();
+  const requestPreparePackage = useApplicationStore().requestPreparePackage;
   const regenerateTake = useRegenerateAgentTakeMutation();
   const agentTakeJob = useAgentTakeJob();
   const deleteApps = useDeleteApplicationsMutation();
+
+  /**
+   * Promote → open on Tracked jobs → Prepare there.
+   * Prepare is queued in the shared store so navigate does not drop mutate callbacks.
+   */
+  const trackAndPackage = useCallback(
+    async (app: ApplicationOutput) => {
+      await promote.mutateAsync({ id: app.id });
+      requestPreparePackage(app.id);
+      void navigate({
+        to: "/dashboard/tracked-jobs",
+        search: { applicationId: app.id }
+      });
+    },
+    [navigate, promote, requestPreparePackage]
+  );
 
   const jobs = useMemo(() => flattenApplicationsPages(listQuery.data), [listQuery.data]);
   const totalCount = listQuery.data?.pages[0]?.totalCount;
@@ -940,17 +947,7 @@ export function NewJobsPage() {
                         setFixUrlApp(job);
                         return;
                       }
-                      void run(
-                        job.id,
-                        async () => {
-                          await promote.mutateAsync({ id: job.id });
-                          const packed = await generatePackage.mutateAsync({
-                            applicationId: job.id
-                          });
-                          setPackageApplication(packed);
-                        },
-                        "Tracked — package ready"
-                      );
+                      void run(job.id, () => trackAndPackage(job), "Moved to Tracked jobs");
                     },
                     onRegenerateTake: () => {
                       void regenerateTake.mutateAsync({
@@ -1090,16 +1087,6 @@ export function NewJobsPage() {
             />
           ) : null}
 
-          {packageApplication ? (
-            <ApplyPackageSheet
-              open
-              application={packageApplication}
-              onOpenChange={(open) => {
-                if (!open) setPackageApplication(null);
-              }}
-            />
-          ) : null}
-
           {editApp != null && !hostOwnsPanel ? (
             <ApplicationFormSheet
               key={editApp.id ?? "new-jobs-edit"}
@@ -1134,17 +1121,7 @@ export function NewJobsPage() {
                 action: {
                   label: "Track & package",
                   onClick: () => {
-                    void run(
-                      app.id,
-                      async () => {
-                        await promote.mutateAsync({ id: app.id });
-                        const packed = await generatePackage.mutateAsync({
-                          applicationId: app.id
-                        });
-                        setPackageApplication(packed);
-                      },
-                      "Tracked — package ready"
-                    );
+                    void run(app.id, () => trackAndPackage(app), "Moved to Tracked jobs");
                   }
                 },
                 duration: 12_000

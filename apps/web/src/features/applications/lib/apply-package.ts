@@ -40,7 +40,9 @@ export function getApplyPackageEntryState(
   const hasMaterials = hasAcceptedMaterials(app);
 
   if (options?.reviewApplyKit === false) {
-    if (hasMaterials || hasDraft) return "accepted";
+    // Materials = real kit. Orphan drafts without materials must not look
+    // "accepted" (Prepare again) — that hid failed hub package runs.
+    if (hasMaterials) return "accepted";
     return "none";
   }
 

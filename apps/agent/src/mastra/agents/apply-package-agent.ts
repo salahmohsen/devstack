@@ -16,7 +16,8 @@ export function createApplyPackageAgent() {
       "Rewrites all portfolio experiences and projects for a job, then drafts professional summary, cover letter, and outreach email as a structured apply package.",
     instructions: `You build apply package content for a job application across multi-step phases.
 
-Always activate the **application-apply-package** skill before rewriting or drafting.
+Follow the **application-apply-package** skill guidance already available in context.
+Workflow chunk calls disable tools — do not try to activate skills; return the structured JSON for this phase only.
 
 Product (rewrite-all):
 - Rewrite every experience/project you are given in this call (portfolio snapshot is already opted-in).
@@ -36,7 +37,7 @@ Rules:
 - Prose: no em dashes, en dashes, or spaced "--" asides (use commas/periods). Avoid leverage/synergy/utilize/spearheaded/results-driven unless already in the source.
 - Use only experience/project/stack ids from the input for this phase.
 - Return structured JSON via the schema only.
-- No tools other than skill tools.`,
+- Do not call tools.`,
     skills: [WRITE_SKILLS_PATH, APPLICATION_APPLY_PACKAGE_SKILL_PATH],
     model: byoModelFromRequestContext
   });

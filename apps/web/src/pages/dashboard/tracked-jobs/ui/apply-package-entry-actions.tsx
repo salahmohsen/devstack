@@ -11,12 +11,11 @@ import {
   RefreshCwIcon,
   SparklesIcon
 } from "lucide-react";
-import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { type ApplicationOutput, isApplicationOpen } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
-import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Dialog,
@@ -133,7 +132,10 @@ function runMaterialAction(
   }
 }
 
-/** Page-level host — do not mount inside Menu/ContextMenu (unmount closes dialog). */
+/**
+ * Preview dialog for kit materials. Hosted by dashboard layout
+ * (`ApplicationMaterialPreviewHost`) — not inside Menu/ContextMenu.
+ */
 export function ApplicationMaterialPreviewDialog({
   app,
   kind,
@@ -258,10 +260,10 @@ export function ApplyPackageMenuItems({
   hidePrimaryKind = null
 }: ApplyPackageMenuItemsProps) {
   const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
-  const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
+  const { openSendOutreach, openEdit, openMaterialPreview, openRegenerateConfirm } =
+    useApplicationStore();
   const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
     useDashboardApplyPackage();
-  const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app, { reviewApplyKit });
   const open = isApplicationOpen(app.outcome);
   const generating = isPendingFor(app.id);
@@ -269,17 +271,13 @@ export function ApplyPackageMenuItems({
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
 
-  function generate() {
-    runGenerate(app.id, () => setRegenerateOpen(false));
-  }
-
   return (
     <>
       <Separator />
       {entryState === "none" ? (
         hasDescription ? (
           hidePrimaryKind === "prepare" ? null : (
-            <Item disabled={!open || generating} onClick={() => open && generate()}>
+            <Item disabled={!open || generating} onClick={() => open && runGenerate(app.id)}>
               <SparklesIcon aria-hidden="true" />
               {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepare}
             </Item>
@@ -299,7 +297,10 @@ export function ApplyPackageMenuItems({
               {APPLICATION_PRIMARY_ACTION_LABELS.review}
             </Item>
           )}
-          <Item disabled={!open || generating} onClick={() => open && setRegenerateOpen(true)}>
+          <Item
+            disabled={!open || generating}
+            onClick={() => open && openRegenerateConfirm(app.id)}
+          >
             <RefreshCwIcon aria-hidden="true" />
             Regenerate
           </Item>
@@ -342,7 +343,10 @@ export function ApplyPackageMenuItems({
             </Sub>
           ) : null}
           {hidePrimaryKind === "prepare-again" ? null : (
-            <Item disabled={!open || generating} onClick={() => open && setRegenerateOpen(true)}>
+            <Item
+              disabled={!open || generating}
+              onClick={() => open && openRegenerateConfirm(app.id)}
+            >
               <SparklesIcon aria-hidden="true" />
               {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain}
             </Item>
@@ -355,24 +359,6 @@ export function ApplyPackageMenuItems({
           ) : null}
         </>
       ) : null}
-
-      <ConfirmDialog
-        open={regenerateOpen}
-        onOpenChange={setRegenerateOpen}
-        title={entryState === "accepted" ? "Prepare a new package?" : "Regenerate apply package?"}
-        description={
-          entryState === "accepted"
-            ? "AI will draft a new package. Your current resume and cover letter stay until you Accept the new package."
-            : "This runs AI again and overwrites the current draft. Uses your BYO model quota."
-        }
-        confirmLabel={
-          entryState === "accepted" ? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain : "Regenerate"
-        }
-        confirmLoading={generating}
-        onConfirm={() => {
-          generate();
-        }}
-      />
     </>
   );
 }
@@ -387,20 +373,16 @@ type ApplyPackagePanelActionsProps = {
  * Joined coss Group of filled `default` buttons — separators use bg-primary/72 (coss p-group-6).
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
-  const { openSendOutreach, openEdit, openMaterialPreview } = useApplicationStore();
+  const { openSendOutreach, openEdit, openMaterialPreview, openRegenerateConfirm } =
+    useApplicationStore();
   const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
     useDashboardApplyPackage();
-  const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app, { reviewApplyKit });
   const open = isApplicationOpen(app.outcome);
   const generating = isPendingFor(app.id);
   const busyLabel = busyLabelFor(app.id);
   const hasDescription = hasJobDescription(app);
   const materials = useMemo(() => materialsFor(app), [app]);
-
-  function generate() {
-    runGenerate(app.id, () => setRegenerateOpen(false));
-  }
 
   const segments: React.ReactNode[] = [];
 
@@ -415,7 +397,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           disabled={!open || generating}
           loading={generating}
           className="min-w-0 flex-1 active:scale-[0.96]"
-          onClick={() => generate()}
+          onClick={() => runGenerate(app.id)}
         >
           <SparklesIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
           {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepare}
@@ -461,7 +443,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         variant="default"
         disabled={!open || generating}
         className="min-w-0 flex-1 active:scale-[0.96]"
-        onClick={() => setRegenerateOpen(true)}
+        onClick={() => openRegenerateConfirm(app.id)}
       >
         <RefreshCwIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
         Regenerate
@@ -479,7 +461,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         disabled={!open || generating}
         loading={generating}
         className="min-w-0 flex-1 active:scale-[0.96]"
-        onClick={() => setRegenerateOpen(true)}
+        onClick={() => openRegenerateConfirm(app.id)}
       >
         <SparklesIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
         {busyLabel ?? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain}
@@ -583,24 +565,6 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           </p>
         ) : null
       ) : null}
-
-      <ConfirmDialog
-        open={regenerateOpen}
-        onOpenChange={setRegenerateOpen}
-        title={entryState === "accepted" ? "Prepare a new package?" : "Regenerate apply package?"}
-        description={
-          entryState === "accepted"
-            ? "AI will draft a new package. Your current resume and cover letter stay until you Accept the new package."
-            : "This runs AI again and overwrites the current draft. Uses your BYO model quota."
-        }
-        confirmLabel={
-          entryState === "accepted" ? APPLICATION_PRIMARY_ACTION_LABELS.prepareAgain : "Regenerate"
-        }
-        confirmLoading={generating}
-        onConfirm={() => {
-          generate();
-        }}
-      />
     </div>
   );
 }

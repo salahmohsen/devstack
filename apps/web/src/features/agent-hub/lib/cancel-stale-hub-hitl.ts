@@ -155,3 +155,42 @@ export function cancelOutputForHubHitl(toolName: string): unknown {
   }
   return { action: "cancel" };
 }
+
+/**
+ * Seal waiting Confirm cards into cancelled outputs before the first paint.
+ * Post-paint remount cancel + live GenUI cards race and can lock the main thread
+ * (especially multiple propose-from-jd cards each kicking preview/take queries).
+ */
+export function sealWaitingHubHitlOnRemount(messages: readonly UIMessage[]): {
+  messages: UIMessage[];
+  cancelledIds: string[];
+} {
+  const waiting = waitingHubConfirmCards(messages);
+  if (waiting.length === 0) {
+    return { messages: messages as UIMessage[], cancelledIds: [] };
+  }
+
+  const cancelById = new Map(waiting.map((card) => [card.toolCallId, card.toolName]));
+  const next = messages.map((message) => {
+    if (message.role !== "assistant") return message;
+    let changed = false;
+    const parts = (message.parts ?? []).map((raw) => {
+      const part = raw as HubToolNamePart;
+      const toolCallId = part.toolCallId ?? "";
+      const toolName = cancelById.get(toolCallId);
+      if (!toolName) return raw;
+      changed = true;
+      return {
+        ...part,
+        state: "output-available",
+        output: cancelOutputForHubHitl(toolName)
+      };
+    });
+    return changed ? ({ ...message, parts } as UIMessage) : message;
+  });
+
+  return {
+    messages: next,
+    cancelledIds: waiting.map((card) => card.toolCallId)
+  };
+}

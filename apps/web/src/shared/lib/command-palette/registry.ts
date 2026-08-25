@@ -95,7 +95,7 @@ registerCommands([
     icon: Bot,
     keywords: ["agent", "hub", "home", "dashboard"],
     authRequired: true,
-    action: { type: "navigate", to: "/dashboard" }
+    action: { type: "navigate", to: "/dashboard/agent" }
   },
   {
     id: "nav:onboarding",
