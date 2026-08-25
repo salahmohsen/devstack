@@ -79,7 +79,7 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
     if (request.kind !== "application") return;
     if (applicationQuery.data) return;
     if (applicationQuery.isPending || applicationQuery.isFetching) return;
-    close();
+    clearEntityInspectRequest(request.requestId);
     dismissDashboardSidePanel({ force: true });
   }, [
     applicationQuery.data,

@@ -41,4 +41,12 @@ describe("extractStructuredGeneratePayload", () => {
     expect(extractStructuredGeneratePayload({ text: "   " })).toBeUndefined();
     expect(extractStructuredGeneratePayload({ text: "I activated the skill." })).toBeUndefined();
   });
+
+  it("parses the first complete JSON value when trailing prose follows", () => {
+    expect(
+      extractStructuredGeneratePayload({
+        text: '{"items":[{"experienceId":"e1","rewrittenBullets":["A"]}]} Here is a short note.'
+      })
+    ).toEqual({ items: [{ experienceId: "e1", rewrittenBullets: ["A"] }] });
+  });
 });

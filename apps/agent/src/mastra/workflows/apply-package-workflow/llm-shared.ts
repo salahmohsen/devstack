@@ -42,6 +42,46 @@ type RaceGenerateAgent = {
   ) => Promise<{ object?: unknown; text?: string }>;
 };
 
+/** First complete JSON object/array in `text`, ignoring trailing prose. */
+export function extractFirstJsonValue(text: string): unknown {
+  const start = text.search(/[[{]/);
+  if (start < 0) return undefined;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i]!;
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{" || ch === "[") depth += 1;
+    else if (ch === "}" || ch === "]") {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(text.slice(start, i + 1)) as unknown;
+        } catch {
+          return undefined;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
 /** Pull JSON from a generate result when `.object` is missing (common with skill tools / prompt-injection SO). */
 export function extractStructuredGeneratePayload(result: {
   object?: unknown;
@@ -58,14 +98,7 @@ export function extractStructuredGeneratePayload(result: {
   try {
     return JSON.parse(candidate) as unknown;
   } catch {
-    const start = candidate.search(/[[{]/);
-    if (start < 0) return undefined;
-    const slice = candidate.slice(start);
-    try {
-      return JSON.parse(slice) as unknown;
-    } catch {
-      return undefined;
-    }
+    return extractFirstJsonValue(candidate);
   }
 }
 

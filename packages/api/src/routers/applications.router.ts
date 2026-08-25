@@ -580,18 +580,26 @@ export const applicationsRouter = {
             return toApplicationOutputWithListing(existing);
           }
           // inbox / dismissed → promote to tracked (no skill re-link)
+          const fromStatus = existing.trackingStatus;
           const promoted = await applicationRepository.setTrackingStatus(
             existing.id,
             userId,
-            "tracked"
+            "tracked",
+            fromStatus
           );
-          if (!promoted) throw errors.NOT_FOUND();
+          if (!promoted) {
+            const raced = await applicationRepository.findByUserIdAndUrl(userId, listingUrl);
+            if (raced?.trackingStatus === "tracked") {
+              return toApplicationOutputWithListing(raced);
+            }
+            throw errors.NOT_FOUND();
+          }
           await applicationActivityRepository.append({
             userId,
             applicationId: promoted.id,
             kind: "promoted",
             actorUserId: userId,
-            metadata: { from: existing.trackingStatus, via: "manual_create_conflict" }
+            metadata: { from: fromStatus, via: "manual_create_conflict" }
           });
           return toApplicationOutputWithListing(promoted);
         }
@@ -638,14 +646,26 @@ export const applicationsRouter = {
           if (row.trackingStatus === "tracked") {
             return toApplicationOutputWithListing(row);
           }
-          const promoted = await applicationRepository.setTrackingStatus(row.id, userId, "tracked");
-          if (!promoted) throw errors.NOT_FOUND();
+          const fromStatus = row.trackingStatus;
+          const promoted = await applicationRepository.setTrackingStatus(
+            row.id,
+            userId,
+            "tracked",
+            fromStatus
+          );
+          if (!promoted) {
+            const raced = await applicationRepository.findByUserIdAndUrl(userId, listingUrl);
+            if (raced?.trackingStatus === "tracked") {
+              return toApplicationOutputWithListing(raced);
+            }
+            throw errors.NOT_FOUND();
+          }
           await applicationActivityRepository.append({
             userId,
             applicationId: promoted.id,
             kind: "promoted",
             actorUserId: userId,
-            metadata: { from: row.trackingStatus, via: "manual_create_conflict" }
+            metadata: { from: fromStatus, via: "manual_create_conflict" }
           });
           return toApplicationOutputWithListing(promoted);
         }

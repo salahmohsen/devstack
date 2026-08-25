@@ -41,6 +41,19 @@ function coerceCreateMatchScore(value: number | null | undefined): number | null
   return Math.min(100, Math.max(0, Math.round(value)));
 }
 
+function skillTagsFromNames(
+  names: string[] | undefined,
+  band: "required" | "preferred"
+): Array<{ name: string; stackId: string | null; band: "required" | "preferred" }> {
+  const out: Array<{ name: string; stackId: string | null; band: "required" | "preferred" }> = [];
+  for (const raw of names ?? []) {
+    const name = raw.trim();
+    if (!name) continue;
+    out.push({ name, stackId: null, band });
+  }
+  return out;
+}
+
 export function createInputFromJdProposal(
   input: ProposeApplicationFromJdCardInput
 ): CreateApplicationInput {
@@ -67,18 +80,8 @@ export function createInputFromJdProposal(
     workMode: input.workMode ?? undefined,
     employmentType:
       input.employmentType && input.employmentType !== "unknown" ? input.employmentType : undefined,
-    requiredSkills: (input.requiredSkills ?? [])
-      .map((name) => name.trim())
-      .filter((name) => name.length > 0)
-      .map((name) => {
-        return { name, stackId: null as string | null, band: "required" as const };
-      }),
-    preferredSkills: (input.preferredSkills ?? [])
-      .map((name) => name.trim())
-      .filter((name) => name.length > 0)
-      .map((name) => {
-        return { name, stackId: null as string | null, band: "preferred" as const };
-      }),
+    requiredSkills: skillTagsFromNames(input.requiredSkills, "required"),
+    preferredSkills: skillTagsFromNames(input.preferredSkills, "preferred"),
     stage: "saved",
     hiringUrgency: "unknown"
   };

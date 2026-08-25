@@ -16,9 +16,8 @@ const DeleteApplicationDialog = lazy(() =>
 
 function closeInspectForDeletedApplication(applicationId: string) {
   const inspect = getEntityInspectHostState().request;
-  if (inspect?.kind === "application" && inspect.id === applicationId) {
-    clearEntityInspectRequest();
-  }
+  if (inspect?.kind !== "application" || inspect.id !== applicationId) return;
+  clearEntityInspectRequest();
   // Force: skip dirty-form guards. Listeners zero inspectOpen/hasContent so the
   // agent chat shell collapses even if portal unmount lags one frame.
   dismissDashboardSidePanel({ force: true });
