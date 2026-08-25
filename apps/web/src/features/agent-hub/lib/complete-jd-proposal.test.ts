@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { CreateApplicationInputSchema } from "@tsu-stack/core";
+
 import {
+  createInputFromJdProposal,
   inferJdCardActionFromCrm,
   mergeJdProposalWithListingPreview,
+  sanitizeOptionalHttpUrl,
   shouldGenerateJdProposalTake
 } from "./complete-jd-proposal";
 
@@ -128,11 +132,83 @@ describe("inferJdCardActionFromCrm", () => {
     expect(merged.matchScore).toBe(0);
   });
 
+  it("overrides a hallucinated title/company when previewListing extract looks real", () => {
+    const longDeelJd = [
+      "Who We Are Is What We Do. Deel is the all-in-one payroll and HR platform for global teams.",
+      "Summary The Senior Full Stack Engineer is responsible for designing, developing, and",
+      "maintaining both the front-end and back-end components of Deel's platform. You will develop",
+      "high-quality, responsive web applications using TypeScript, Javascript, React, Express.",
+      "Qualifications At least 8 years of Full-Stack experience, with a focus on TypeScript."
+    ].join(" ");
+    const merged = mergeJdProposalWithListingPreview(
+      {
+        ...input,
+        title: "Junior AI / Agentic Engineer (Full-Stack + Automation)",
+        companyName: "HexaFlow",
+        location: "Egypt",
+        description: "Build AI agents for HexaFlow clients with Next.js and n8n.",
+        matchScore: 90,
+        notes: "Junior-friendly remote role for an agent-first engineer.",
+        url: "https://www.linkedin.com/jobs/view/4456503372/"
+      },
+      {
+        ok: true,
+        title: "Senior Full Stack Engineer - EMEA",
+        companyName: "Deel",
+        location: "Egypt",
+        description: longDeelJd,
+        workMode: "remote",
+        salaryRange: null,
+        employmentType: "full_time",
+        department: "Engineering and Information Technology",
+        datePosted: null,
+        experience: "At least 8 years",
+        requiredSkills: ["TypeScript", "React", "Express"],
+        preferredSkills: ["NestJS"],
+        matchScore: 15
+      }
+    );
+    expect(merged.title).toBe("Senior Full Stack Engineer - EMEA");
+    expect(merged.companyName).toBe("Deel");
+    expect(merged.description).toMatch(/Deel is the all-in-one payroll/);
+    expect(merged.matchScore).toBe(15);
+    expect(merged.experience).toMatch(/8 years/i);
+  });
+
   it("returns null when no dismissed listing matches", () => {
     expect(
       inferJdCardActionFromCrm(input, {
         dismissed: [{ url: "https://www.linkedin.com/jobs/view/999" }]
       })
     ).toBeNull();
+  });
+});
+
+describe("createInputFromJdProposal", () => {
+  it("drops LLM sentinel applyUrl/url so create validation passes", () => {
+    const created = createInputFromJdProposal({
+      ...input,
+      applyUrl: "None",
+      url: "https://www.linkedin.com/jobs/view/4458164349/",
+      matchScore: 72.4
+    });
+    expect(created.applyUrl).toBeNull();
+    expect(created.url).toBe("https://www.linkedin.com/jobs/view/4458164349");
+    expect(created.matchScore).toBe(72);
+    expect(CreateApplicationInputSchema.safeParse(created).success).toBe(true);
+  });
+
+  it("sanitizeOptionalHttpUrl rejects None / bare hosts", () => {
+    expect(sanitizeOptionalHttpUrl("None")).toBeNull();
+    expect(sanitizeOptionalHttpUrl("n/a")).toBeNull();
+    expect(sanitizeOptionalHttpUrl("linkedin.com/jobs/view/1")).toBeNull();
+    expect(sanitizeOptionalHttpUrl("https://www.linkedin.com/jobs/view/1/")).toBe(
+      "https://www.linkedin.com/jobs/view/1"
+    );
+  });
+
+  it("merge drops sentinel applyUrl instead of keeping None", () => {
+    const merged = mergeJdProposalWithListingPreview({ ...input, applyUrl: "None" }, null);
+    expect(merged.applyUrl).toBeNull();
   });
 });

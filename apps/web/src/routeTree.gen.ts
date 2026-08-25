@@ -49,6 +49,7 @@ import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from
 import { Route as rootLayout_protectedDashboardNewJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/new-jobs/index'
 import { Route as rootLayout_protectedDashboardMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/index'
 import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
+import { Route as rootLayout_protectedDashboardAgentIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/agent/index'
 import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
 import { Route as rootLayoutUsernameReposRepoIndexRouteImport } from './routes/(root-layout)/$username/repos/$repo/index'
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
@@ -297,6 +298,12 @@ const rootLayout_protectedDashboardExperiencesIndexRoute =
     path: '/',
     getParentRoute: () => rootLayout_protectedDashboardExperiencesRouteRoute,
   } as any)
+const rootLayout_protectedDashboardAgentIndexRoute =
+  rootLayout_protectedDashboardAgentIndexRouteImport.update({
+    id: '/agent/',
+    path: '/agent/',
+    getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
+  } as any)
 const rootLayoutguestSignInCreateAnAccountIndexRoute =
   rootLayoutguestSignInCreateAnAccountIndexRouteImport.update({
     id: '/sign-in/create-an-account/',
@@ -457,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$username/repos/$repo/': typeof rootLayoutUsernameReposRepoIndexRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/dashboard/agent/': typeof rootLayout_protectedDashboardAgentIndexRoute
   '/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/mail/': typeof rootLayout_protectedDashboardMailIndexRoute
   '/dashboard/new-jobs/': typeof rootLayout_protectedDashboardNewJobsIndexRoute
@@ -511,6 +519,7 @@ export interface FileRoutesByTo {
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$username/repos/$repo': typeof rootLayoutUsernameReposRepoIndexRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/dashboard/agent': typeof rootLayout_protectedDashboardAgentIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/mail': typeof rootLayout_protectedDashboardMailIndexRoute
   '/dashboard/new-jobs': typeof rootLayout_protectedDashboardNewJobsIndexRoute
@@ -575,6 +584,7 @@ export interface FileRoutesById {
   '/(root-layout)/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/(root-layout)/$username/repos/$repo/': typeof rootLayoutUsernameReposRepoIndexRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/(root-layout)/__protected/dashboard/agent/': typeof rootLayout_protectedDashboardAgentIndexRoute
   '/(root-layout)/__protected/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/(root-layout)/__protected/dashboard/mail/': typeof rootLayout_protectedDashboardMailIndexRoute
   '/(root-layout)/__protected/dashboard/new-jobs/': typeof rootLayout_protectedDashboardNewJobsIndexRoute
@@ -637,6 +647,7 @@ export interface FileRouteTypes {
     | '/repos/$repo/tree/$'
     | '/$username/repos/$repo/'
     | '/sign-in/create-an-account/'
+    | '/dashboard/agent/'
     | '/dashboard/experiences/'
     | '/dashboard/mail/'
     | '/dashboard/new-jobs/'
@@ -691,6 +702,7 @@ export interface FileRouteTypes {
     | '/repos/$repo/tree/$'
     | '/$username/repos/$repo'
     | '/sign-in/create-an-account'
+    | '/dashboard/agent'
     | '/dashboard/experiences'
     | '/dashboard/mail'
     | '/dashboard/new-jobs'
@@ -754,6 +766,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/repos/$repo/tree/$'
     | '/(root-layout)/$username/repos/$repo/'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
+    | '/(root-layout)/__protected/dashboard/agent/'
     | '/(root-layout)/__protected/dashboard/experiences/'
     | '/(root-layout)/__protected/dashboard/mail/'
     | '/(root-layout)/__protected/dashboard/new-jobs/'
@@ -1076,6 +1089,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardExperiencesRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/agent/': {
+      id: '/(root-layout)/__protected/dashboard/agent/'
+      path: '/agent'
+      fullPath: '/dashboard/agent/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardAgentIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardRouteRoute
+    }
     '/(root-layout)/(guest)/sign-in/create-an-account/': {
       id: '/(root-layout)/(guest)/sign-in/create-an-account/'
       path: '/sign-in/create-an-account'
@@ -1345,6 +1365,7 @@ interface rootLayout_protectedDashboardRouteRouteChildren {
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
   rootLayout_protectedDashboardMailCategoryRoute: typeof rootLayout_protectedDashboardMailCategoryRoute
+  rootLayout_protectedDashboardAgentIndexRoute: typeof rootLayout_protectedDashboardAgentIndexRoute
   rootLayout_protectedDashboardMailIndexRoute: typeof rootLayout_protectedDashboardMailIndexRoute
   rootLayout_protectedDashboardNewJobsIndexRoute: typeof rootLayout_protectedDashboardNewJobsIndexRoute
   rootLayout_protectedDashboardOnboardingIndexRoute: typeof rootLayout_protectedDashboardOnboardingIndexRoute
@@ -1368,6 +1389,8 @@ const rootLayout_protectedDashboardRouteRouteChildren: rootLayout_protectedDashb
       rootLayout_protectedDashboardIndexRoute,
     rootLayout_protectedDashboardMailCategoryRoute:
       rootLayout_protectedDashboardMailCategoryRoute,
+    rootLayout_protectedDashboardAgentIndexRoute:
+      rootLayout_protectedDashboardAgentIndexRoute,
     rootLayout_protectedDashboardMailIndexRoute:
       rootLayout_protectedDashboardMailIndexRoute,
     rootLayout_protectedDashboardNewJobsIndexRoute:

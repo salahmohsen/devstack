@@ -1,9 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
+
+import { dismissDashboardSidePanel } from "@/shared/lib/side-panel-control";
 
 import {
   clearEntityInspectRequest,
@@ -70,6 +73,24 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
     clearEntityInspectRequest(request.requestId);
   };
 
+  // Deleted / missing application: close inspect instead of parking on "not found".
+  // Prefer isError / empty settled state — do not wait out endless retries alone.
+  useEffect(() => {
+    if (request.kind !== "application") return;
+    if (applicationQuery.data) return;
+    if (applicationQuery.isPending || applicationQuery.isFetching) return;
+    close();
+    dismissDashboardSidePanel({ force: true });
+  }, [
+    applicationQuery.data,
+    applicationQuery.isError,
+    applicationQuery.isFetching,
+    applicationQuery.isPending,
+    request.id,
+    request.kind,
+    request.requestId
+  ]);
+
   const openEdit = () => {
     if (request.kind === "application") return;
     clearEntityInspectRequest(request.requestId);
@@ -89,18 +110,7 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
       return <InspectLoading title="Application" onClose={close} />;
     }
     if (!application) {
-      return (
-        <ItemsInspectHost
-          open
-          item={{ id: request.id }}
-          title="Job"
-          onOpenChange={(open) => {
-            if (!open) close();
-          }}
-        >
-          {() => <p className="px-6 py-8 text-sm text-muted-foreground">Job not found.</p>}
-        </ItemsInspectHost>
-      );
+      return null;
     }
     const discovery =
       application.trackingStatus === "inbox" || application.trackingStatus === "dismissed";

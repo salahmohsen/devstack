@@ -98,20 +98,6 @@ const ApplicationInfoPanel = lazy(() =>
     };
   })
 );
-const ApplicationMaterialPreviewDialog = lazy(() =>
-  import("@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions").then((m) => {
-    return {
-      default: m.ApplicationMaterialPreviewDialog
-    };
-  })
-);
-const ApplyPackageSheet = lazy(() =>
-  import("@/pages/dashboard/tracked-jobs/ui/apply-package-sheet").then((m) => {
-    return {
-      default: m.ApplyPackageSheet
-    };
-  })
-);
 const ImportJdSheet = lazy(() =>
   import("@/pages/dashboard/tracked-jobs/ui/import-jd-sheet").then((m) => {
     return {
@@ -123,13 +109,6 @@ const SendOutreachDialog = lazy(() =>
   import("@/pages/dashboard/tracked-jobs/ui/send-outreach-dialog").then((m) => {
     return {
       default: m.SendOutreachDialog
-    };
-  })
-);
-const DeleteApplicationDialog = lazy(() =>
-  import("@/pages/dashboard/tracked-jobs/ui/delete-application-dialog").then((m) => {
-    return {
-      default: m.DeleteApplicationDialog
     };
   })
 );
@@ -181,17 +160,11 @@ export function TrackedJobsPage() {
     closeSheet,
     closeView,
     showView,
-    packageSheetAppId,
-    closePackageSheet,
     sendOutreachAppId,
     closeSendOutreach,
-    deleteConfirmAppId,
-    closeDeleteConfirm,
     importJdSheetOpen,
     openImportJdSheet,
-    closeImportJdSheet,
-    materialPreview,
-    closeMaterialPreview
+    closeImportJdSheet
   } = useApplicationStore();
   // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
   const hostOwnsPanel = useEntityPanelHostActive();
@@ -356,25 +329,10 @@ export function TrackedJobsPage() {
     return knownById.get(viewItem.id) ?? viewItem;
   }, [knownById, viewItem]);
 
-  const packageApplication = useMemo(() => {
-    if (!packageSheetAppId) return null;
-    return knownById.get(packageSheetAppId) ?? null;
-  }, [packageSheetAppId, knownById]);
-
   const sendApplication = useMemo(() => {
     if (!sendOutreachAppId) return null;
     return knownById.get(sendOutreachAppId) ?? null;
   }, [sendOutreachAppId, knownById]);
-
-  const deleteApplication = useMemo(() => {
-    if (!deleteConfirmAppId) return null;
-    return knownById.get(deleteConfirmAppId) ?? null;
-  }, [deleteConfirmAppId, knownById]);
-
-  const materialPreviewApplication = useMemo(() => {
-    if (!materialPreview) return null;
-    return knownById.get(materialPreview.applicationId) ?? null;
-  }, [materialPreview, knownById]);
 
   // Side panel works for both board (View / card click) and list (row click).
   const isItemOpen = useMemo(
@@ -577,16 +535,6 @@ export function TrackedJobsPage() {
             />
           ) : null}
 
-          {packageSheetAppId != null ? (
-            <ApplyPackageSheet
-              open
-              application={packageApplication}
-              onOpenChange={(open) => {
-                if (!open) closePackageSheet();
-              }}
-            />
-          ) : null}
-
           {sendOutreachAppId != null ? (
             <SendOutreachDialog
               open
@@ -597,33 +545,12 @@ export function TrackedJobsPage() {
             />
           ) : null}
 
-          {deleteConfirmAppId != null ? (
-            <DeleteApplicationDialog
-              open
-              application={deleteApplication}
-              onOpenChange={(open) => {
-                if (!open) closeDeleteConfirm();
-              }}
-            />
-          ) : null}
-
           {importJdSheetOpen ? (
             <ImportJdSheet
               open
               onOpenChange={(open) => {
                 if (open) openImportJdSheet();
                 else closeImportJdSheet();
-              }}
-            />
-          ) : null}
-
-          {materialPreviewApplication && materialPreview ? (
-            <ApplicationMaterialPreviewDialog
-              app={materialPreviewApplication}
-              kind={materialPreview.kind}
-              open
-              onOpenChange={(open) => {
-                if (!open) closeMaterialPreview();
               }}
             />
           ) : null}

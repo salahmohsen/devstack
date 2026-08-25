@@ -7,10 +7,11 @@ import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/qu
  * Only same-origin relative paths are allowed.
  */
 function resolveLoggedInRedirect(raw: unknown): string {
-  if (typeof raw !== "string" || raw.length === 0) return "/dashboard";
-  if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
-  if (raw === "/sign-in" || raw.startsWith("/sign-in/")) return "/dashboard";
-  if (raw === "/sign-up" || raw.startsWith("/sign-up/")) return "/dashboard";
+  if (typeof raw !== "string" || raw.length === 0) return "/dashboard/agent";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard/agent";
+  if (raw === "/sign-in" || raw.startsWith("/sign-in/")) return "/dashboard/agent";
+  if (raw === "/sign-up" || raw.startsWith("/sign-up/")) return "/dashboard/agent";
+  if (raw === "/dashboard" || raw === "/dashboard/") return "/dashboard/agent";
   return raw;
 }
 
@@ -24,9 +25,9 @@ export const Route = createFileRoute("/(root-layout)/(guest)")({
     if (user) {
       const search = location.search as { redirect?: string };
       const target = resolveLoggedInRedirect(search.redirect);
-      // href supports arbitrary same-app paths; known dashboard uses typed `to`.
-      if (target === "/dashboard") {
-        throw redirect({ to: "/dashboard" });
+      // href supports arbitrary same-app paths; known agent home uses typed `to`.
+      if (target === "/dashboard/agent") {
+        throw redirect({ to: "/dashboard/agent" });
       }
       throw redirect({ href: target });
     }

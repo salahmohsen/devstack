@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   AlignLeftIcon,
+  BotIcon,
   Building2Icon,
   ExternalLinkIcon,
   FileTextIcon,
@@ -13,6 +14,7 @@ import {
   MailIcon,
   MapPinIcon,
   PackageIcon,
+  PencilIcon,
   RefreshCwIcon,
   SparklesIcon,
   StickyNoteIcon
@@ -43,6 +45,13 @@ import {
   DialogPopup,
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipProvider,
+  TooltipTrigger
+} from "@tsu-stack/ui/components/tooltip";
 import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 
 import { ITEM_AVATAR_EYEBROW_CLASSNAME } from "@/shared/ui/item-avatar";
@@ -68,12 +77,7 @@ import {
   useSetOutcomeMutation
 } from "@/features/applications";
 
-import {
-  ItemInfoPanel,
-  ItemInfoSection,
-  ItemInfoSections,
-  PanelEditButton
-} from "@/widgets/items-page";
+import { ItemInfoPanel, ItemInfoSection, ItemInfoSections } from "@/widgets/items-page";
 
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import {
@@ -205,23 +209,86 @@ function JobDescriptionBody({ value }: { value: string }) {
   );
 }
 
-function OpenInAgentButton({ item }: { item: ApplicationOutput }) {
+function DiscoveryPanelActions({ item, onEdit }: { item: ApplicationOutput; onEdit?: () => void }) {
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
-      onClick={() => {
-        requestHubApplicationMention({
-          id: item.id,
-          title: item.title,
-          companyName: item.companyName
-        });
-      }}
-    >
-      <SparklesIcon aria-hidden />
-      Open in agent
-    </Button>
+    <TooltipProvider>
+      <Group aria-label="Item actions" className="items-stretch">
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="outline"
+                className="shrink-0 active:scale-[0.96]"
+                aria-label="Open in agent"
+                onClick={() => {
+                  requestHubApplicationMention({
+                    id: item.id,
+                    title: item.title,
+                    companyName: item.companyName
+                  });
+                }}
+              />
+            }
+          >
+            <BotIcon strokeWidth={1.75} aria-hidden />
+          </TooltipTrigger>
+          <TooltipPopup>Open in agent</TooltipPopup>
+        </Tooltip>
+        {onEdit ? (
+          <>
+            <GroupSeparator />
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    className="shrink-0 active:scale-[0.96]"
+                    aria-label="Edit"
+                    onClick={onEdit}
+                  />
+                }
+              >
+                <PencilIcon strokeWidth={1.75} aria-hidden />
+              </TooltipTrigger>
+              <TooltipPopup>Edit</TooltipPopup>
+            </Tooltip>
+          </>
+        ) : null}
+        {item.url ? (
+          <>
+            <GroupSeparator />
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    className="shrink-0 active:scale-[0.96]"
+                    aria-label={`Open job posting (${postingHost(item.url)})`}
+                    render={
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Open job posting (${postingHost(item.url)})`}
+                      />
+                    }
+                  />
+                }
+              >
+                <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
+              </TooltipTrigger>
+              <TooltipPopup>Open listing</TooltipPopup>
+            </Tooltip>
+          </>
+        ) : null}
+      </Group>
+    </TooltipProvider>
   );
 }
 
@@ -390,34 +457,11 @@ export function ApplicationInfoPanel({
           </div>
         }
         actions={
-          <>
-            <OpenInAgentButton item={item} />
-            {!isDiscovery ? (
-              <ApplicationActionGroup app={item} variant="panel" />
-            ) : (
-              <>
-                {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
-                {item.url ? (
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="outline"
-                    className="active:scale-[0.96]"
-                    render={
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Open job posting (${postingHost(item.url)})`}
-                      />
-                    }
-                  >
-                    <ExternalLinkIcon strokeWidth={1.75} />
-                  </Button>
-                ) : null}
-              </>
-            )}
-          </>
+          !isDiscovery ? (
+            <ApplicationActionGroup app={item} variant="panel" />
+          ) : (
+            <DiscoveryPanelActions item={item} onEdit={onEdit} />
+          )
         }
         updatedAt={item.updatedAt}
         createdAt={item.createdAt}

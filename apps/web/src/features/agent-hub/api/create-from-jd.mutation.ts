@@ -16,7 +16,7 @@ export function useCreateApplicationFromJdMutation() {
 
   return useMutation(
     orpcQueryClient.applications.create.mutationOptions({
-      onSuccess: async (created) => {
+      onSuccess: (created) => {
         queryClient.setQueryData<ApplicationListOutput>(trackedListKey(), (prev) => {
           if (!prev) return [created];
           if (prev.some((row) => row.id === created.id)) {
@@ -24,8 +24,9 @@ export function useCreateApplicationFromJdMutation() {
           }
           return [created, ...prev];
         });
-        await invalidateApplicationsListQueries(queryClient);
+        // Toast immediately — do not wait on list invalidation (can take seconds).
         toast.success("Application added to pipeline.");
+        void invalidateApplicationsListQueries(queryClient);
       },
       onError: (error) => {
         toast.error(error.message || "Failed to create application.");
@@ -79,13 +80,13 @@ export function useGenerateApplyPackageFromJdMutation() {
 
   return useMutation(
     orpcQueryClient.applications.generateApplyPackage.mutationOptions({
-      onSuccess: async (data) => {
+      onSuccess: (data) => {
         queryClient.setQueryData<ApplicationListOutput>(trackedListKey(), (prev) => {
           if (!prev) return prev;
           return prev.map((row) => (row.id === data.id ? data : row));
         });
-        await invalidateApplicationsListQueries(queryClient);
         toast.success("Apply package draft ready to review.");
+        void invalidateApplicationsListQueries(queryClient);
       },
       onError: (error) => {
         toastAiError(error.message || "Could not generate apply package", {

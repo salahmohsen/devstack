@@ -1,13 +1,21 @@
 "use client";
 
-import { ChevronDownIcon, ExternalLinkIcon, PencilIcon } from "lucide-react";
+import { BotIcon, ChevronDownIcon, ExternalLinkIcon, PencilIcon } from "lucide-react";
+import { type ReactNode } from "react";
 
 import { type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipProvider,
+  TooltipTrigger
+} from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { requestHubApplicationMention } from "@/features/agent-hub";
 import {
   APPLICATION_PRIMARY_ACTION_LABELS,
   getApplicationPrimaryAction,
@@ -28,12 +36,55 @@ export type ApplicationActionGroupProps = {
   /**
    * - `board`: [Magic | Open listing icon? | ▾]
    * - `list`: [Magic | Open listing? | ▾] — no Edit
-   * - `panel`: [Magic | Edit | Open listing? | ▾]
+   * - `panel`: icon-only [Open in agent | Magic | Edit | Open listing? | ▾]
    * All use bordered `outline` segments (coss outline group).
    */
   variant: "board" | "list" | "panel";
   className?: string;
 };
+
+function PanelIconButton({
+  label,
+  onClick,
+  children,
+  href
+}: {
+  label: string;
+  onClick?: () => void;
+  children: ReactNode;
+  href?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          href ? (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="outline"
+              className="shrink-0 active:scale-[0.96]"
+              aria-label={label}
+              render={<a href={href} target="_blank" rel="noreferrer" aria-label={label} />}
+            />
+          ) : (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="outline"
+              className="shrink-0 active:scale-[0.96]"
+              aria-label={label}
+              onClick={onClick}
+            />
+          )
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipPopup>{label}</TooltipPopup>
+    </Tooltip>
+  );
+}
 
 /**
  * coss Group for tracked-jobs magic CTA + overflow chevron.
@@ -45,7 +96,8 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
   const primary = getApplicationPrimaryAction(app, { reviewApplyKit });
   const listingUrl = listingUrlFor(app);
   const isBoard = variant === "board";
-  const showEdit = variant === "panel";
+  const isPanel = variant === "panel";
+  const showEdit = isPanel;
   const slots = isBoard ? applicationMenuSlots : applicationListMenuSlots;
   // Skip Edit in the menu only when Edit is already a Group segment (panel).
   const density = showEdit ? "list-overflow" : "full";
@@ -55,57 +107,84 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
   const hideOpenListingInMenu = showListingInGroup || hidePrimaryKind === "open-listing";
 
   const segmentSize = isBoard ? "sm" : "default";
-  const chevronSize = isBoard ? "icon-sm" : "icon";
+  const chevronSize = isBoard || isPanel ? "icon-sm" : "icon";
 
-  return (
+  const group = (
     <Group
       aria-label="Item actions"
       className={cn("items-stretch", isBoard && "mt-2.5 w-full", className)}
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
+      {isPanel ? (
+        <>
+          <PanelIconButton
+            label="Open in agent"
+            onClick={() => {
+              requestHubApplicationMention({
+                id: app.id,
+                title: app.title,
+                companyName: app.companyName
+              });
+            }}
+          >
+            <BotIcon strokeWidth={1.75} aria-hidden />
+          </PanelIconButton>
+          <GroupSeparator />
+        </>
+      ) : null}
       {primary ? (
         <ApplicationPrimaryActionButton
           app={app}
           layout={isBoard ? "card" : "inline"}
           grouped
           buttonVariant="outline"
+          iconOnly={isPanel}
           className={isBoard ? "min-w-0 flex-1" : "min-w-0"}
         />
       ) : null}
       {primary ? <GroupSeparator /> : null}
       {showEdit ? (
         <>
-          <Button
-            type="button"
-            size={segmentSize}
-            variant="outline"
-            className="shrink-0 active:scale-[0.96]"
-            onClick={() => openEdit(app)}
-          >
+          <PanelIconButton label="Edit" onClick={() => openEdit(app)}>
             <PencilIcon strokeWidth={1.75} aria-hidden />
-            Edit
-          </Button>
+          </PanelIconButton>
           <GroupSeparator />
         </>
       ) : null}
       {showListingInGroup && listingUrl ? (
         <>
-          <Button
-            type="button"
-            size={isBoard ? chevronSize : segmentSize}
-            variant="outline"
-            className={cn(
-              "shrink-0 active:scale-[0.96]",
-              // Board: icon-only next to magic CTA to save width (better-ui optical density).
-              isBoard && "size-8 sm:size-7"
-            )}
-            aria-label={APPLICATION_PRIMARY_ACTION_LABELS.openListing}
-            render={<a href={listingUrl} target="_blank" rel="noreferrer" />}
-          >
-            <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
-            {isBoard ? null : APPLICATION_PRIMARY_ACTION_LABELS.openListing}
-          </Button>
+          {isPanel ? (
+            <PanelIconButton
+              label={APPLICATION_PRIMARY_ACTION_LABELS.openListing}
+              href={listingUrl}
+            >
+              <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
+            </PanelIconButton>
+          ) : (
+            <Button
+              type="button"
+              size={isBoard ? chevronSize : segmentSize}
+              variant="outline"
+              className={cn(
+                "shrink-0 active:scale-[0.96]",
+                // Board: icon-only next to magic CTA to save width (better-ui optical density).
+                isBoard && "size-8 sm:size-7"
+              )}
+              aria-label={APPLICATION_PRIMARY_ACTION_LABELS.openListing}
+              render={
+                <a
+                  href={listingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={APPLICATION_PRIMARY_ACTION_LABELS.openListing}
+                />
+              }
+            >
+              <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
+              {isBoard ? null : APPLICATION_PRIMARY_ACTION_LABELS.openListing}
+            </Button>
+          )}
           <GroupSeparator />
         </>
       ) : null}
@@ -117,7 +196,10 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
               size={chevronSize}
               variant="outline"
               aria-label="More actions"
-              className={cn("shrink-0 active:scale-[0.96]", isBoard && "size-8 sm:size-7")}
+              className={cn(
+                "shrink-0 active:scale-[0.96]",
+                (isBoard || isPanel) && "size-8 sm:size-7"
+              )}
             />
           }
         >
@@ -130,9 +212,15 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
             density={density}
             hidePrimaryKind={hidePrimaryKind}
             hideOpenListing={hideOpenListingInMenu}
+            showBatchSelect={!isPanel}
+            showView={!isPanel}
           />
         </MenuPopup>
       </Menu>
     </Group>
   );
+
+  if (!isPanel) return group;
+
+  return <TooltipProvider>{group}</TooltipProvider>;
 }

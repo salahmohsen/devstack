@@ -20,7 +20,7 @@ import { useCountApplicationsQuery } from "@/features/applications";
  * Profile / Repos / Dashboard live in the topbar scope cluster.
  */
 const DashboardItems = [
-  { href: "/dashboard", label: "Agent" },
+  { href: "/dashboard/agent", label: "Agent" },
   { href: "/dashboard/onboarding", label: "Onboarding" },
   { href: "/dashboard/experiences", label: "Experiences" },
   { href: "/dashboard/projects", label: "Projects" },

@@ -1,31 +1,39 @@
 "use client";
 
+import { useRef } from "react";
+
 import { type ApplicationOutput } from "@tsu-stack/core";
 import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 
 import { useDeleteApplicationsMutation } from "@/features/applications";
 
-import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
-
 type DeleteApplicationDialogProps = {
   open: boolean;
   application: ApplicationOutput | null;
   onOpenChange: (open: boolean) => void;
+  /** Called after a successful delete (close panel / inspect). */
+  onDeleted?: (applicationId: string) => void;
 };
 
-/** Page-level host — do not mount inside Menu/ContextMenu (unmount closes dialog). */
+/** Layout/page host — do not mount inside Menu/ContextMenu (unmount closes dialog). */
 export function DeleteApplicationDialog({
   open,
   application,
-  onOpenChange
+  onOpenChange,
+  onDeleted
 }: DeleteApplicationDialogProps) {
   const deleteMutation = useDeleteApplicationsMutation();
-  const { viewItem, closeView } = useApplicationStore();
+  // AlertDialogAction is a Close: it fires onOpenChange(false) in the same click as
+  // onConfirm, before isPending flips. Keep the host mounted until mutate settles.
+  const deletingRef = useRef(false);
 
   return (
     <ConfirmDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => {
+        if (!next && deletingRef.current) return;
+        onOpenChange(next);
+      }}
       title="Delete this application?"
       description="This permanently removes the application from your pipeline. Prefer Close as for roles that ended — only use delete for mistakes or test data."
       confirmLabel="Delete"
@@ -34,12 +42,18 @@ export function DeleteApplicationDialog({
       confirmDisabled={!application}
       onConfirm={() => {
         if (!application) return;
+        const applicationId = application.id;
+        deletingRef.current = true;
         deleteMutation.mutate(
-          { ids: [application.id] },
+          { ids: [applicationId] },
           {
             onSuccess: () => {
+              onDeleted?.(applicationId);
+              deletingRef.current = false;
               onOpenChange(false);
-              if (viewItem?.id === application.id) closeView();
+            },
+            onError: () => {
+              deletingRef.current = false;
             }
           }
         );

@@ -171,6 +171,7 @@ export type {
 } from "./lib/entity-form-host-store";
 export {
   clearEntityInspectRequest,
+  getEntityInspectHostState,
   releaseEntityPanelHosts,
   requestEntityInspect,
   useEntityInspectHostActive,
@@ -188,6 +189,7 @@ export type { DailyBriefHostRequest } from "./lib/daily-brief-host-store";
 export {
   cancelOutputForHubHitl,
   isHubConfirmHitlToolName,
+  sealWaitingHubHitlOnRemount,
   staleWaitingHubConfirmCards,
   toolCallIsOnLatestAssistant,
   waitingHubConfirmCards

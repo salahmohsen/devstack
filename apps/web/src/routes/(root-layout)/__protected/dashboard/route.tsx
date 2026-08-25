@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 
+import { isDashboardAgentPath } from "@/shared/lib/dashboard-paths";
 import { generateAppSeo } from "@/shared/lib/seo";
 
 import {
@@ -11,8 +12,13 @@ import {
 } from "@/features/agent-hub";
 import { useDetectStacksJobSelector } from "@/features/stacks";
 
+import { ApplicationDeleteConfirmHost } from "@/pages/dashboard/_lib/application-delete-confirm-host";
+import { ApplicationMaterialPreviewHost } from "@/pages/dashboard/_lib/application-material-preview-host";
+import { ApplicationPackageSheetHost } from "@/pages/dashboard/_lib/application-package-sheet-host";
+import { ApplicationRegenerateConfirmHost } from "@/pages/dashboard/_lib/application-regenerate-confirm-host";
 import { HubApplicationsSync } from "@/pages/dashboard/_lib/hub-applications-sync";
 import { HubAssistantModal } from "@/pages/dashboard/_lib/hub-assistant-modal";
+import { PendingPreparePackageHost } from "@/pages/dashboard/_lib/pending-prepare-package-host";
 
 const DetectStacksResultsHost = lazy(() =>
   import("@/pages/dashboard/projects/ui/detect-stacks-dialog").then((m) => {
@@ -62,11 +68,6 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard")({
   component: DashboardLayout
 });
 
-function isDashboardHomePath(pathname: string): boolean {
-  const normalized = pathname.replace(/\/+$/, "") || "/";
-  return normalized === "/dashboard";
-}
-
 function DeferredDetectStacksHost() {
   const mount = useDetectStacksJobSelector(
     (state) =>
@@ -115,7 +116,7 @@ function DeferredDailyBriefHost() {
 
 function DashboardLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const showFloater = !isDashboardHomePath(pathname);
+  const showFloater = !isDashboardAgentPath(pathname);
 
   return (
     <HubChatProvider>
@@ -127,6 +128,11 @@ function DashboardLayout() {
       <DeferredEntityFormHost />
       <DeferredEntityInspectHost />
       <DeferredDailyBriefHost />
+      <PendingPreparePackageHost />
+      <ApplicationMaterialPreviewHost />
+      <ApplicationPackageSheetHost />
+      <ApplicationDeleteConfirmHost />
+      <ApplicationRegenerateConfirmHost />
       <Outlet />
       {showFloater ? <HubAssistantModal /> : null}
     </HubChatProvider>

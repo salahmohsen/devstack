@@ -77,9 +77,10 @@ describe("getApplyPackageEntryState with reviewApplyKit", () => {
   });
 
   it("never returns draft when Review is off", () => {
+    // Orphan draft (no materials) is not a usable kit — treat as none.
     expect(
       getApplyPackageEntryState(app({ applyPackageDraft: draft }), { reviewApplyKit: false })
-    ).toBe("accepted");
+    ).toBe("none");
     expect(
       getApplyPackageEntryState(app({ applyPackageDraft: draft, resumeId: "resume-1" }), {
         reviewApplyKit: false
@@ -104,10 +105,10 @@ describe("getApplicationPrimaryAction with reviewApplyKit", () => {
     expect(primary).toEqual({ kind: "prepare-again", label: "Prepare again" });
   });
 
-  it("shows Prepare again for orphan drafts when Review is off", () => {
+  it("shows Prepare for orphan drafts when Review is off", () => {
     const primary = getApplicationPrimaryAction(app({ applyPackageDraft: draft }), {
       reviewApplyKit: false
     });
-    expect(primary).toEqual({ kind: "prepare-again", label: "Prepare again" });
+    expect(primary).toEqual({ kind: "prepare", label: "Prepare" });
   });
 });

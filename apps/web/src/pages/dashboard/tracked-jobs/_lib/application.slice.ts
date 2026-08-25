@@ -31,14 +31,26 @@ type ApplicationUIState = {
   applyPackageBusyPhaseById: Record<string, ApplyPackageBusyPhase>;
   /** Apply package draft review sheet (application id). */
   packageSheetAppId: string | null;
+  /**
+   * New jobs "Track & package" handoff: prepare after Tracked jobs mounts.
+   * Kept in module state so navigate does not drop the intent with the page.
+   */
+  pendingPreparePackageId: string | null;
   /** Send outreach confirm dialog (application id). */
   sendOutreachAppId: string | null;
   /**
-   * Delete confirm dialog (application id).
-   * Page-level host — Menu/ContextMenu unmount on item click and would
-   * dismiss an in-menu AlertDialog immediately.
+   * Delete confirm dialog (full row snapshot).
+   * Layout host — Menu/ContextMenu unmount on item click and would
+   * dismiss an in-menu AlertDialog immediately. Snapshot keeps Confirm
+   * enabled after list/get invalidate.
    */
-  deleteConfirmAppId: string | null;
+  deleteConfirmApp: ApplicationOutput | null;
+  /**
+   * Prepare again / Regenerate confirm (application id).
+   * Layout host — must not live inside Menu (unmount closes it) or race the
+   * opening click as a dialog outside dismiss.
+   */
+  regenerateConfirmAppId: string | null;
   /** Import JD via shared hub chat sheet. */
   importJdSheetOpen: boolean;
   /**
@@ -66,10 +78,15 @@ type ApplicationUIActions = {
   setApplyPackageBusyPhase: (id: string, phase: ApplyPackageBusyPhase | null) => void;
   openPackageSheet: (applicationId: string) => void;
   closePackageSheet: () => void;
+  /** Queue Prepare for after Tracked jobs opens (Track & package). */
+  requestPreparePackage: (applicationId: string) => void;
+  clearPendingPreparePackage: () => void;
   openSendOutreach: (applicationId: string) => void;
   closeSendOutreach: () => void;
-  openDeleteConfirm: (applicationId: string) => void;
+  openDeleteConfirm: (app: ApplicationOutput) => void;
   closeDeleteConfirm: () => void;
+  openRegenerateConfirm: (applicationId: string) => void;
+  closeRegenerateConfirm: () => void;
   openImportJdSheet: () => void;
   closeImportJdSheet: () => void;
   openMaterialPreview: (applicationId: string, kind: ApplicationMaterialKind) => void;
@@ -86,8 +103,10 @@ let state: ApplicationUIState = {
   applyPackageInFlightIds: {},
   applyPackageBusyPhaseById: {},
   packageSheetAppId: null,
+  pendingPreparePackageId: null,
   sendOutreachAppId: null,
-  deleteConfirmAppId: null,
+  deleteConfirmApp: null,
+  regenerateConfirmAppId: null,
   importJdSheetOpen: false,
   materialPreview: null
 };
@@ -149,16 +168,42 @@ const actions: ApplicationUIActions = {
     else next[id] = phase;
     setState({ applyPackageBusyPhaseById: next });
   },
-  openPackageSheet: (applicationId) => setState({ packageSheetAppId: applicationId }),
+  // Defer overlay opens past the triggering pointerup so Base UI does not
+  // treat that same gesture as an outside dismiss (flash-then-close).
+  openPackageSheet: (applicationId) => {
+    window.setTimeout(() => setState({ packageSheetAppId: applicationId }), 50);
+  },
   closePackageSheet: () => setState({ packageSheetAppId: null }),
-  openSendOutreach: (applicationId) => setState({ sendOutreachAppId: applicationId }),
+  requestPreparePackage: (applicationId) => {
+    const nextInFlight = { ...state.applyPackageInFlightIds, [applicationId]: true as const };
+    const nextPhase = {
+      ...state.applyPackageBusyPhaseById,
+      [applicationId]: "drafting" as const
+    };
+    setState({
+      pendingPreparePackageId: applicationId,
+      applyPackageInFlightIds: nextInFlight,
+      applyPackageBusyPhaseById: nextPhase
+    });
+  },
+  clearPendingPreparePackage: () => setState({ pendingPreparePackageId: null }),
+  openSendOutreach: (applicationId) => {
+    window.setTimeout(() => setState({ sendOutreachAppId: applicationId }), 50);
+  },
   closeSendOutreach: () => setState({ sendOutreachAppId: null }),
-  openDeleteConfirm: (applicationId) => setState({ deleteConfirmAppId: applicationId }),
-  closeDeleteConfirm: () => setState({ deleteConfirmAppId: null }),
+  openDeleteConfirm: (app) => {
+    window.setTimeout(() => setState({ deleteConfirmApp: app }), 50);
+  },
+  closeDeleteConfirm: () => setState({ deleteConfirmApp: null }),
+  openRegenerateConfirm: (applicationId) => {
+    window.setTimeout(() => setState({ regenerateConfirmAppId: applicationId }), 50);
+  },
+  closeRegenerateConfirm: () => setState({ regenerateConfirmAppId: null }),
   openImportJdSheet: () => setState({ importJdSheetOpen: true }),
   closeImportJdSheet: () => setState({ importJdSheetOpen: false }),
-  openMaterialPreview: (applicationId, kind) =>
-    setState({ materialPreview: { applicationId, kind } }),
+  openMaterialPreview: (applicationId, kind) => {
+    window.setTimeout(() => setState({ materialPreview: { applicationId, kind } }), 50);
+  },
   closeMaterialPreview: () => setState({ materialPreview: null })
 };
 

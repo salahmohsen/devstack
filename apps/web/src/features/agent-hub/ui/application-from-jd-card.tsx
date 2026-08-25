@@ -84,6 +84,18 @@ function matchBadgeVariant(score: number): "success" | "warning" | "secondary" {
   return "secondary";
 }
 
+function isHttpHref(value: string | null | undefined): value is string {
+  const trimmed = value?.trim() ?? "";
+  if (trimmed.length === 0) return false;
+  if (/^(none|null|undefined|n\/?a|nil|-)$/i.test(trimmed)) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return /^https?:$/i.test(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
 function listingHost(href: string): string {
   try {
     return new URL(href).hostname.replace(/^www\./, "");
@@ -195,12 +207,11 @@ export function ApplicationFromJdCard({
   const submitting = pendingAction != null && resolvedAction == null;
   const locked = disabled || submitting || superseded || resolvedAction != null;
 
-  const listingUrl =
-    typeof input.url === "string" && input.url.length > 0
-      ? input.url
-      : typeof input.applyUrl === "string" && input.applyUrl.length > 0
-        ? input.applyUrl
-        : null;
+  const listingUrl = isHttpHref(input.url)
+    ? input.url.trim()
+    : isHttpHref(input.applyUrl)
+      ? input.applyUrl.trim()
+      : null;
 
   const handleAction = React.useCallback(
     (action: ApplicationFromJdCardAction) => {
@@ -224,10 +235,12 @@ export function ApplicationFromJdCard({
   const fromLocation = splitPlace(input.location);
   const workModeLabel = input.workMode ? WORK_MODE_LABELS[input.workMode] : fromLocation.workMode;
   const place = fromLocation.place;
-  const applyHref =
-    typeof input.applyUrl === "string" && input.applyUrl.length > 0 ? input.applyUrl : null;
-  const listingHref =
-    typeof input.url === "string" && input.url.length > 0 ? input.url : listingUrl;
+  const applyHref = isHttpHref(input.applyUrl) ? input.applyUrl.trim() : null;
+  const listingHref = isHttpHref(input.url)
+    ? input.url.trim()
+    : isHttpHref(listingUrl)
+      ? listingUrl
+      : null;
   const sourceLabel = input.source
     ? APPLICATION_SOURCE_LABELS[input.source]
     : listingHref

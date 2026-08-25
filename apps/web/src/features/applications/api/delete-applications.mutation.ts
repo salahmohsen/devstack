@@ -25,6 +25,10 @@ export function useDeleteApplicationsMutation() {
             queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.activity(id) })
           )
         ]);
+        // Sync: drop cached get rows so agent inspect cannot keep painting a deleted job.
+        for (const id of variables.ids) {
+          queryClient.removeQueries({ queryKey: applicationsQueryKeys.get(id) });
+        }
         const n = variables.ids.length;
         toast.success(n === 1 ? "Job permanently deleted." : `${n} jobs permanently deleted.`);
       },

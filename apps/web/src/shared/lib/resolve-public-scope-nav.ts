@@ -1,3 +1,4 @@
+import { isDashboardPath } from "@/shared/lib/dashboard-paths";
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
 import {
   createPublicSurface,
@@ -26,11 +27,6 @@ const HIDDEN_PREFIXES = [
   "/privacy-policy",
   "/terms-of-service"
 ] as const;
-
-function isDashboardPath(pathname: string): boolean {
-  const path = normalizePath(pathname);
-  return path === "/dashboard" || path.startsWith("/dashboard/");
-}
 
 /** First path segment reserved (not a username). */
 const RESERVED_SEGMENTS = new Set([

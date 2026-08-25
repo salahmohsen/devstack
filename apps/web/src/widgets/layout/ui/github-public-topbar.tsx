@@ -175,7 +175,7 @@ export function Topbar() {
     if (pathname.startsWith("/dashboard")) return;
     let cancelled = false;
     void (async () => {
-      const routes = ["/", "/repos", "/dashboard"];
+      const routes = ["/", "/repos", "/dashboard/agent"];
       await Promise.all(
         routes.map((to) => preloadRouteOnce(routerRef.current, to).catch(() => undefined))
       );
@@ -319,12 +319,12 @@ export function Topbar() {
               </MenuLinkItem>
               {scopeNav.showDashboard ? (
                 customHost ? (
-                  <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
+                  <MenuLinkItem render={<a href={primaryAppUrl("/dashboard/agent")} />}>
                     <LayoutDashboard size={16} strokeWidth={2} />
                     Dashboard
                   </MenuLinkItem>
                 ) : (
-                  <PrimaryAppMenuLink path="/dashboard" label="Dashboard">
+                  <PrimaryAppMenuLink path="/dashboard/agent" label="Dashboard">
                     <LayoutDashboard size={16} strokeWidth={2} />
                     Dashboard
                   </PrimaryAppMenuLink>

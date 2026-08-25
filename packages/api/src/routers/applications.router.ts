@@ -571,6 +571,32 @@ export const applicationsRouter = {
       const trimmedUrl = input.url?.trim();
       const rawUrl = trimmedUrl && trimmedUrl.length > 0 ? trimmedUrl : null;
       const listingUrl = rawUrl ? (canonicalizeJobUrl(rawUrl) ?? rawUrl) : null;
+
+      // URL present: resolve existing row before skill linking (hub re-package must be fast).
+      if (listingUrl) {
+        const existing = await applicationRepository.findByUserIdAndUrl(userId, listingUrl);
+        if (existing) {
+          if (existing.trackingStatus === "tracked") {
+            return toApplicationOutputWithListing(existing);
+          }
+          // inbox / dismissed → promote to tracked (no skill re-link)
+          const promoted = await applicationRepository.setTrackingStatus(
+            existing.id,
+            userId,
+            "tracked"
+          );
+          if (!promoted) throw errors.NOT_FOUND();
+          await applicationActivityRepository.append({
+            userId,
+            applicationId: promoted.id,
+            kind: "promoted",
+            actorUserId: userId,
+            metadata: { from: existing.trackingStatus, via: "manual_create_conflict" }
+          });
+          return toApplicationOutputWithListing(promoted);
+        }
+      }
+
       const linked = await linkJobSkillsForUser({
         userId,
         title: input.title,
@@ -602,18 +628,16 @@ export const applicationsRouter = {
         resumeId: input.resumeId ?? null
       };
 
-      // URL present: race-safe dedup + conflict policy (hub parity).
+      // URL present: race-safe insert (conflict race after the pre-check above).
       if (listingUrl) {
         const { row, created } = await applicationRepository.createIfAbsentByUrl({
           ...common,
           url: listingUrl
         });
         if (!created) {
-          // Already tracked (open or closed): return as-is — no field overwrite, no reopen.
           if (row.trackingStatus === "tracked") {
             return toApplicationOutputWithListing(row);
           }
-          // inbox / dismissed → promote to tracked
           const promoted = await applicationRepository.setTrackingStatus(row.id, userId, "tracked");
           if (!promoted) throw errors.NOT_FOUND();
           await applicationActivityRepository.append({

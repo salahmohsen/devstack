@@ -1,11 +1,11 @@
 "use client";
 
 import { ExternalLinkIcon, FileTextIcon, MailIcon, PackageIcon, SparklesIcon } from "lucide-react";
-import { useState, type ComponentType, type SyntheticEvent } from "react";
+import { type ComponentType, type SyntheticEvent } from "react";
 
 import { type ApplicationOutput, isApplicationOpen } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
-import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -44,6 +44,8 @@ type ApplicationPrimaryActionButtonProps = {
   grouped?: boolean;
   /** Force button chrome when nested in an action Group (board = outline). */
   buttonVariant?: "default" | "outline";
+  /** Icon-only control; label moves to aria-label + tooltip. */
+  iconOnly?: boolean;
   className?: string;
 };
 
@@ -56,12 +58,12 @@ export function ApplicationPrimaryActionButton({
   layout = "card",
   grouped = false,
   buttonVariant,
+  iconOnly = false,
   className
 }: ApplicationPrimaryActionButtonProps) {
-  const { openEdit, openSendOutreach } = useApplicationStore();
+  const { openEdit, openSendOutreach, openRegenerateConfirm } = useApplicationStore();
   const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
     useDashboardApplyPackage();
-  const [prepareAgainOpen, setPrepareAgainOpen] = useState(false);
   const primary = getApplicationPrimaryAction(app, { reviewApplyKit });
   const open = isApplicationOpen(app.outcome);
 
@@ -72,6 +74,7 @@ export function ApplicationPrimaryActionButton({
     isPendingFor(app.id) &&
     (primary.kind === "prepare" || primary.kind === "review" || primary.kind === "prepare-again");
   const busyLabel = busyLabelFor(app.id);
+  const actionLabel = busyLabel ?? primary.label;
   const disabled = !open || generating;
   const resolvedVariant =
     buttonVariant ?? (primary.kind === "open-listing" && !grouped ? "outline" : "default");
@@ -88,7 +91,7 @@ export function ApplicationPrimaryActionButton({
         runReview(app.id);
         break;
       case "prepare-again":
-        setPrepareAgainOpen(true);
+        openRegenerateConfirm(app.id);
         break;
       case "send":
         openSendOutreach(app.id);
@@ -101,43 +104,57 @@ export function ApplicationPrimaryActionButton({
     }
   }
 
-  return (
-    <>
-      <Button
-        type="button"
-        size={layout === "inline" ? "default" : "sm"}
-        variant={resolvedVariant}
-        className={cn(
-          "active:scale-[0.96]",
-          layout === "card" && !grouped && "mt-2.5 w-full",
-          // Match Group chevron `icon-sm` (size-8 / sm:size-7) — do not force h-7 alone.
-          grouped && layout === "card" && "min-w-0 flex-1",
-          grouped && layout === "inline" && "min-w-0",
-          className
-        )}
-        disabled={disabled}
-        loading={generating}
-        onPointerDown={stopRowActivation}
-        onClick={(event) => {
-          stopRowActivation(event);
-          runPrimary();
-        }}
-      >
-        <Icon aria-hidden="true" />
-        {busyLabel ?? primary.label}
-      </Button>
+  if (iconOnly) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              size="icon-sm"
+              variant={resolvedVariant}
+              className={cn("shrink-0 active:scale-[0.96]", className)}
+              disabled={disabled}
+              loading={generating}
+              aria-label={actionLabel}
+              onPointerDown={stopRowActivation}
+              onClick={(event) => {
+                stopRowActivation(event);
+                runPrimary();
+              }}
+            />
+          }
+        >
+          <Icon aria-hidden="true" />
+        </TooltipTrigger>
+        <TooltipPopup>{actionLabel}</TooltipPopup>
+      </Tooltip>
+    );
+  }
 
-      <ConfirmDialog
-        open={prepareAgainOpen}
-        onOpenChange={setPrepareAgainOpen}
-        title="Prepare a new package?"
-        description="AI will draft a new package. Your current resume and cover letter stay until the new package is written."
-        confirmLabel="Prepare again"
-        confirmLoading={generating}
-        onConfirm={() => {
-          runGenerate(app.id, () => setPrepareAgainOpen(false));
-        }}
-      />
-    </>
+  return (
+    <Button
+      type="button"
+      size={layout === "inline" ? "default" : "sm"}
+      variant={resolvedVariant}
+      className={cn(
+        "active:scale-[0.96]",
+        layout === "card" && !grouped && "mt-2.5 w-full",
+        // Match Group chevron `icon-sm` (size-8 / sm:size-7) — do not force h-7 alone.
+        grouped && layout === "card" && "min-w-0 flex-1",
+        grouped && layout === "inline" && "min-w-0",
+        className
+      )}
+      disabled={disabled}
+      loading={generating}
+      onPointerDown={stopRowActivation}
+      onClick={(event) => {
+        stopRowActivation(event);
+        runPrimary();
+      }}
+    >
+      <Icon aria-hidden="true" />
+      {actionLabel}
+    </Button>
   );
 }

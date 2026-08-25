@@ -45,7 +45,7 @@ function buildLettersPrompt(
 
   return `Draft professional summary, cover letter, and recruiter outreach for this job application.
 
-Activate the **application-apply-package** skill first, then write the letters.
+Follow application-apply-package letter rules. Tools are disabled — return JSON only.
 
 applicationId: ${state.applicationId}
 

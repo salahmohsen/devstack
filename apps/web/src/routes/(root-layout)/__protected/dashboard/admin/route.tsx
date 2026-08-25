@@ -8,7 +8,7 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/admin
   component: AdminLayout,
   beforeLoad: ({ context, location }) => {
     if (!isSuperAdminRole(context.user?.role)) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/dashboard/agent" });
     }
     const path = location.pathname.replace(/\/$/, "");
     if (path === "/dashboard/admin") {
