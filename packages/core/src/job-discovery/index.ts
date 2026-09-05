@@ -11,7 +11,6 @@ export * from "./hiring-region";
 export * from "./land-budget";
 export * from "./land-match";
 export * from "./queue";
-export * from "./shelf";
 export * from "./ttl";
 export * from "./two-axis";
 export * from "./types";

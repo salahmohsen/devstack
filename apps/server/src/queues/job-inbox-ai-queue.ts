@@ -14,7 +14,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 /**
  * Inbox evaluate / harvest AI (score + take).
  *
- * Discovery: jobId `eval_${userId}_${postingId}`. Harvest/manual:
+ * Discovery: jobId `eval_${userId}_${jobId}` (user_job id). Harvest/manual:
  * `inboxai_${applicationId}`. Remove on complete/fail so a later retry can
  * reuse the id.
  */
@@ -68,7 +68,7 @@ export function startJobInboxAiQueue(redisUrl: string): void {
         jobId: job.id ?? null,
         userId: parsed.data.userId,
         applicationId: parsed.data.applicationId ?? null,
-        postingId: parsed.data.postingId ?? null,
+        userJobId: parsed.data.jobId ?? null,
         runId: parsed.data.runId,
         outcome: result.outcome
       });
