@@ -29,5 +29,6 @@ export * from "./user-custom-domain.schema.ts";
 export * from "./user-gmail-sync.schema.ts";
 export * from "./user-hub-state.schema.ts";
 export * from "./user-job-ai-budget.schema.ts";
+export * from "./user-job.schema.ts";
 export * from "./user-mail-settings.schema.ts";
 export * from "./user-notification-settings.schema.ts";

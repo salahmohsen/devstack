@@ -68,6 +68,12 @@ export {
   type UserJobAiBudgetEntity
 } from "./user-job-ai-budget.repository.ts";
 export {
+  userJobRepository,
+  type ListUnlandedInput,
+  type NewUserJob,
+  type UserJobEntity
+} from "./user-job.repository.ts";
+export {
   mailCrmApplyRepository,
   type CreateMailCrmApplyData,
   type MailCrmApplyEntity
