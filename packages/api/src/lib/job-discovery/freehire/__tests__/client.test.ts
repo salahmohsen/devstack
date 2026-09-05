@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const loggerSpies = {
   set: vi.fn(),
@@ -14,8 +14,10 @@ vi.mock("@tsu-stack/logger/server", () => {
 });
 
 import {
+  clearGeoCitiesCache,
   FreehireAgentJobSchema,
   resolveFreehireBaseUrl,
+  searchFreehireCities,
   searchFreehireJobs
 } from "#@/lib/job-discovery/freehire/client";
 
@@ -192,5 +194,74 @@ describe("searchFreehireJobs", () => {
     const error = (await failure) as Error;
     expect(error).toBeInstanceOf(DOMException);
     expect(error.message).toContain("Aborted");
+  });
+});
+
+describe("searchFreehireCities", () => {
+  beforeEach(() => {
+    clearGeoCitiesCache();
+  });
+
+  function citiesResponse(body: unknown, status = 200) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { "content-type": "application/json" }
+    });
+  }
+
+  it("parses the { data: [{ value, country }] } envelope", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      citiesResponse({
+        data: [
+          { value: "Berlin", country: "de" },
+          { value: "Bern", country: "ch" }
+        ]
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const options = await searchFreehireCities("ber");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("https://freehire.me/api/v1/geo/cities?q=ber"),
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(options).toEqual([
+      { value: "Berlin", country: "de" },
+      { value: "Bern", country: "ch" }
+    ]);
+  });
+
+  it("caches a query for repeated keystrokes", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(citiesResponse({ data: [{ value: "Berlin", country: "de" }] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await searchFreehireCities("ber");
+    await searchFreehireCities("ber");
+    await searchFreehireCities("BER");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns empty options when the key is blank", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(searchFreehireCities("   ")).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("resolves to empty options on non-2xx instead of throwing", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(citiesResponse({ error: "down" }, 503)));
+    await expect(searchFreehireCities("ber")).resolves.toEqual([]);
+    expect(loggerSpies.error).toHaveBeenCalled();
+    expect(loggerSpies.emit).toHaveBeenCalledWith({ _forceKeep: true });
+  });
+
+  it("resolves to empty options on network failure", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+    await expect(searchFreehireCities("ber")).resolves.toEqual([]);
+    expect(loggerSpies.error).toHaveBeenCalled();
   });
 });

@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 
+import { z } from "zod";
+
 import {
   computeLandBudget,
   dailyAiAttemptCap,
@@ -13,6 +15,7 @@ import { applicationRepository, userJobAiBudgetRepository } from "@tsu-stack/db/
 
 import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
 import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
+import { searchFreehireCities } from "#@/lib/job-discovery/freehire/client";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
@@ -102,5 +105,20 @@ export const jobDiscoveryRouter = {
         seats,
         reason: "ok"
       };
+    }),
+
+  searchCities: protectedProcedure
+    .route({
+      description: "City suggestions for the job settings geography autocomplete",
+      method: "GET"
+    })
+    .input(z.object({ q: z.string().trim().min(1).max(60) }))
+    .output(
+      z.object({
+        options: z.array(z.object({ value: z.string(), country: z.string() }))
+      })
+    )
+    .handler(async ({ input }) => {
+      return { options: await searchFreehireCities(input.q) };
     })
 };

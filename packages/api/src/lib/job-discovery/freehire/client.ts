@@ -7,6 +7,21 @@ const DEFAULT_FREEHIRE_BASE_URL = "https://freehire.me/api/v1";
 const SEARCH_TIMEOUT_MS = 15_000;
 const OPERATION = "api__freehire_agent_jobs_search";
 
+const GEO_CITIES_TIMEOUT_MS = 5_000;
+const GEO_CACHE_TTL_MS = 60 * 60 * 1000;
+const GEO_CACHE_MAX_ENTRIES = 500;
+const GEO_OPERATION = "api__freehire_geo_cities";
+
+export const FreehireGeoCitySchema = z.object({
+  value: z.string().min(1),
+  country: z.string().min(1)
+});
+export type FreehireGeoCity = z.infer<typeof FreehireGeoCitySchema>;
+
+const GeoCitiesEnvelopeSchema = z.object({
+  data: z.array(FreehireGeoCitySchema)
+});
+
 export function resolveFreehireBaseUrl(): string {
   return ENV_SERVER.FREEHIRE_API_BASE_URL?.trim() ?? DEFAULT_FREEHIRE_BASE_URL;
 }
@@ -141,5 +156,66 @@ export async function searchFreehireJobs(
   } finally {
     clearTimeout(timer);
     opts?.signal?.removeEventListener("abort", onCallerAbort);
+  }
+}
+
+const geoCitiesCache = new Map<string, { at: number; options: FreehireGeoCity[] }>();
+
+/** Test hook — the module-level cache is process-wide. */
+export function clearGeoCitiesCache(): void {
+  geoCitiesCache.clear();
+}
+
+/**
+ * City suggestions from the freehire geo endpoint. Cached in-memory for 1h so
+ * repeated browser keystrokes never hit freehire. Any failure resolves to an
+ * empty list — autocomplete is never worth an error surface.
+ */
+export async function searchFreehireCities(query: string): Promise<FreehireGeoCity[]> {
+  const q = query.trim().slice(0, 60);
+  if (!q) return [];
+
+  const cacheKey = q.toLowerCase();
+  const cached = geoCitiesCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < GEO_CACHE_TTL_MS) {
+    return cached.options;
+  }
+
+  const log = createLogger({ operation: GEO_OPERATION });
+  const started = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GEO_CITIES_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${resolveFreehireBaseUrl()}/geo/cities?q=${encodeURIComponent(q)}`, {
+      signal: controller.signal,
+      headers: { Accept: "application/json" }
+    });
+    const bodyText = await res.text();
+    if (!res.ok) {
+      throw new Error(`freehire geo cities failed: HTTP ${res.status}`);
+    }
+    const options = GeoCitiesEnvelopeSchema.parse(JSON.parse(bodyText)).data;
+
+    if (geoCitiesCache.size >= GEO_CACHE_MAX_ENTRIES) geoCitiesCache.clear();
+    geoCitiesCache.set(cacheKey, { at: Date.now(), options });
+
+    log.set({
+      event: "freehire_geo_cities_completed",
+      status: res.status,
+      count: options.length,
+      durationMs: Date.now() - started
+    });
+    log.emit();
+    return options;
+  } catch (error) {
+    log.error(error instanceof Error ? error : new Error(String(error)), {
+      event: "freehire_geo_cities_failed",
+      durationMs: Date.now() - started
+    });
+    log.emit({ _forceKeep: true });
+    return [];
+  } finally {
+    clearTimeout(timer);
   }
 }
