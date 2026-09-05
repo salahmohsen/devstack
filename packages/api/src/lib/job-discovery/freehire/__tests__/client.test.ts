@@ -111,9 +111,27 @@ describe("searchFreehireJobs", () => {
       "fetch",
       vi.fn().mockResolvedValue(jsonResponse({ error: "paused for maintenance" }, 503))
     );
-    const pending = searchFreehireJobs(new URLSearchParams());
-    await expect(pending).rejects.toThrow(/HTTP 503 paused for maintenance/);
+    await expect(searchFreehireJobs(new URLSearchParams())).rejects.toThrow(
+      /HTTP 503 paused for maintenance/
+    );
     expect(loggerSpies.error).toHaveBeenCalled();
+    expect(loggerSpies.emit).toHaveBeenCalledWith({ _forceKeep: true });
+  });
+
+  it("wraps a 2xx non-JSON body as a bad envelope with the parse error as cause", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("<html>gateway splash</html>", {
+          status: 200,
+          headers: { "content-type": "text/html" }
+        })
+      )
+    );
+    const failure = searchFreehireJobs(new URLSearchParams()).catch((error: unknown) => error);
+    const error = (await failure) as Error;
+    expect(error.message).toContain("bad envelope (HTTP 200)");
+    expect(error.cause).toBeInstanceOf(SyntaxError);
     expect(loggerSpies.emit).toHaveBeenCalledWith({ _forceKeep: true });
   });
 

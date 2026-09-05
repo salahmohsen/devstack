@@ -110,7 +110,15 @@ export async function searchFreehireJobs(
       );
     }
 
-    const envelope = FreehireSearchEnvelopeSchema.parse(JSON.parse(bodyText));
+    let body: unknown;
+    try {
+      body = JSON.parse(bodyText);
+    } catch (error) {
+      throw new Error(`freehire agent jobs search: bad envelope (HTTP ${res.status})`, {
+        cause: error
+      });
+    }
+    const envelope = FreehireSearchEnvelopeSchema.parse(body);
     const ignoredParams = envelope.meta.ignored_params ?? [];
     log.set({
       event: "freehire_agent_jobs_search_completed",

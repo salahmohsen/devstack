@@ -733,10 +733,7 @@ async function runInboxAiForJob(input: {
 
   const row = await insertDiscoveryApplication({
     ...baseInsert,
-    matchScore:
-      keep === "dismissed" || keep === "passed" || keep === "heuristic"
-        ? cap.displayScore
-        : cheap.score,
+    matchScore: cap.displayScore,
     matchReasons: match.reasons,
     trackingStatus: plan.insert.trackingStatus,
     poolSize: DISCOVERY_FETCH_POOL_SIZE,

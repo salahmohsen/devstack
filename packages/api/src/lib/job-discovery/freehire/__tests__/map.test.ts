@@ -105,4 +105,16 @@ describe("toUserJobRow", () => {
       source: null
     });
   });
+
+  it("nulls a malformed posted_at instead of storing an Invalid Date", () => {
+    const job = FreehireAgentJobSchema.parse({
+      public_slug: "bad-date-job",
+      url: "https://example.com/bad-date",
+      title: "Bad Date",
+      company: "Dateless Co",
+      posted_at: "not-a-timestamp"
+    });
+    const row = toUserJobRow(job, META);
+    expect(row.postedAt).toBeNull();
+  });
 });

@@ -37,6 +37,12 @@ function asWorkMode(value: string | null | undefined): string | null {
   return parsed.success ? parsed.data : null;
 }
 
+function postedAtOrNull(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function toUserJobRow(
   job: FreehireAgentJob,
   meta: { userId: string; queryHash: string; queryFilters: Record<string, unknown> }
@@ -46,6 +52,7 @@ export function toUserJobRow(
     userId: meta.userId,
     freehireSlug: job.public_slug,
     title: job.title,
+    // user_job.company_name is NOT NULL — the title fallback keeps the row renderable.
     companyName: textOrNull(job.company) ?? job.title,
     companySlug: textOrNull(job.company_slug),
     companyLogoUrl: null,
@@ -65,7 +72,7 @@ export function toUserJobRow(
     description: job.description
       ? sanitizeHtml(job.description, DESCRIPTION_SANITIZE_OPTIONS)
       : null,
-    postedAt: job.posted_at ? new Date(job.posted_at) : null,
+    postedAt: postedAtOrNull(job.posted_at),
     reality: textOrNull(job.reality?.class),
     source: textOrNull(job.source),
     queryHash: meta.queryHash,
