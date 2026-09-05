@@ -10,7 +10,6 @@ import {
   normalizeLocations,
   normalizeRemoteRegions,
   normalizeWorkModes,
-  refineJobsPerRun,
   UpsertSoftJobPreferencesInputSchema,
   UpsertSoftJobPreferencesOutputSchema,
   type JobPreference,
@@ -39,7 +38,7 @@ function rowToPreference(row: JobPreferenceEntity): JobPreference {
     minMatchScore: row.minMatchScore,
     titleId: row.titleId as JobPreference["titleId"],
     customTitle: row.customTitle ?? null,
-    jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
     importFromEmail: row.importFromEmail ?? false,
     reviewApplyKit: row.reviewApplyKit ?? true
