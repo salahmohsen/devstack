@@ -192,6 +192,30 @@ describe("mergeJobPreference facet semantics", () => {
     expect(merged.workModes).toEqual([]);
     expect(merged.minMatchScore).toBe(60);
   });
+
+  it("clears an array facet on an explicit null patch", () => {
+    const current = mergeJobPreference(defaultJobPreference(), {
+      regions: ["eu"],
+      categories: ["backend"],
+      seniority: ["senior"]
+    });
+    expect(current.regions).toEqual(["eu"]);
+    const patched = mergeJobPreference(current, { regions: null });
+    expect(patched.regions).toBeNull();
+    expect(patched.categories).toEqual(["backend"]);
+    expect(patched.seniority).toEqual(["senior"]);
+  });
+
+  it("keeps array facets when the patch omits them", () => {
+    const current = mergeJobPreference(defaultJobPreference(), {
+      regions: ["eu", "apac"],
+      collections: ["yc"]
+    });
+    const patched = mergeJobPreference(current, { seniority: ["lead"] });
+    expect(patched.regions).toEqual(["eu", "apac"]);
+    expect(patched.collections).toEqual(["yc"]);
+    expect(patched.seniority).toEqual(["lead"]);
+  });
 });
 
 describe("seeker match evidence", () => {

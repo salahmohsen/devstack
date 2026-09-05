@@ -94,17 +94,27 @@ describe("buildFreehireQuery", () => {
     expect(dropped).toEqual(["salaryCurrency:JPY"]);
   });
 
-  it("sends boolean gates only when the pref is exactly true", async () => {
-    const none = await buildFreehireQuery(
-      prefsWith({ visaSponsorship: null, requiresClearance: false })
+  it("passes boolean gates straight through (tri-state: unset → no param)", async () => {
+    const unset = await buildFreehireQuery(
+      prefsWith({ visaSponsorship: null, requiresClearance: null })
     );
-    expect(none.params.get("visa_sponsorship")).toBeNull();
-    expect(none.params.get("requires_clearance")).toBeNull();
+    expect(unset.params.get("visa_sponsorship")).toBeNull();
+    expect(unset.params.get("requires_clearance")).toBeNull();
+  });
 
+  it('sends true booleans as "true"', async () => {
     const both = await buildFreehireQuery(
       prefsWith({ visaSponsorship: true, requiresClearance: true })
     );
     expect(both.params.get("visa_sponsorship")).toBe("true");
+    expect(both.params.get("requires_clearance")).toBe("true");
+  });
+
+  it('sends false booleans as "false" (explicit exclusion, not unset)', async () => {
+    const both = await buildFreehireQuery(
+      prefsWith({ visaSponsorship: false, requiresClearance: false })
+    );
+    expect(both.params.get("visa_sponsorship")).toBe("false");
     expect(both.params.get("requires_clearance")).toBe("false");
   });
 

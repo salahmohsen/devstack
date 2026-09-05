@@ -99,13 +99,13 @@ export async function buildFreehireQuery(prefs: JobPreferenceOutput): Promise<Fr
     params.set("open_within_days", String(prefs.openWithinDays));
     filters.open_within_days = prefs.openWithinDays;
   }
-  if (prefs.visaSponsorship === true) {
-    params.set("visa_sponsorship", "true");
-    filters.visa_sponsorship = true;
+  if (prefs.visaSponsorship != null) {
+    params.set("visa_sponsorship", prefs.visaSponsorship ? "true" : "false");
+    filters.visa_sponsorship = prefs.visaSponsorship;
   }
-  if (prefs.requiresClearance === true) {
-    params.set("requires_clearance", "false");
-    filters.requires_clearance = false;
+  if (prefs.requiresClearance != null) {
+    params.set("requires_clearance", prefs.requiresClearance ? "true" : "false");
+    filters.requires_clearance = prefs.requiresClearance;
   }
 
   return { params, filters, hash: await preferenceQueryHash(filters), dropped };

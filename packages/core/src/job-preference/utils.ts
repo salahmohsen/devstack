@@ -124,7 +124,6 @@ export function isWorkMode(value: string): value is WorkMode {
 
 /**
  * Merge partial upsert onto an existing (or default) preference body.
- * TODO(api): facet persistence rewires with the Task 6/8 job-preference API work.
  */
 export function mergeJobPreference(
   current: JobPreference,
@@ -171,22 +170,23 @@ export function mergeJobPreference(
         : current.dailyBoardScoreCap,
     importFromEmail: patch.importFromEmail ?? current.importFromEmail,
     reviewApplyKit: patch.reviewApplyKit ?? current.reviewApplyKit,
-    regions: patch.regions ?? facets.regions,
-    countries: patch.countries ?? facets.countries,
-    cities: patch.cities ?? facets.cities,
-    categories: patch.categories ?? facets.categories,
-    skills: patch.skills ?? facets.skills,
-    seniority: patch.seniority ?? facets.seniority,
+    regions: patch.regions !== undefined ? patch.regions : facets.regions,
+    countries: patch.countries !== undefined ? patch.countries : facets.countries,
+    cities: patch.cities !== undefined ? patch.cities : facets.cities,
+    categories: patch.categories !== undefined ? patch.categories : facets.categories,
+    skills: patch.skills !== undefined ? patch.skills : facets.skills,
+    seniority: patch.seniority !== undefined ? patch.seniority : facets.seniority,
     experienceYearsMin:
       patch.experienceYearsMin !== undefined ? patch.experienceYearsMin : facets.experienceYearsMin,
     experienceYearsMax:
       patch.experienceYearsMax !== undefined ? patch.experienceYearsMax : facets.experienceYearsMax,
-    employmentTypes: patch.employmentTypes ?? facets.employmentTypes,
-    companyTypes: patch.companyTypes ?? facets.companyTypes,
-    companySizes: patch.companySizes ?? facets.companySizes,
-    domains: patch.domains ?? facets.domains,
-    collections: patch.collections ?? facets.collections,
-    reality: patch.reality ?? facets.reality,
+    employmentTypes:
+      patch.employmentTypes !== undefined ? patch.employmentTypes : facets.employmentTypes,
+    companyTypes: patch.companyTypes !== undefined ? patch.companyTypes : facets.companyTypes,
+    companySizes: patch.companySizes !== undefined ? patch.companySizes : facets.companySizes,
+    domains: patch.domains !== undefined ? patch.domains : facets.domains,
+    collections: patch.collections !== undefined ? patch.collections : facets.collections,
+    reality: patch.reality !== undefined ? patch.reality : facets.reality,
     openWithinDays:
       patch.openWithinDays !== undefined ? patch.openWithinDays : facets.openWithinDays,
     visaSponsorship:
