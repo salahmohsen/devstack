@@ -75,14 +75,49 @@ async function main() {
   };
 
   try {
+    const tableExists = async (name: string): Promise<boolean> => {
+      const result = await pool.query<{ exists: boolean }>(
+        `SELECT to_regclass($1) IS NOT NULL AS exists`,
+        [`public.${name}`]
+      );
+      return result.rows[0]?.exists ?? false;
+    };
+    const columnExists = async (table: string, column: string): Promise<boolean> => {
+      const result = await pool.query<{ exists: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+         ) AS exists`,
+        [table, column]
+      );
+      return result.rows[0]?.exists ?? false;
+    };
+
+    // Shared catalog and legacy columns may already be dropped by
+    // 20260905140000_drop_shared_job_catalog — then there is nothing to do.
+    const hasCatalog = await tableExists("job_posting");
+    const hasLegacyPrefColumns = await columnExists("job_preference", "title_id");
+    if (!hasCatalog && !hasLegacyPrefColumns) {
+      console.log(
+        "[migrate-postings] job_posting and legacy preference columns already dropped — nothing to migrate"
+      );
+      return;
+    }
+
+    if (!hasCatalog) {
+      console.log("[migrate-postings] job_posting already dropped — skipping application repoint");
+    }
+
     // 1. Applications still pointed at the shared catalog (with the join info
     //    needed to derive each posting's legacy slug).
-    const joined = await pool.query<JoinRow>(
-      `SELECT a.id, a.user_id, a.job_id, a.posting_id, jp.adapter_id, jp.external_id
-       FROM application a
-       JOIN job_posting jp ON a.posting_id = jp.id
-       WHERE a.posting_id IS NOT NULL`
-    );
+    const joined = hasCatalog
+      ? await pool.query<JoinRow>(
+          `SELECT a.id, a.user_id, a.job_id, a.posting_id, jp.adapter_id, jp.external_id
+           FROM application a
+           JOIN job_posting jp ON a.posting_id = jp.id
+           WHERE a.posting_id IS NOT NULL`
+        )
+      : { rows: [] as JoinRow[] };
 
     // 2. Copy each distinct referenced posting into user_job under "legacy"
     //    provenance. Hiring region is dropped (no user_job column).
@@ -159,12 +194,15 @@ async function main() {
         }
       }
 
-      // 3. Repoint each application at its matching user_job row.
+      // 3. Repoint each application at its matching user_job row. The
+      //    post-update SELECT is the source of truth: repointed only when
+      //    job_id actually became non-null; orphan only when it is still
+      //    null (no user_job row matched).
       for (const app of joined.rows) {
         if (app.job_id !== null) continue;
         const slug = slugByPostingId.get(app.posting_id);
         if (!slug) continue;
-        const result = await pool.query(
+        await pool.query(
           `UPDATE application
            SET job_id = (
              SELECT id FROM user_job
@@ -173,8 +211,15 @@ async function main() {
            WHERE id = $3 AND job_id IS NULL`,
           [app.user_id, slug, app.id]
         );
-        counts.applicationsRepointed += result.rowCount ?? 0;
-        if (result.rowCount === 0) counts.applicationsOrphaned += 1;
+        const after = await pool.query<{ job_id: string | null }>(
+          `SELECT job_id FROM application WHERE id = $1`,
+          [app.id]
+        );
+        if (after.rows[0]?.job_id != null) {
+          counts.applicationsRepointed += 1;
+        } else {
+          counts.applicationsOrphaned += 1;
+        }
       }
     }
 
@@ -182,12 +227,14 @@ async function main() {
     //    columns (locations, remote_regions, exclude_keywords, jobs_per_run,
     //    work_modes, role_keywords) are removed by the dropping migration,
     //    which completes the reset.
-    const prefs = await pool.query(
-      `UPDATE job_preference
-       SET title_id = NULL, custom_title = NULL, level_floor = NULL
-       WHERE title_id IS NOT NULL OR custom_title IS NOT NULL OR level_floor IS NOT NULL`
-    );
-    counts.preferencesNulled = prefs.rowCount ?? 0;
+    if (hasLegacyPrefColumns) {
+      const prefs = await pool.query(
+        `UPDATE job_preference
+         SET title_id = NULL, custom_title = NULL, level_floor = NULL
+         WHERE title_id IS NOT NULL OR custom_title IS NOT NULL OR level_floor IS NOT NULL`
+      );
+      counts.preferencesNulled = prefs.rowCount ?? 0;
+    }
 
     console.log(
       `[migrate-postings] postingsConsidered=${counts.postingsConsidered} ` +
