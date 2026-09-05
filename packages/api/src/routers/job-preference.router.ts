@@ -196,7 +196,7 @@ export const jobPreferenceRouter = {
 
       // Immediate land so newly saved facets reach the shelf without waiting
       // for the next fetch tick. Hourly runId bucket coalesces repeated saves.
-      // Fire-and-forget: never fail the save when the queue is off.
+      // Fail-soft: never fail the save when the queue is off.
       if (hasValidRoleQuery({ roleKeywords: merged.roleKeywords, categories: merged.categories })) {
         try {
           await requestJobDiscoveryLand({
