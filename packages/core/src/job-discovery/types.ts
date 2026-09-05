@@ -2,13 +2,11 @@ import { z } from "zod";
 
 import { WorkModeSchema, type WorkMode } from "#@/job-preference/types";
 
-import { JOB_ADAPTER_IDS, type JobAdapterId } from "./constants";
-
 export const AdapterCapabilitySchema = z.enum(["search", "feed"]);
 export type AdapterCapability = z.infer<typeof AdapterCapabilitySchema>;
 
 export const NormalizedListingSchema = z.object({
-  adapterId: z.enum(JOB_ADAPTER_IDS),
+  adapterId: z.string(),
   externalId: z.string().min(1),
   listingUrl: z.string().url(),
   title: z.string().min(1),
@@ -39,7 +37,7 @@ export type AdapterFetchInput = {
 };
 
 export type JobSourceAdapter = {
-  id: JobAdapterId;
+  id: string;
   capabilities: readonly AdapterCapability[];
   fetch(input: AdapterFetchInput): Promise<NormalizedListing[]>;
 };

@@ -19,7 +19,6 @@ import {
   stripListingChromeFromText,
   type ListingPageExtract
 } from "#@/common/extract-job-listing-page";
-import { effectiveRoleKeywords } from "#@/job-discovery/title-packs";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
 import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
 import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
@@ -1555,10 +1554,7 @@ export function scoreJobAgainstPreference(
     return { score: 0, passed: false, reasons: hard.reasons, rulesFailed: true };
   }
 
-  const roleKeywords = effectiveRoleKeywords({
-    titleId: p.titleId ?? null,
-    roleKeywords: p.roleKeywords
-  });
+  const roleKeywords = p.roleKeywords;
   if (roleKeywords.length > 0) {
     // Title-only — never score from fetched HTML description noise
     const titleHits = roleKeywords.filter((k) => matchesKeywordPhrase(job.title, k));

@@ -2,14 +2,9 @@ import { z } from "zod";
 
 import {
   DEFAULT_DAILY_BOARD_SCORE_CAP,
-  DEFAULT_JOBS_PER_RUN,
-  JobTitleIdSchema,
   MAX_DAILY_BOARD_SCORE_CAP,
-  MAX_JOBS_PER_RUN,
   MIN_DAILY_BOARD_SCORE_CAP,
-  MIN_JOBS_PER_RUN,
-  refineDailyBoardScoreCap,
-  refineJobsPerRun
+  refineDailyBoardScoreCap
 } from "#@/job-discovery/constants";
 import {
   CategoryFacetSchema,
@@ -43,12 +38,7 @@ const salaryCurrencyField = z
   .nullable()
   .transform((v) => (v === "" || v == null ? null : v.toUpperCase()));
 
-const jobsPerRunField = z
-  .number()
-  .int()
-  .min(MIN_JOBS_PER_RUN)
-  .max(MAX_JOBS_PER_RUN)
-  .transform(refineJobsPerRun);
+const jobsPerRunField = z.number().int();
 
 const dailyBoardScoreCapField = z
   .number()
@@ -58,6 +48,9 @@ const dailyBoardScoreCapField = z
   .transform(refineDailyBoardScoreCap);
 
 const customTitleField = z.string().trim().max(120).nullable();
+
+/** Legacy harvest default until the legacy body dies in a later task. */
+const DEFAULT_JOBS_PER_RUN = 25;
 
 /**
  * Legacy harvest/matching preference body (pre-freehire facets).
@@ -75,7 +68,7 @@ export const JobPreferenceFieldsSchema = z.object({
   salaryCurrency: z.string().nullable(),
   levelFloor: LevelFloorSchema.nullable(),
   minMatchScore: z.number().int().min(0).max(100),
-  titleId: JobTitleIdSchema.nullable(),
+  titleId: z.string().nullable(),
   customTitle: customTitleField,
   jobsPerRun: jobsPerRunField,
   dailyBoardScoreCap: dailyBoardScoreCapField,
@@ -98,7 +91,7 @@ export const JobPreferenceSchema = z.object({
   salaryCurrency: salaryCurrencyField.optional(),
   levelFloor: LevelFloorSchema.nullable().default(null),
   minMatchScore: z.number().int().min(0).max(100).default(60),
-  titleId: JobTitleIdSchema.nullable().default(null),
+  titleId: z.string().nullable().default(null),
   customTitle: customTitleField.default(null),
   jobsPerRun: jobsPerRunField.default(DEFAULT_JOBS_PER_RUN),
   dailyBoardScoreCap: dailyBoardScoreCapField.default(DEFAULT_DAILY_BOARD_SCORE_CAP),

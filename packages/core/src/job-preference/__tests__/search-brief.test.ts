@@ -16,7 +16,11 @@ import { defaultJobPreference, emptySeekerMatchEvidence } from "#@/job-preferenc
 
 const profile = { name: "Ada", summary: "Builds tools" };
 
-function sourceWith(prefs = defaultJobPreference()): SearchBriefSource {
+function defaultBriefPrefs() {
+  return { ...defaultJobPreference(), categories: null };
+}
+
+function sourceWith(prefs = defaultBriefPrefs()): SearchBriefSource {
   return buildSearchBriefSource({
     prefs,
     evidence: emptySeekerMatchEvidence(),
@@ -26,9 +30,9 @@ function sourceWith(prefs = defaultJobPreference()): SearchBriefSource {
 
 describe("search brief source payload", () => {
   it("ignores jobsPerRun, dailyBoardScoreCap, minMatchScore, importFromEmail, and reviewApplyKit", () => {
-    const base = sourceWith(defaultJobPreference());
+    const base = sourceWith();
     const ignored = sourceWith({
-      ...defaultJobPreference(),
+      ...defaultBriefPrefs(),
       jobsPerRun: 40,
       dailyBoardScoreCap: 80,
       minMatchScore: 99,
@@ -40,7 +44,7 @@ describe("search brief source payload", () => {
 
   it("is stable across object key order", () => {
     const source = sourceWith({
-      ...defaultJobPreference(),
+      ...defaultBriefPrefs(),
       excludeKeywords: ["php"],
       levelFloor: "senior"
     });
@@ -57,7 +61,8 @@ describe("search brief source payload", () => {
         locations: source.prefs.locations,
         salaryMin: source.prefs.salaryMin,
         roleKeywords: source.prefs.roleKeywords,
-        levelFloor: source.prefs.levelFloor
+        levelFloor: source.prefs.levelFloor,
+        categories: source.prefs.categories
       }
     } satisfies SearchBriefSource;
     expect(stableSearchBriefSourceJson(source)).toBe(stableSearchBriefSourceJson(shuffled));
@@ -66,14 +71,12 @@ describe("search brief source payload", () => {
   it("changes when prefs, evidence, or profile change", () => {
     const base = stableSearchBriefSourceJson(sourceWith());
     expect(
-      stableSearchBriefSourceJson(
-        sourceWith({ ...defaultJobPreference(), excludeKeywords: ["php"] })
-      )
+      stableSearchBriefSourceJson(sourceWith({ ...defaultBriefPrefs(), excludeKeywords: ["php"] }))
     ).not.toBe(base);
     expect(
       stableSearchBriefSourceJson(
         buildSearchBriefSource({
-          prefs: defaultJobPreference(),
+          prefs: defaultBriefPrefs(),
           evidence: { ...emptySeekerMatchEvidence(), projectTitles: ["Hub"] },
           profile
         })
@@ -82,7 +85,7 @@ describe("search brief source payload", () => {
     expect(
       stableSearchBriefSourceJson(
         buildSearchBriefSource({
-          prefs: defaultJobPreference(),
+          prefs: defaultBriefPrefs(),
           evidence: emptySeekerMatchEvidence(),
           profile: { name: "Ada", summary: "Different" }
         })
@@ -93,12 +96,12 @@ describe("search brief source payload", () => {
   it("does not change when evidence arrays are reordered", () => {
     const empty = emptySeekerMatchEvidence();
     const a = buildSearchBriefSource({
-      prefs: defaultJobPreference(),
+      prefs: defaultBriefPrefs(),
       evidence: { ...empty, roleTitles: ["Backend", "Frontend"], projectTitles: ["Hub", "Mail"] },
       profile
     });
     const b = buildSearchBriefSource({
-      prefs: defaultJobPreference(),
+      prefs: defaultBriefPrefs(),
       evidence: { ...empty, roleTitles: ["Frontend", "Backend"], projectTitles: ["Mail", "Hub"] },
       profile
     });
@@ -109,7 +112,7 @@ describe("search brief source payload", () => {
 describe("lists-only search brief renderer", () => {
   it("renders default columns without unused headings or prose", () => {
     const markdown = renderSearchBriefMarkdown({
-      prefs: searchBriefPrefsFromPreference(defaultJobPreference())
+      prefs: searchBriefPrefsFromPreference(defaultBriefPrefs())
     });
     expect(markdown.startsWith("## Target jobs")).toBe(true);
     expect(markdown).toContain("- Level floor: none");
@@ -124,11 +127,12 @@ describe("lists-only search brief renderer", () => {
     expect(markdown).not.toContain("Example titles:");
   });
 
-  it("restates stored columns and pack label", () => {
+  it("restates stored columns and role keywords", () => {
     const markdown = renderSearchBriefMarkdown({
       prefs: searchBriefPrefsFromPreference({
-        ...defaultJobPreference(),
-        titleId: "frontend",
+        ...defaultBriefPrefs(),
+        roleKeywords: ["react", "go"],
+        categories: ["backend"],
         levelFloor: "senior",
         excludeKeywords: ["react native"],
         workModes: ["remote"],
@@ -138,7 +142,7 @@ describe("lists-only search brief renderer", () => {
         salaryCurrency: "USD"
       })
     });
-    expect(markdown).toContain("- Example titles: Frontend Engineer");
+    expect(markdown).toContain("- Example titles: react, go");
     expect(markdown).toContain("- Level floor: senior");
     expect(markdown).toContain("- Exclusions: react native");
     expect(markdown).toContain("- Modes: remote");
@@ -148,9 +152,19 @@ describe("lists-only search brief renderer", () => {
     expect(markdown.startsWith("## Target jobs")).toBe(true);
   });
 
+  it("falls back to categories for example titles when roleKeywords are empty", () => {
+    const markdown = renderSearchBriefMarkdown({
+      prefs: searchBriefPrefsFromPreference({
+        ...defaultBriefPrefs(),
+        categories: ["backend", "frontend"]
+      })
+    });
+    expect(markdown).toContain("- Example titles: backend, frontend");
+  });
+
   it("changes when levelFloor, salary, or exclude is patched", () => {
     const current = {
-      ...defaultJobPreference(),
+      ...defaultBriefPrefs(),
       excludeKeywords: ["php"],
       salaryMin: 3000,
       salaryCurrency: "USD",

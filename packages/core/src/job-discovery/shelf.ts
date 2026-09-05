@@ -1,4 +1,4 @@
-import { type JobPreference, WorkModeSchema, type WorkMode } from "#@/job-preference/types";
+import { type JobPreferenceOutput, WorkModeSchema, type WorkMode } from "#@/job-preference/types";
 
 import { scoreCatalogAgainstPreference } from "./cheap-score";
 import { decideTwoAxis } from "./two-axis";
@@ -14,6 +14,7 @@ export type TwoAxisShelfListing = {
   skills: readonly string[] | null;
   salaryMin: number | null;
   salaryCurrency: string | null;
+  experienceYearsMin?: number | null;
 };
 
 function asWorkMode(value: string | null | undefined): WorkMode | null {
@@ -27,7 +28,7 @@ function asWorkMode(value: string | null | undefined): WorkMode | null {
  */
 export function countTwoAxisPassedUnseen(
   shelf: readonly TwoAxisShelfListing[],
-  prefs: JobPreference,
+  prefs: JobPreferenceOutput,
   budget: number
 ): number {
   if (budget <= 0) return 0;
@@ -43,7 +44,8 @@ export function countTwoAxisPassedUnseen(
         workMode,
         skills: listing.skills ? [...listing.skills] : [],
         salaryMin: listing.salaryMin,
-        salaryCurrency: listing.salaryCurrency
+        salaryCurrency: listing.salaryCurrency,
+        experienceYearsMin: listing.experienceYearsMin ?? null
       },
       prefs
     );
@@ -63,8 +65,8 @@ export function countTwoAxisPassedUnseen(
       location: candidate.location,
       prefs: {
         workModes: prefs.workModes,
-        locations: prefs.locations,
-        remoteRegions: prefs.remoteRegions
+        locations: prefs.cities ?? [],
+        remoteRegions: prefs.regions ?? []
       }
     });
     if (twoAxis.action !== "pass") continue;

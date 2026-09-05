@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { JobTitleIdSchema } from "#@/job-discovery/constants";
-
 import {
   JobPreferenceFieldsSchema,
   LevelFloorSchema,
@@ -52,7 +50,7 @@ const softCustomTitleField = z.string().trim().max(120).nullable();
 /** Immediate search-loop writes. Hard-stop keys are rejected (strict). */
 export const UpsertSoftJobPreferencesInputSchema = z
   .object({
-    titleId: JobTitleIdSchema.nullable().optional(),
+    titleId: z.string().nullable().optional(),
     customTitle: softCustomTitleField.optional(),
     roleKeywords: PreferenceListPatchSchema.optional(),
     workModes: z.array(WorkModeSchema).max(3).optional(),

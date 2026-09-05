@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-import { TITLE_PACKS } from "#@/job-discovery/constants";
+import { CategoryFacetSchema } from "#@/job-discovery/facets";
 
 import {
   JobPreferenceFieldsSchema,
   SeekerMatchEvidenceSchema,
   type JobPreference,
+  type JobPreferenceFacetFields,
   type SeekerMatchEvidence
 } from "./types";
 
@@ -20,6 +21,8 @@ export const SearchBriefPrefsSchema = JobPreferenceFieldsSchema.pick({
   levelFloor: true,
   titleId: true,
   customTitle: true
+}).extend({
+  categories: z.array(CategoryFacetSchema).nullable()
 });
 export type SearchBriefPrefs = z.infer<typeof SearchBriefPrefsSchema>;
 
@@ -50,9 +53,12 @@ export const GetSearchBriefOutputSchema = z.object({
 });
 export type GetSearchBriefOutput = z.infer<typeof GetSearchBriefOutputSchema>;
 
-export function searchBriefPrefsFromPreference(
-  prefs: Pick<JobPreference, keyof SearchBriefPrefs>
-): SearchBriefPrefs {
+type BriefPrefsSource = Pick<
+  JobPreference & Partial<JobPreferenceFacetFields>,
+  keyof SearchBriefPrefs
+>;
+
+export function searchBriefPrefsFromPreference(prefs: BriefPrefsSource): SearchBriefPrefs {
   return {
     workModes: prefs.workModes,
     locations: prefs.locations,
@@ -63,7 +69,8 @@ export function searchBriefPrefsFromPreference(
     salaryCurrency: prefs.salaryCurrency,
     levelFloor: prefs.levelFloor,
     titleId: prefs.titleId,
-    customTitle: prefs.customTitle
+    customTitle: prefs.customTitle,
+    categories: prefs.categories ?? null
   };
 }
 
@@ -82,7 +89,7 @@ function fingerprintStrings(values: readonly string[]): string[] {
 }
 
 export function buildSearchBriefSource(input: {
-  prefs: Pick<JobPreference, keyof SearchBriefPrefs>;
+  prefs: BriefPrefsSource;
   evidence: SeekerMatchEvidence;
   profile: { name: string; summary: string };
 }): SearchBriefSource {
@@ -129,12 +136,10 @@ function joinOr(values: readonly string[], empty: string): string {
 }
 
 function exampleTitlesLine(prefs: SearchBriefPrefs): string | null {
-  if (prefs.titleId != null && prefs.titleId !== "custom") {
-    return TITLE_PACKS[prefs.titleId].label;
-  }
-  const custom = prefs.customTitle?.trim();
-  if (custom) return custom;
-  if (prefs.roleKeywords.length > 0) return prefs.roleKeywords.join(", ");
+  const keywords = prefs.roleKeywords.map((k) => k.trim()).filter(Boolean);
+  if (keywords.length > 0) return keywords.join(", ");
+  const categories = prefs.categories ?? [];
+  if (categories.length > 0) return categories.join(", ");
   return null;
 }
 

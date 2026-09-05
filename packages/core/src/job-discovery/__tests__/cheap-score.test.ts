@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { scoreCatalogAgainstPreference } from "#@/job-discovery/cheap-score";
-import { defaultJobPreference } from "#@/job-preference/utils";
+import { hasValidRoleQuery, scoreCatalogAgainstPreference } from "#@/job-discovery/cheap-score";
+import { defaultJobPreferenceOutput } from "#@/job-preference/utils";
 
 const listing = {
   title: "Senior Frontend Engineer",
@@ -10,34 +10,53 @@ const listing = {
   workMode: "remote" as const,
   skills: ["react", "typescript"],
   salaryMin: null,
-  salaryCurrency: null
+  salaryCurrency: null,
+  experienceYearsMin: null
 };
 
 const prefs = {
-  ...defaultJobPreference(),
-  titleId: "frontend" as const,
-  roleKeywords: [] as string[],
-  excludeKeywords: ["php"],
+  ...defaultJobPreferenceOutput(),
+  roleKeywords: ["frontend", "react"],
   workModes: ["remote" as const],
-  locations: ["EU"],
-  minMatchScore: 90
+  salaryMin: null,
+  salaryCurrency: null,
+  experienceYearsMin: null
 };
 
 describe("scoreCatalogAgainstPreference", () => {
-  it("ranks a title hit and ignores minMatchScore (AI bar only)", () => {
+  it("ranks a title hit; passed is eligible-to-land, never minMatchScore-gated", () => {
     const r = scoreCatalogAgainstPreference(listing, { ...prefs, minMatchScore: 100 });
     expect(r.passed).toBe(true);
     expect(r.score).toBeGreaterThan(0);
-    // passed is "eligible to land", not "score >= minMatchScore"
+    expect(r.reasons.join(" ")).toMatch(/title keywords/i);
   });
 
-  it("kills exclude in title", () => {
-    const r = scoreCatalogAgainstPreference({ ...listing, title: "PHP Frontend" }, prefs);
-    expect(r.passed).toBe(false);
-    expect(r.score).toBe(0);
+  it("kills a garbage title/company", () => {
+    expect(
+      scoreCatalogAgainstPreference({ ...listing, title: "Job Alert: 5 new roles" }, prefs).passed
+    ).toBe(false);
+    expect(
+      scoreCatalogAgainstPreference({ ...listing, companyName: "LinkedIn" }, prefs).passed
+    ).toBe(false);
   });
 
-  it("title-hits Front End when the frontend pack seeds front-end", () => {
+  it("applies the salary floor only when the stated currency matches", () => {
+    const usdFloor = { ...prefs, salaryMin: 4000, salaryCurrency: "USD" };
+    const below = scoreCatalogAgainstPreference(
+      { ...listing, salaryMin: 24_000, salaryCurrency: "USD" },
+      usdFloor
+    );
+    expect(below.passed).toBe(false);
+    expect(below.reasons).toContain("below salary floor");
+
+    const mismatch = scoreCatalogAgainstPreference(
+      { ...listing, salaryMin: 24_000, salaryCurrency: "EUR" },
+      usdFloor
+    );
+    expect(mismatch.passed).toBe(true);
+  });
+
+  it("title-hits Front End when the keyword is frontend", () => {
     const r = scoreCatalogAgainstPreference(
       { ...listing, title: "Front End Angular Engineer" },
       prefs
@@ -46,74 +65,82 @@ describe("scoreCatalogAgainstPreference", () => {
     expect(r.reasons.join(" ")).toMatch(/title keywords/i);
   });
 
+  it("falls back to categories as title needles when roleKeywords are empty", () => {
+    const categoryOnly = {
+      ...prefs,
+      roleKeywords: [],
+      categories: ["frontend" as const]
+    };
+    expect(
+      scoreCatalogAgainstPreference(
+        { ...listing, title: "Front End Angular Engineer" },
+        categoryOnly
+      ).passed
+    ).toBe(true);
+    expect(
+      scoreCatalogAgainstPreference({ ...listing, title: "Staff Nurse" }, categoryOnly).passed
+    ).toBe(false);
+  });
+
   it("fails without a title keyword hit", () => {
     const r = scoreCatalogAgainstPreference({ ...listing, title: "Staff Nurse" }, prefs);
     expect(r.passed).toBe(false);
     expect(r.reasons.join(" ")).toMatch(/title/i);
   });
 
-  it("does not use description text for excludes or title hits", () => {
-    const r = scoreCatalogAgainstPreference({ ...listing, title: "Staff Nurse" }, prefs);
-    expect(r.passed).toBe(false);
-  });
-
-  it("passes a title hit when remote listing mismatches hybrid+Egypt prefs (mode/location are later gates)", () => {
+  it("passes a title hit when remote listing mismatches hybrid+cairo prefs (mode/place are later gates)", () => {
     const r = scoreCatalogAgainstPreference(listing, {
       ...prefs,
       workModes: ["hybrid"],
-      locations: ["Egypt"]
+      cities: ["Cairo"]
     });
     expect(r.passed).toBe(true);
     expect(r.score).toBeGreaterThan(0);
     expect(r.reasons.join(" ")).not.toMatch(/work mode|location match|location mismatch/i);
   });
 
-  it("kills exclude react native on Senior React Native Engineer", () => {
-    const r = scoreCatalogAgainstPreference(
-      {
-        ...listing,
-        title: "Senior React Native Engineer",
-        skills: ["react native", "typescript"]
-      },
-      { ...defaultJobPreference(), roleKeywords: ["engineer"], excludeKeywords: ["react native"] }
+  it("adds the structured skill bonus for role keyword skills", () => {
+    const hit = scoreCatalogAgainstPreference(listing, prefs);
+    const miss = scoreCatalogAgainstPreference({ ...listing, skills: ["graphql"] }, prefs);
+    expect(hit.score).toBeGreaterThan(miss.score);
+    expect(hit.reasons).toContain("structured skill hit");
+  });
+
+  it("caps the score via applyYearsCap when the listing wants more years than the seeker has", () => {
+    const noBound = scoreCatalogAgainstPreference(
+      { ...listing, title: "Senior Frontend React Engineer", skills: [] },
+      prefs
     );
+    expect(noBound.score).toBe(75);
+
+    const capped = scoreCatalogAgainstPreference(
+      { ...listing, title: "Senior Frontend React Engineer", skills: [], experienceYearsMin: 8 },
+      { ...prefs, experienceYearsMin: 3 }
+    );
+    expect(capped.passed).toBe(true);
+    expect(capped.score).toBe(65);
+    expect(capped.reasons).toContain("years cap");
+  });
+
+  it("does not use description text for title hits", () => {
+    const r = scoreCatalogAgainstPreference({ ...listing, title: "Staff Nurse" }, prefs);
     expect(r.passed).toBe(false);
-    expect(r.score).toBe(0);
+  });
+});
+
+describe("hasValidRoleQuery", () => {
+  it("is true with a trimmed non-empty roleKeywords entry", () => {
+    expect(hasValidRoleQuery({ roleKeywords: ["react"], categories: null })).toBe(true);
+    expect(hasValidRoleQuery({ roleKeywords: [" "], categories: null })).toBe(false);
   });
 
-  it("does not kill Senior React Native Engineer when exclude is react", () => {
-    const r = scoreCatalogAgainstPreference(
-      {
-        ...listing,
-        title: "Senior React Native Engineer",
-        skills: ["react native", "typescript"]
-      },
-      { ...defaultJobPreference(), roleKeywords: ["engineer"], excludeKeywords: ["react"] }
-    );
-    expect(r.passed).toBe(true);
+  it("is true with non-empty categories even without keywords", () => {
+    expect(hasValidRoleQuery({ roleKeywords: [], categories: ["backend"] })).toBe(true);
   });
 
-  it("does not title-hit React Native on role keyword react", () => {
-    const r = scoreCatalogAgainstPreference(
-      {
-        ...listing,
-        title: "Senior React Native Engineer",
-        skills: ["react native"]
-      },
-      { ...defaultJobPreference(), roleKeywords: ["react"] }
-    );
-    expect(r.passed).toBe(false);
-    expect(r.reasons).toContain("no role keyword in title");
-  });
-
-  it("title-hits Senior React Engineer and React.js Developer on role keyword react", () => {
-    const reactOnly = { ...defaultJobPreference(), roleKeywords: ["react"] };
-    expect(
-      scoreCatalogAgainstPreference({ ...listing, title: "Senior React Engineer" }, reactOnly)
-        .passed
-    ).toBe(true);
-    expect(
-      scoreCatalogAgainstPreference({ ...listing, title: "React.js Developer" }, reactOnly).passed
-    ).toBe(true);
+  it("is false when both are empty or blank", () => {
+    expect(hasValidRoleQuery({ roleKeywords: [], categories: null })).toBe(false);
+    expect(hasValidRoleQuery({ roleKeywords: [], categories: [] })).toBe(false);
+    expect(hasValidRoleQuery({ roleKeywords: ["  "], categories: [] })).toBe(false);
   });
 });

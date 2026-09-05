@@ -1,6 +1,5 @@
 import {
   DEFAULT_DAILY_BOARD_SCORE_CAP,
-  DEFAULT_JOBS_PER_RUN,
   refineDailyBoardScoreCap
 } from "#@/job-discovery/constants";
 import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
@@ -55,7 +54,7 @@ export function defaultJobPreference(): JobPreference {
     minMatchScore: DEFAULT_MIN_MATCH_SCORE,
     titleId: null,
     customTitle: null,
-    jobsPerRun: DEFAULT_JOBS_PER_RUN,
+    jobsPerRun: 25,
     dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
     importFromEmail: DEFAULT_IMPORT_FROM_EMAIL,
     reviewApplyKit: DEFAULT_REVIEW_APPLY_KIT
