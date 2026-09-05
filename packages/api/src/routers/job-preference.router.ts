@@ -6,6 +6,7 @@ import {
   defaultJobPreference,
   defaultJobPreferenceOutput,
   GetSearchBriefOutputSchema,
+  hasValidRoleQuery,
   JobPreferenceOutputSchema,
   ResetBoardScoresTodayOutputSchema,
   mergeJobPreference,
@@ -24,12 +25,14 @@ import {
   type JobPreferenceFacetData
 } from "@tsu-stack/db";
 import { type StoredLevelFloor, type StoredWorkMode } from "@tsu-stack/db/schema";
+import { createLogger } from "@tsu-stack/logger/server";
 
 import {
   BriefWriteInvalidateSourceSchema,
   ensureSearchBrief,
   invalidateSearchBrief
 } from "#@/lib/application/search-brief";
+import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function utcDay(now = new Date()): string {
@@ -190,6 +193,26 @@ export const jobPreferenceRouter = {
         invalidateSearchBrief(userId, input.briefInvalidateSource ?? "settings"),
         userJobAiBudgetRepository.attemptsForDay(userId, utcDay())
       ]);
+
+      // Immediate land so newly saved facets reach the shelf without waiting
+      // for the next fetch tick. Hourly runId bucket coalesces repeated saves.
+      // Fire-and-forget: never fail the save when the queue is off.
+      if (hasValidRoleQuery({ roleKeywords: merged.roleKeywords, categories: merged.categories })) {
+        try {
+          await requestJobDiscoveryLand({
+            userId,
+            runId: `save_${new Date().toISOString().slice(0, 13)}`,
+            trigger: "backfill"
+          });
+        } catch (error) {
+          const log = createLogger({ operation: "api__job_preference_save_land_enqueue", userId });
+          log.error(error instanceof Error ? error : new Error(String(error)), {
+            event: "job_preference_save_land_enqueue_failed"
+          });
+          log.emit({ _forceKeep: true });
+        }
+      }
+
       return toOutput(row, boardScoresUsedToday);
     }),
 
