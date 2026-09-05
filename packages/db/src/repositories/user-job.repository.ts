@@ -26,7 +26,11 @@ export type ListUnlandedInput = {
   queryHash?: string;
 };
 
-/** Snapshot fields refreshed on conflict; id/user/slug/firstSeenAt stay fixed. */
+/**
+ * Snapshot fields refreshed on conflict; id/user/slug/firstSeenAt stay fixed.
+ * `description`, `summary`, and `skills` get prefer-guards so a thin re-fetch
+ * cannot degrade a rich stored row.
+ */
 const SNAPSHOT_COLUMNS = [
   "title",
   "companyName",
@@ -41,17 +45,38 @@ const SNAPSHOT_COLUMNS = [
   "salaryMin",
   "salaryMax",
   "salaryCurrency",
-  "skills",
   "category",
   "domains",
-  "summary",
-  "description",
   "postedAt",
   "reality",
   "source",
   "queryHash",
   "queryFilters"
 ] as const;
+
+function colName(column: keyof typeof userJob) {
+  return (userJob[column] as { name: string }).name;
+}
+
+function colSql(column: keyof typeof userJob) {
+  return sql.raw(`"${colName(column)}"`);
+}
+
+/** Keep the longer value; incoming null/blank does not wipe a stored one. */
+function preferLongerSnapshot(column: "description" | "summary") {
+  const name = sql.raw(`"${colName(column)}"`);
+  return sql`case
+    when btrim(coalesce(excluded.${name}, '')) = '' then user_job.${name}
+    when length(excluded.${name}) >= length(user_job.${name}) then excluded.${name}
+    else user_job.${name}
+  end`;
+}
+
+/** Keep stored skills when the incoming payload did not state any. */
+function preferStoredSkills() {
+  const name = colSql("skills");
+  return sql`case when coalesce(excluded.${name}, '[]'::jsonb) = '[]'::jsonb then user_job.${name} else excluded.${name} end`;
+}
 
 function unlandedConditions(input: ListUnlandedInput) {
   const conditions = [eq(userJob.userId, input.userId)];
@@ -71,7 +96,10 @@ export const userJobRepository = {
   /**
    * Idempotent per-user staging write on `(userId, freehireSlug)`.
    * Conflicts refresh all snapshot fields plus `lastSeenAt`; `firstSeenAt`
-   * keeps its original value. Returns the number of rows written.
+   * keeps its original value. Incoming null/blank description/summary keeps
+   * the stored value (longer wins otherwise), and empty incoming skills keep
+   * stored skills. Audit timestamps always come from the DB. Returns the
+   * number of rows written.
    */
   async upsertMany(userId: string, rows: NewUserJob[]): Promise<number> {
     if (rows.length === 0) return 0;
@@ -80,8 +108,9 @@ export const userJobRepository = {
       .insert(userJob)
       .values(
         rows.map((row) => {
+          const { firstSeenAt: _firstSeenAt, lastSeenAt: _lastSeenAt, ...snapshot } = row;
           return {
-            ...row,
+            ...snapshot,
             id: row.id ?? crypto.randomUUID(),
             userId
           };
@@ -96,6 +125,9 @@ export const userJobRepository = {
               sql.raw(`excluded."${userJob[column].name}"`)
             ])
           ),
+          description: preferLongerSnapshot("description"),
+          summary: preferLongerSnapshot("summary"),
+          skills: preferStoredSkills(),
           lastSeenAt: sql`now()`
         }
       })

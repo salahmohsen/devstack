@@ -1,4 +1,4 @@
-import { type and } from "drizzle-orm";
+import { type and, type SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -60,7 +60,7 @@ afterEach(() => {
 
 describe("userJobRepository", () => {
   describe("upsertMany", () => {
-    it("issues onConflictDoUpdate keyed on (userId, freehireSlug), sets lastSeenAt, never firstSeenAt", async () => {
+    function buildUpsertMock() {
       const mockDb = buildMockDb();
       const onConflict = vi
         .fn()
@@ -69,10 +69,13 @@ describe("userJobRepository", () => {
         values: vi.fn().mockReturnValue({ onConflictDoUpdate: onConflict })
       });
       mockGetDb.mockReturnValue(mockDb as never);
+      return { mockDb, onConflict };
+    }
 
-      const result = await userJobRepository.upsertMany("user-1", [
-        row({ lastSeenAt: undefined as never })
-      ]);
+    it("issues onConflictDoUpdate keyed on (userId, freehireSlug), sets lastSeenAt, never firstSeenAt", async () => {
+      const { mockDb, onConflict } = buildUpsertMock();
+
+      const result = await userJobRepository.upsertMany("user-1", [row()]);
 
       expect(mockDb.insert).toHaveBeenCalledWith(userJob);
       const insertChain = mockDb.insert.mock.results[0].value;
@@ -95,6 +98,41 @@ describe("userJobRepository", () => {
       expect(setKeys).not.toContain("freehireSlug");
 
       expect(result).toBe(1);
+    });
+
+    it("strips caller-supplied audit timestamps so DB defaults govern the insert", async () => {
+      const { mockDb } = buildUpsertMock();
+
+      await userJobRepository.upsertMany("user-1", [
+        row({ firstSeenAt: new Date("2020-01-01"), lastSeenAt: new Date("2020-01-02") })
+      ]);
+
+      const values = mockDb.insert.mock.results[0].value.values.mock.calls[0][0];
+      expect(values[0]).not.toHaveProperty("firstSeenAt");
+      expect(values[0]).not.toHaveProperty("lastSeenAt");
+    });
+
+    it("guards snapshot overwrites on conflict: longer-of text, empty-skills keep, now() bump", async () => {
+      const { onConflict } = buildUpsertMock();
+      await userJobRepository.upsertMany("user-1", [row()]);
+
+      const set = onConflict.mock.calls[0][0].set as Record<string, SQL>;
+      const lastSeenSql = new PgDialect().sqlToQuery(set.lastSeenAt).sql;
+      expect(lastSeenSql).toBe("now()");
+
+      const descriptionSql = new PgDialect().sqlToQuery(set.description).sql;
+      expect(descriptionSql).toContain(`coalesce(excluded."description", '')`);
+      expect(descriptionSql).toContain('user_job."description"');
+      expect(descriptionSql).toContain(
+        `length(excluded."description") >= length(user_job."description")`
+      );
+
+      const summarySql = new PgDialect().sqlToQuery(set.summary).sql;
+      expect(summarySql).toContain('user_job."summary"');
+
+      const skillsSql = new PgDialect().sqlToQuery(set.skills).sql;
+      expect(skillsSql).toContain(`coalesce(excluded."skills", '[]'::jsonb) = '[]'::jsonb`);
+      expect(skillsSql).toContain('user_job."skills"');
     });
 
     it("returns 0 without touching the db for empty input", async () => {
