@@ -112,7 +112,8 @@ async function coalesceOrRemoveFinishedLandJob(
 }
 
 export async function enqueueJobDiscoveryLand(
-  payload: JobDiscoveryLandPayload
+  payload: JobDiscoveryLandPayload,
+  opts?: { delayMs?: number }
 ): Promise<{ enqueued: boolean; jobId?: string }> {
   const s = store();
   if (!s.queue) {
@@ -132,6 +133,7 @@ export async function enqueueJobDiscoveryLand(
     }
     const job = await s.queue.add(JOB_DISCOVERY_LAND_JOB_NAME, data, {
       jobId,
+      delay: opts?.delayMs,
       removeOnComplete: true,
       removeOnFail: true,
       attempts: 3,

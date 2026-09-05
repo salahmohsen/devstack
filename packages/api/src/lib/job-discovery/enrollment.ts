@@ -9,6 +9,24 @@ export function activityWindowStart(now: Date): Date {
   return new Date(now.getTime() - DISCOVERY_ACTIVITY_WINDOW_MS);
 }
 
+/** UTC `YYYY-MM-DD` label used to coalesce cron land runs per day. */
+export function utcDay(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * Deterministic stagger in `[0, 24h)` from the userId (FNV-1a char fold, mod
+ * 86_400_000). Spreads enrolled users across the day after the 24h tick.
+ */
+export function hashToDelay(userId: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < userId.length; i += 1) {
+    hash ^= userId.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash % 86_400_000;
+}
+
 /**
  * Cron-enrollment predicate: saved role facets (q keywords or categories) AND
  * activity within the 7-day window (session `updatedAt` bumps on auth use).

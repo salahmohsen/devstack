@@ -14,7 +14,9 @@ import { jobPreference } from "@tsu-stack/db/schema";
 import {
   activityWindowStart,
   enrolledUsersPredicate,
-  listEnrolledUserIds
+  hashToDelay,
+  listEnrolledUserIds,
+  utcDay
 } from "#@/lib/job-discovery/enrollment";
 
 function mockDb(rows: Array<{ userId: string }>) {
@@ -74,6 +76,34 @@ describe("enrolledUsersPredicate (rendered SQL)", () => {
     expect(query.sql).toContain(`"session"."user_id" = "job_preference"."user_id"`);
     expect(query.sql).toContain(`"session"."updated_at" > $1`);
     expect(query.params).toEqual(["2026-08-29T12:00:00.000Z"]);
+  });
+});
+
+describe("utcDay", () => {
+  it("formats a UTC YYYY-MM-DD label", () => {
+    expect(utcDay(new Date("2026-09-05T23:30:00Z"))).toBe("2026-09-05");
+    expect(utcDay(new Date("2026-01-01T00:00:00Z"))).toBe("2026-01-01");
+  });
+
+  it("rolls over at UTC midnight, not local", () => {
+    expect(utcDay(new Date("2026-09-05T23:59:59.999Z"))).toBe("2026-09-05");
+    expect(utcDay(new Date("2026-09-06T00:00:00.000Z"))).toBe("2026-09-06");
+  });
+});
+
+describe("hashToDelay", () => {
+  it("is deterministic per userId", () => {
+    expect(hashToDelay("user-abc")).toBe(hashToDelay("user-abc"));
+    expect(hashToDelay("user-abc")).not.toBe(hashToDelay("user-abd"));
+  });
+
+  it("stays within [0, 24h) for arbitrary ids", () => {
+    for (let i = 0; i < 500; i += 1) {
+      const delay = hashToDelay(`user-${i}`);
+      expect(delay).toBeGreaterThanOrEqual(0);
+      expect(delay).toBeLessThan(86_400_000);
+      expect(Number.isInteger(delay)).toBe(true);
+    }
   });
 });
 

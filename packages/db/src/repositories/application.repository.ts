@@ -29,7 +29,6 @@ import {
   type ApplicationStage,
   type ApplicationTrackingStatus
 } from "../schema/application.schema.ts";
-import { jobPosting } from "../schema/job-posting.schema.ts";
 
 export type ApplicationEntity = InferSelectModel<typeof application>;
 export type CreateApplicationData = Omit<
@@ -231,34 +230,6 @@ function applicationCursorWhere(
     after(application.updatedAt, at),
     and(eq(application.updatedAt, at), after(application.id, cursor.id))
   );
-}
-
-/** First inbox HTTP check; keep in sync with core `LIVENESS_AFTER_MS` (~3.5d). */
-const INBOX_LIVENESS_AFTER_MS = Math.floor((7 * 24 * 60 * 60 * 1000) / 2);
-
-async function listDueLivenessByStatus(
-  dueAt: Date,
-  trackingStatus: "inbox" | "tracked",
-  limit: number,
-  updatedAtBefore: Date
-): Promise<ApplicationEntity[]> {
-  if (limit <= 0) return [];
-  const rows = await getDb()
-    .select({ application })
-    .from(application)
-    .leftJoin(jobPosting, eq(application.postingId, jobPosting.id))
-    .where(
-      and(
-        eq(application.trackingStatus, trackingStatus),
-        isNotNull(application.inboxExpiresAt),
-        lte(application.createdAt, dueAt),
-        lte(application.updatedAt, updatedAtBefore),
-        or(isNull(application.postingId), isNull(jobPosting.closedAt))
-      )
-    )
-    .orderBy(asc(application.updatedAt), asc(application.createdAt), asc(application.id))
-    .limit(limit);
-  return rows.map((row) => row.application);
 }
 
 async function insertIfAbsentByUrl(
@@ -708,65 +679,10 @@ export const applicationRepository = {
     return { urls, postingIds, jobIds };
   },
 
-  /**
-   * Inbox + tracked rows ready for HTTP liveness.
-   * `inboxExpiresAt` set (discovery / post-ship harvest). Due at `createdAt + ~3.5d`.
-   * Skips postings already closed and rows touched after `updatedAtBefore`.
-   * Orders by `updatedAt` so a tick rotates instead of re-probing the same 100.
-   * Fills inbox first so tracked cannot starve newer probes.
-   */
-  async listInboxDueLiveness(
-    now: Date,
-    limit: number,
-    opts?: { updatedAtBefore?: Date }
-  ): Promise<ApplicationEntity[]> {
-    if (limit <= 0) return [];
-    const dueAt = new Date(now.getTime() - INBOX_LIVENESS_AFTER_MS);
-    const updatedAtBefore = opts?.updatedAtBefore ?? now;
-    const inbox = await listDueLivenessByStatus(dueAt, "inbox", limit, updatedAtBefore);
-    const tracked = await listDueLivenessByStatus(
-      dueAt,
-      "tracked",
-      limit - inbox.length,
-      updatedAtBefore
-    );
-    return [...inbox, ...tracked];
-  },
-
   /** Bump `updatedAt` so probed rows fall out of the next oldest-first batch. */
   async touchUpdatedAt(ids: string[], now = new Date()): Promise<void> {
     if (ids.length === 0) return;
     await getDb().update(application).set({ updatedAt: now }).where(inArray(application.id, ids));
-  },
-
-  /** Inbox rows (TTL-eligible) whose catalog posting is already closed. */
-  async listInboxWithClosedPosting(limit: number): Promise<ApplicationEntity[]> {
-    if (limit <= 0) return [];
-    const rows = await getDb()
-      .select({ application })
-      .from(application)
-      .innerJoin(jobPosting, eq(application.postingId, jobPosting.id))
-      .where(
-        and(
-          eq(application.trackingStatus, "inbox"),
-          isNotNull(application.inboxExpiresAt),
-          isNotNull(jobPosting.closedAt)
-        )
-      )
-      .orderBy(asc(application.createdAt))
-      .limit(limit);
-    return rows.map((row) => row.application);
-  },
-
-  /** Open inbox rows linked to the given catalog postings (shared closed-listing dismiss). */
-  async listInboxByPostingIds(postingIds: string[]): Promise<ApplicationEntity[]> {
-    if (postingIds.length === 0) return [];
-    return getDb()
-      .select()
-      .from(application)
-      .where(
-        and(eq(application.trackingStatus, "inbox"), inArray(application.postingId, postingIds))
-      );
   },
 
   async listInboxExpired(now: Date, limit: number): Promise<ApplicationEntity[]> {

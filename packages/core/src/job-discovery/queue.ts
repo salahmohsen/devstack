@@ -1,14 +1,18 @@
 import { z } from "zod";
 
 export const JOB_CATALOG_INGEST_QUEUE_NAME = "job-catalog-ingest";
+export const JOB_DISCOVERY_FETCH_QUEUE_NAME = "job-discovery-fetch";
 export const JOB_DISCOVERY_LAND_QUEUE_NAME = "job-discovery-land";
 export const JOB_INBOX_AI_QUEUE_NAME = "job-inbox-ai";
 export const JOB_INBOX_LIVENESS_QUEUE_NAME = "job-inbox-liveness";
+export const JOB_INBOX_TICK_QUEUE_NAME = "job-inbox-tick";
 
 export const JOB_CATALOG_INGEST_JOB_NAME = "catalog-ingest";
+export const JOB_DISCOVERY_FETCH_JOB_NAME = "discovery-fetch";
 export const JOB_DISCOVERY_LAND_JOB_NAME = "discovery-land";
 export const JOB_INBOX_AI_JOB_NAME = "inbox-ai";
 export const JOB_INBOX_LIVENESS_JOB_NAME = "inbox-liveness";
+export const JOB_INBOX_TICK_JOB_NAME = "inbox-tick";
 
 /** Coalesce cron / findNow / backfill while waiting or active. */
 export function landJobId(userId: string, runId: string): string {
