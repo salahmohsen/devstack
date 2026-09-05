@@ -76,6 +76,10 @@ export function startJobDiscoveryFetchQueue(redisUrl: string): void {
     {
       jobId: FETCH_DAILY_JOB_ID,
       repeat: { every: FETCH_TICK_INTERVAL_MS },
+      // One retry: a failed tick reruns the whole fan-out; already-enqueued
+      // users coalesce on the same-day `land_${userId}_cron_${utcDay}` job id.
+      attempts: 2,
+      backoff: { type: "exponential", delay: 2000 },
       removeOnComplete: 50,
       removeOnFail: 100
     }
@@ -96,15 +100,31 @@ async function runFetchTick(): Promise<Record<string, unknown>> {
   const runId = `cron_${utcDay(now)}`;
 
   let landEnqueued = 0;
+  let failed = 0;
   for (const userId of userIds) {
-    const enqueued = await requestJobDiscoveryLand(
-      { userId, runId, trigger: "cron" },
-      { delayMs: hashToDelay(userId) }
-    );
-    if (enqueued) landEnqueued += 1;
+    try {
+      const enqueued = await requestJobDiscoveryLand(
+        { userId, runId, trigger: "cron" },
+        { delayMs: hashToDelay(userId) }
+      );
+      if (enqueued) {
+        landEnqueued += 1;
+      } else {
+        failed += 1;
+      }
+    } catch (error) {
+      failed += 1;
+      const log = createLogger({ operation: "server__job_discovery_fetch_tick" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "job_discovery_fetch_tick_enqueue_failed",
+        userId,
+        runId
+      });
+      log.emit({ _forceKeep: true });
+    }
   }
 
-  return { enrolled: userIds.length, landEnqueued, runId };
+  return { enrolled: userIds.length, landEnqueued, failed, runId };
 }
 
 export async function stopJobDiscoveryFetchQueue(): Promise<void> {
