@@ -156,7 +156,7 @@ export const COLLECTION_FACET_VALUES = [
 export const CollectionFacetSchema = z.enum(COLLECTION_FACET_VALUES);
 
 /** Open-vocabulary geo/skill chips (countries, cities, skills). */
-export const CountryOrCitySchema = z.string().trim().min(1);
+export const OpenFacetValueSchema = z.string().trim().min(1).max(120);
 
 export const FACET_KEYS = [
   "regions",
@@ -173,6 +173,22 @@ export const FACET_KEYS = [
   "reality"
 ] as const;
 export type FacetKey = (typeof FACET_KEYS)[number];
+
+/** App preference key → freehire query param. Used by the query builder. */
+export const FACET_KEY_TO_WIRE: Record<FacetKey, string> = {
+  regions: "regions",
+  countries: "countries",
+  cities: "cities",
+  categories: "category",
+  skills: "skills",
+  seniority: "seniority",
+  employmentTypes: "employment_type",
+  companyTypes: "company_type",
+  companySizes: "company_size",
+  domains: "domains",
+  collections: "collections",
+  reality: "reality"
+};
 
 export const SALARY_CURRENCIES = ["USD", "EUR", "GBP", "RUB"] as const;
 export const SalaryCurrencySchema = z.enum(SALARY_CURRENCIES);

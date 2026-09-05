@@ -16,11 +16,11 @@ import {
   CollectionFacetSchema,
   CompanySizeFacetSchema,
   CompanyTypeFacetSchema,
-  CountryOrCitySchema,
   DomainFacetSchema,
   EmploymentTypeFacetSchema,
   RegionFacetSchema,
   RealityFacetSchema,
+  OpenFacetValueSchema,
   SeniorityFacetSchema,
   WorkModeSchema
 } from "#@/job-discovery/facets";
@@ -34,7 +34,7 @@ const preferenceString = z.string().trim().min(1).max(120);
 
 const preferenceStringList = z.array(preferenceString).max(50);
 
-const openFacetList = z.array(CountryOrCitySchema).max(50);
+const openFacetList = z.array(OpenFacetValueSchema).max(50);
 
 const salaryCurrencyField = z
   .string()
@@ -138,6 +138,28 @@ export const JobPreferenceOutputSchema = z.object({
   boardScoresUsedToday: z.number().int().nonnegative()
 });
 export type JobPreferenceOutput = z.infer<typeof JobPreferenceOutputSchema>;
+
+/** Facet-only slice shared by upsert merge and persistence mapping. */
+export type JobPreferenceFacetFields = Pick<
+  JobPreferenceOutput,
+  | "regions"
+  | "countries"
+  | "cities"
+  | "categories"
+  | "skills"
+  | "seniority"
+  | "experienceYearsMin"
+  | "experienceYearsMax"
+  | "employmentTypes"
+  | "companyTypes"
+  | "companySizes"
+  | "domains"
+  | "collections"
+  | "reality"
+  | "openWithinDays"
+  | "visaSponsorship"
+  | "requiresClearance"
+>;
 
 export const ResetBoardScoresTodayOutputSchema = z.object({
   boardScoresUsedToday: z.literal(0)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { UpsertJobPreferenceInputSchema } from "#@/job-preference/types";
 import {
   backfillRemoteRegionsFromLocations,
   buildSeekerMatchEvidence,
@@ -133,6 +134,63 @@ describe("mergeJobPreference", () => {
       salaryCurrency: undefined
     });
     expect(merged.dailyBoardScoreCap).toBe(50);
+  });
+});
+
+describe("UpsertJobPreferenceInputSchema facet validation", () => {
+  it("rejects a bogus facet value", () => {
+    expect(UpsertJobPreferenceInputSchema.safeParse({ seniority: ["bogus"] }).success).toBe(false);
+    expect(UpsertJobPreferenceInputSchema.safeParse({ companySizes: ["10-20"] }).success).toBe(
+      false
+    );
+  });
+
+  it("accepts valid facet input", () => {
+    expect(
+      UpsertJobPreferenceInputSchema.safeParse({
+        seniority: ["senior", "lead"],
+        regions: ["eu", "mena"],
+        collections: ["yc"],
+        openWithinDays: 14,
+        visaSponsorship: true
+      }).success
+    ).toBe(true);
+  });
+});
+
+describe("mergeJobPreference facet semantics", () => {
+  it("applies present facet fields and defaults the rest to unset", () => {
+    const merged = mergeJobPreference(defaultJobPreference(), {
+      seniority: ["senior"],
+      visaSponsorship: false
+    });
+    expect(merged.seniority).toEqual(["senior"]);
+    expect(merged.visaSponsorship).toBe(false);
+    expect(merged.regions).toBeNull();
+    expect(merged.openWithinDays).toBeNull();
+  });
+
+  it("keeps facet values from current and passes tri-state nulls through", () => {
+    const current = mergeJobPreference(defaultJobPreference(), {
+      regions: ["eu"],
+      collections: ["yc"],
+      requiresClearance: true
+    });
+    const patched = mergeJobPreference(current, {
+      requiresClearance: null,
+      openWithinDays: 7
+    });
+    expect(patched.regions).toEqual(["eu"]);
+    expect(patched.collections).toEqual(["yc"]);
+    expect(patched.requiresClearance).toBeNull();
+    expect(patched.openWithinDays).toBe(7);
+  });
+
+  it("defaults all facets on first write with no patch", () => {
+    const merged = mergeJobPreference(defaultJobPreference(), undefined);
+    expect(merged.seniority).toBeNull();
+    expect(merged.workModes).toEqual([]);
+    expect(merged.minMatchScore).toBe(60);
   });
 });
 

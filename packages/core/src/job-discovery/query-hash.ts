@@ -3,7 +3,8 @@
  * Same filters in any key/array order → same hash; any value change → new hash.
  */
 export async function preferenceQueryHash(filters: Record<string, unknown>): Promise<string> {
-  const json = JSON.stringify(canonicalize(filters));
+  const canonical = canonicalize(filters);
+  const json = JSON.stringify(canonical === undefined ? {} : canonical);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(json));
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, "0"))

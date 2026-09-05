@@ -48,4 +48,31 @@ describe("preferenceQueryHash", () => {
     expect(a).toBe(b);
     expect(a).toMatch(/^[0-9a-f]{16}$/);
   });
+
+  it("hashes an empty filter set to the empty-object sentinel", async () => {
+    const empty = await preferenceQueryHash({});
+    const cleared = await preferenceQueryHash({
+      regions: null,
+      seniority: [],
+      openWithinDays: undefined
+    });
+    expect(empty).toBe(cleared);
+    expect(empty).toMatch(/^[0-9a-f]{16}$/);
+    expect(empty).not.toBe(await preferenceQueryHash({ regions: ["eu"] }));
+  });
+
+  it("sorts keys inside nested objects and object arrays", async () => {
+    const a = await preferenceQueryHash({
+      geo: { regions: ["eu", "mena"], countries: ["DE"] },
+      chips: [{ wire: "employment_type", app: "employmentTypes" }]
+    });
+    const b = await preferenceQueryHash({
+      chips: [{ app: "employmentTypes", wire: "employment_type" }],
+      geo: { countries: ["DE"], regions: ["mena", "eu"] }
+    });
+    expect(a).toBe(b);
+    expect(a).not.toBe(
+      await preferenceQueryHash({ geo: { regions: ["eu", "mena"], countries: ["DE"] } })
+    );
+  });
 });

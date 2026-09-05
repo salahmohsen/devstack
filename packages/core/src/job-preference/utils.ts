@@ -14,12 +14,33 @@ import {
 import {
   SeekerMatchEvidenceSchema,
   type JobPreference,
+  type JobPreferenceFacetFields,
   type JobPreferenceOutput,
   type LevelFloor,
   type SeekerMatchEvidence,
   type UpsertJobPreferenceInput,
   type WorkMode
 } from "./types";
+
+const FACET_FIELD_DEFAULTS: JobPreferenceFacetFields = {
+  regions: null,
+  countries: null,
+  cities: null,
+  categories: null,
+  skills: null,
+  seniority: null,
+  experienceYearsMin: null,
+  experienceYearsMax: null,
+  employmentTypes: null,
+  companyTypes: null,
+  companySizes: null,
+  domains: null,
+  collections: null,
+  reality: null,
+  openWithinDays: null,
+  visaSponsorship: null,
+  requiresClearance: null
+};
 
 export function defaultJobPreference(): JobPreference {
   return {
@@ -102,12 +123,41 @@ export function isWorkMode(value: string): value is WorkMode {
   return (WORK_MODES as readonly string[]).includes(value);
 }
 
-/** Merge partial upsert onto an existing (or default) preference body. */
+/**
+ * Merge partial upsert onto an existing (or default) preference body.
+ * TODO(api): facet persistence rewires with the Task 6/8 job-preference API work.
+ */
 export function mergeJobPreference(
   current: JobPreference,
   patch: UpsertJobPreferenceInput | undefined
-): JobPreference {
-  if (!patch) return current;
+): JobPreference & JobPreferenceFacetFields {
+  const facetCurrent = current as JobPreference & Partial<JobPreferenceFacetFields>;
+  const facetOrCurrent = <K extends keyof JobPreferenceFacetFields>(
+    key: K
+  ): JobPreferenceFacetFields[K] => {
+    const value = facetCurrent[key];
+    return (value ?? FACET_FIELD_DEFAULTS[key]) as JobPreferenceFacetFields[K];
+  };
+  const facets: JobPreferenceFacetFields = {
+    regions: facetOrCurrent("regions"),
+    countries: facetOrCurrent("countries"),
+    cities: facetOrCurrent("cities"),
+    categories: facetOrCurrent("categories"),
+    skills: facetOrCurrent("skills"),
+    seniority: facetOrCurrent("seniority"),
+    experienceYearsMin: facetOrCurrent("experienceYearsMin"),
+    experienceYearsMax: facetOrCurrent("experienceYearsMax"),
+    employmentTypes: facetOrCurrent("employmentTypes"),
+    companyTypes: facetOrCurrent("companyTypes"),
+    companySizes: facetOrCurrent("companySizes"),
+    domains: facetOrCurrent("domains"),
+    collections: facetOrCurrent("collections"),
+    reality: facetOrCurrent("reality"),
+    openWithinDays: facetOrCurrent("openWithinDays"),
+    visaSponsorship: facetOrCurrent("visaSponsorship"),
+    requiresClearance: facetOrCurrent("requiresClearance")
+  };
+  if (!patch) return { ...current, ...facets };
   return {
     ...current,
     workModes: patch.workModes ?? current.workModes,
@@ -121,7 +171,29 @@ export function mergeJobPreference(
         ? refineDailyBoardScoreCap(patch.dailyBoardScoreCap)
         : current.dailyBoardScoreCap,
     importFromEmail: patch.importFromEmail ?? current.importFromEmail,
-    reviewApplyKit: patch.reviewApplyKit ?? current.reviewApplyKit
+    reviewApplyKit: patch.reviewApplyKit ?? current.reviewApplyKit,
+    regions: patch.regions ?? facets.regions,
+    countries: patch.countries ?? facets.countries,
+    cities: patch.cities ?? facets.cities,
+    categories: patch.categories ?? facets.categories,
+    skills: patch.skills ?? facets.skills,
+    seniority: patch.seniority ?? facets.seniority,
+    experienceYearsMin:
+      patch.experienceYearsMin !== undefined ? patch.experienceYearsMin : facets.experienceYearsMin,
+    experienceYearsMax:
+      patch.experienceYearsMax !== undefined ? patch.experienceYearsMax : facets.experienceYearsMax,
+    employmentTypes: patch.employmentTypes ?? facets.employmentTypes,
+    companyTypes: patch.companyTypes ?? facets.companyTypes,
+    companySizes: patch.companySizes ?? facets.companySizes,
+    domains: patch.domains ?? facets.domains,
+    collections: patch.collections ?? facets.collections,
+    reality: patch.reality ?? facets.reality,
+    openWithinDays:
+      patch.openWithinDays !== undefined ? patch.openWithinDays : facets.openWithinDays,
+    visaSponsorship:
+      patch.visaSponsorship !== undefined ? patch.visaSponsorship : facets.visaSponsorship,
+    requiresClearance:
+      patch.requiresClearance !== undefined ? patch.requiresClearance : facets.requiresClearance
   };
 }
 
