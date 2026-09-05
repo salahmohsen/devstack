@@ -103,7 +103,7 @@ function JobsStepForm({
         <FramePanel className="space-y-6">
           <JobPreferenceFields
             form={form}
-            emptyHint="Empty filters accept every harvested listing. Add modes, locations, or keywords so New jobs stays close to your craft."
+            emptyHint="Empty filters accept every harvested listing. Add modes, places, or keywords so New jobs stays close to your craft."
             boardScoresUsedToday={undefined}
             onResetBoardScoresToday={undefined}
             resetBoardScoresPending={false}

@@ -1,27 +1,28 @@
 import { z } from "zod";
 
 import {
+  CATEGORY_FACET_VALUES,
+  CategoryFacetSchema,
+  COLLECTION_FACET_VALUES,
+  CollectionFacetSchema,
+  CompanySizeFacetSchema,
+  CompanyTypeFacetSchema,
   DEFAULT_DAILY_BOARD_SCORE_CAP,
   DEFAULT_IMPORT_FROM_EMAIL,
-  DEFAULT_JOBS_PER_RUN,
   DEFAULT_MIN_MATCH_SCORE,
   DEFAULT_REVIEW_APPLY_KIT,
-  JobPreferenceFieldsSchema,
-  JobTitleIdSchema,
-  LEVEL_FLOOR_LABELS,
-  LEVEL_FLOORS,
-  LevelFloorSchema,
-  WORK_MODE_LABELS,
-  WORK_MODES,
-  isOpenJobPreference,
+  DOMAIN_FACET_VALUES,
+  DomainFacetSchema,
+  EmploymentTypeFacetSchema,
   isWorkMode,
-  normalizeHiringRegion,
-  normalizeRemoteRegions,
-  refineCustomDiscoveryTitle,
-  remoteRegionSelectOptions,
-  titlePackOptions,
-  type JobTitleId,
-  type LevelFloor,
+  isOpenJobPreference,
+  JobPreferenceFieldsSchema,
+  RegionFacetSchema,
+  RealityFacetSchema,
+  SALARY_CURRENCIES,
+  SeniorityFacetSchema,
+  WORK_MODES,
+  WORK_MODE_LABELS,
   type UpsertJobPreferenceInput,
   type WorkMode
 } from "@tsu-stack/core";
@@ -41,40 +42,73 @@ export function parseOptionalMonthlyAmount(raw: string): number | null {
   return amount;
 }
 
-export type JobPreferenceFormState = {
-  workModes: WorkMode[];
-  locations: string[];
-  remoteRegions: string[];
-  roleKeywords: string[];
-  excludeKeywords: string[];
-  salaryMin: string;
-  salaryCurrency: string;
-  levelFloor: LevelFloor | "";
-  minMatchScore: number;
-  titleId: JobTitleId | "";
-  customTitle: string;
-  jobsPerRun: number;
-  dailyBoardScoreCap: number;
-  importFromEmail: boolean;
-  reviewApplyKit: boolean;
-};
+/** Facet lists are optional: an empty selection is stored as null (unset). */
+function orUnset<T>(values: readonly T[]): T[] | null {
+  return values.length > 0 ? [...values] : null;
+}
+
+function optionalIntegerField(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!/^\d{1,3}$/.test(trimmed)) return null;
+  return Number(trimmed);
+}
+
+/** Tri-state facet select: the form keeps a string, the API gets null/true/false. */
+export type TriStateFacet = "unset" | "true" | "false";
+
+function triStateToBoolean(value: TriStateFacet): boolean | null {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return null;
+}
+
+function booleanToTriState(value: boolean | null | undefined): TriStateFacet {
+  if (value === true) return "true";
+  if (value === false) return "false";
+  return "unset";
+}
+
+const yearsField = z
+  .string()
+  .trim()
+  .max(3)
+  .refine((value) => value === "" || /^\d{1,3}$/.test(value), "Enter whole years or leave empty");
+
+const daysField = z
+  .string()
+  .trim()
+  .max(4)
+  .refine((value) => value === "" || /^\d{1,4}$/.test(value), "Enter whole days or leave empty")
+  .refine((value) => value === "" || Number(value) >= 1, "Enter at least 1 day");
+
+const openFacetList = z.array(z.string().trim().min(1).max(120)).max(50);
 
 export const JobPreferenceFormSchema = JobPreferenceFieldsSchema.pick({
   workModes: true,
-  locations: true,
-  remoteRegions: true,
   roleKeywords: true,
-  excludeKeywords: true,
   minMatchScore: true,
-  jobsPerRun: true,
   dailyBoardScoreCap: true,
   importFromEmail: true,
   reviewApplyKit: true
 })
   .extend({
-    titleId: JobTitleIdSchema.or(z.literal("")),
-    customTitle: z.string().trim().max(120),
-    levelFloor: LevelFloorSchema.or(z.literal("")),
+    regions: z.array(RegionFacetSchema),
+    countries: openFacetList,
+    cities: openFacetList,
+    roleKeywords: z.array(z.string().trim().min(1).max(120)).max(50),
+    categories: z.array(CategoryFacetSchema),
+    skills: openFacetList,
+    seniority: z.array(SeniorityFacetSchema),
+    experienceYearsMin: yearsField,
+    experienceYearsMax: yearsField,
+    employmentTypes: z.array(EmploymentTypeFacetSchema),
+    companyTypes: z.array(CompanyTypeFacetSchema),
+    companySizes: z.array(CompanySizeFacetSchema),
+    domains: z.array(DomainFacetSchema),
+    collections: z.array(CollectionFacetSchema),
+    reality: z.array(RealityFacetSchema),
+    openWithinDays: daysField,
     salaryMin: z
       .string()
       .trim()
@@ -83,9 +117,10 @@ export const JobPreferenceFormSchema = JobPreferenceFieldsSchema.pick({
         (value) => value === "" || parseOptionalMonthlyAmount(value) != null,
         "Enter a whole monthly amount or leave empty"
       ),
-    salaryCurrency: z.string().trim().max(8)
+    salaryCurrency: z.string().trim().max(8),
+    visaSponsorship: z.enum(["unset", "true", "false"]),
+    requiresClearance: z.enum(["unset", "true", "false"])
   })
-  .superRefine(refineCustomDiscoveryTitle)
   .superRefine((value, ctx) => {
     if (parseOptionalMonthlyAmount(value.salaryMin) == null) return;
     if (value.salaryCurrency.trim() !== "") return;
@@ -96,6 +131,57 @@ export const JobPreferenceFormSchema = JobPreferenceFieldsSchema.pick({
     });
   });
 
+const FACET_LABEL_OVERRIDES: Readonly<Record<string, string>> = {
+  ai: "AI",
+  ai_engineering: "AI engineering",
+  ai_native: "AI-native",
+  apac: "APAC",
+  c_level: "C-level",
+  cis: "CIS",
+  climatetech: "ClimateTech",
+  crypto: "Crypto",
+  devops: "DevOps",
+  devtools: "DevTools",
+  ecommerce: "E-commerce",
+  edtech: "EdTech",
+  fintech: "Fintech",
+  fullstack: "Full-stack",
+  gamedev: "Game dev",
+  govtech: "GovTech",
+  hr: "HR",
+  hrtech: "HR tech",
+  latam: "LatAm",
+  mag7: "Mag 7",
+  mena: "MENA",
+  ml_ai: "ML / AI",
+  qa: "QA",
+  sre: "SRE",
+  yc: "YC"
+};
+
+/** snake_case / kebab-case facet value → Title Case label; numeric ranges stay literal. */
+export function facetLabel(value: string): string {
+  const override = FACET_LABEL_OVERRIDES[value];
+  if (override) return override;
+  if (/^\d/.test(value)) return value;
+  return value
+    .split(/[_-]/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+const REGION_LABEL_EXTRA: Readonly<Record<string, string>> = { eu: "EU", uk: "UK" };
+function labelFor(value: string): string {
+  return REGION_LABEL_EXTRA[value] ?? facetLabel(value);
+}
+
+function facetOptions(values: readonly string[]): Array<{ value: string; label: string }> {
+  return values.map((value) => {
+    return { value, label: labelFor(value) };
+  });
+}
+
 export const JOB_PREFERENCE_WORK_MODE_OPTIONS = WORK_MODES.map((mode) => {
   return {
     value: mode,
@@ -103,54 +189,102 @@ export const JOB_PREFERENCE_WORK_MODE_OPTIONS = WORK_MODES.map((mode) => {
   };
 });
 
-export const JOB_TITLE_PACK_OPTIONS = titlePackOptions();
+export const JOB_PREFERENCE_REGION_OPTIONS = facetOptions(RegionFacetSchema.options);
 
-export const JOB_PREFERENCE_LEVEL_FLOOR_OPTIONS = LEVEL_FLOORS.map((level) => {
-  return {
-    value: level,
-    label: LEVEL_FLOOR_LABELS[level]
-  };
+export const JOB_PREFERENCE_SENIORITY_OPTIONS = facetOptions(SeniorityFacetSchema.options);
+
+export const JOB_PREFERENCE_EMPLOYMENT_TYPE_OPTIONS = facetOptions(
+  EmploymentTypeFacetSchema.options
+);
+
+export const JOB_PREFERENCE_COMPANY_TYPE_OPTIONS = facetOptions(CompanyTypeFacetSchema.options);
+
+export const JOB_PREFERENCE_COMPANY_SIZE_OPTIONS = CompanySizeFacetSchema.options.map((size) => {
+  return { value: size, label: size };
 });
 
-export const JOB_PREFERENCE_REMOTE_REGION_OPTIONS = remoteRegionSelectOptions();
+export const JOB_PREFERENCE_CATEGORY_OPTIONS = facetOptions(CATEGORY_FACET_VALUES);
 
-const COMMON_SALARY_CURRENCIES = [
-  "USD",
-  "EUR",
-  "GBP",
-  "EGP",
-  "SAR",
-  "AED",
-  "KWD",
-  "QAR",
-  "BHD",
-  "CAD",
-  "AUD",
-  "CHF",
-  "JPY",
-  "INR"
-] as const;
+export const JOB_PREFERENCE_DOMAIN_OPTIONS = facetOptions(DOMAIN_FACET_VALUES);
 
-export const JOB_PREFERENCE_SALARY_CURRENCY_OPTIONS = COMMON_SALARY_CURRENCIES.map((code) => {
+export const JOB_PREFERENCE_COLLECTION_OPTIONS = facetOptions(COLLECTION_FACET_VALUES);
+
+export const JOB_PREFERENCE_REALITY_OPTIONS = facetOptions(RealityFacetSchema.options);
+
+export const JOB_PREFERENCE_SALARY_CURRENCY_OPTIONS = SALARY_CURRENCIES.map((code) => {
   return {
     value: code,
     label: code
   };
 });
 
+export const JOB_PREFERENCE_TRI_STATE_OPTIONS = [
+  { value: "unset", label: "No preference" },
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" }
+] as const satisfies ReadonlyArray<{ value: TriStateFacet; label: string }>;
+
+type Region = (typeof RegionFacetSchema.options)[number];
+type Category = (typeof CATEGORY_FACET_VALUES)[number];
+type Seniority = (typeof SeniorityFacetSchema.options)[number];
+type EmploymentType = (typeof EmploymentTypeFacetSchema.options)[number];
+type CompanyType = (typeof CompanyTypeFacetSchema.options)[number];
+type CompanySize = (typeof CompanySizeFacetSchema.options)[number];
+type Domain = (typeof DOMAIN_FACET_VALUES)[number];
+type Collection = (typeof COLLECTION_FACET_VALUES)[number];
+type Reality = (typeof RealityFacetSchema.options)[number];
+
+export type JobPreferenceFormState = {
+  regions: Region[];
+  countries: string[];
+  cities: string[];
+  roleKeywords: string[];
+  categories: Category[];
+  skills: string[];
+  seniority: Seniority[];
+  experienceYearsMin: string;
+  experienceYearsMax: string;
+  workModes: WorkMode[];
+  employmentTypes: EmploymentType[];
+  salaryMin: string;
+  salaryCurrency: string;
+  visaSponsorship: TriStateFacet;
+  requiresClearance: TriStateFacet;
+  companyTypes: CompanyType[];
+  companySizes: CompanySize[];
+  domains: Domain[];
+  collections: Collection[];
+  openWithinDays: string;
+  reality: Reality[];
+  minMatchScore: number;
+  dailyBoardScoreCap: number;
+  importFromEmail: boolean;
+  reviewApplyKit: boolean;
+};
+
 export const emptyJobPreferenceForm: JobPreferenceFormState = {
-  workModes: [],
-  locations: [],
-  remoteRegions: [],
+  regions: [],
+  countries: [],
+  cities: [],
   roleKeywords: [],
-  excludeKeywords: [],
+  categories: [],
+  skills: [],
+  seniority: [],
+  experienceYearsMin: "",
+  experienceYearsMax: "",
+  workModes: [],
+  employmentTypes: [],
   salaryMin: "",
   salaryCurrency: "",
-  levelFloor: "",
+  visaSponsorship: "unset",
+  requiresClearance: "unset",
+  companyTypes: [],
+  companySizes: [],
+  domains: [],
+  collections: [],
+  openWithinDays: "",
+  reality: [],
   minMatchScore: DEFAULT_MIN_MATCH_SCORE,
-  titleId: "",
-  customTitle: "",
-  jobsPerRun: DEFAULT_JOBS_PER_RUN,
   dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
   importFromEmail: DEFAULT_IMPORT_FROM_EMAIL,
   reviewApplyKit: DEFAULT_REVIEW_APPLY_KIT
@@ -158,18 +292,28 @@ export const emptyJobPreferenceForm: JobPreferenceFormState = {
 
 export function jobPreferenceFormFromQuery(data: JobPreferenceQueryResult): JobPreferenceFormState {
   return {
-    workModes: data.workModes.filter(isWorkMode),
-    locations: [...data.locations],
-    remoteRegions: normalizeRemoteRegions(data.remoteRegions ?? []),
+    regions: [...(data.regions ?? [])],
+    countries: [...(data.countries ?? [])],
+    cities: [...(data.cities ?? [])],
     roleKeywords: [...data.roleKeywords],
-    excludeKeywords: [...data.excludeKeywords],
+    categories: [...(data.categories ?? [])],
+    skills: [...(data.skills ?? [])],
+    seniority: [...(data.seniority ?? [])],
+    experienceYearsMin: data.experienceYearsMin == null ? "" : String(data.experienceYearsMin),
+    experienceYearsMax: data.experienceYearsMax == null ? "" : String(data.experienceYearsMax),
+    workModes: data.workModes.filter(isWorkMode),
+    employmentTypes: [...(data.employmentTypes ?? [])],
     salaryMin: data.salaryMin == null ? "" : String(data.salaryMin),
     salaryCurrency: (data.salaryCurrency ?? "").trim().toUpperCase(),
-    levelFloor: data.levelFloor ?? "",
+    visaSponsorship: booleanToTriState(data.visaSponsorship),
+    requiresClearance: booleanToTriState(data.requiresClearance),
+    companyTypes: [...(data.companyTypes ?? [])],
+    companySizes: [...(data.companySizes ?? [])],
+    domains: [...(data.domains ?? [])],
+    collections: [...(data.collections ?? [])],
+    openWithinDays: data.openWithinDays == null ? "" : String(data.openWithinDays),
+    reality: [...(data.reality ?? [])],
     minMatchScore: data.minMatchScore,
-    titleId: data.titleId ?? "",
-    customTitle: data.customTitle ?? "",
-    jobsPerRun: data.jobsPerRun,
     dailyBoardScoreCap: data.dailyBoardScoreCap ?? DEFAULT_DAILY_BOARD_SCORE_CAP,
     importFromEmail: data.importFromEmail,
     reviewApplyKit: data.reviewApplyKit ?? DEFAULT_REVIEW_APPLY_KIT
@@ -193,52 +337,57 @@ export function salaryCurrencyOptions(current: string): Array<{ value: string; l
   return JOB_PREFERENCE_SALARY_CURRENCY_OPTIONS;
 }
 
-export function leftoverRemoteRegionLocationTokens(locations: readonly string[]): string[] {
-  return locations.filter((token) => {
-    const slug = normalizeHiringRegion(token);
-    if (slug == null) return false;
-    if (slug === "worldwide") return true;
-    return /\bremote\b/i.test(token);
-  });
-}
-
-export function leftoverRemoteRegionsHint(tokens: readonly string[]): string {
-  const quoted = tokens.map((token) => `“${token}”`).join(", ");
-  const verb = tokens.length === 1 ? "looks" : "look";
-  const pronoun = tokens.length === 1 ? "it" : "them";
-  return `${quoted} ${verb} like a remote region. Move ${pronoun} to Remote regions.`;
-}
-
 export function isOpenJobPreferenceForm(value: JobPreferenceFormState): boolean {
   return isOpenJobPreference({
     workModes: value.workModes,
-    locations: value.locations,
-    remoteRegions: value.remoteRegions,
     roleKeywords: value.roleKeywords,
-    excludeKeywords: value.excludeKeywords,
     salaryMin: parseOptionalMonthlyAmount(value.salaryMin),
-    levelFloor: value.levelFloor === "" ? null : value.levelFloor
+    regions: orUnset(value.regions),
+    countries: orUnset(value.countries),
+    cities: orUnset(value.cities),
+    categories: orUnset(value.categories),
+    skills: orUnset(value.skills),
+    seniority: orUnset(value.seniority),
+    experienceYearsMin: optionalIntegerField(value.experienceYearsMin),
+    experienceYearsMax: optionalIntegerField(value.experienceYearsMax),
+    employmentTypes: orUnset(value.employmentTypes),
+    companyTypes: orUnset(value.companyTypes),
+    companySizes: orUnset(value.companySizes),
+    domains: orUnset(value.domains),
+    collections: orUnset(value.collections),
+    openWithinDays: optionalIntegerField(value.openWithinDays),
+    reality: orUnset(value.reality),
+    visaSponsorship: triStateToBoolean(value.visaSponsorship),
+    requiresClearance: triStateToBoolean(value.requiresClearance)
   });
 }
 
 export function jobPreferenceInputFromForm(
   value: JobPreferenceFormState
 ): UpsertJobPreferenceInput {
-  const titleId = value.titleId === "" ? null : value.titleId;
-  const customTitle = value.customTitle.trim();
   return {
     workModes: value.workModes,
-    locations: normalizeTags(value.locations, 50, 120),
-    remoteRegions: normalizeRemoteRegions(value.remoteRegions),
+    regions: orUnset(value.regions),
+    countries: orUnset(normalizeTags(value.countries, 50, 120)),
+    cities: orUnset(normalizeTags(value.cities, 50, 120)),
     roleKeywords: normalizeTags(value.roleKeywords, 50, 120),
-    excludeKeywords: normalizeTags(value.excludeKeywords, 50, 120),
+    categories: orUnset(value.categories),
+    skills: orUnset(normalizeTags(value.skills, 50, 120)),
+    seniority: orUnset(value.seniority),
+    experienceYearsMin: optionalIntegerField(value.experienceYearsMin),
+    experienceYearsMax: optionalIntegerField(value.experienceYearsMax),
+    employmentTypes: orUnset(value.employmentTypes),
+    companyTypes: orUnset(value.companyTypes),
+    companySizes: orUnset(value.companySizes),
+    domains: orUnset(value.domains),
+    collections: orUnset(value.collections),
+    reality: orUnset(value.reality),
+    openWithinDays: optionalIntegerField(value.openWithinDays),
     salaryMin: parseOptionalMonthlyAmount(value.salaryMin),
     salaryCurrency: normalizeSalaryCurrencyInput(value.salaryCurrency),
-    levelFloor: value.levelFloor === "" ? null : value.levelFloor,
+    visaSponsorship: triStateToBoolean(value.visaSponsorship),
+    requiresClearance: triStateToBoolean(value.requiresClearance),
     minMatchScore: value.minMatchScore,
-    titleId,
-    customTitle: titleId === "custom" && customTitle.length > 0 ? customTitle : null,
-    jobsPerRun: value.jobsPerRun,
     dailyBoardScoreCap: value.dailyBoardScoreCap,
     importFromEmail: value.importFromEmail,
     reviewApplyKit: value.reviewApplyKit
