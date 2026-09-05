@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CategoryFacetSchema } from "#@/job-discovery/facets";
+import { CategoryFacetSchema, RegionFacetSchema } from "#@/job-discovery/facets";
 
 import {
   JobPreferenceFieldsSchema,
@@ -16,7 +16,10 @@ export const SearchBriefPrefsSchema = JobPreferenceFieldsSchema.pick({
   salaryMin: true,
   salaryCurrency: true
 }).extend({
-  categories: z.array(CategoryFacetSchema).nullable()
+  categories: z.array(CategoryFacetSchema).nullable(),
+  regions: z.array(RegionFacetSchema).nullish(),
+  countries: z.array(z.string()).nullish(),
+  cities: z.array(z.string()).nullish()
 });
 export type SearchBriefPrefs = z.infer<typeof SearchBriefPrefsSchema>;
 
@@ -58,7 +61,10 @@ export function searchBriefPrefsFromPreference(prefs: BriefPrefsSource): SearchB
     roleKeywords: prefs.roleKeywords,
     salaryMin: prefs.salaryMin,
     salaryCurrency: prefs.salaryCurrency,
-    categories: prefs.categories ?? null
+    categories: prefs.categories ?? null,
+    regions: prefs.regions ?? null,
+    countries: prefs.countries ?? null,
+    cities: prefs.cities ?? null
   };
 }
 
@@ -123,6 +129,18 @@ function joinOr(values: readonly string[], empty: string): string {
   return values.length > 0 ? values.join(", ") : empty;
 }
 
+/** Facet geography lines; empty lists are omitted. */
+function locationLines(prefs: SearchBriefPrefs): string[] {
+  const lines: string[] = [];
+  const regions = prefs.regions ?? [];
+  const countries = prefs.countries ?? [];
+  const cities = prefs.cities ?? [];
+  if (regions.length > 0) lines.push(`- Regions: ${joinOr(regions, "none")}`);
+  if (countries.length > 0) lines.push(`- Countries: ${joinOr(countries, "none")}`);
+  if (cities.length > 0) lines.push(`- Cities: ${joinOr(cities, "none")}`);
+  return lines;
+}
+
 function exampleTitlesLine(prefs: SearchBriefPrefs): string | null {
   const keywords = prefs.roleKeywords.map((k) => k.trim()).filter(Boolean);
   if (keywords.length > 0) return keywords.join(", ");
@@ -146,20 +164,25 @@ export function renderSearchBriefLists(
   if (titles) targetJobs.push(`- Example titles: ${titles}`);
   targetJobs.push(`- Modes: ${joinOr(prefs.workModes, "any")}`);
 
+  const geography = locationLines(prefs);
+
   const skills: string[] = [];
   const paragraph = skillsParagraph?.trim();
   if (paragraph) skills.push(paragraph);
 
-  return [
+  const sections = [
     "## Target jobs",
     ...targetJobs,
     "",
+    ...(geography.length > 0 ? ["## Location", ...geography, ""] : []),
     "## Compensation",
     `- Minimum monthly: ${formatSalaryFloor(prefs)}`,
     "",
     "## Skills",
     ...skills
-  ].join("\n");
+  ];
+
+  return sections.join("\n");
 }
 
 export function renderSearchBriefMarkdown(input: {

@@ -53,19 +53,44 @@ export function defaultJobPreference(): JobPreference {
 }
 
 /**
- * True when the seeker has not constrained harvest (empty filters).
- * Open profiles should not lose listings solely to minMatchScore=60 defaults —
- * AI still attaches a score for ranking in New jobs.
+ * True when the seeker has not constrained harvest (empty filters, legacy body
+ * and facets alike). Open profiles should not lose listings solely to
+ * minMatchScore=60 defaults — AI still attaches a score for ranking in New jobs.
  */
-export function isOpenJobPreference(prefs: {
-  workModes?: readonly string[] | null;
-  roleKeywords?: readonly string[] | null;
-  salaryMin?: number | null;
-}): boolean {
+export function isOpenJobPreference(
+  prefs: {
+    workModes?: readonly string[] | null;
+    roleKeywords?: readonly string[] | null;
+    salaryMin?: number | null;
+  } & Partial<JobPreferenceFacetFields>
+): boolean {
   return (
+    !hasFacetFilter(prefs) &&
     (prefs.roleKeywords?.length ?? 0) === 0 &&
     (prefs.workModes?.length ?? 0) === 0 &&
     (prefs.salaryMin == null || prefs.salaryMin === undefined)
+  );
+}
+
+function hasFacetFilter(prefs: Partial<JobPreferenceFacetFields>): boolean {
+  return (
+    (prefs.regions?.length ?? 0) > 0 ||
+    (prefs.countries?.length ?? 0) > 0 ||
+    (prefs.cities?.length ?? 0) > 0 ||
+    (prefs.categories?.length ?? 0) > 0 ||
+    (prefs.skills?.length ?? 0) > 0 ||
+    (prefs.seniority?.length ?? 0) > 0 ||
+    prefs.experienceYearsMin != null ||
+    prefs.experienceYearsMax != null ||
+    (prefs.employmentTypes?.length ?? 0) > 0 ||
+    (prefs.companyTypes?.length ?? 0) > 0 ||
+    (prefs.companySizes?.length ?? 0) > 0 ||
+    (prefs.domains?.length ?? 0) > 0 ||
+    (prefs.collections?.length ?? 0) > 0 ||
+    prefs.openWithinDays != null ||
+    (prefs.reality?.length ?? 0) > 0 ||
+    prefs.visaSponsorship === true ||
+    prefs.requiresClearance === true
   );
 }
 
@@ -214,7 +239,7 @@ export function shouldPassAllHarvestJobs(
     workModes?: readonly string[] | null;
     roleKeywords?: readonly string[] | null;
     salaryMin?: number | null;
-  },
+  } & Partial<JobPreferenceFacetFields>,
   evidence?: SeekerMatchEvidence | null
 ): boolean {
   return isOpenJobPreference(prefs) && !seekerEvidenceHasSignal(evidence);

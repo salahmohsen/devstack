@@ -19,6 +19,17 @@ import {
   stripListingChromeFromText,
   type ListingPageExtract
 } from "#@/common/extract-job-listing-page";
+import {
+  CategoryFacetSchema,
+  CollectionFacetSchema,
+  CompanySizeFacetSchema,
+  CompanyTypeFacetSchema,
+  DomainFacetSchema,
+  EmploymentTypeFacetSchema,
+  RegionFacetSchema,
+  RealityFacetSchema,
+  SeniorityFacetSchema
+} from "#@/job-discovery/facets";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
 import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
 import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
@@ -27,6 +38,7 @@ import {
   SeekerMatchEvidenceSchema,
   WorkModeSchema,
   type JobPreference,
+  type JobPreferenceFacetFields,
   type SeekerMatchEvidence,
   type WorkMode
 } from "#@/job-preference/types";
@@ -178,6 +190,23 @@ export type MailNotifierExtract = z.infer<typeof MailNotifierExtractSchema>;
 export const HarvestJobPreferenceSchema = z.object({
   workModes: z.array(WorkModeSchema).default([]),
   roleKeywords: z.array(z.string()).default([]),
+  regions: z.array(RegionFacetSchema).nullish(),
+  countries: z.array(z.string()).nullish(),
+  cities: z.array(z.string()).nullish(),
+  categories: z.array(CategoryFacetSchema).nullish(),
+  skills: z.array(z.string()).nullish(),
+  seniority: z.array(SeniorityFacetSchema).nullish(),
+  experienceYearsMin: z.number().int().nullish(),
+  experienceYearsMax: z.number().int().nullish(),
+  employmentTypes: z.array(EmploymentTypeFacetSchema).nullish(),
+  companyTypes: z.array(CompanyTypeFacetSchema).nullish(),
+  companySizes: z.array(CompanySizeFacetSchema).nullish(),
+  domains: z.array(DomainFacetSchema).nullish(),
+  collections: z.array(CollectionFacetSchema).nullish(),
+  openWithinDays: z.number().int().nullish(),
+  reality: z.array(RealityFacetSchema).nullish(),
+  visaSponsorship: z.boolean().nullish(),
+  requiresClearance: z.boolean().nullish(),
   salaryMin: z.number().nullable().optional(),
   salaryCurrency: z.string().nullable().optional(),
   minMatchScore: z.number().int().min(0).max(100).default(60),
@@ -1489,7 +1518,7 @@ export type ScoreJobPreferenceInput = Pick<
 > & {
   salaryMin?: number | null;
   salaryCurrency?: string | null;
-};
+} & Partial<JobPreferenceFacetFields>;
 
 export type ScoreJobPayFields = {
   salaryMin?: number | null;

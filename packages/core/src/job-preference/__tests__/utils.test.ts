@@ -43,6 +43,17 @@ describe("isOpenJobPreference", () => {
       })
     ).toBe(false);
   });
+
+  it("is closed when only facet geography is set", () => {
+    expect(isOpenJobPreference({ ...defaultJobPreference(), regions: ["eu"] })).toBe(false);
+    expect(isOpenJobPreference({ ...defaultJobPreference(), countries: ["Germany"] })).toBe(false);
+    expect(isOpenJobPreference({ ...defaultJobPreference(), cities: ["Cairo"] })).toBe(false);
+  });
+
+  it("is closed when a non-geography facet is set", () => {
+    expect(isOpenJobPreference({ ...defaultJobPreference(), categories: ["backend"] })).toBe(false);
+    expect(isOpenJobPreference({ ...defaultJobPreference(), seniority: ["senior"] })).toBe(false);
+  });
 });
 
 describe("normalizeWorkModes", () => {
@@ -222,6 +233,16 @@ describe("seeker match evidence", () => {
     });
     expect(
       shouldPassAllHarvestJobs({ ...defaultJobPreference(), roleKeywords: ["frontend"] }, evidence)
+    ).toBe(false);
+  });
+
+  it("never pass-all when only facet geography is set", () => {
+    expect(shouldPassAllHarvestJobs({ ...defaultJobPreference(), regions: ["eu"] })).toBe(false);
+    expect(
+      shouldPassAllHarvestJobs(
+        { ...defaultJobPreference(), regions: ["eu"] },
+        emptySeekerMatchEvidence()
+      )
     ).toBe(false);
   });
 });

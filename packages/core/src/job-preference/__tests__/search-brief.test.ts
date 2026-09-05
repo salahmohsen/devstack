@@ -53,7 +53,10 @@ describe("search brief source payload", () => {
         workModes: source.prefs.workModes,
         salaryMin: source.prefs.salaryMin,
         roleKeywords: source.prefs.roleKeywords,
-        categories: source.prefs.categories
+        categories: source.prefs.categories,
+        regions: source.prefs.regions,
+        countries: source.prefs.countries,
+        cities: source.prefs.cities
       }
     } satisfies SearchBriefSource;
     expect(stableSearchBriefSourceJson(source)).toBe(stableSearchBriefSourceJson(shuffled));
@@ -143,6 +146,33 @@ describe("lists-only search brief renderer", () => {
       })
     });
     expect(markdown).toContain("- Example titles: backend, frontend");
+  });
+
+  it("renders facet geography as a Location section", () => {
+    const markdown = renderSearchBriefMarkdown({
+      prefs: searchBriefPrefsFromPreference({
+        ...defaultBriefPrefs(),
+        regions: ["eu", "mena"],
+        countries: ["Germany"],
+        cities: ["Cairo"],
+        workModes: ["remote"]
+      })
+    });
+    expect(markdown).toContain("## Location");
+    expect(markdown).toContain("- Regions: eu, mena");
+    expect(markdown).toContain("- Countries: Germany");
+    expect(markdown).toContain("- Cities: Cairo");
+    expect(markdown).toContain("- Modes: remote");
+  });
+
+  it("omits the Location section when no facet geography is set", () => {
+    const markdown = renderSearchBriefMarkdown({
+      prefs: searchBriefPrefsFromPreference({
+        ...defaultBriefPrefs(),
+        roleKeywords: ["react"]
+      })
+    });
+    expect(markdown).not.toContain("## Location");
   });
 
   it("changes when the salary floor is patched", () => {

@@ -4,10 +4,34 @@ import {
   defaultJobPreferenceOutput,
   refineDailyBoardScoreCap,
   type JobPreference,
+  type JobPreferenceFacetFields,
   type JobPreferenceOutput,
   type WorkMode
 } from "@tsu-stack/core";
 import { jobPreferenceRepository } from "@tsu-stack/db";
+
+/** DB facet columns are plain jsonb string[] — recast to the facet-typed shape. */
+function facetsFromRow(row: Awaited<ReturnType<typeof jobPreferenceRepository.findByUserId>>) {
+  return {
+    regions: row?.regions,
+    countries: row?.countries,
+    cities: row?.cities,
+    categories: row?.categories,
+    skills: row?.skills,
+    seniority: row?.seniority,
+    experienceYearsMin: row?.experienceYearsMin,
+    experienceYearsMax: row?.experienceYearsMax,
+    employmentTypes: row?.employmentTypes,
+    companyTypes: row?.companyTypes,
+    companySizes: row?.companySizes,
+    domains: row?.domains,
+    collections: row?.collections,
+    openWithinDays: row?.openWithinDays,
+    reality: row?.reality,
+    visaSponsorship: row?.visaSponsorship,
+    requiresClearance: row?.requiresClearance
+  } satisfies Record<string, unknown> as Partial<JobPreferenceFacetFields>;
+}
 
 export async function loadJobPreference(userId: string): Promise<JobPreference> {
   const row = await jobPreferenceRepository.findByUserId(userId);
@@ -20,7 +44,8 @@ export async function loadJobPreference(userId: string): Promise<JobPreference> 
     minMatchScore: row.minMatchScore ?? DEFAULT_MIN_MATCH_SCORE,
     dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
     importFromEmail: row.importFromEmail ?? false,
-    reviewApplyKit: row.reviewApplyKit ?? true
+    reviewApplyKit: row.reviewApplyKit ?? true,
+    ...facetsFromRow(row)
   };
 }
 

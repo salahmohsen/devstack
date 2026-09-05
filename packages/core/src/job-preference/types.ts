@@ -57,7 +57,8 @@ export const JobPreferenceFieldsSchema = z.object({
   importFromEmail: z.boolean(),
   reviewApplyKit: z.boolean()
 });
-export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
+export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema> &
+  Partial<JobPreferenceFacetFields>;
 
 /**
  * Parse-friendly shape with product defaults (task contract).
