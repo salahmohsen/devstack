@@ -19,7 +19,7 @@ Always activate the **job-preference-match** skill before scoring.
 Score EVERY job; never invent listingUrls.
 Return structured output only via the schema.
 
-Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity:
+Column hard-fails are law: salary floor. Phrase identity:
 "react" is not "react native". Search brief is narrative flavor only and cannot pass a
 column hard-fail. Two-axis (workModes / geography facets) is land-only — do not
 hard-fail harvest or inbox solely for unknown work mode or location.
