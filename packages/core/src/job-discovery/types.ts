@@ -6,6 +6,7 @@ export const AdapterCapabilitySchema = z.enum(["search", "feed"]);
 export type AdapterCapability = z.infer<typeof AdapterCapabilitySchema>;
 
 export const NormalizedListingSchema = z.object({
+  // transitional: enum dies with the adapter framework (Task 10)
   adapterId: z.string(),
   externalId: z.string().min(1),
   listingUrl: z.string().url(),
@@ -37,6 +38,7 @@ export type AdapterFetchInput = {
 };
 
 export type JobSourceAdapter = {
+  // transitional: enum dies with the adapter framework (Task 10)
   id: string;
   capabilities: readonly AdapterCapability[];
   fetch(input: AdapterFetchInput): Promise<NormalizedListing[]>;

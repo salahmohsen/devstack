@@ -19,6 +19,7 @@ export const SearchBriefPrefsSchema = JobPreferenceFieldsSchema.pick({
   salaryMin: true,
   salaryCurrency: true,
   levelFloor: true,
+  // transitional: ignored by exampleTitlesLine since facet rework (Task 4); drop with legacy body
   titleId: true,
   customTitle: true
 }).extend({

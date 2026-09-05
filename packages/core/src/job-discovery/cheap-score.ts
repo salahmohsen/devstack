@@ -30,19 +30,13 @@ export function hasValidRoleQuery(input: {
   return (input.categories?.length ?? 0) > 0;
 }
 
-function includesAny(haystack: string, needles: readonly string[]): boolean {
-  const h = haystack.toLowerCase();
-  return needles.some((n) => {
-    const k = n.trim().toLowerCase();
-    return k.length > 0 && h.includes(k);
-  });
-}
-
 /**
  * Catalog cheap score on structured fields only (no description / JD HTML).
  * `passed` means eligible to land/rank — never gated on minMatchScore.
  * Work mode and place are not scored here; two-axis is a later gate, and
  * region/geo matching happens upstream in the freehire query.
+ * Callers must run {@link hasValidRoleQuery} first — with empty needles
+ * every listing silently fails "no role keyword in title".
  */
 export function scoreCatalogAgainstPreference(
   listing: CheapListing,
@@ -83,7 +77,7 @@ export function scoreCatalogAgainstPreference(
   if (
     listing.skills.length > 0 &&
     needles.length > 0 &&
-    listing.skills.some((s) => includesAny(s, needles))
+    listing.skills.some((s) => needles.some((n) => matchesKeywordPhrase(s, n)))
   ) {
     score += 5;
     reasons.push("structured skill hit");

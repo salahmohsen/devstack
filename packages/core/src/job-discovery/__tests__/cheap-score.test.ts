@@ -106,6 +106,29 @@ describe("scoreCatalogAgainstPreference", () => {
     expect(hit.reasons).toContain("structured skill hit");
   });
 
+  it("scores the skill bonus for underscored category slugs against normalized skills", () => {
+    const categoryOnly = {
+      ...prefs,
+      roleKeywords: [],
+      categories: ["data_engineering" as const]
+    };
+    const r = scoreCatalogAgainstPreference(
+      {
+        title: "Senior Data Engineering Manager",
+        companyName: "Acme",
+        location: "Remote",
+        workMode: "remote" as const,
+        skills: ["data engineering", "postgres"],
+        salaryMin: null,
+        salaryCurrency: null,
+        experienceYearsMin: null
+      },
+      categoryOnly
+    );
+    expect(r.passed).toBe(true);
+    expect(r.reasons).toContain("structured skill hit");
+  });
+
   it("caps the score via applyYearsCap when the listing wants more years than the seeker has", () => {
     const noBound = scoreCatalogAgainstPreference(
       { ...listing, title: "Senior Frontend React Engineer", skills: [] },

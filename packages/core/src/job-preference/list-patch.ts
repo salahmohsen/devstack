@@ -50,6 +50,7 @@ const softCustomTitleField = z.string().trim().max(120).nullable();
 /** Immediate search-loop writes. Hard-stop keys are rejected (strict). */
 export const UpsertSoftJobPreferencesInputSchema = z
   .object({
+    // transitional: facet schema has no title; legacy body dies with Task 9/10
     titleId: z.string().nullable().optional(),
     customTitle: softCustomTitleField.optional(),
     roleKeywords: PreferenceListPatchSchema.optional(),
