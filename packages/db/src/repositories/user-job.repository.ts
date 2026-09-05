@@ -15,7 +15,7 @@ import { application } from "../schema/application.schema.ts";
 import { userJob } from "../schema/user-job.schema.ts";
 
 export type UserJobEntity = InferSelectModel<typeof userJob>;
-export type NewUserJob = InferInsertModel<typeof userJob> & { id?: string };
+export type NewUserJob = Omit<InferInsertModel<typeof userJob>, "id"> & { id?: string };
 
 export type ListUnlandedInput = {
   userId: string;

@@ -107,6 +107,8 @@ export const ENV_SERVER = createEnv({
     GMAIL_PUSH_REQUIRE_AUTH: z.stringbool().optional(),
     GMAIL_PUBSUB_TOPIC: z.string().min(1).optional(),
     // Redis
-    REDIS_URL: z.string().optional()
+    REDIS_URL: z.string().optional(),
+    /** Freehire API base override (fail-soft drills / staging). Defaults to https://freehire.me/api/v1. */
+    FREEHIRE_API_BASE_URL: normalizedUrlSchema.optional()
   }
 });
