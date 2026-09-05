@@ -1,7 +1,4 @@
-import { isBelowLevelFloor } from "./level";
-import { findMatchingKeywords } from "./phrase-match";
 import { comparableMonthlyPay, type SalaryPeriod } from "./salary-compare";
-import { type LevelFloor } from "./types";
 
 export type PreferenceHardFailJob = {
   title: string;
@@ -15,10 +12,8 @@ export type PreferenceHardFailJob = {
 };
 
 export type PreferenceHardFailPrefs = {
-  excludeKeywords?: readonly string[] | null;
   salaryMin?: number | null;
   salaryCurrency?: string | null;
-  levelFloor?: LevelFloor | null;
 };
 
 export type PreferenceHardFailResult = {
@@ -26,26 +21,11 @@ export type PreferenceHardFailResult = {
   reasons: string[];
 };
 
-function excludeHaystack(job: PreferenceHardFailJob): string {
-  return [job.title, job.companyName ?? "", job.location ?? "", job.description ?? ""]
-    .join(" ")
-    .trim();
-}
-
 export function applyPreferenceHardFails(
   job: PreferenceHardFailJob,
   prefs: PreferenceHardFailPrefs
 ): PreferenceHardFailResult {
   const reasons: string[] = [];
-  const excludes = prefs.excludeKeywords ?? [];
-  if (excludes.length > 0) {
-    const hits = findMatchingKeywords(excludeHaystack(job), excludes);
-    if (hits.length > 0) reasons.push("excluded keyword match");
-  }
-
-  if (isBelowLevelFloor(job.title, prefs.levelFloor)) {
-    reasons.push("below level floor");
-  }
 
   const floor = prefs.salaryMin;
   if (floor != null && Number.isFinite(floor)) {

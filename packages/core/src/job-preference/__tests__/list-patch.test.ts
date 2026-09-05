@@ -78,41 +78,30 @@ describe("applyPreferenceListPatch", () => {
 });
 
 describe("applySoftJobPreferencePatch", () => {
-  it("applies list deltas and set-only workModes/title", () => {
+  it("applies role keyword deltas and workModes", () => {
     const current = {
       ...defaultJobPreference(),
-      roleKeywords: ["react"],
-      locations: ["Cairo"],
-      remoteRegions: ["mena"]
+      roleKeywords: ["react"]
     };
     const next = applySoftJobPreferencePatch(current, {
-      titleId: "frontend",
       workModes: ["remote"],
-      roleKeywords: { op: "add", values: ["typescript"] },
-      remoteRegions: { op: "set", values: ["eu"] }
+      roleKeywords: { op: "add", values: ["typescript"] }
     });
-    expect(next.titleId).toBe("frontend");
     expect(next.workModes).toEqual(["remote"]);
     expect(next.roleKeywords).toEqual(["react", "typescript"]);
-    expect(next.remoteRegions).toEqual(["eu"]);
-    expect(next.locations).toEqual(["Cairo"]);
   });
 
   it("does not touch hard-stop columns", () => {
     const current = {
       ...defaultJobPreference(),
-      excludeKeywords: ["php"],
       salaryMin: 4000,
-      salaryCurrency: "USD",
-      levelFloor: "senior" as const
+      salaryCurrency: "USD"
     };
     const next = applySoftJobPreferencePatch(current, {
       roleKeywords: { op: "add", values: ["go"] }
     });
-    expect(next.excludeKeywords).toEqual(["php"]);
     expect(next.salaryMin).toBe(4000);
     expect(next.salaryCurrency).toBe("USD");
-    expect(next.levelFloor).toBe("senior");
   });
 });
 
@@ -136,10 +125,10 @@ describe("UpsertSoftJobPreferencesInputSchema", () => {
     ).toBe(false);
   });
 
-  it("accepts remoteRegions set (replace)", () => {
+  it("accepts roleKeywords set (replace)", () => {
     expect(
       UpsertSoftJobPreferencesInputSchema.safeParse({
-        remoteRegions: { op: "set", values: ["eu"] }
+        roleKeywords: { op: "set", values: ["frontend"] }
       }).success
     ).toBe(true);
   });
@@ -168,38 +157,32 @@ describe("jobPreferencesEqual", () => {
 });
 
 describe("applyHardJobPreferencePatch + describeHardPreferenceDelta", () => {
-  it("merges exclude add and keeps existing", () => {
-    const current = {
-      ...defaultJobPreference(),
-      excludeKeywords: ["React Native"]
-    };
-    const patch = ProposeHardPreferenceChangeInputSchema.parse({
-      excludeKeywords: { op: "add", values: ["PHP"] }
-    });
-    expect(applyHardJobPreferencePatch(current, patch)).toEqual({
-      excludeKeywords: ["React Native", "PHP"]
-    });
-    const view = describeHardPreferenceDelta(current, patch);
-    expect(view.summary).toMatch(/Add exclude:\s*PHP/i);
-    expect(view.summary).toMatch(/React Native/);
-    expect(view.chips).toContain("PHP");
+  it("rejects dropped hard-stop fields", () => {
+    expect(
+      ProposeHardPreferenceChangeInputSchema.safeParse({
+        excludeKeywords: { op: "add", values: ["php"] }
+      }).success
+    ).toBe(false);
+    expect(
+      ProposeHardPreferenceChangeInputSchema.safeParse({
+        levelFloor: "senior"
+      }).success
+    ).toBe(false);
   });
 
-  it("sets salary floor and level floor", () => {
+  it("sets salary floor", () => {
     const current = defaultJobPreference();
     const patch = ProposeHardPreferenceChangeInputSchema.parse({
       salaryMin: 4000,
-      salaryCurrency: "usd",
-      levelFloor: "senior"
+      salaryCurrency: "usd"
     });
     expect(applyHardJobPreferencePatch(current, patch)).toEqual({
       salaryMin: 4000,
-      salaryCurrency: "USD",
-      levelFloor: "senior"
+      salaryCurrency: "USD"
     });
     const view = describeHardPreferenceDelta(current, patch);
     expect(view.summary).toMatch(/4000/);
     expect(view.summary).toMatch(/USD/);
-    expect(view.summary).toMatch(/senior/i);
+    expect(view.chips).toContain("4000 USD");
   });
 });

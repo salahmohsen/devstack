@@ -1,12 +1,6 @@
 import { z } from "zod";
 
-import {
-  JobPreferenceFieldsSchema,
-  LevelFloorSchema,
-  WorkModeSchema,
-  type JobPreference,
-  type LevelFloor
-} from "./types";
+import { JobPreferenceFieldsSchema, WorkModeSchema, type JobPreference } from "./types";
 
 const preferenceString = z.string().trim().min(1).max(120);
 const preferenceStringList = z.array(preferenceString).max(50);
@@ -45,30 +39,16 @@ export function applyPreferenceListPatch(
   return uniquePreferenceList(current.filter((value) => !remove.has(value.trim().toLowerCase())));
 }
 
-const softCustomTitleField = z.string().trim().max(120).nullable();
-
 /** Immediate search-loop writes. Hard-stop keys are rejected (strict). */
 export const UpsertSoftJobPreferencesInputSchema = z
   .object({
-    // transitional: facet schema has no title; legacy body dies with Task 9/10
-    titleId: z.string().nullable().optional(),
-    customTitle: softCustomTitleField.optional(),
     roleKeywords: PreferenceListPatchSchema.optional(),
-    workModes: z.array(WorkModeSchema).max(3).optional(),
-    locations: PreferenceListPatchSchema.optional(),
-    remoteRegions: PreferenceListPatchSchema.optional()
+    workModes: z.array(WorkModeSchema).max(3).optional()
   })
   .strict()
-  .refine(
-    (value) =>
-      value.titleId !== undefined ||
-      value.customTitle !== undefined ||
-      value.roleKeywords !== undefined ||
-      value.workModes !== undefined ||
-      value.locations !== undefined ||
-      value.remoteRegions !== undefined,
-    { message: "Provide at least one soft preference field" }
-  );
+  .refine((value) => value.roleKeywords !== undefined || value.workModes !== undefined, {
+    message: "Provide at least one soft preference field"
+  });
 export type UpsertSoftJobPreferencesInput = z.infer<typeof UpsertSoftJobPreferencesInputSchema>;
 
 export const UpsertSoftJobPreferencesOutputSchema = z.object({
@@ -87,19 +67,12 @@ const salaryCurrencyPatch = z
 export const ProposeHardPreferenceChangeInputSchema = z
   .object({
     salaryMin: z.number().nonnegative().nullable().optional(),
-    salaryCurrency: salaryCurrencyPatch.optional(),
-    excludeKeywords: PreferenceListPatchSchema.optional(),
-    levelFloor: LevelFloorSchema.nullable().optional()
+    salaryCurrency: salaryCurrencyPatch.optional()
   })
   .strict()
-  .refine(
-    (value) =>
-      value.salaryMin !== undefined ||
-      value.salaryCurrency !== undefined ||
-      value.excludeKeywords !== undefined ||
-      value.levelFloor !== undefined,
-    { message: "Propose at least one hard-stop field" }
-  );
+  .refine((value) => value.salaryMin !== undefined || value.salaryCurrency !== undefined, {
+    message: "Propose at least one hard-stop field"
+  });
 export type ProposeHardPreferenceChangeInput = z.infer<
   typeof ProposeHardPreferenceChangeInputSchema
 >;
@@ -118,21 +91,14 @@ function sameStringList(left: readonly string[], right: readonly string[]): bool
 
 export function jobPreferencesEqual(left: JobPreference, right: JobPreference): boolean {
   return (
-    left.titleId === right.titleId &&
-    left.customTitle === right.customTitle &&
     left.salaryMin === right.salaryMin &&
     left.salaryCurrency === right.salaryCurrency &&
-    left.levelFloor === right.levelFloor &&
     left.minMatchScore === right.minMatchScore &&
-    left.jobsPerRun === right.jobsPerRun &&
     left.dailyBoardScoreCap === right.dailyBoardScoreCap &&
     left.importFromEmail === right.importFromEmail &&
     left.reviewApplyKit === right.reviewApplyKit &&
     sameStringList(left.workModes, right.workModes) &&
-    sameStringList(left.locations, right.locations) &&
-    sameStringList(left.remoteRegions, right.remoteRegions) &&
-    sameStringList(left.roleKeywords, right.roleKeywords) &&
-    sameStringList(left.excludeKeywords, right.excludeKeywords)
+    sameStringList(left.roleKeywords, right.roleKeywords)
   );
 }
 
@@ -143,54 +109,30 @@ export function applySoftJobPreferencePatch(
   const roleKeywords = input.roleKeywords
     ? applyPreferenceListPatch(current.roleKeywords, input.roleKeywords)
     : undefined;
-  const locations = input.locations
-    ? applyPreferenceListPatch(current.locations, input.locations)
-    : undefined;
-  const remoteRegions = input.remoteRegions
-    ? applyPreferenceListPatch(current.remoteRegions, input.remoteRegions)
-    : undefined;
   return {
     ...current,
-    titleId: input.titleId !== undefined ? input.titleId : current.titleId,
-    customTitle: input.customTitle !== undefined ? input.customTitle : current.customTitle,
     workModes: input.workModes ?? current.workModes,
-    roleKeywords: roleKeywords ?? current.roleKeywords,
-    locations: locations ?? current.locations,
-    remoteRegions: remoteRegions ?? current.remoteRegions
+    roleKeywords: roleKeywords ?? current.roleKeywords
   };
 }
 
-/** Hard-stop next values; exclude/levelFloor no longer ride the freehire upsert schema. */
+/** Hard-stop next values; salary floor only since the catalog drop. */
 export type HardPreferencePatch = {
-  excludeKeywords?: string[];
   salaryMin?: number | null;
   salaryCurrency?: string | null;
-  levelFloor?: LevelFloor | null;
 };
 
 export function applyHardJobPreferencePatch(
-  current: Pick<JobPreference, "excludeKeywords" | "salaryMin" | "salaryCurrency" | "levelFloor">,
+  _current: Pick<JobPreference, "salaryMin" | "salaryCurrency">,
   patch: ProposeHardPreferenceChangeInput
 ): HardPreferencePatch {
   const next: HardPreferencePatch = {};
-  if (patch.excludeKeywords) {
-    next.excludeKeywords = applyPreferenceListPatch(current.excludeKeywords, patch.excludeKeywords);
-  }
   if (patch.salaryMin !== undefined) next.salaryMin = patch.salaryMin;
   if (patch.salaryCurrency !== undefined) {
     next.salaryCurrency =
       patch.salaryCurrency == null ? null : patch.salaryCurrency.trim().toUpperCase();
   }
-  if (patch.levelFloor !== undefined) next.levelFloor = patch.levelFloor;
   return next;
-}
-
-function formatExcludeList(values: readonly string[]): string {
-  return values.length > 0 ? values.join(", ") : "none";
-}
-
-function formatLevelFloor(value: LevelFloor | null): string {
-  return value ?? "none";
 }
 
 function formatSalaryFloor(min: number | null, currency: string | null): string {
@@ -205,32 +147,12 @@ export type HardPreferenceDeltaView = {
 };
 
 export function describeHardPreferenceDelta(
-  current: Pick<JobPreference, "excludeKeywords" | "salaryMin" | "salaryCurrency" | "levelFloor">,
+  current: Pick<JobPreference, "salaryMin" | "salaryCurrency">,
   patch: ProposeHardPreferenceChangeInput
 ): HardPreferenceDeltaView {
   const upsert = applyHardJobPreferencePatch(current, patch);
   const lines: string[] = [];
   const chips: string[] = [];
-
-  if (patch.excludeKeywords) {
-    const next = upsert.excludeKeywords ?? current.excludeKeywords;
-    const op = patch.excludeKeywords.op;
-    const incoming = patch.excludeKeywords.values;
-    if (op === "add") {
-      lines.push(
-        `Add exclude: ${incoming.join(", ") || "none"} — keep existing: ${formatExcludeList(current.excludeKeywords)}`
-      );
-    } else if (op === "remove") {
-      lines.push(
-        `Remove exclude: ${incoming.join(", ") || "none"} — keep: ${formatExcludeList(next)}`
-      );
-    } else {
-      lines.push(
-        `Set exclusions to: ${formatExcludeList(next)} — was: ${formatExcludeList(current.excludeKeywords)}`
-      );
-    }
-    chips.push(...incoming);
-  }
 
   if (patch.salaryMin !== undefined || patch.salaryCurrency !== undefined) {
     const nextMin = upsert.salaryMin !== undefined ? upsert.salaryMin : current.salaryMin;
@@ -245,16 +167,6 @@ export function describeHardPreferenceDelta(
     }
     const salaryChip = formatSalaryFloor(nextMin ?? null, nextCurrency ?? null);
     if (salaryChip !== "none") chips.push(salaryChip);
-  }
-
-  if (patch.levelFloor !== undefined) {
-    const next = upsert.levelFloor !== undefined ? upsert.levelFloor : current.levelFloor;
-    if (next == null) {
-      lines.push("Clear level floor");
-    } else {
-      lines.push(`Set level floor: ${formatLevelFloor(next)}`);
-      chips.push(next);
-    }
   }
 
   return {

@@ -1,11 +1,7 @@
 import { eq, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
-import {
-  jobPreference,
-  type StoredLevelFloor,
-  type StoredWorkMode
-} from "../schema/job-preference.schema.ts";
+import { jobPreference, type StoredWorkMode } from "../schema/job-preference.schema.ts";
 
 export type JobPreferenceEntity = InferSelectModel<typeof jobPreference>;
 
@@ -34,17 +30,10 @@ export type UpsertJobPreferenceData = {
   id: string;
   userId: string;
   workModes: StoredWorkMode[];
-  locations: string[];
-  remoteRegions: string[];
   roleKeywords: string[];
-  excludeKeywords: string[];
   salaryMin: number | null;
   salaryCurrency: string | null;
-  levelFloor: StoredLevelFloor | null;
   minMatchScore: number;
-  titleId: string | null;
-  customTitle: string | null;
-  jobsPerRun: number;
   dailyBoardScoreCap: number;
   importFromEmail: boolean;
   reviewApplyKit: boolean;
@@ -71,17 +60,10 @@ export const jobPreferenceRepository = {
         .update(jobPreference)
         .set({
           workModes: input.workModes,
-          locations: input.locations,
-          remoteRegions: input.remoteRegions,
           roleKeywords: input.roleKeywords,
-          excludeKeywords: input.excludeKeywords,
           salaryMin: input.salaryMin,
           salaryCurrency: input.salaryCurrency,
-          levelFloor: input.levelFloor,
           minMatchScore: input.minMatchScore,
-          titleId: input.titleId,
-          customTitle: input.customTitle,
-          jobsPerRun: input.jobsPerRun,
           dailyBoardScoreCap: input.dailyBoardScoreCap,
           importFromEmail: input.importFromEmail,
           reviewApplyKit: input.reviewApplyKit,
@@ -100,17 +82,10 @@ export const jobPreferenceRepository = {
         id: input.id,
         userId: input.userId,
         workModes: input.workModes,
-        locations: input.locations,
-        remoteRegions: input.remoteRegions,
         roleKeywords: input.roleKeywords,
-        excludeKeywords: input.excludeKeywords,
         salaryMin: input.salaryMin,
         salaryCurrency: input.salaryCurrency,
-        levelFloor: input.levelFloor,
         minMatchScore: input.minMatchScore,
-        titleId: input.titleId,
-        customTitle: input.customTitle,
-        jobsPerRun: input.jobsPerRun,
         dailyBoardScoreCap: input.dailyBoardScoreCap,
         importFromEmail: input.importFromEmail,
         reviewApplyKit: input.reviewApplyKit,

@@ -22,9 +22,6 @@ import {
 
 export { WorkModeSchema, type WorkMode } from "#@/job-discovery/facets";
 
-export const LevelFloorSchema = z.enum(["junior", "mid", "senior", "staff"]);
-export type LevelFloor = z.infer<typeof LevelFloorSchema>;
-
 const preferenceString = z.string().trim().min(1).max(120);
 
 const preferenceStringList = z.array(preferenceString).max(50);
@@ -38,8 +35,6 @@ const salaryCurrencyField = z
   .nullable()
   .transform((v) => (v === "" || v == null ? null : v.toUpperCase()));
 
-const jobsPerRunField = z.number().int();
-
 const dailyBoardScoreCapField = z
   .number()
   .int()
@@ -47,30 +42,17 @@ const dailyBoardScoreCapField = z
   .max(MAX_DAILY_BOARD_SCORE_CAP)
   .transform(refineDailyBoardScoreCap);
 
-const customTitleField = z.string().trim().max(120).nullable();
-
-/** Legacy harvest default until the legacy body dies in a later task. */
-const DEFAULT_JOBS_PER_RUN = 25;
-
 /**
- * Legacy harvest/matching preference body (pre-freehire facets).
- * Kept for the harvest scorer, two-axis, and list-patch flows; the
- * facet-shaped {@link JobPreferenceOutputSchema} supersedes it for the
- * freehire discovery surface and is reworked in the scorer task.
+ * Harvest/matching preference body shared by the scorer, two-axis, and
+ * list-patch flows. The facet-shaped {@link JobPreferenceOutputSchema}
+ * supersedes it for the freehire discovery surface.
  */
 export const JobPreferenceFieldsSchema = z.object({
   workModes: z.array(WorkModeSchema).max(3),
-  locations: preferenceStringList,
-  remoteRegions: preferenceStringList,
   roleKeywords: preferenceStringList,
-  excludeKeywords: preferenceStringList,
   salaryMin: z.number().nonnegative().nullable(),
   salaryCurrency: z.string().nullable(),
-  levelFloor: LevelFloorSchema.nullable(),
   minMatchScore: z.number().int().min(0).max(100),
-  titleId: z.string().nullable(),
-  customTitle: customTitleField,
-  jobsPerRun: jobsPerRunField,
   dailyBoardScoreCap: dailyBoardScoreCapField,
   importFromEmail: z.boolean(),
   reviewApplyKit: z.boolean()
@@ -83,17 +65,10 @@ export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
  */
 export const JobPreferenceSchema = z.object({
   workModes: z.array(WorkModeSchema).max(3).default([]),
-  locations: preferenceStringList.default([]),
-  remoteRegions: preferenceStringList.default([]),
   roleKeywords: preferenceStringList.default([]),
-  excludeKeywords: preferenceStringList.default([]),
   salaryMin: z.number().nonnegative().nullable().optional(),
   salaryCurrency: salaryCurrencyField.optional(),
-  levelFloor: LevelFloorSchema.nullable().default(null),
   minMatchScore: z.number().int().min(0).max(100).default(60),
-  titleId: z.string().nullable().default(null),
-  customTitle: customTitleField.default(null),
-  jobsPerRun: jobsPerRunField.default(DEFAULT_JOBS_PER_RUN),
   dailyBoardScoreCap: dailyBoardScoreCapField.default(DEFAULT_DAILY_BOARD_SCORE_CAP),
   importFromEmail: z.boolean().default(false),
   reviewApplyKit: z.boolean().default(true)

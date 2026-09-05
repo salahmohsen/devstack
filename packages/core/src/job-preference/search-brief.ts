@@ -12,16 +12,9 @@ import {
 
 export const SearchBriefPrefsSchema = JobPreferenceFieldsSchema.pick({
   workModes: true,
-  locations: true,
-  remoteRegions: true,
   roleKeywords: true,
-  excludeKeywords: true,
   salaryMin: true,
-  salaryCurrency: true,
-  levelFloor: true,
-  // transitional: ignored by exampleTitlesLine since facet rework (Task 4); drop with legacy body
-  titleId: true,
-  customTitle: true
+  salaryCurrency: true
 }).extend({
   categories: z.array(CategoryFacetSchema).nullable()
 });
@@ -62,15 +55,9 @@ type BriefPrefsSource = Pick<
 export function searchBriefPrefsFromPreference(prefs: BriefPrefsSource): SearchBriefPrefs {
   return {
     workModes: prefs.workModes,
-    locations: prefs.locations,
-    remoteRegions: prefs.remoteRegions,
     roleKeywords: prefs.roleKeywords,
-    excludeKeywords: prefs.excludeKeywords,
     salaryMin: prefs.salaryMin,
     salaryCurrency: prefs.salaryCurrency,
-    levelFloor: prefs.levelFloor,
-    titleId: prefs.titleId,
-    customTitle: prefs.customTitle,
     categories: prefs.categories ?? null
   };
 }
@@ -157,22 +144,15 @@ export function renderSearchBriefLists(
   const targetJobs: string[] = [];
   const titles = exampleTitlesLine(prefs);
   if (titles) targetJobs.push(`- Example titles: ${titles}`);
-  targetJobs.push(`- Level floor: ${prefs.levelFloor ?? "none"}`);
-  targetJobs.push(`- Exclusions: ${joinOr(prefs.excludeKeywords, "none")}`);
+  targetJobs.push(`- Modes: ${joinOr(prefs.workModes, "any")}`);
 
   const skills: string[] = [];
   const paragraph = skillsParagraph?.trim();
   if (paragraph) skills.push(paragraph);
-  skills.push(`- Exclusions: ${joinOr(prefs.excludeKeywords, "none")}`);
 
   return [
     "## Target jobs",
     ...targetJobs,
-    "",
-    "## Location",
-    `- Modes: ${joinOr(prefs.workModes, "any")}`,
-    `- On-site / hybrid places: ${joinOr(prefs.locations, "none — onsite/hybrid will not land")}`,
-    `- Remote regions: ${joinOr(prefs.remoteRegions, "worldwide")}`,
     "",
     "## Compensation",
     `- Minimum monthly: ${formatSalaryFloor(prefs)}`,

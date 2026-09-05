@@ -2,13 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { UpsertJobPreferenceInputSchema } from "#@/job-preference/types";
 import {
-  backfillRemoteRegionsFromLocations,
   buildSeekerMatchEvidence,
   defaultJobPreference,
   emptySeekerMatchEvidence,
   isOpenJobPreference,
   mergeJobPreference,
-  normalizeRemoteRegions,
   normalizeWorkModes,
   seekerEvidenceHasSignal,
   shouldPassAllHarvestJobs
@@ -44,25 +42,6 @@ describe("isOpenJobPreference", () => {
         workModes: ["remote", "hybrid"]
       })
     ).toBe(false);
-  });
-
-  it("treats default empty remoteRegions as open and a set list as closed", () => {
-    expect(isOpenJobPreference({ ...defaultJobPreference(), remoteRegions: [] })).toBe(true);
-    expect(isOpenJobPreference({ ...defaultJobPreference(), remoteRegions: ["eu"] })).toBe(false);
-    expect(isOpenJobPreference({ ...defaultJobPreference(), levelFloor: "senior" })).toBe(false);
-  });
-});
-
-describe("normalizeRemoteRegions", () => {
-  it("drops worldwide tokens and keeps remaining slugs", () => {
-    expect(normalizeRemoteRegions(["worldwide", "mena"])).toEqual(["mena"]);
-    expect(normalizeRemoteRegions(["worldwide"])).toEqual([]);
-  });
-});
-
-describe("backfillRemoteRegionsFromLocations", () => {
-  it("copies a non-worldwide location slug onto remoteRegions", () => {
-    expect(backfillRemoteRegionsFromLocations(["egypt"]).remoteRegions).toContain("egypt");
   });
 });
 
@@ -102,11 +81,9 @@ describe("mergeJobPreference", () => {
     expect(merged.workModes).toEqual(["hybrid", "onsite"]);
   });
 
-  it("defaults new discovery fields", () => {
+  it("defaults scoring fields", () => {
     const d = defaultJobPreference();
-    expect(d.titleId).toBeNull();
-    expect(d.customTitle).toBeNull();
-    expect(d.jobsPerRun).toBe(25);
+    expect(d.minMatchScore).toBe(60);
     expect(d.dailyBoardScoreCap).toBe(50);
     expect(d.importFromEmail).toBe(false);
     expect(d.reviewApplyKit).toBe(true);

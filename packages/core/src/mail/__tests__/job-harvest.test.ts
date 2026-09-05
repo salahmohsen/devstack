@@ -444,39 +444,6 @@ describe("scoreJobAgainstPreference", () => {
     expect(r.reasons).toContain("no role keyword in title");
   });
 
-  it("kills exclude react native on Senior React Native Engineer", () => {
-    const r = scoreJobAgainstPreference(
-      {
-        title: "Senior React Native Engineer",
-        companyName: "Acme",
-        listingUrl: "https://www.linkedin.com/jobs/view/30",
-        applyUrl: null,
-        applyMethod: "unknown",
-        source: "linkedin"
-      },
-      { ...defaultJobPreference(), excludeKeywords: ["react native"] }
-    );
-    expect(r.passed).toBe(false);
-    expect(r.score).toBe(0);
-    expect(r.reasons).toContain("excluded keyword match");
-  });
-
-  it("does not kill Senior React Native Engineer when exclude is react", () => {
-    const r = scoreJobAgainstPreference(
-      {
-        title: "Senior React Native Engineer",
-        companyName: "Acme",
-        listingUrl: "https://www.linkedin.com/jobs/view/31",
-        applyUrl: null,
-        applyMethod: "unknown",
-        source: "linkedin"
-      },
-      { ...defaultJobPreference(), roleKeywords: ["engineer"], excludeKeywords: ["react"] }
-    );
-    expect(r.reasons).not.toContain("excluded keyword match");
-    expect(r.passed).toBe(true);
-  });
-
   it("does not title-hit React Native on role keyword react", () => {
     const r = scoreJobAgainstPreference(
       {

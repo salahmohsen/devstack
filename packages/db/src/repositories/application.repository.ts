@@ -270,7 +270,6 @@ async function insertIfAbsentByUrl(
       outcomeAt: null,
       hiringUrgency: input.hiringUrgency ?? "unknown",
       resumeId: input.resumeId ?? null,
-      postingId: input.postingId ?? null,
       jobId: input.jobId ?? null,
       inboxExpiresAt: input.inboxExpiresAt ?? null,
       discoveryRunId: input.discoveryRunId ?? null
@@ -567,7 +566,6 @@ export const applicationRepository = {
         outcomeAt: null,
         hiringUrgency: input.hiringUrgency ?? "unknown",
         resumeId: input.resumeId ?? null,
-        postingId: input.postingId ?? null,
         jobId: input.jobId ?? null,
         inboxExpiresAt: input.inboxExpiresAt ?? null,
         discoveryRunId: input.discoveryRunId ?? null
@@ -595,7 +593,7 @@ export const applicationRepository = {
     input: CreateApplicationData & {
       url: string;
       discoveryRunId: string;
-      jobsPerRun: number;
+      poolSize: number;
       maxOpenInbox: number;
     }
   ): Promise<{ row: ApplicationEntity | null; created: boolean }> {
@@ -621,7 +619,7 @@ export const applicationRepository = {
 
       const openInbox = openRow?.n ?? 0;
       const inboxThisRun = runRow?.n ?? 0;
-      if (openInbox >= input.maxOpenInbox || inboxThisRun >= input.jobsPerRun) {
+      if (openInbox >= input.maxOpenInbox || inboxThisRun >= input.poolSize) {
         return { row: null, created: false };
       }
 
@@ -643,40 +641,31 @@ export const applicationRepository = {
     return row?.n ?? 0;
   },
 
-  /** URLs / posting ids / user_job ids already referenced by this user's applications. */
-  async listUserSeenRefs(
-    userId: string
-  ): Promise<{ urls: string[]; postingIds: string[]; jobIds: string[] }> {
+  /** URLs / user_job ids already referenced by this user's applications. */
+  async listUserSeenRefs(userId: string): Promise<{ urls: string[]; jobIds: string[] }> {
     const rows = await getDb()
       .select({
         url: application.url,
-        postingId: application.postingId,
         jobId: application.jobId
       })
       .from(application)
       .where(eq(application.userId, userId));
 
     const urls: string[] = [];
-    const postingIds: string[] = [];
     const jobIds: string[] = [];
     const seenUrls = new Set<string>();
-    const seenPostingIds = new Set<string>();
     const seenJobIds = new Set<string>();
     for (const row of rows) {
       if (row.url && !seenUrls.has(row.url)) {
         seenUrls.add(row.url);
         urls.push(row.url);
       }
-      if (row.postingId && !seenPostingIds.has(row.postingId)) {
-        seenPostingIds.add(row.postingId);
-        postingIds.push(row.postingId);
-      }
       if (row.jobId && !seenJobIds.has(row.jobId)) {
         seenJobIds.add(row.jobId);
         jobIds.push(row.jobId);
       }
     }
-    return { urls, postingIds, jobIds };
+    return { urls, jobIds };
   },
 
   /** Bump `updatedAt` so probed rows fall out of the next oldest-first batch. */

@@ -120,15 +120,7 @@ ${prefsSummary ?? "(not set)"}`;
 
 type TakePrefsColumns = Pick<
   JobPreference,
-  | "roleKeywords"
-  | "locations"
-  | "remoteRegions"
-  | "workModes"
-  | "excludeKeywords"
-  | "levelFloor"
-  | "salaryMin"
-  | "salaryCurrency"
-  | "minMatchScore"
+  "roleKeywords" | "workModes" | "salaryMin" | "salaryCurrency" | "minMatchScore"
 >;
 
 export function prefsSummaryFromRow(
@@ -139,11 +131,7 @@ export function prefsSummaryFromRow(
   if (!prefs && !evidence && !searchBriefMarkdown?.trim()) return null;
   const columns = {
     roleKeywords: prefs?.roleKeywords ?? [],
-    locations: prefs?.locations ?? [],
-    remoteRegions: prefs?.remoteRegions ?? [],
     workModes: prefs?.workModes ?? [],
-    excludeKeywords: prefs?.excludeKeywords ?? [],
-    levelFloor: prefs?.levelFloor ?? null,
     salaryMin: prefs?.salaryMin ?? null,
     salaryCurrency: prefs?.salaryCurrency ?? null,
     minMatchScore: prefs?.minMatchScore ?? null
@@ -169,7 +157,7 @@ async function loadTakePromptContext(userId: string): Promise<{
   const searchBriefMarkdown = brief?.markdown ?? null;
   return {
     prefsSummary: prefsSummaryFromRow(prefs, evidence, searchBriefMarkdown),
-    hasExclude: prefs.excludeKeywords.length > 0,
+    hasExclude: false,
     hasBrief: Boolean(searchBriefMarkdown?.trim())
   };
 }

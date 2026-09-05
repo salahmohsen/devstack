@@ -28,7 +28,6 @@ import {
 import {
   application,
   experience,
-  jobPosting,
   project,
   projectStack,
   resume,
@@ -328,13 +327,6 @@ function sourceTagsOverlap(tags: string[], negate: boolean): SQL {
   return negate ? sql`not (${overlap})` : overlap;
 }
 
-function listingClosedExists(): SQL {
-  return sql`exists (select 1 from ${jobPosting} where ${and(
-    eq(jobPosting.id, application.postingId),
-    isNotNull(jobPosting.closedAt)
-  )})`;
-}
-
 function compileNumberCmp(
   column: typeof application.matchScore,
   cmp: ListQueryCmp
@@ -451,10 +443,10 @@ function compileJobsCmp(cmp: ListQueryCmp): SQL {
       if (cmp.op === "out") return sourceTagsOverlap(cmp.args, true);
       break;
     case "listingClosed": {
+      // Shared catalog is gone — nothing can be "closed" anymore.
       const value = cmp.args[0] === "true";
       const closed = cmp.op === "neq" ? !value : value;
-      const existsSql = listingClosedExists();
-      return closed ? existsSql : not(existsSql);
+      return closed ? sql`false` : sql`true`;
     }
     case "matchScore": {
       const sqlCmp = compileNumberCmp(application.matchScore, cmp);

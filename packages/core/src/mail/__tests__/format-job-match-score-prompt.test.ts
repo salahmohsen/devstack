@@ -12,15 +12,13 @@ function preferenceJson(prompt: string): Record<string, unknown> {
 }
 
 describe("formatJobMatchScorePrompt", () => {
-  it("emits exclude, level, salary, remoteRegions, evidence, and brief as narrative", () => {
+  it("emits salary, roleKeywords, evidence, and brief as narrative", () => {
     const prompt = formatJobMatchScorePrompt({
       prefs: {
         ...defaultJobPreference(),
-        excludeKeywords: ["react native"],
-        levelFloor: "senior",
+        roleKeywords: ["react"],
         salaryMin: 4000,
-        salaryCurrency: "USD",
-        remoteRegions: ["mena"]
+        salaryCurrency: "USD"
       },
       evidence: {
         roleTitles: ["Frontend Engineer"],
@@ -35,11 +33,11 @@ describe("formatJobMatchScorePrompt", () => {
     });
 
     const columns = preferenceJson(prompt);
-    expect(columns.excludeKeywords).toEqual(["react native"]);
-    expect(columns.levelFloor).toBe("senior");
+    expect(columns.roleKeywords).toEqual(["react"]);
     expect(columns.salaryMin).toBe(4000);
     expect(columns.salaryCurrency).toBe("USD");
-    expect(columns.remoteRegions).toEqual(["mena"]);
+    expect(columns).not.toHaveProperty("excludeKeywords");
+    expect(columns).not.toHaveProperty("levelFloor");
     expect(columns).not.toHaveProperty("searchBriefMarkdown");
     expect(JSON.stringify(columns)).not.toContain(BRIEF);
 

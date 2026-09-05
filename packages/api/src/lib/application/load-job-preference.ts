@@ -5,7 +5,6 @@ import {
   refineDailyBoardScoreCap,
   type JobPreference,
   type JobPreferenceOutput,
-  type LevelFloor,
   type WorkMode
 } from "@tsu-stack/core";
 import { jobPreferenceRepository } from "@tsu-stack/db";
@@ -15,17 +14,10 @@ export async function loadJobPreference(userId: string): Promise<JobPreference> 
   if (!row) return defaultJobPreference();
   return {
     workModes: row.workModes ?? [],
-    locations: row.locations ?? [],
-    remoteRegions: row.remoteRegions ?? [],
     roleKeywords: row.roleKeywords ?? [],
-    excludeKeywords: row.excludeKeywords ?? [],
     salaryMin: row.salaryMin,
     salaryCurrency: row.salaryCurrency,
-    levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore ?? DEFAULT_MIN_MATCH_SCORE,
-    titleId: row.titleId ?? null,
-    customTitle: row.customTitle ?? null,
-    jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
     importFromEmail: row.importFromEmail ?? false,
     reviewApplyKit: row.reviewApplyKit ?? true

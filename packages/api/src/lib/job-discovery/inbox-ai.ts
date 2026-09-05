@@ -371,7 +371,7 @@ async function insertDiscoveryApplication(input: {
       ? await applicationRepository.createInboxIfUnderCaps({
           ...insertInput,
           discoveryRunId: input.runId,
-          jobsPerRun: input.poolSize,
+          poolSize: input.poolSize,
           maxOpenInbox: MAX_OPEN_INBOX
         })
       : await applicationRepository.createIfAbsentByUrl(insertInput);

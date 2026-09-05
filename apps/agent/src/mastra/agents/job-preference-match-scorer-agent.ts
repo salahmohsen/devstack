@@ -21,7 +21,7 @@ Return structured output only via the schema.
 
 Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity:
 "react" is not "react native". Search brief is narrative flavor only and cannot pass a
-column hard-fail. Two-axis (workModes / locations / remoteRegions) is land-only — do not
+column hard-fail. Two-axis (workModes / geography facets) is land-only — do not
 hard-fail harvest or inbox solely for unknown work mode or location.
 
 JobPreference.workModes is a multi-select array (OR semantics): empty = no mode filter;

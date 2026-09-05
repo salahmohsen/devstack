@@ -374,13 +374,9 @@ const scoreJobsAgainstPreferenceAi = createStep({
 
     const prefs: HarvestJobPreference = inputData.preference ?? {
       workModes: [],
-      locations: [],
-      remoteRegions: [],
       roleKeywords: [],
-      excludeKeywords: [],
       salaryMin: null,
       salaryCurrency: null,
-      levelFloor: null,
       minMatchScore: 60
     };
     const minScore = prefs.minMatchScore ?? 60;
@@ -601,13 +597,9 @@ const generateAgentTakesAi = createStep({
 
     const prefs: HarvestJobPreference = inputData.preference ?? {
       workModes: [],
-      locations: [],
-      remoteRegions: [],
       roleKeywords: [],
-      excludeKeywords: [],
       salaryMin: null,
       salaryCurrency: null,
-      levelFloor: null,
       minMatchScore: 60
     };
 
@@ -626,19 +618,15 @@ const generateAgentTakesAi = createStep({
 
     const prompt = `Write a short agent take for EACH match-passed job.
 
-Column hard-fails (exclude phrase, level floor, salary floor) are law. Phrase identity: "react" is not "react native". Search brief is narrative flavor only. Two-axis is land-only — not a harvest/inbox hard-fail.
+Column hard-fails (salary floor) are law. Search brief is narrative flavor only. Two-axis is land-only — not a harvest/inbox hard-fail.
 
 Seeker preferences (JSON):
 ${JSON.stringify(
   {
     workModes: prefs.workModes,
-    locations: prefs.locations,
-    remoteRegions: prefs.remoteRegions,
     roleKeywords: prefs.roleKeywords,
-    excludeKeywords: prefs.excludeKeywords,
     salaryMin: prefs.salaryMin,
-    salaryCurrency: prefs.salaryCurrency,
-    levelFloor: prefs.levelFloor
+    salaryCurrency: prefs.salaryCurrency
   },
   null,
   2

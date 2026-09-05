@@ -25,15 +25,10 @@ const EMPTY_BRIEF: GetSearchBriefOutput = {
   structured: {
     prefs: {
       workModes: [],
-      locations: [],
-      remoteRegions: [],
       roleKeywords: [],
-      excludeKeywords: [],
       salaryMin: null,
       salaryCurrency: null,
-      levelFloor: null,
-      titleId: null,
-      customTitle: null
+      categories: null
     },
     profile: { name: "", summary: "" }
   },

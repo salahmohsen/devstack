@@ -143,17 +143,14 @@ export const ApplicationOutputSchema = z.object({
   fitAnalysisPackageHash: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
-  /** Computed from job_posting.closedAt join — not a DB column on application. */
+  /** Always false since the shared catalog dropped — kept for API shape stability. */
   listingClosed: z.boolean().default(false),
   workMode: WorkModeSchema.nullable(),
   hiringRegion: z.string().nullable(),
   requiredSkills: z.array(JobSkillTagSchema).default([]),
   preferredSkills: z.array(JobSkillTagSchema).default([])
 }) satisfies z.ZodType<
-  Omit<
-    ApplicationSchemaSelect,
-    "userId" | "postingId" | "jobId" | "inboxExpiresAt" | "discoveryRunId"
-  > & {
+  Omit<ApplicationSchemaSelect, "userId" | "jobId" | "inboxExpiresAt" | "discoveryRunId"> & {
     listingClosed: boolean;
   }
 >;

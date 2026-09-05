@@ -2,7 +2,6 @@ import {
   DEFAULT_DAILY_BOARD_SCORE_CAP,
   refineDailyBoardScoreCap
 } from "#@/job-discovery/constants";
-import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
 
 import {
   DEFAULT_IMPORT_FROM_EMAIL,
@@ -15,7 +14,6 @@ import {
   type JobPreference,
   type JobPreferenceFacetFields,
   type JobPreferenceOutput,
-  type LevelFloor,
   type SeekerMatchEvidence,
   type UpsertJobPreferenceInput,
   type WorkMode
@@ -44,17 +42,10 @@ const FACET_FIELD_DEFAULTS: JobPreferenceFacetFields = {
 export function defaultJobPreference(): JobPreference {
   return {
     workModes: [],
-    locations: [],
-    remoteRegions: [],
     roleKeywords: [],
-    excludeKeywords: [],
     salaryMin: null,
     salaryCurrency: null,
-    levelFloor: null,
     minMatchScore: DEFAULT_MIN_MATCH_SCORE,
-    titleId: null,
-    customTitle: null,
-    jobsPerRun: 25,
     dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
     importFromEmail: DEFAULT_IMPORT_FROM_EMAIL,
     reviewApplyKit: DEFAULT_REVIEW_APPLY_KIT
@@ -68,20 +59,12 @@ export function defaultJobPreference(): JobPreference {
  */
 export function isOpenJobPreference(prefs: {
   workModes?: readonly string[] | null;
-  locations?: readonly string[] | null;
-  remoteRegions?: readonly string[] | null;
   roleKeywords?: readonly string[] | null;
-  excludeKeywords?: readonly string[] | null;
   salaryMin?: number | null;
-  levelFloor?: LevelFloor | null;
 }): boolean {
   return (
     (prefs.roleKeywords?.length ?? 0) === 0 &&
-    (prefs.excludeKeywords?.length ?? 0) === 0 &&
     (prefs.workModes?.length ?? 0) === 0 &&
-    (prefs.locations?.length ?? 0) === 0 &&
-    (prefs.remoteRegions?.length ?? 0) === 0 &&
-    prefs.levelFloor == null &&
     (prefs.salaryMin == null || prefs.salaryMin === undefined)
   );
 }
@@ -202,66 +185,6 @@ export function normalizeWorkModes(modes: WorkMode[]): WorkMode[] {
   return WORK_MODES.filter((m) => set.has(m));
 }
 
-const PREFERENCE_LIST_MAX = 50;
-
-function isWorldwideHiringRegionToken(token: string): boolean {
-  return normalizeHiringRegion(token) === "worldwide";
-}
-
-/** Drop empty and worldwide tokens. City/place strings stay as written. */
-export function normalizeLocations(tokens: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of tokens) {
-    const value = raw.trim();
-    if (!value || isWorldwideHiringRegionToken(value)) continue;
-    const key = value.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(value);
-    if (out.length >= PREFERENCE_LIST_MAX) break;
-  }
-  return out;
-}
-
-/** Map known synonyms to slugs; drop worldwide tokens so `[]` means worldwide remote. */
-export function normalizeRemoteRegions(tokens: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of tokens) {
-    const value = raw.trim();
-    if (!value) continue;
-    const slug = normalizeHiringRegion(value);
-    if (slug === "worldwide") continue;
-    const mapped = slug ?? value;
-    const key = mapped.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(mapped);
-    if (out.length >= PREFERENCE_LIST_MAX) break;
-  }
-  return out;
-}
-
-/** Copy non-worldwide location slugs onto remoteRegions; strip worldwide tokens from locations. */
-export function backfillRemoteRegionsFromLocations(locations: string[]): {
-  locations: string[];
-  remoteRegions: string[];
-} {
-  const seen = new Set<string>();
-  const remoteRegions: string[] = [];
-  for (const token of locations) {
-    const slug = normalizeHiringRegion(token);
-    if (slug == null || slug === "worldwide" || seen.has(slug)) continue;
-    seen.add(slug);
-    remoteRegions.push(slug);
-  }
-  return {
-    locations: normalizeLocations(locations),
-    remoteRegions
-  };
-}
-
 export function emptySeekerMatchEvidence(): SeekerMatchEvidence {
   return {
     roleTitles: [],
@@ -289,12 +212,8 @@ export function seekerEvidenceHasSignal(evidence: SeekerMatchEvidence | null | u
 export function shouldPassAllHarvestJobs(
   prefs: {
     workModes?: readonly string[] | null;
-    locations?: readonly string[] | null;
-    remoteRegions?: readonly string[] | null;
     roleKeywords?: readonly string[] | null;
-    excludeKeywords?: readonly string[] | null;
     salaryMin?: number | null;
-    levelFloor?: LevelFloor | null;
   },
   evidence?: SeekerMatchEvidence | null
 ): boolean {

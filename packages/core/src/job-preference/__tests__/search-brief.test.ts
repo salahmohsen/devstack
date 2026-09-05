@@ -29,11 +29,10 @@ function sourceWith(prefs = defaultBriefPrefs()): SearchBriefSource {
 }
 
 describe("search brief source payload", () => {
-  it("ignores jobsPerRun, dailyBoardScoreCap, minMatchScore, importFromEmail, and reviewApplyKit", () => {
+  it("ignores dailyBoardScoreCap, minMatchScore, importFromEmail, and reviewApplyKit", () => {
     const base = sourceWith();
     const ignored = sourceWith({
       ...defaultBriefPrefs(),
-      jobsPerRun: 40,
       dailyBoardScoreCap: 80,
       minMatchScore: 99,
       importFromEmail: true,
@@ -44,24 +43,16 @@ describe("search brief source payload", () => {
 
   it("is stable across object key order", () => {
     const source = sourceWith({
-      ...defaultBriefPrefs(),
-      excludeKeywords: ["php"],
-      levelFloor: "senior"
+      ...defaultBriefPrefs()
     });
     const shuffled = {
       profile: source.profile,
       evidence: source.evidence,
       prefs: {
-        customTitle: source.prefs.customTitle,
         salaryCurrency: source.prefs.salaryCurrency,
         workModes: source.prefs.workModes,
-        titleId: source.prefs.titleId,
-        remoteRegions: source.prefs.remoteRegions,
-        excludeKeywords: source.prefs.excludeKeywords,
-        locations: source.prefs.locations,
         salaryMin: source.prefs.salaryMin,
         roleKeywords: source.prefs.roleKeywords,
-        levelFloor: source.prefs.levelFloor,
         categories: source.prefs.categories
       }
     } satisfies SearchBriefSource;
@@ -71,7 +62,7 @@ describe("search brief source payload", () => {
   it("changes when prefs, evidence, or profile change", () => {
     const base = stableSearchBriefSourceJson(sourceWith());
     expect(
-      stableSearchBriefSourceJson(sourceWith({ ...defaultBriefPrefs(), excludeKeywords: ["php"] }))
+      stableSearchBriefSourceJson(sourceWith({ ...defaultBriefPrefs(), roleKeywords: ["react"] }))
     ).not.toBe(base);
     expect(
       stableSearchBriefSourceJson(
@@ -115,12 +106,12 @@ describe("lists-only search brief renderer", () => {
       prefs: searchBriefPrefsFromPreference(defaultBriefPrefs())
     });
     expect(markdown.startsWith("## Target jobs")).toBe(true);
-    expect(markdown).toContain("- Level floor: none");
-    expect(markdown).toContain("- Exclusions: none");
     expect(markdown).toContain("- Modes: any");
-    expect(markdown).toContain("- On-site / hybrid places: none — onsite/hybrid will not land");
-    expect(markdown).toContain("- Remote regions: worldwide");
     expect(markdown).toContain("- Minimum monthly: none");
+    expect(markdown).not.toContain("Level floor");
+    expect(markdown).not.toContain("Exclusions");
+    expect(markdown).not.toContain("On-site / hybrid places");
+    expect(markdown).not.toContain("Remote regions");
     expect(markdown).not.toContain("Target sectors");
     expect(markdown).not.toContain("Target companies");
     expect(markdown).not.toContain("Fit calibration");
@@ -133,21 +124,13 @@ describe("lists-only search brief renderer", () => {
         ...defaultBriefPrefs(),
         roleKeywords: ["react", "go"],
         categories: ["backend"],
-        levelFloor: "senior",
-        excludeKeywords: ["react native"],
         workModes: ["remote"],
-        locations: ["Cairo"],
-        remoteRegions: ["mena"],
         salaryMin: 4000,
         salaryCurrency: "USD"
       })
     });
     expect(markdown).toContain("- Example titles: react, go");
-    expect(markdown).toContain("- Level floor: senior");
-    expect(markdown).toContain("- Exclusions: react native");
     expect(markdown).toContain("- Modes: remote");
-    expect(markdown).toContain("- On-site / hybrid places: Cairo");
-    expect(markdown).toContain("- Remote regions: mena");
     expect(markdown).toContain("- Minimum monthly: 4000 USD");
     expect(markdown.startsWith("## Target jobs")).toBe(true);
   });
@@ -162,59 +145,38 @@ describe("lists-only search brief renderer", () => {
     expect(markdown).toContain("- Example titles: backend, frontend");
   });
 
-  it("changes when levelFloor, salary, or exclude is patched", () => {
+  it("changes when the salary floor is patched", () => {
     const current = {
       ...defaultBriefPrefs(),
-      excludeKeywords: ["php"],
       salaryMin: 3000,
-      salaryCurrency: "USD",
-      levelFloor: "mid" as const
+      salaryCurrency: "USD"
     };
     const currentPrefs = searchBriefPrefsFromPreference(current);
     const currentMd = renderSearchBriefMarkdown({ prefs: currentPrefs });
-    const hardCurrent = {
-      excludeKeywords: current.excludeKeywords,
-      salaryMin: current.salaryMin ?? null,
-      salaryCurrency: current.salaryCurrency ?? null,
-      levelFloor: current.levelFloor ?? null
-    };
 
     const proposed = (patch: unknown) => {
       const nextPrefs = applyHardJobPreferencePatch(
-        hardCurrent,
+        { salaryMin: current.salaryMin ?? null, salaryCurrency: current.salaryCurrency ?? null },
         ProposeHardPreferenceChangeInputSchema.parse(patch)
       );
       return renderSearchBriefMarkdown({
         prefs: {
           ...currentPrefs,
-          excludeKeywords: nextPrefs.excludeKeywords ?? currentPrefs.excludeKeywords,
           salaryMin:
             nextPrefs.salaryMin !== undefined ? nextPrefs.salaryMin : currentPrefs.salaryMin,
           salaryCurrency:
             nextPrefs.salaryCurrency !== undefined
               ? nextPrefs.salaryCurrency
-              : currentPrefs.salaryCurrency,
-          levelFloor:
-            nextPrefs.levelFloor !== undefined ? nextPrefs.levelFloor : currentPrefs.levelFloor
+              : currentPrefs.salaryCurrency
         }
       });
     };
 
-    const levelMd = proposed({ levelFloor: "senior" });
     const salaryMd = proposed({ salaryMin: 4000, salaryCurrency: "usd" });
-    const excludeMd = proposed({ excludeKeywords: { op: "add", values: ["cobol"] } });
-
-    expect(levelMd).not.toBe(currentMd);
-    expect(currentMd).toContain("- Level floor: mid");
-    expect(levelMd).toContain("- Level floor: senior");
 
     expect(salaryMd).not.toBe(currentMd);
     expect(currentMd).toContain("- Minimum monthly: 3000 USD");
     expect(salaryMd).toContain("- Minimum monthly: 4000 USD");
-
-    expect(excludeMd).not.toBe(currentMd);
-    expect(currentMd).toContain("- Exclusions: php");
-    expect(excludeMd).toContain("- Exclusions: php, cobol");
   });
 });
 

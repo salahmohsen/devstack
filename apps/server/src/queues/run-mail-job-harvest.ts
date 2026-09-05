@@ -109,7 +109,6 @@ export async function runMailJobHarvest(input: {
     labels: row.labels ?? [],
     minMatchScore: prefs.minMatchScore,
     roleKeywordCount: prefs.roleKeywords?.length ?? 0,
-    excludeKeywordCount: prefs.excludeKeywords?.length ?? 0,
     evidenceRoleTitles: evidence.roleTitles.length,
     evidenceStacks: evidence.stackNames.length,
     hasByoApiKey: Boolean(llm.apiKey?.trim()),

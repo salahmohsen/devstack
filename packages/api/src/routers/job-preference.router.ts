@@ -10,13 +10,10 @@ import {
   JobPreferenceOutputSchema,
   ResetBoardScoresTodayOutputSchema,
   mergeJobPreference,
-  normalizeLocations,
-  normalizeRemoteRegions,
   normalizeWorkModes,
   refineDailyBoardScoreCap,
   UpsertJobPreferenceInputSchema,
   type JobPreference,
-  type LevelFloor,
   type WorkMode
 } from "@tsu-stack/core";
 import {
@@ -24,7 +21,7 @@ import {
   userJobAiBudgetRepository,
   type JobPreferenceFacetData
 } from "@tsu-stack/db";
-import { type StoredLevelFloor, type StoredWorkMode } from "@tsu-stack/db/schema";
+import { type StoredWorkMode } from "@tsu-stack/db/schema";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import {
@@ -45,10 +42,7 @@ function toOutput(
 ) {
   return JobPreferenceOutputSchema.parse({
     workModes: row.workModes,
-    locations: row.locations,
-    remoteRegions: row.remoteRegions ?? [],
     roleKeywords: row.roleKeywords,
-    excludeKeywords: row.excludeKeywords,
     regions: row.regions ?? null,
     countries: row.countries ?? null,
     cities: row.cities ?? null,
@@ -68,11 +62,7 @@ function toOutput(
     openWithinDays: row.openWithinDays ?? null,
     visaSponsorship: row.visaSponsorship ?? null,
     requiresClearance: row.requiresClearance ?? null,
-    levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore,
-    titleId: row.titleId ?? null,
-    customTitle: row.customTitle ?? null,
-    jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
     importFromEmail: row.importFromEmail ?? false,
     reviewApplyKit: row.reviewApplyKit ?? true,
@@ -86,17 +76,10 @@ function rowToPreference(
 ): JobPreference {
   return {
     workModes: row.workModes as WorkMode[],
-    locations: row.locations,
-    remoteRegions: row.remoteRegions ?? [],
     roleKeywords: row.roleKeywords,
-    excludeKeywords: row.excludeKeywords,
     salaryMin: row.salaryMin ?? null,
     salaryCurrency: row.salaryCurrency ?? null,
-    levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore,
-    titleId: row.titleId ?? null,
-    customTitle: row.customTitle ?? null,
-    jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
     importFromEmail: row.importFromEmail ?? false,
     reviewApplyKit: row.reviewApplyKit ?? true
@@ -165,24 +148,15 @@ export const jobPreferenceRouter = {
       const base = existing ? rowToPreference(existing) : defaultJobPreference();
       const merged = mergeJobPreference(base, input);
       const workModes = normalizeWorkModes(merged.workModes);
-      const locations = normalizeLocations(merged.locations);
-      const remoteRegions = normalizeRemoteRegions(merged.remoteRegions);
 
       const row = await jobPreferenceRepository.upsert({
         id: existing?.id ?? randomUUID(),
         userId,
         workModes: workModes as StoredWorkMode[],
-        locations,
-        remoteRegions,
         roleKeywords: merged.roleKeywords,
-        excludeKeywords: merged.excludeKeywords,
         salaryMin: merged.salaryMin,
         salaryCurrency: merged.salaryCurrency,
-        levelFloor: merged.levelFloor as StoredLevelFloor | null,
         minMatchScore: merged.minMatchScore,
-        titleId: merged.titleId,
-        customTitle: merged.customTitle,
-        jobsPerRun: merged.jobsPerRun,
         dailyBoardScoreCap: refineDailyBoardScoreCap(merged.dailyBoardScoreCap),
         importFromEmail: merged.importFromEmail,
         reviewApplyKit: merged.reviewApplyKit,

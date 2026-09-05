@@ -13,15 +13,13 @@ function columnsJson(summary: string): Record<string, unknown> {
 }
 
 describe("prefsSummaryFromRow", () => {
-  it("emits exclude, level, salary, remoteRegions, evidence, and brief as narrative", () => {
+  it("emits roleKeywords, salary, evidence, and brief as narrative", () => {
     const summary = prefsSummaryFromRow(
       {
         ...defaultJobPreference(),
-        excludeKeywords: ["react native"],
-        levelFloor: "senior",
+        roleKeywords: ["react"],
         salaryMin: 4000,
-        salaryCurrency: "USD",
-        remoteRegions: ["mena"]
+        salaryCurrency: "USD"
       },
       {
         roleTitles: ["Frontend Engineer"],
@@ -35,11 +33,11 @@ describe("prefsSummaryFromRow", () => {
 
     expect(summary).toBeTruthy();
     const columns = columnsJson(summary!);
-    expect(columns.excludeKeywords).toEqual(["react native"]);
-    expect(columns.levelFloor).toBe("senior");
+    expect(columns.roleKeywords).toEqual(["react"]);
     expect(columns.salaryMin).toBe(4000);
     expect(columns.salaryCurrency).toBe("USD");
-    expect(columns.remoteRegions).toEqual(["mena"]);
+    expect(columns).not.toHaveProperty("excludeKeywords");
+    expect(columns).not.toHaveProperty("levelFloor");
     expect(columns).not.toHaveProperty("searchBriefMarkdown");
     expect(JSON.stringify(columns)).not.toContain(BRIEF);
 
