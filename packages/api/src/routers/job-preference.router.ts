@@ -13,14 +13,16 @@ import {
   normalizeRemoteRegions,
   normalizeWorkModes,
   refineDailyBoardScoreCap,
-  refineJobsPerRun,
   UpsertJobPreferenceInputSchema,
   type JobPreference,
-  type JobTitleId,
   type LevelFloor,
   type WorkMode
 } from "@tsu-stack/core";
-import { jobPreferenceRepository, userJobAiBudgetRepository } from "@tsu-stack/db";
+import {
+  jobPreferenceRepository,
+  userJobAiBudgetRepository,
+  type JobPreferenceFacetData
+} from "@tsu-stack/db";
 import { type StoredLevelFloor, type StoredWorkMode } from "@tsu-stack/db/schema";
 
 import {
@@ -44,13 +46,30 @@ function toOutput(
     remoteRegions: row.remoteRegions ?? [],
     roleKeywords: row.roleKeywords,
     excludeKeywords: row.excludeKeywords,
+    regions: row.regions ?? null,
+    countries: row.countries ?? null,
+    cities: row.cities ?? null,
+    categories: row.categories ?? null,
+    skills: row.skills ?? null,
+    seniority: row.seniority ?? null,
+    experienceYearsMin: row.experienceYearsMin ?? null,
+    experienceYearsMax: row.experienceYearsMax ?? null,
     salaryMin: row.salaryMin ?? null,
     salaryCurrency: row.salaryCurrency ?? null,
+    employmentTypes: row.employmentTypes ?? null,
+    companyTypes: row.companyTypes ?? null,
+    companySizes: row.companySizes ?? null,
+    domains: row.domains ?? null,
+    collections: row.collections ?? null,
+    reality: row.reality ?? null,
+    openWithinDays: row.openWithinDays ?? null,
+    visaSponsorship: row.visaSponsorship ?? null,
+    requiresClearance: row.requiresClearance ?? null,
     levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore,
-    titleId: (row.titleId as JobTitleId | null) ?? null,
+    titleId: row.titleId ?? null,
     customTitle: row.customTitle ?? null,
-    jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
     importFromEmail: row.importFromEmail ?? false,
     reviewApplyKit: row.reviewApplyKit ?? true,
@@ -72,12 +91,36 @@ function rowToPreference(
     salaryCurrency: row.salaryCurrency ?? null,
     levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore,
-    titleId: (row.titleId as JobTitleId | null) ?? null,
+    titleId: row.titleId ?? null,
     customTitle: row.customTitle ?? null,
-    jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
     importFromEmail: row.importFromEmail ?? false,
     reviewApplyKit: row.reviewApplyKit ?? true
+  };
+}
+
+function facetDataFromMerged(
+  merged: ReturnType<typeof mergeJobPreference>
+): JobPreferenceFacetData {
+  return {
+    regions: merged.regions,
+    countries: merged.countries,
+    cities: merged.cities,
+    categories: merged.categories,
+    skills: merged.skills,
+    seniority: merged.seniority,
+    experienceYearsMin: merged.experienceYearsMin,
+    experienceYearsMax: merged.experienceYearsMax,
+    employmentTypes: merged.employmentTypes,
+    companyTypes: merged.companyTypes,
+    companySizes: merged.companySizes,
+    domains: merged.domains,
+    collections: merged.collections,
+    openWithinDays: merged.openWithinDays,
+    reality: merged.reality,
+    visaSponsorship: merged.visaSponsorship,
+    requiresClearance: merged.requiresClearance
   };
 }
 
@@ -102,7 +145,7 @@ export const jobPreferenceRouter = {
 
   upsert: protectedProcedure
     .route({
-      description: "Create or update job preferences for mail harvest match filtering",
+      description: "Create or update job preferences for discovery and harvest filtering",
       method: "POST"
     })
     .input(
@@ -136,10 +179,11 @@ export const jobPreferenceRouter = {
         minMatchScore: merged.minMatchScore,
         titleId: merged.titleId,
         customTitle: merged.customTitle,
-        jobsPerRun: refineJobsPerRun(merged.jobsPerRun),
+        jobsPerRun: merged.jobsPerRun,
         dailyBoardScoreCap: refineDailyBoardScoreCap(merged.dailyBoardScoreCap),
         importFromEmail: merged.importFromEmail,
-        reviewApplyKit: merged.reviewApplyKit
+        reviewApplyKit: merged.reviewApplyKit,
+        facets: facetDataFromMerged(merged)
       });
 
       const [, boardScoresUsedToday] = await Promise.all([

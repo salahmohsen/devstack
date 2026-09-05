@@ -1,9 +1,12 @@
 import {
   DEFAULT_MIN_MATCH_SCORE,
   defaultJobPreference,
+  defaultJobPreferenceOutput,
+  refineDailyBoardScoreCap,
   type JobPreference,
-  type JobTitleId,
-  type LevelFloor
+  type JobPreferenceOutput,
+  type LevelFloor,
+  type WorkMode
 } from "@tsu-stack/core";
 import { jobPreferenceRepository } from "@tsu-stack/db";
 
@@ -20,11 +23,50 @@ export async function loadJobPreference(userId: string): Promise<JobPreference> 
     salaryCurrency: row.salaryCurrency,
     levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore ?? DEFAULT_MIN_MATCH_SCORE,
-    titleId: (row.titleId as JobTitleId | null) ?? null,
+    titleId: row.titleId ?? null,
     customTitle: row.customTitle ?? null,
     jobsPerRun: row.jobsPerRun ?? 25,
     dailyBoardScoreCap: row.dailyBoardScoreCap ?? 50,
     importFromEmail: row.importFromEmail ?? false,
     reviewApplyKit: row.reviewApplyKit ?? true
+  };
+}
+
+/**
+ * Facet-shaped preference for the freehire discovery pipeline (land / inbox AI).
+ * `boardScoresUsedToday` is a response-only field on the API surface — loaders
+ * read the budget repository directly, so it stays 0 here.
+ */
+export async function loadJobPreferenceOutput(userId: string): Promise<JobPreferenceOutput> {
+  const row = await jobPreferenceRepository.findByUserId(userId);
+  if (!row) return defaultJobPreferenceOutput();
+  return {
+    workModes: (row.workModes ?? []) as WorkMode[],
+    regions: row.regions as JobPreferenceOutput["regions"],
+    countries: row.countries,
+    cities: row.cities,
+    roleKeywords: row.roleKeywords ?? [],
+    categories: row.categories as JobPreferenceOutput["categories"],
+    skills: row.skills,
+    seniority: row.seniority as JobPreferenceOutput["seniority"],
+    experienceYearsMin: row.experienceYearsMin ?? null,
+    experienceYearsMax: row.experienceYearsMax ?? null,
+    salaryMin: row.salaryMin ?? null,
+    salaryCurrency: row.salaryCurrency ?? null,
+    employmentTypes: row.employmentTypes as JobPreferenceOutput["employmentTypes"],
+    companyTypes: row.companyTypes as JobPreferenceOutput["companyTypes"],
+    companySizes: row.companySizes as JobPreferenceOutput["companySizes"],
+    domains: row.domains as JobPreferenceOutput["domains"],
+    collections: row.collections as JobPreferenceOutput["collections"],
+    reality: row.reality as JobPreferenceOutput["reality"],
+    openWithinDays: row.openWithinDays ?? null,
+    visaSponsorship: row.visaSponsorship ?? null,
+    requiresClearance: row.requiresClearance ?? null,
+    minMatchScore: row.minMatchScore ?? DEFAULT_MIN_MATCH_SCORE,
+    dailyBoardScoreCap: refineDailyBoardScoreCap(row.dailyBoardScoreCap ?? 50),
+    importFromEmail: row.importFromEmail ?? false,
+    reviewApplyKit: row.reviewApplyKit ?? true,
+    updatedAt: row.updatedAt,
+    boardScoresUsedToday: 0
   };
 }

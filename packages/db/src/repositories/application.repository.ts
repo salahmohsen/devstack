@@ -300,6 +300,7 @@ async function insertIfAbsentByUrl(
       hiringUrgency: input.hiringUrgency ?? "unknown",
       resumeId: input.resumeId ?? null,
       postingId: input.postingId ?? null,
+      jobId: input.jobId ?? null,
       inboxExpiresAt: input.inboxExpiresAt ?? null,
       discoveryRunId: input.discoveryRunId ?? null
     })
@@ -596,6 +597,7 @@ export const applicationRepository = {
         hiringUrgency: input.hiringUrgency ?? "unknown",
         resumeId: input.resumeId ?? null,
         postingId: input.postingId ?? null,
+        jobId: input.jobId ?? null,
         inboxExpiresAt: input.inboxExpiresAt ?? null,
         discoveryRunId: input.discoveryRunId ?? null
       })
@@ -670,21 +672,25 @@ export const applicationRepository = {
     return row?.n ?? 0;
   },
 
-  async listUserUrlsAndPostingIds(
+  /** URLs / posting ids / user_job ids already referenced by this user's applications. */
+  async listUserSeenRefs(
     userId: string
-  ): Promise<{ urls: string[]; postingIds: string[] }> {
+  ): Promise<{ urls: string[]; postingIds: string[]; jobIds: string[] }> {
     const rows = await getDb()
       .select({
         url: application.url,
-        postingId: application.postingId
+        postingId: application.postingId,
+        jobId: application.jobId
       })
       .from(application)
       .where(eq(application.userId, userId));
 
     const urls: string[] = [];
     const postingIds: string[] = [];
+    const jobIds: string[] = [];
     const seenUrls = new Set<string>();
     const seenPostingIds = new Set<string>();
+    const seenJobIds = new Set<string>();
     for (const row of rows) {
       if (row.url && !seenUrls.has(row.url)) {
         seenUrls.add(row.url);
@@ -694,8 +700,12 @@ export const applicationRepository = {
         seenPostingIds.add(row.postingId);
         postingIds.push(row.postingId);
       }
+      if (row.jobId && !seenJobIds.has(row.jobId)) {
+        seenJobIds.add(row.jobId);
+        jobIds.push(row.jobId);
+      }
     }
-    return { urls, postingIds };
+    return { urls, postingIds, jobIds };
   },
 
   /**

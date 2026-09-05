@@ -211,7 +211,7 @@ export async function requestJobInboxAi(input: JobInboxAiPayload): Promise<boole
     extra: {
       userId: data.userId,
       runId: data.runId,
-      postingId: data.postingId ?? null,
+      jobId: data.jobId ?? null,
       applicationId: data.applicationId ?? null
     },
     jobId: inboxAiQueueJobId(data),

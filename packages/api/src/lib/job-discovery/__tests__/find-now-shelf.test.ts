@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   countTwoAxisPassedUnseen,
-  defaultJobPreference,
+  defaultJobPreferenceOutput,
   scoreCatalogAgainstPreference
 } from "@tsu-stack/core";
 
 const hybridEgyptPrefs = {
-  ...defaultJobPreference(),
-  titleId: "frontend" as const,
+  ...defaultJobPreferenceOutput(),
   workModes: ["hybrid"] as Array<"hybrid">,
-  locations: ["egypt"]
+  cities: ["egypt"],
+  roleKeywords: ["frontend"]
 };
 
 const remoteOnlyListing = {
@@ -26,10 +26,10 @@ const remoteOnlyListing = {
 };
 
 describe("findNow two-axis shelf", () => {
-  it("does not treat a remote-only cheap-pass catalog as two-axis unseen for hybrid+Egypt", () => {
+  it("does not treat a remote-only cheap-pass shelf row as two-axis unseen for hybrid+Egypt", () => {
     expect(scoreCatalogAgainstPreference(remoteOnlyListing, hybridEgyptPrefs).passed).toBe(true);
-    const twoAxisUnseen = countTwoAxisPassedUnseen([remoteOnlyListing], hybridEgyptPrefs, 25);
+    const twoAxisUnseen = countTwoAxisPassedUnseen([remoteOnlyListing], hybridEgyptPrefs, 100);
     expect(twoAxisUnseen).toBe(0);
-    expect(twoAxisUnseen < 25).toBe(true);
+    expect(twoAxisUnseen < 100).toBe(true);
   });
 });

@@ -2,23 +2,17 @@ import { randomUUID } from "node:crypto";
 
 import {
   computeLandBudget,
-  countTwoAxisPassedUnseen,
   dailyAiAttemptCap,
+  DISCOVERY_FETCH_POOL_SIZE,
   FindJobsNowInputSchema,
   FindJobsNowOutputSchema,
-  hasValidDiscoveryTitle,
-  ingestQueryKey,
-  MAX_OPEN_INBOX,
-  type JobPreference
+  hasValidRoleQuery,
+  MAX_OPEN_INBOX
 } from "@tsu-stack/core";
-import {
-  applicationRepository,
-  jobPostingRepository,
-  userJobAiBudgetRepository
-} from "@tsu-stack/db/repositories";
+import { applicationRepository, userJobAiBudgetRepository } from "@tsu-stack/db/repositories";
 
-import { loadJobPreference } from "#@/lib/application/load-job-preference";
-import { requestJobCatalogIngest, requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
+import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
+import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
@@ -26,26 +20,10 @@ function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
-/** Unseen catalog rows that survive cheap + $0 two-axis, up to `budget`. */
-async function countTwoAxisUnseenShelf(input: {
-  userId: string;
-  prefs: JobPreference;
-  budget: number;
-}): Promise<number> {
-  if (input.budget <= 0) return 0;
-
-  const seen = await applicationRepository.listUserUrlsAndPostingIds(input.userId);
-  const shelf = await jobPostingRepository.listOpenForLand({
-    excludeUrls: seen.urls,
-    excludePostingIds: seen.postingIds
-  });
-  return countTwoAxisPassedUnseen(shelf, input.prefs, input.budget);
-}
-
 export const jobDiscoveryRouter = {
   findNow: protectedProcedure
     .route({
-      description: "Ingest this user's query if the shelf is thin, then land",
+      description: "Land jobs from this user's own freehire fetch (per-user shelf)",
       method: "POST"
     })
     .input(FindJobsNowInputSchema)
@@ -53,17 +31,11 @@ export const jobDiscoveryRouter = {
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
       const [prefs, llm] = await Promise.all([
-        loadJobPreference(userId),
+        loadJobPreferenceOutput(userId),
         resolveRuntimeAiCredentials(userId, "scorer")
       ]);
 
-      if (
-        !hasValidDiscoveryTitle({
-          titleId: prefs.titleId,
-          customTitle: prefs.customTitle,
-          roleKeywords: prefs.roleKeywords
-        })
-      ) {
+      if (!hasValidRoleQuery({ roleKeywords: prefs.roleKeywords, categories: prefs.categories })) {
         return {
           enqueued: false,
           ingestTriggered: false,
@@ -83,7 +55,7 @@ export const jobDiscoveryRouter = {
         };
       }
 
-      // Enqueue only — ingest/land workers run asynchronously. Never await the model.
+      // Enqueue only — fetch/land workers run asynchronously. Never await the model.
       const hasAiKey = Boolean(llm.apiKey?.trim());
       const remainingDailyAiAttempts = hasAiKey
         ? await userJobAiBudgetRepository.remainingAttempts(
@@ -93,7 +65,7 @@ export const jobDiscoveryRouter = {
           )
         : 0;
       const budget = computeLandBudget({
-        jobsPerRun: prefs.jobsPerRun,
+        poolSize: DISCOVERY_FETCH_POOL_SIZE,
         openInbox,
         inboxThisRun: 0,
         remainingDailyAiAttempts,
@@ -109,27 +81,16 @@ export const jobDiscoveryRouter = {
       }
 
       const runId = `find_${userId}_${randomUUID()}`;
-      const twoAxisUnseen = await countTwoAxisUnseenShelf({ userId, prefs, budget });
-      const ingestTriggered = twoAxisUnseen < budget;
-      const queryKey =
-        ingestQueryKey({
-          titleId: prefs.titleId,
-          customTitle: prefs.customTitle,
-          roleKeywords: prefs.roleKeywords
-        }) ?? undefined;
-
-      const enqueued = ingestTriggered
-        ? await requestJobCatalogIngest({ mode: "user_query", userId, runId, queryKey })
-        : await requestJobDiscoveryLand({
-            userId,
-            runId,
-            trigger: "find_now"
-          });
+      const enqueued = await requestJobDiscoveryLand({
+        userId,
+        runId,
+        trigger: "find_now"
+      });
 
       if (!enqueued) {
         return {
           enqueued: false,
-          ingestTriggered,
+          ingestTriggered: false,
           seats,
           reason: "queue_unavailable"
         };
@@ -137,7 +98,7 @@ export const jobDiscoveryRouter = {
 
       return {
         enqueued: true,
-        ingestTriggered,
+        ingestTriggered: false,
         seats,
         reason: "ok"
       };

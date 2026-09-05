@@ -6,13 +6,12 @@ import {
   classifyJobSkills,
   decideTwoAxis,
   dailyAiAttemptCap,
+  DISCOVERY_FETCH_POOL_SIZE,
   EmploymentTypeSchema,
   inferApplicationSource,
   INBOX_TTL_MS,
   inboxKeeperInsertAllowed,
   isThinJobDescription,
-  JOB_ADAPTER_IDS,
-  JOB_ADAPTER_LABELS,
   MAX_OPEN_INBOX,
   mergeExperienceYears,
   resolveJobSkillTags,
@@ -20,7 +19,6 @@ import {
   WorkModeSchema,
   type ApplicationSource,
   type EmploymentType,
-  type JobAdapterId,
   type JobInboxAiPayload,
   type JobSkillTag,
   type WorkMode
@@ -29,25 +27,18 @@ import {
   applicationActivityRepository,
   applicationRepository,
   experienceRepository,
-  jobPostingRepository,
-  preferLongerJobDescription,
   stackRepository,
   userJobAiBudgetRepository,
+  userJobRepository,
   type ApplicationEntity,
-  type JobPostingEntity
+  type UserJobEntity
 } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/generate-agent-take";
-import { loadJobPreference } from "#@/lib/application/load-job-preference";
+import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
 import { scoreApplicationMatch } from "#@/lib/application/score-application-match";
 import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
-import { formatCatalogSalaryRange, hydratePostingIfNeeded } from "#@/lib/job-discovery/hydrate";
-import {
-  leftoverExtractFromListing,
-  leftoverExtractIfNeeded,
-  mergeLeftoverExtract
-} from "#@/lib/job-discovery/leftover-extract";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
@@ -79,6 +70,22 @@ const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
   workable: "Workable",
   smartrecruiters: "SmartRecruiters"
 };
+
+/** Adapter-stated snapshot pay as a lander string, e.g. `$120k–$150k USD`. */
+function formatSnapshotSalaryRange(
+  salaryMin: number | null,
+  salaryMax: number | null,
+  salaryCurrency: string | null
+): string | null {
+  if (salaryMin == null && salaryMax == null) return null;
+  const fmt = (n: number) => (n % 1000 === 0 && Math.abs(n) >= 1000 ? `$${n / 1000}k` : `$${n}`);
+  const range =
+    salaryMin != null && salaryMax != null
+      ? `${fmt(salaryMin)}–${fmt(salaryMax)}`
+      : fmt(salaryMin ?? salaryMax!);
+  const currency = salaryCurrency?.trim();
+  return currency ? `${range} ${currency}` : range;
+}
 
 /**
  * Soft AI failure (heuristic fallback) must not treat minMatchScore as a cheap
@@ -142,11 +149,6 @@ export function decideEvaluateOutcome(input: {
   };
 }
 
-/** Soft score fallback must not refund 2×N after leftover extract already used the tick. */
-export function shouldRefundHeuristicIncrement(leftoverExtractRan: boolean): boolean {
-  return !leftoverExtractRan;
-}
-
 function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
@@ -173,34 +175,30 @@ function asEmploymentType(value: string | null | undefined): EmploymentType {
   return parsed.success ? parsed.data : "unknown";
 }
 
-function isJobAdapterId(value: string): value is JobAdapterId {
-  return (JOB_ADAPTER_IDS as readonly string[]).includes(value);
+function trimmedOrNull(value: string | null | undefined): string | null {
+  const text = value?.trim();
+  return text != null && text.length > 0 ? text : null;
 }
 
-function adapterDisplayName(adapterId: string, sourcePlatform: string | null): string {
+function sourceDisplayName(sourcePlatform: string | null): string {
   const platform = sourcePlatform?.trim().toLowerCase() ?? "";
   if (platform && FREEHIRE_SOURCE_LABELS[platform]) return FREEHIRE_SOURCE_LABELS[platform]!;
-  if (isJobAdapterId(adapterId)) return JOB_ADAPTER_LABELS[adapterId];
   if (sourcePlatform?.trim()) {
     const raw = sourcePlatform.trim();
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   }
-  return adapterId;
+  return "Freehire";
 }
 
-function discoverySourceFields(input: {
-  listingUrl: string;
-  adapterId: string;
-  sourcePlatform: string | null;
-}): { source: ApplicationSource; sourceLabel: string | null } {
+function discoverySourceFields(input: { listingUrl: string; sourcePlatform: string | null }): {
+  source: ApplicationSource;
+  sourceLabel: string | null;
+} {
   const source = inferApplicationSource(input.listingUrl);
   if (source !== "other" && source !== "company_website") {
     return { source, sourceLabel: null };
   }
-  return {
-    source,
-    sourceLabel: adapterDisplayName(input.adapterId, input.sourcePlatform)
-  };
+  return { source, sourceLabel: sourceDisplayName(input.sourcePlatform) };
 }
 
 function persistHiringRegion(
@@ -247,20 +245,20 @@ export function shouldInsertAfterCapRecheck(input: {
   trackingStatus: "inbox" | "dismissed";
   openInbox: number;
   inboxThisRun: number;
-  jobsPerRun: number;
+  poolSize: number;
 }): boolean {
   if (input.trackingStatus !== "inbox") return true;
   return inboxKeeperInsertAllowed({
     openInbox: input.openInbox,
     inboxThisRun: input.inboxThisRun,
-    jobsPerRun: input.jobsPerRun
+    poolSize: input.poolSize
   });
 }
 
 async function canInsertInboxKeeper(input: {
   userId: string;
   runId: string;
-  jobsPerRun: number;
+  poolSize: number;
 }): Promise<boolean> {
   const [openInbox, inboxThisRun] = await Promise.all([
     applicationRepository.countByUserIdAndTrackingStatus(input.userId, "inbox"),
@@ -270,7 +268,7 @@ async function canInsertInboxKeeper(input: {
     trackingStatus: "inbox",
     openInbox,
     inboxThisRun,
-    jobsPerRun: input.jobsPerRun
+    poolSize: input.poolSize
   });
 }
 
@@ -311,7 +309,7 @@ async function dismissExistingAndBackfill(input: {
 async function insertDiscoveryApplication(input: {
   userId: string;
   runId: string;
-  posting: JobPostingEntity;
+  job: UserJobEntity;
   listingUrl: string;
   description: string | null;
   location: string | null;
@@ -325,25 +323,24 @@ async function insertDiscoveryApplication(input: {
   cheapReasons: string[];
   matchReasons: string[];
   trackingStatus: "inbox" | "dismissed";
-  jobsPerRun: number;
+  poolSize: number;
   dismissVia?: "low_match";
   agentTake?: string | null;
 }): Promise<ApplicationEntity | null> {
   const { source, sourceLabel } = discoverySourceFields({
     listingUrl: input.listingUrl,
-    adapterId: input.posting.adapterId,
-    sourcePlatform: input.posting.sourcePlatform
+    sourcePlatform: input.job.source
   });
-  const salaryRange = formatCatalogSalaryRange(
-    input.posting.salaryMin,
-    input.posting.salaryMax,
-    input.posting.salaryCurrency
+  const salaryRange = formatSnapshotSalaryRange(
+    input.job.salaryMin,
+    input.job.salaryMax,
+    input.job.salaryCurrency
   );
 
   const insertInput = {
     userId: input.userId,
-    companyName: input.posting.companyName,
-    title: input.posting.title,
+    companyName: input.job.companyName,
+    title: input.job.title,
     url: input.listingUrl,
     applyUrl: input.listingUrl,
     applyMethod: "external" as const,
@@ -360,11 +357,11 @@ async function insertDiscoveryApplication(input: {
     employmentType: input.employmentType,
     description: input.description,
     agentTake: input.agentTake ?? null,
-    experienceYearsMin: input.posting.experienceYearsMin ?? null,
-    companyLogoUrl: input.posting.companyLogoUrl ?? null,
+    experienceYearsMin: input.job.experienceYearsMin ?? null,
+    companyLogoUrl: input.job.companyLogoUrl ?? null,
     trackingStatus: input.trackingStatus,
     stage: "saved" as const,
-    postingId: input.posting.id,
+    jobId: input.job.id,
     discoveryRunId: input.runId,
     inboxExpiresAt: new Date(Date.now() + INBOX_TTL_MS)
   };
@@ -374,7 +371,7 @@ async function insertDiscoveryApplication(input: {
       ? await applicationRepository.createInboxIfUnderCaps({
           ...insertInput,
           discoveryRunId: input.runId,
-          jobsPerRun: input.jobsPerRun,
+          jobsPerRun: input.poolSize,
           maxOpenInbox: MAX_OPEN_INBOX
         })
       : await applicationRepository.createIfAbsentByUrl(insertInput);
@@ -391,7 +388,7 @@ async function insertDiscoveryApplication(input: {
         cheapScore: input.cheapScore,
         cheapReasons: input.cheapReasons,
         matchReasons: input.matchReasons,
-        adapterId: input.posting.adapterId
+        source: input.job.source
       }
     });
     return row;
@@ -416,18 +413,6 @@ async function insertDiscoveryApplication(input: {
   return row;
 }
 
-/** If the inbox JD is a teaser, hydrate the posting and copy a longer description onto the app. */
-async function hydrateInboxApplicationIfThin(owned: ApplicationEntity): Promise<ApplicationEntity> {
-  if (!isThinJobDescription(owned.description) || !owned.postingId) return owned;
-  const hydrate = await hydratePostingIfNeeded(owned.postingId);
-  const nextDescription = preferLongerJobDescription(hydrate.description, owned.description);
-  if (!nextDescription || nextDescription === owned.description) return owned;
-  const updated = await applicationRepository.update(owned.id, owned.userId, {
-    description: nextDescription
-  });
-  return updated ?? { ...owned, description: nextDescription };
-}
-
 /** Harvest / score-error path: application already exists. */
 async function runInboxAiForApplication(input: {
   userId: string;
@@ -438,12 +423,12 @@ async function runInboxAiForApplication(input: {
   if (!found || found.trackingStatus !== "inbox") {
     return { outcome: "skipped" };
   }
-  const owned = await hydrateInboxApplicationIfThin(found);
+  const owned = found;
 
-  const [prefs, llm, posting] = await Promise.all([
-    loadJobPreference(input.userId),
+  const [prefs, llm, job] = await Promise.all([
+    loadJobPreferenceOutput(input.userId),
     resolveRuntimeAiCredentials(input.userId, "scorer"),
-    owned.postingId ? jobPostingRepository.findById(owned.postingId) : Promise.resolve(null)
+    owned.jobId ? userJobRepository.findById(owned.jobId) : Promise.resolve(null)
   ]);
 
   // No key: keep the cheap-landed stub. Still-thin JD: no score budget, no take.
@@ -473,7 +458,7 @@ async function runInboxAiForApplication(input: {
         salaryRange: owned.salaryRange,
         description: owned.description,
         applyMethod: owned.applyMethod,
-        workMode: asWorkMode(owned.workMode) ?? asWorkMode(posting?.workMode)
+        workMode: asWorkMode(owned.workMode) ?? asWorkMode(job?.workMode)
       }
     });
   } catch (error) {
@@ -515,12 +500,12 @@ async function runInboxAiForApplication(input: {
   const cap = await displayScoreForUser({
     userId: input.userId,
     aiScore: match.score,
-    listingMinYears: owned.experienceYearsMin ?? posting?.experienceYearsMin
+    listingMinYears: owned.experienceYearsMin ?? job?.experienceYearsMin
   });
   await applicationRepository.update(owned.id, input.userId, {
     matchScore: cap.displayScore,
-    experienceYearsMin: owned.experienceYearsMin ?? posting?.experienceYearsMin ?? null,
-    companyLogoUrl: owned.companyLogoUrl ?? posting?.companyLogoUrl ?? null
+    experienceYearsMin: owned.experienceYearsMin ?? job?.experienceYearsMin ?? null,
+    companyLogoUrl: owned.companyLogoUrl ?? job?.companyLogoUrl ?? null
   });
 
   try {
@@ -535,44 +520,34 @@ async function runInboxAiForApplication(input: {
   return { outcome: decision === "heuristic" ? "heuristic" : "passed" };
 }
 
-/** Discovery evaluate-then-insert: leftover extract → score → insert inbox or dismissed. */
-async function runInboxAiForPosting(input: {
+/** Discovery evaluate-then-insert: score the user_job snapshot → insert inbox or dismissed. */
+async function runInboxAiForJob(input: {
   userId: string;
-  postingId: string;
+  jobId: string;
   runId: string;
 }): Promise<{ outcome: InboxAiOutcome }> {
-  const [prefs, llm, found] = await Promise.all([
-    loadJobPreference(input.userId),
+  const [prefs, llm, job] = await Promise.all([
+    loadJobPreferenceOutput(input.userId),
     resolveRuntimeAiCredentials(input.userId, "scorer"),
-    jobPostingRepository.findById(input.postingId)
+    userJobRepository.findById(input.jobId)
   ]);
-  if (!found || found.closedAt != null) {
+  if (!job) {
     return { outcome: "skipped" };
   }
 
-  let posting = found;
-  if (isThinJobDescription(posting.description)) {
-    const hydrate = await hydratePostingIfNeeded(posting.id);
-    if (hydrate.listingClosed) return { outcome: "skipped" };
-    const nextDescription = preferLongerJobDescription(hydrate.description, posting.description);
-    if (nextDescription && nextDescription !== posting.description) {
-      posting = { ...posting, description: nextDescription };
-    }
-  }
-
-  const listingUrl = canonicalizeJobUrl(posting.listingUrl);
+  const listingUrl = canonicalizeJobUrl(job.listingUrl);
   if (!listingUrl) return { outcome: "skipped" };
 
   const existing = await applicationRepository.findByUserIdAndUrl(input.userId, listingUrl);
   if (existing) return { outcome: "skipped" };
 
   const leftover = applyZeroDollarCandidate({
-    workMode: asWorkMode(posting.workMode),
-    hiringRegion: posting.hiringRegion,
-    location: posting.location,
-    employmentType: posting.employmentType,
-    description: posting.description,
-    skills: posting.skills ?? []
+    workMode: asWorkMode(job.workMode),
+    hiringRegion: null,
+    location: trimmedOrNull(job.location),
+    employmentType: job.employmentType,
+    description: job.description,
+    skills: job.skills ?? []
   });
   const workMode = leftover.workMode;
   const twoAxis = decideTwoAxis({
@@ -581,8 +556,8 @@ async function runInboxAiForPosting(input: {
     location: leftover.location,
     prefs: {
       workModes: prefs.workModes,
-      locations: prefs.locations,
-      remoteRegions: prefs.remoteRegions
+      locations: prefs.cities ?? [],
+      remoteRegions: prefs.regions ?? []
     }
   });
   if (twoAxis.action === "drop" || workMode == null) {
@@ -590,73 +565,30 @@ async function runInboxAiForPosting(input: {
   }
 
   const hasAiKey = Boolean(llm.apiKey?.trim());
-  if (hasAiKey && isThinJobDescription(leftover.description)) {
+  if (hasAiKey && isThinJobDescription(job.description)) {
     return { outcome: "skipped" };
   }
 
   const cheap = scoreCatalogAgainstPreference(
     {
-      title: posting.title,
-      companyName: posting.companyName,
-      location: leftover.location,
+      title: job.title,
+      companyName: job.companyName,
+      location: trimmedOrNull(job.location),
       workMode,
-      skills: leftover.skills,
-      salaryMin: posting.salaryMin,
-      salaryCurrency: posting.salaryCurrency
+      skills: job.skills ?? [],
+      salaryMin: job.salaryMin,
+      salaryCurrency: job.salaryCurrency
     },
     prefs
   );
-  const hiringRegion = persistHiringRegion(workMode, leftover.hiringRegion);
-  const description = leftover.description ?? posting.description;
-  const salaryRange = formatCatalogSalaryRange(
-    posting.salaryMin,
-    posting.salaryMax,
-    posting.salaryCurrency
-  );
+  const hiringRegion = persistHiringRegion(workMode, null);
+  const description = job.description;
+  const salaryRange = formatSnapshotSalaryRange(job.salaryMin, job.salaryMax, job.salaryCurrency);
 
   const willCallAgent = hasAiKey && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
-  let employmentType = asEmploymentType(leftover.employmentType);
-  let requiredNames = leftover.skills;
-  let preferredNames: string[] = [];
-  let leftoverExtractRan = false;
-
-  if (willCallAgent) {
-    const reserved = await userJobAiBudgetRepository.tryIncrement(
-      input.userId,
-      utcDay(),
-      dailyAiAttemptCap(prefs.dailyBoardScoreCap)
-    );
-    if (!reserved) return { outcome: "skipped" };
-
-    const leftoverByo = await leftoverExtractIfNeeded({
-      willCallAgent: true,
-      skills: requiredNames,
-      employmentType,
-      extract: () =>
-        leftoverExtractFromListing({
-          userId: input.userId,
-          llm,
-          job: {
-            listingUrl,
-            title: posting.title,
-            companyName: posting.companyName,
-            location: leftover.location,
-            description,
-            employmentType
-          }
-        })
-    });
-    leftoverExtractRan = leftoverByo.invoked;
-    if (leftoverByo.invoked) {
-      const merged = mergeLeftoverExtract(
-        { employmentType, required: requiredNames, preferred: preferredNames },
-        leftoverByo.result
-      );
-      employmentType = merged.employmentType;
-      requiredNames = merged.required;
-      preferredNames = merged.preferred;
-    }
-  }
+  const employmentType = asEmploymentType(leftover.employmentType);
+  const requiredNames = leftover.skills;
+  const preferredNames: string[] = [];
 
   const { requiredSkills, preferredSkills, held } = await resolveSkillsForUser(
     input.userId,
@@ -677,10 +609,10 @@ async function runInboxAiForPosting(input: {
   const baseInsert = {
     userId: input.userId,
     runId: input.runId,
-    posting,
+    job,
     listingUrl,
     description,
-    location: leftover.location,
+    location: trimmedOrNull(job.location),
     workMode,
     hiringRegion,
     employmentType,
@@ -695,7 +627,7 @@ async function runInboxAiForPosting(input: {
       !(await canInsertInboxKeeper({
         userId: input.userId,
         runId: input.runId,
-        jobsPerRun: prefs.jobsPerRun
+        poolSize: DISCOVERY_FETCH_POOL_SIZE
       }))
     ) {
       return { outcome: "skipped" };
@@ -705,10 +637,17 @@ async function runInboxAiForPosting(input: {
       matchScore: cheap.score,
       matchReasons: cheap.reasons,
       trackingStatus: "inbox",
-      jobsPerRun: prefs.jobsPerRun
+      poolSize: DISCOVERY_FETCH_POOL_SIZE
     });
     return { outcome: row ? "heuristic" : "skipped" };
   }
+
+  const reserved = await userJobAiBudgetRepository.tryIncrement(
+    input.userId,
+    utcDay(),
+    dailyAiAttemptCap(prefs.dailyBoardScoreCap)
+  );
+  if (!reserved) return { outcome: "skipped" };
 
   let match;
   try {
@@ -717,9 +656,9 @@ async function runInboxAiForPosting(input: {
       llm,
       job: {
         listingUrl,
-        title: posting.title,
-        companyName: posting.companyName,
-        location: leftover.location,
+        title: job.title,
+        companyName: job.companyName,
+        location: trimmedOrNull(job.location),
         salaryRange,
         description,
         applyMethod: "external",
@@ -742,10 +681,10 @@ async function runInboxAiForPosting(input: {
   const cap = await displayScoreForUser({
     userId: input.userId,
     aiScore: match.score,
-    listingMinYears: posting.experienceYearsMin
+    listingMinYears: job.experienceYearsMin
   });
   let takeText: string | null = null;
-  if (keep === "heuristic" && shouldRefundHeuristicIncrement(leftoverExtractRan)) {
+  if (keep === "heuristic") {
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
   }
   if (keep === "passed" || keep === "heuristic") {
@@ -753,14 +692,14 @@ async function runInboxAiForPosting(input: {
       userId: input.userId,
       llm,
       job: {
-        title: posting.title,
-        companyName: posting.companyName,
-        location: leftover.location,
+        title: job.title,
+        companyName: job.companyName,
+        location: trimmedOrNull(job.location),
         employmentType,
         salaryRange,
         matchScore: cap.displayScore,
         description,
-        experienceYearsMin: posting.experienceYearsMin,
+        experienceYearsMin: job.experienceYearsMin,
         seekerYears: cap.seekerYears,
         yearsCapped: cap.capped,
         skillsMatch
@@ -786,7 +725,7 @@ async function runInboxAiForPosting(input: {
     !(await canInsertInboxKeeper({
       userId: input.userId,
       runId: input.runId,
-      jobsPerRun: prefs.jobsPerRun
+      poolSize: DISCOVERY_FETCH_POOL_SIZE
     }))
   ) {
     return { outcome: "skipped" };
@@ -800,7 +739,7 @@ async function runInboxAiForPosting(input: {
         : cheap.score,
     matchReasons: match.reasons,
     trackingStatus: plan.insert.trackingStatus,
-    jobsPerRun: prefs.jobsPerRun,
+    poolSize: DISCOVERY_FETCH_POOL_SIZE,
     dismissVia: plan.insert.trackingStatus === "dismissed" ? "low_match" : undefined,
     agentTake: plan.insert.agentTake
   });
@@ -815,10 +754,10 @@ export async function runInboxAi(input: JobInboxAiPayload): Promise<{ outcome: I
       runId: input.runId
     });
   }
-  if (input.postingId) {
-    return runInboxAiForPosting({
+  if (input.jobId) {
+    return runInboxAiForJob({
       userId: input.userId,
-      postingId: input.postingId,
+      jobId: input.jobId,
       runId: input.runId
     });
   }

@@ -48,6 +48,7 @@ export {
 export {
   jobPreferenceRepository,
   type JobPreferenceEntity,
+  type JobPreferenceFacetData,
   type UpsertJobPreferenceData
 } from "./job-preference.repository.ts";
 export {

@@ -14,7 +14,8 @@ const DESCRIPTION_SANITIZE_OPTIONS = {
 };
 
 function textOrNull(value: string | null | undefined): string | null {
-  return value?.trim() ?? null;
+  const text = value?.trim();
+  return text != null && text.length > 0 ? text : null;
 }
 
 function intOrNull(value: number | null | undefined): number | null {

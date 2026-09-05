@@ -150,7 +150,10 @@ export const ApplicationOutputSchema = z.object({
   requiredSkills: z.array(JobSkillTagSchema).default([]),
   preferredSkills: z.array(JobSkillTagSchema).default([])
 }) satisfies z.ZodType<
-  Omit<ApplicationSchemaSelect, "userId" | "postingId" | "inboxExpiresAt" | "discoveryRunId"> & {
+  Omit<
+    ApplicationSchemaSelect,
+    "userId" | "postingId" | "jobId" | "inboxExpiresAt" | "discoveryRunId"
+  > & {
     listingClosed: boolean;
   }
 >;

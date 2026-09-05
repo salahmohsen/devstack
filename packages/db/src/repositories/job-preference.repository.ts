@@ -9,6 +9,27 @@ import {
 
 export type JobPreferenceEntity = InferSelectModel<typeof jobPreference>;
 
+/** Freehire facet columns (nullable jsonb — null = not configured). */
+export type JobPreferenceFacetData = {
+  regions: string[] | null;
+  countries: string[] | null;
+  cities: string[] | null;
+  categories: string[] | null;
+  skills: string[] | null;
+  seniority: string[] | null;
+  experienceYearsMin: number | null;
+  experienceYearsMax: number | null;
+  employmentTypes: string[] | null;
+  companyTypes: string[] | null;
+  companySizes: string[] | null;
+  domains: string[] | null;
+  collections: string[] | null;
+  openWithinDays: number | null;
+  reality: string[] | null;
+  visaSponsorship: boolean | null;
+  requiresClearance: boolean | null;
+};
+
 export type UpsertJobPreferenceData = {
   id: string;
   userId: string;
@@ -27,6 +48,8 @@ export type UpsertJobPreferenceData = {
   dailyBoardScoreCap: number;
   importFromEmail: boolean;
   reviewApplyKit: boolean;
+  /** Omitted → facet columns untouched (legacy callers keep their behavior). */
+  facets?: JobPreferenceFacetData;
 };
 
 export const jobPreferenceRepository = {
@@ -62,6 +85,7 @@ export const jobPreferenceRepository = {
           dailyBoardScoreCap: input.dailyBoardScoreCap,
           importFromEmail: input.importFromEmail,
           reviewApplyKit: input.reviewApplyKit,
+          ...input.facets,
           updatedAt: new Date()
         })
         .where(eq(jobPreference.userId, input.userId))
@@ -89,7 +113,8 @@ export const jobPreferenceRepository = {
         jobsPerRun: input.jobsPerRun,
         dailyBoardScoreCap: input.dailyBoardScoreCap,
         importFromEmail: input.importFromEmail,
-        reviewApplyKit: input.reviewApplyKit
+        reviewApplyKit: input.reviewApplyKit,
+        ...input.facets
       })
       .returning();
     if (!row) throw new Error("Failed to insert job_preference");
