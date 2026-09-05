@@ -111,13 +111,11 @@ describe("mergeJobPreference", () => {
     expect(d.reviewApplyKit).toBe(true);
   });
 
-  it("merges jobsPerRun and importFromEmail when provided", () => {
+  it("merges importFromEmail when provided", () => {
     const merged = mergeJobPreference(defaultJobPreference(), {
-      jobsPerRun: 17,
       importFromEmail: true,
       salaryCurrency: undefined
     });
-    expect(merged.jobsPerRun).toBe(15); // snapped
     expect(merged.importFromEmail).toBe(true);
   });
 

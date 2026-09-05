@@ -1,8 +1,7 @@
 import {
   DEFAULT_DAILY_BOARD_SCORE_CAP,
   DEFAULT_JOBS_PER_RUN,
-  refineDailyBoardScoreCap,
-  refineJobsPerRun
+  refineDailyBoardScoreCap
 } from "#@/job-discovery/constants";
 import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
 
@@ -69,7 +68,31 @@ export function isOpenJobPreference(prefs: {
 
 export function defaultJobPreferenceOutput(): JobPreferenceOutput {
   return {
-    ...defaultJobPreference(),
+    workModes: [],
+    regions: null,
+    countries: null,
+    cities: null,
+    roleKeywords: [],
+    categories: null,
+    skills: null,
+    seniority: null,
+    experienceYearsMin: null,
+    experienceYearsMax: null,
+    salaryMin: null,
+    salaryCurrency: null,
+    employmentTypes: null,
+    companyTypes: null,
+    companySizes: null,
+    domains: null,
+    collections: null,
+    reality: null,
+    openWithinDays: null,
+    visaSponsorship: null,
+    requiresClearance: null,
+    minMatchScore: DEFAULT_MIN_MATCH_SCORE,
+    dailyBoardScoreCap: DEFAULT_DAILY_BOARD_SCORE_CAP,
+    importFromEmail: DEFAULT_IMPORT_FROM_EMAIL,
+    reviewApplyKit: DEFAULT_REVIEW_APPLY_KIT,
     updatedAt: null,
     boardScoresUsedToday: 0
   };
@@ -86,20 +109,13 @@ export function mergeJobPreference(
 ): JobPreference {
   if (!patch) return current;
   return {
+    ...current,
     workModes: patch.workModes ?? current.workModes,
-    locations: patch.locations ?? current.locations,
-    remoteRegions: patch.remoteRegions ?? current.remoteRegions,
     roleKeywords: patch.roleKeywords ?? current.roleKeywords,
-    excludeKeywords: patch.excludeKeywords ?? current.excludeKeywords,
     salaryMin: patch.salaryMin !== undefined ? patch.salaryMin : current.salaryMin,
     salaryCurrency:
       patch.salaryCurrency !== undefined ? patch.salaryCurrency : current.salaryCurrency,
-    levelFloor: patch.levelFloor !== undefined ? patch.levelFloor : current.levelFloor,
     minMatchScore: patch.minMatchScore ?? current.minMatchScore,
-    titleId: patch.titleId !== undefined ? patch.titleId : current.titleId,
-    customTitle: patch.customTitle !== undefined ? patch.customTitle : current.customTitle,
-    jobsPerRun:
-      patch.jobsPerRun !== undefined ? refineJobsPerRun(patch.jobsPerRun) : current.jobsPerRun,
     dailyBoardScoreCap:
       patch.dailyBoardScoreCap !== undefined
         ? refineDailyBoardScoreCap(patch.dailyBoardScoreCap)

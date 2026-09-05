@@ -5,11 +5,9 @@ import { JobTitleIdSchema } from "#@/job-discovery/constants";
 import {
   JobPreferenceFieldsSchema,
   LevelFloorSchema,
-  UpsertJobPreferenceInputSchema,
   WorkModeSchema,
   type JobPreference,
-  type LevelFloor,
-  type UpsertJobPreferenceInput
+  type LevelFloor
 } from "./types";
 
 const preferenceString = z.string().trim().min(1).max(120);
@@ -163,23 +161,29 @@ export function applySoftJobPreferencePatch(
   };
 }
 
+/** Hard-stop next values; exclude/levelFloor no longer ride the freehire upsert schema. */
+export type HardPreferencePatch = {
+  excludeKeywords?: string[];
+  salaryMin?: number | null;
+  salaryCurrency?: string | null;
+  levelFloor?: LevelFloor | null;
+};
+
 export function applyHardJobPreferencePatch(
   current: Pick<JobPreference, "excludeKeywords" | "salaryMin" | "salaryCurrency" | "levelFloor">,
   patch: ProposeHardPreferenceChangeInput
-): UpsertJobPreferenceInput {
-  const next: {
-    excludeKeywords?: string[];
-    salaryMin?: number | null;
-    salaryCurrency?: string | null;
-    levelFloor?: LevelFloor | null;
-  } = {};
+): HardPreferencePatch {
+  const next: HardPreferencePatch = {};
   if (patch.excludeKeywords) {
     next.excludeKeywords = applyPreferenceListPatch(current.excludeKeywords, patch.excludeKeywords);
   }
   if (patch.salaryMin !== undefined) next.salaryMin = patch.salaryMin;
-  if (patch.salaryCurrency !== undefined) next.salaryCurrency = patch.salaryCurrency;
+  if (patch.salaryCurrency !== undefined) {
+    next.salaryCurrency =
+      patch.salaryCurrency == null ? null : patch.salaryCurrency.trim().toUpperCase();
+  }
   if (patch.levelFloor !== undefined) next.levelFloor = patch.levelFloor;
-  return UpsertJobPreferenceInputSchema.parse(next);
+  return next;
 }
 
 function formatExcludeList(values: readonly string[]): string {
@@ -198,7 +202,7 @@ function formatSalaryFloor(min: number | null, currency: string | null): string 
 export type HardPreferenceDeltaView = {
   summary: string;
   chips: string[];
-  upsert: UpsertJobPreferenceInput;
+  upsert: HardPreferencePatch;
 };
 
 export function describeHardPreferenceDelta(
