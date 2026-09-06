@@ -18,6 +18,12 @@ const normalizedUrlSchema = z.preprocess((value) => {
   return normalizeUrlString(value);
 }, z.url());
 
+/** Optional URL that treats empty/whitespace-only values as unset (compose `${VAR:-}` defaults). */
+const optionalNormalizedUrlSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+}, normalizedUrlSchema.optional());
+
 const IS_BUILD = process.env.IS_BUILD === "true";
 
 // Required at runtime, but optional at build time so the build can run
@@ -109,6 +115,6 @@ export const ENV_SERVER = createEnv({
     // Redis
     REDIS_URL: z.string().optional(),
     /** Freehire API base override (fail-soft drills / staging). Defaults to https://freehire.me/api/v1. */
-    FREEHIRE_API_BASE_URL: normalizedUrlSchema.optional()
+    FREEHIRE_API_BASE_URL: optionalNormalizedUrlSchema
   }
 });
