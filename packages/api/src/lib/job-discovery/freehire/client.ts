@@ -197,7 +197,10 @@ export async function searchFreehireCities(query: string): Promise<FreehireGeoCi
     }
     const options = GeoCitiesEnvelopeSchema.parse(JSON.parse(bodyText)).data;
 
-    if (geoCitiesCache.size >= GEO_CACHE_MAX_ENTRIES) geoCitiesCache.clear();
+    const oldestKey = geoCitiesCache.keys().next().value;
+    if (geoCitiesCache.size >= GEO_CACHE_MAX_ENTRIES && oldestKey !== undefined) {
+      geoCitiesCache.delete(oldestKey);
+    }
     geoCitiesCache.set(cacheKey, { at: Date.now(), options });
 
     log.set({

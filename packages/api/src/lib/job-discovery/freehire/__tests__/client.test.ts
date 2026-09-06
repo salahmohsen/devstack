@@ -233,9 +233,9 @@ describe("searchFreehireCities", () => {
   });
 
   it("caches a query for repeated keystrokes", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(citiesResponse({ data: [{ value: "Berlin", country: "de" }] }));
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(citiesResponse({ data: [{ value: "Berlin", country: "de" }] }))
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await searchFreehireCities("ber");
@@ -263,5 +263,39 @@ describe("searchFreehireCities", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     await expect(searchFreehireCities("ber")).resolves.toEqual([]);
     expect(loggerSpies.error).toHaveBeenCalled();
+  });
+
+  it("refetches after the 1h cache TTL expires", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(citiesResponse({ data: [{ value: "Berlin", country: "de" }] }))
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const startedAt = Date.now();
+    await searchFreehireCities("ber");
+    vi.setSystemTime(startedAt + 60 * 60 * 1000 + 1);
+    await searchFreehireCities("ber");
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it("evicts the oldest entry when the cache reaches its cap", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(citiesResponse({ data: [] })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await searchFreehireCities("oldest");
+    for (let i = 1; i < 500; i++) {
+      await searchFreehireCities(`query-${i}`);
+    }
+    await searchFreehireCities("newest");
+    expect(fetchMock).toHaveBeenCalledTimes(501);
+
+    await searchFreehireCities("oldest");
+    expect(fetchMock).toHaveBeenCalledTimes(502);
+    await searchFreehireCities("newest");
+    await searchFreehireCities("query-499");
+    expect(fetchMock).toHaveBeenCalledTimes(502);
   });
 });
