@@ -10,9 +10,7 @@ export * from "./github-config.schema.ts";
 export * from "./invite.schema.ts";
 export * from "./invite-redemption.schema.ts";
 export * from "./platform-setting.schema.ts";
-export * from "./job-company.schema.ts";
 export * from "./job-preference.schema.ts";
-export * from "./job-posting.schema.ts";
 export * from "./mail-crm-apply.schema.ts";
 
 export * from "./mail-message.schema.ts";
@@ -29,5 +27,6 @@ export * from "./user-custom-domain.schema.ts";
 export * from "./user-gmail-sync.schema.ts";
 export * from "./user-hub-state.schema.ts";
 export * from "./user-job-ai-budget.schema.ts";
+export * from "./user-job.schema.ts";
 export * from "./user-mail-settings.schema.ts";
 export * from "./user-notification-settings.schema.ts";

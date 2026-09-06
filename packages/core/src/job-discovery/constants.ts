@@ -1,168 +1,17 @@
-import { z } from "zod";
+export const DISCOVERY_FETCH_POOL_SIZE = 100;
+/** Per-user `user_job` rows older than this are pruned. */
+export const USER_JOB_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** Fetch-pool activity window: users with runs inside it stay on the tick rotation. */
+export const DISCOVERY_ACTIVITY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
-export const JOB_TITLE_PACK_IDS = [
-  "frontend",
-  "backend",
-  "fullstack",
-  "mobile",
-  "data_ml",
-  "devops",
-  "product",
-  "design",
-  "qa",
-  "security",
-  "eng_manager",
-  "devrel",
-  "data_analyst",
-  "solutions"
-] as const;
-
-export type JobTitlePackId = (typeof JOB_TITLE_PACK_IDS)[number];
-export type JobTitleId = JobTitlePackId | "custom";
-
-export const JobTitlePackIdSchema = z.enum(JOB_TITLE_PACK_IDS);
-export const JobTitleIdSchema = z.enum([...JOB_TITLE_PACK_IDS, "custom"]);
-
-export type TitlePack = {
-  id: JobTitlePackId;
-  label: string;
-  keywords: string[];
-};
-
-/** Seed keywords copied verbatim from the job-discovery adapters design title-packs table. */
-export const TITLE_PACKS: Record<JobTitlePackId, TitlePack> = {
-  frontend: {
-    id: "frontend",
-    label: "Frontend Engineer",
-    keywords: ["frontend", "front-end", "react", "typescript", "next.js", "nextjs", "ui engineer"]
-  },
-  backend: {
-    id: "backend",
-    label: "Backend Engineer",
-    keywords: ["backend", "back-end", "api", "node", "java", "golang", "python", "postgres"]
-  },
-  fullstack: {
-    id: "fullstack",
-    label: "Full-stack Engineer",
-    keywords: ["fullstack", "full-stack", "frontend", "backend", "react", "node", "typescript"]
-  },
-  mobile: {
-    id: "mobile",
-    label: "Mobile Engineer",
-    keywords: ["mobile", "ios", "android", "react native", "flutter", "swift", "kotlin"]
-  },
-  data_ml: {
-    id: "data_ml",
-    label: "Data / ML",
-    keywords: [
-      "data scientist",
-      "machine learning",
-      "ml engineer",
-      "data engineer",
-      "python",
-      "pytorch"
-    ]
-  },
-  devops: {
-    id: "devops",
-    label: "DevOps / Platform",
-    keywords: ["devops", "platform", "sre", "kubernetes", "infra", "terraform", "aws"]
-  },
-  product: {
-    id: "product",
-    label: "Product Manager",
-    keywords: ["product manager", "pm", "product owner"]
-  },
-  design: {
-    id: "design",
-    label: "Product Designer",
-    keywords: ["product designer", "ux", "ui designer", "figma"]
-  },
-  qa: {
-    id: "qa",
-    label: "QA / SET",
-    keywords: ["qa", "quality", "sdet", "test engineer", "automation"]
-  },
-  security: {
-    id: "security",
-    label: "Security Engineer",
-    keywords: ["security", "appsec", "pentester", "infosec"]
-  },
-  eng_manager: {
-    id: "eng_manager",
-    label: "EM / Manager",
-    keywords: ["engineering manager", "em", "head of engineering"]
-  },
-  devrel: {
-    id: "devrel",
-    label: "DevRel",
-    keywords: ["developer advocate", "devrel", "dx engineer"]
-  },
-  data_analyst: {
-    id: "data_analyst",
-    label: "Data Analyst",
-    keywords: ["data analyst", "analytics", "bi", "sql"]
-  },
-  solutions: {
-    id: "solutions",
-    label: "Solutions Engineer",
-    keywords: ["solutions engineer", "sales engineer", "se"]
-  }
-};
-
-export const JOB_ADAPTER_IDS = [
-  "freehire",
-  "himalayas",
-  "arbeitnow",
-  "remotive",
-  "remoteok"
-] as const;
-
-export type JobAdapterId = (typeof JOB_ADAPTER_IDS)[number];
-
-/** UI / `sourceLabel` names when discovery platform is `other` or `company_website`. */
-export const JOB_ADAPTER_LABELS: Record<JobAdapterId, string> = {
-  freehire: "freehire",
-  himalayas: "Himalayas",
-  arbeitnow: "Arbeitnow",
-  remotive: "Remotive",
-  remoteok: "RemoteOK"
-};
-
-/** freehire `source=` allowlist — drop aggregator copies we fetch ourselves. */
-export const FREEHIRE_ATS_SOURCES = [
-  "greenhouse",
-  "ashby",
-  "lever",
-  "workable",
-  "smartrecruiters"
-] as const;
-
-export type FreehireAtsSource = (typeof FREEHIRE_ATS_SOURCES)[number];
-
-export const DEFAULT_JOBS_PER_RUN = 25;
-export const MIN_JOBS_PER_RUN = 15;
-export const MAX_JOBS_PER_RUN = 40;
-export const JOBS_PER_RUN_STEP = 5;
 export const DEFAULT_DAILY_BOARD_SCORE_CAP = 50;
 export const MIN_DAILY_BOARD_SCORE_CAP = 20;
 export const MAX_DAILY_BOARD_SCORE_CAP = 100;
 export const DAILY_BOARD_SCORE_CAP_STEP = 10;
 export const MAX_OPEN_INBOX = 50;
 export const INBOX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-export const LIVENESS_AFTER_MS = Math.floor(INBOX_TTL_MS / 2); // ~3.5d
-export const LIVENESS_TICK_INTERVAL_MS = 12 * 60 * 60 * 1000;
-export const LIVENESS_TICK_BATCH = 100;
-/** Skip due rows touched more recently than this so a 100-row tick rotates. */
-export const LIVENESS_REPROBE_AFTER_MS = Math.floor(LIVENESS_TICK_INTERVAL_MS / 2);
-
-/** Snap to 15/20/25/30/35/40 (nearest step, clamped). */
-export function refineJobsPerRun(n: number): number {
-  const clamped = Math.min(MAX_JOBS_PER_RUN, Math.max(MIN_JOBS_PER_RUN, n));
-  const stepsFromMin = Math.round((clamped - MIN_JOBS_PER_RUN) / JOBS_PER_RUN_STEP);
-  const snapped = MIN_JOBS_PER_RUN + stepsFromMin * JOBS_PER_RUN_STEP;
-  return Math.min(MAX_JOBS_PER_RUN, Math.max(MIN_JOBS_PER_RUN, snapped));
-}
+export const INBOX_TICK_INTERVAL_MS = 12 * 60 * 60 * 1000;
+export const INBOX_TICK_BATCH = 100;
 
 /** Snap to 20/30/…/100 (nearest step, clamped). */
 export function refineDailyBoardScoreCap(n: number): number {
@@ -174,7 +23,7 @@ export function refineDailyBoardScoreCap(n: number): number {
   return Math.min(MAX_DAILY_BOARD_SCORE_CAP, Math.max(MIN_DAILY_BOARD_SCORE_CAP, snapped));
 }
 
-/** Daily board-score attempts. Value comes from Jobs settings, not 2× jobsPerRun. */
+/** Daily board-score attempts. Value comes from Jobs settings, not the fetch pool size. */
 export function dailyAiAttemptCap(dailyBoardScoreCap: number): number {
   return refineDailyBoardScoreCap(dailyBoardScoreCap);
 }

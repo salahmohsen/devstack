@@ -16,6 +16,7 @@
     "db": "dotenvx run -f ../env/.env -- drizzle-kit",
     "auth:generate": "dotenvx run -f ../env/.env -- npx auth@1.7.0-rc.1 generate --config ../auth/src/index.ts --output ./src/schema/auth.schema.ts --yes",
     "db:generate": "pnpm run db generate",
+    "migrate-postings": "dotenvx run -f ../env/.env -- tsx scripts/migrate-postings-to-user-jobs.ts",
     "test:unit": "vp test run"
   },
   "dependencies": {

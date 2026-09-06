@@ -5,6 +5,11 @@ import { hiringRegionsOverlap, resolveRemoteListingSlug } from "./hiring-region"
 
 export type TwoAxisWorkMode = WorkMode | null;
 
+/**
+ * Callers map the facet-shaped preference onto this shape:
+ * `workModes` from `workModes`, `remoteRegions` from `regions`,
+ * `locations` from `cities`.
+ */
 export type TwoAxisPrefs = {
   workModes: Array<"remote" | "hybrid" | "onsite">;
   locations: string[];

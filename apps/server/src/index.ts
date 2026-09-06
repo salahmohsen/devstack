@@ -3,7 +3,6 @@ import { type Server as HTTPServer } from "node:http";
 import { serve } from "@hono/node-server";
 
 import {
-  registerJobCatalogIngestEnqueue,
   registerJobDiscoveryLandEnqueue,
   registerJobInboxAiEnqueue
 } from "@tsu-stack/api/lib/job-discovery/enqueue";
@@ -14,16 +13,13 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { app } from "#@/app";
 import { createGithubGateway, broadcastSignals } from "#@/github-gateway";
-import {
-  enqueueJobCatalogIngest,
-  startJobCatalogIngestQueue
-} from "#@/queues/job-catalog-ingest-queue";
+import { startJobDiscoveryFetchQueue } from "#@/queues/job-discovery-fetch-queue";
 import {
   enqueueJobDiscoveryLand,
   startJobDiscoveryLandQueue
 } from "#@/queues/job-discovery-land-queue";
 import { enqueueJobInboxAi, startJobInboxAiQueue } from "#@/queues/job-inbox-ai-queue";
-import { startJobInboxLivenessQueue } from "#@/queues/job-inbox-liveness-queue";
+import { startJobInboxTickQueue } from "#@/queues/job-inbox-tick-queue";
 import { enqueueMailClassify, startMailClassifyQueue } from "#@/queues/mail-classify-queue";
 import { enqueueMailJobHarvest, startMailJobHarvestQueue } from "#@/queues/mail-job-harvest-queue";
 import { initRuntime, setBroadcastSignals } from "#@/runtime-context";
@@ -151,11 +147,11 @@ async function start(): Promise<void> {
       log.emit({ _forceKeep: true });
     }
 
-    // Discovery land first so daily ingest can enqueue `land_${userId}_${runId}`.
+    // Discovery land first so the fetch tick can enqueue delayed land jobs.
     try {
       startJobDiscoveryLandQueue(ENV_SERVER.REDIS_URL);
-      registerJobDiscoveryLandEnqueue(async (payload) => {
-        const result = await enqueueJobDiscoveryLand(payload);
+      registerJobDiscoveryLandEnqueue(async (payload, opts) => {
+        const result = await enqueueJobDiscoveryLand(payload, opts);
         return result.enqueued;
       });
     } catch (error) {
@@ -180,27 +176,24 @@ async function start(): Promise<void> {
       log.emit({ _forceKeep: true });
     }
 
+    // 24h fetch tick: fans out one staggered land job per enrolled user.
     try {
-      startJobCatalogIngestQueue(ENV_SERVER.REDIS_URL);
-      registerJobCatalogIngestEnqueue(async (payload) => {
-        const result = await enqueueJobCatalogIngest(payload);
-        return result.enqueued;
-      });
+      startJobDiscoveryFetchQueue(ENV_SERVER.REDIS_URL);
     } catch (error) {
-      const log = createLogger({ operation: "server__job_catalog_ingest_queue" });
+      const log = createLogger({ operation: "server__job_discovery_fetch_queue" });
       log.error(error instanceof Error ? error : new Error(String(error)), {
-        event: "job_catalog_ingest_queue_start_failed"
+        event: "job_discovery_fetch_queue_start_failed"
       });
       log.emit({ _forceKeep: true });
     }
 
-    // Stub no-op until Task 15; 12h repeat is registered now.
+    // Inbox tick: TTL dismissal + silence nudges + user_job purge (12h).
     try {
-      startJobInboxLivenessQueue(ENV_SERVER.REDIS_URL);
+      startJobInboxTickQueue(ENV_SERVER.REDIS_URL);
     } catch (error) {
-      const log = createLogger({ operation: "server__job_inbox_liveness_queue" });
+      const log = createLogger({ operation: "server__job_inbox_tick_queue" });
       log.error(error instanceof Error ? error : new Error(String(error)), {
-        event: "job_inbox_liveness_queue_start_failed"
+        event: "job_inbox_tick_queue_start_failed"
       });
       log.emit({ _forceKeep: true });
     }

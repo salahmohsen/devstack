@@ -1,25 +1,25 @@
 import { z } from "zod";
 
-import { TITLE_PACKS } from "#@/job-discovery/constants";
+import { CategoryFacetSchema, RegionFacetSchema } from "#@/job-discovery/facets";
 
 import {
   JobPreferenceFieldsSchema,
   SeekerMatchEvidenceSchema,
   type JobPreference,
+  type JobPreferenceFacetFields,
   type SeekerMatchEvidence
 } from "./types";
 
 export const SearchBriefPrefsSchema = JobPreferenceFieldsSchema.pick({
   workModes: true,
-  locations: true,
-  remoteRegions: true,
   roleKeywords: true,
-  excludeKeywords: true,
   salaryMin: true,
-  salaryCurrency: true,
-  levelFloor: true,
-  titleId: true,
-  customTitle: true
+  salaryCurrency: true
+}).extend({
+  categories: z.array(CategoryFacetSchema).nullable(),
+  regions: z.array(RegionFacetSchema).nullish(),
+  countries: z.array(z.string()).nullish(),
+  cities: z.array(z.string()).nullish()
 });
 export type SearchBriefPrefs = z.infer<typeof SearchBriefPrefsSchema>;
 
@@ -50,20 +50,21 @@ export const GetSearchBriefOutputSchema = z.object({
 });
 export type GetSearchBriefOutput = z.infer<typeof GetSearchBriefOutputSchema>;
 
-export function searchBriefPrefsFromPreference(
-  prefs: Pick<JobPreference, keyof SearchBriefPrefs>
-): SearchBriefPrefs {
+type BriefPrefsSource = Pick<
+  JobPreference & Partial<JobPreferenceFacetFields>,
+  keyof SearchBriefPrefs
+>;
+
+export function searchBriefPrefsFromPreference(prefs: BriefPrefsSource): SearchBriefPrefs {
   return {
     workModes: prefs.workModes,
-    locations: prefs.locations,
-    remoteRegions: prefs.remoteRegions,
     roleKeywords: prefs.roleKeywords,
-    excludeKeywords: prefs.excludeKeywords,
     salaryMin: prefs.salaryMin,
     salaryCurrency: prefs.salaryCurrency,
-    levelFloor: prefs.levelFloor,
-    titleId: prefs.titleId,
-    customTitle: prefs.customTitle
+    categories: prefs.categories ?? null,
+    regions: prefs.regions ?? null,
+    countries: prefs.countries ?? null,
+    cities: prefs.cities ?? null
   };
 }
 
@@ -82,7 +83,7 @@ function fingerprintStrings(values: readonly string[]): string[] {
 }
 
 export function buildSearchBriefSource(input: {
-  prefs: Pick<JobPreference, keyof SearchBriefPrefs>;
+  prefs: BriefPrefsSource;
   evidence: SeekerMatchEvidence;
   profile: { name: string; summary: string };
 }): SearchBriefSource {
@@ -128,13 +129,23 @@ function joinOr(values: readonly string[], empty: string): string {
   return values.length > 0 ? values.join(", ") : empty;
 }
 
+/** Facet geography lines; empty lists are omitted. */
+function locationLines(prefs: SearchBriefPrefs): string[] {
+  const lines: string[] = [];
+  const regions = prefs.regions ?? [];
+  const countries = prefs.countries ?? [];
+  const cities = prefs.cities ?? [];
+  if (regions.length > 0) lines.push(`- Regions: ${joinOr(regions, "none")}`);
+  if (countries.length > 0) lines.push(`- Countries: ${joinOr(countries, "none")}`);
+  if (cities.length > 0) lines.push(`- Cities: ${joinOr(cities, "none")}`);
+  return lines;
+}
+
 function exampleTitlesLine(prefs: SearchBriefPrefs): string | null {
-  if (prefs.titleId != null && prefs.titleId !== "custom") {
-    return TITLE_PACKS[prefs.titleId].label;
-  }
-  const custom = prefs.customTitle?.trim();
-  if (custom) return custom;
-  if (prefs.roleKeywords.length > 0) return prefs.roleKeywords.join(", ");
+  const keywords = prefs.roleKeywords.map((k) => k.trim()).filter(Boolean);
+  if (keywords.length > 0) return keywords.join(", ");
+  const categories = prefs.categories ?? [];
+  if (categories.length > 0) return categories.join(", ");
   return null;
 }
 
@@ -151,29 +162,27 @@ export function renderSearchBriefLists(
   const targetJobs: string[] = [];
   const titles = exampleTitlesLine(prefs);
   if (titles) targetJobs.push(`- Example titles: ${titles}`);
-  targetJobs.push(`- Level floor: ${prefs.levelFloor ?? "none"}`);
-  targetJobs.push(`- Exclusions: ${joinOr(prefs.excludeKeywords, "none")}`);
+  targetJobs.push(`- Modes: ${joinOr(prefs.workModes, "any")}`);
+
+  const geography = locationLines(prefs);
 
   const skills: string[] = [];
   const paragraph = skillsParagraph?.trim();
   if (paragraph) skills.push(paragraph);
-  skills.push(`- Exclusions: ${joinOr(prefs.excludeKeywords, "none")}`);
 
-  return [
+  const sections = [
     "## Target jobs",
     ...targetJobs,
     "",
-    "## Location",
-    `- Modes: ${joinOr(prefs.workModes, "any")}`,
-    `- On-site / hybrid places: ${joinOr(prefs.locations, "none — onsite/hybrid will not land")}`,
-    `- Remote regions: ${joinOr(prefs.remoteRegions, "worldwide")}`,
-    "",
+    ...(geography.length > 0 ? ["## Location", ...geography, ""] : []),
     "## Compensation",
     `- Minimum monthly: ${formatSalaryFloor(prefs)}`,
     "",
     "## Skills",
     ...skills
-  ].join("\n");
+  ];
+
+  return sections.join("\n");
 }
 
 export function renderSearchBriefMarkdown(input: {

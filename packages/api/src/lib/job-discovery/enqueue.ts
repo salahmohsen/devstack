@@ -1,26 +1,23 @@
 import { Queue, type ConnectionOptions } from "bullmq";
 
 import {
-  JOB_CATALOG_INGEST_JOB_NAME,
-  JOB_CATALOG_INGEST_QUEUE_NAME,
   JOB_DISCOVERY_LAND_JOB_NAME,
   JOB_DISCOVERY_LAND_QUEUE_NAME,
   JOB_INBOX_AI_JOB_NAME,
   JOB_INBOX_AI_QUEUE_NAME,
-  JobCatalogIngestPayloadSchema,
   JobDiscoveryLandPayloadSchema,
   JobInboxAiPayloadSchema,
   inboxAiQueueJobId,
-  ingestJobId,
   landJobId,
-  type JobCatalogIngestPayload,
   type JobDiscoveryLandPayload,
   type JobInboxAiPayload
 } from "@tsu-stack/core";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
-type EnqueueFn<T> = (input: T) => Promise<boolean>;
+type EnqueueOpts = { delayMs?: number };
+
+type EnqueueFn<T> = (input: T, opts?: EnqueueOpts) => Promise<boolean>;
 
 type HookStore<T> = { enqueueHook: EnqueueFn<T> | null };
 
@@ -73,6 +70,7 @@ async function enqueueDirect(input: {
   event: string;
   extra?: Record<string, unknown>;
   jobId?: string;
+  delayMs?: number;
   removeOnComplete?: boolean | number;
   removeOnFail?: boolean | number;
 }): Promise<boolean> {
@@ -88,6 +86,7 @@ async function enqueueDirect(input: {
         }
         await queue.add(input.jobName, input.data, {
           jobId: input.jobId,
+          delay: input.delayMs,
           removeOnComplete: input.removeOnComplete ?? 1000,
           removeOnFail: input.removeOnFail ?? 5000,
           attempts: 3,
@@ -137,6 +136,7 @@ async function requestWithHook<T>(input: {
   event: string;
   extra?: Record<string, unknown>;
   jobId?: string;
+  delayMs?: number;
   removeOnComplete?: boolean | number;
   removeOnFail?: boolean | number;
 }): Promise<boolean> {
@@ -146,7 +146,10 @@ async function requestWithHook<T>(input: {
   const hook = hookStore<T>(input.hookKey).enqueueHook;
   if (!hook) return false;
   try {
-    return await hook(input.data);
+    return await hook(
+      input.data,
+      input.delayMs === undefined ? undefined : { delayMs: input.delayMs }
+    );
   } catch (error) {
     const log = createLogger({ operation: input.operation });
     log.error(error instanceof Error ? error : new Error(String(error)), {
@@ -161,8 +164,6 @@ const LAND_HOOK_KEY = "__tsu_stack_job_discovery_land_enqueue_hook__";
 const LAND_QUEUE_KEY = "__tsu_stack_job_discovery_land_producer_queue__";
 const INBOX_AI_HOOK_KEY = "__tsu_stack_job_inbox_ai_enqueue_hook__";
 const INBOX_AI_QUEUE_KEY = "__tsu_stack_job_inbox_ai_producer_queue__";
-const INGEST_HOOK_KEY = "__tsu_stack_job_catalog_ingest_enqueue_hook__";
-const INGEST_QUEUE_KEY = "__tsu_stack_job_catalog_ingest_producer_queue__";
 
 export function registerJobDiscoveryLandEnqueue(fn: EnqueueFn<JobDiscoveryLandPayload>): void {
   hookStore<JobDiscoveryLandPayload>(LAND_HOOK_KEY).enqueueHook = fn;
@@ -172,12 +173,9 @@ export function registerJobInboxAiEnqueue(fn: EnqueueFn<JobInboxAiPayload>): voi
   hookStore<JobInboxAiPayload>(INBOX_AI_HOOK_KEY).enqueueHook = fn;
 }
 
-export function registerJobCatalogIngestEnqueue(fn: EnqueueFn<JobCatalogIngestPayload>): void {
-  hookStore<JobCatalogIngestPayload>(INGEST_HOOK_KEY).enqueueHook = fn;
-}
-
 export async function requestJobDiscoveryLand(
-  input: Omit<JobDiscoveryLandPayload, "enqueuedAt">
+  input: Omit<JobDiscoveryLandPayload, "enqueuedAt">,
+  opts?: EnqueueOpts
 ): Promise<boolean> {
   const data = JobDiscoveryLandPayloadSchema.parse({
     ...input,
@@ -193,6 +191,7 @@ export async function requestJobDiscoveryLand(
     event: "job_discovery_land_enqueued",
     extra: { userId: data.userId, runId: data.runId, trigger: data.trigger },
     jobId: landJobId(data.userId, data.runId),
+    delayMs: opts?.delayMs,
     removeOnComplete: true,
     removeOnFail: true
   });
@@ -211,27 +210,10 @@ export async function requestJobInboxAi(input: JobInboxAiPayload): Promise<boole
     extra: {
       userId: data.userId,
       runId: data.runId,
-      postingId: data.postingId ?? null,
+      jobId: data.jobId ?? null,
       applicationId: data.applicationId ?? null
     },
     jobId: inboxAiQueueJobId(data),
-    removeOnComplete: true,
-    removeOnFail: true
-  });
-}
-
-export async function requestJobCatalogIngest(input: JobCatalogIngestPayload): Promise<boolean> {
-  const data = JobCatalogIngestPayloadSchema.parse(input);
-  return requestWithHook({
-    hookKey: INGEST_HOOK_KEY,
-    queueKey: INGEST_QUEUE_KEY,
-    queueName: JOB_CATALOG_INGEST_QUEUE_NAME,
-    jobName: JOB_CATALOG_INGEST_JOB_NAME,
-    data,
-    operation: "api__job_catalog_ingest_enqueue",
-    event: "job_catalog_ingest_enqueued",
-    extra: { mode: data.mode, userId: data.userId, runId: data.runId },
-    jobId: ingestJobId(data),
     removeOnComplete: true,
     removeOnFail: true
   });

@@ -1,32 +1,44 @@
 import { eq, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
-import {
-  jobPreference,
-  type StoredLevelFloor,
-  type StoredWorkMode
-} from "../schema/job-preference.schema.ts";
+import { jobPreference, type StoredWorkMode } from "../schema/job-preference.schema.ts";
 
 export type JobPreferenceEntity = InferSelectModel<typeof jobPreference>;
+
+/** Freehire facet columns (nullable jsonb — null = not configured). */
+export type JobPreferenceFacetData = {
+  regions: string[] | null;
+  countries: string[] | null;
+  cities: string[] | null;
+  categories: string[] | null;
+  skills: string[] | null;
+  seniority: string[] | null;
+  experienceYearsMin: number | null;
+  experienceYearsMax: number | null;
+  employmentTypes: string[] | null;
+  companyTypes: string[] | null;
+  companySizes: string[] | null;
+  domains: string[] | null;
+  collections: string[] | null;
+  openWithinDays: number | null;
+  reality: string[] | null;
+  visaSponsorship: boolean | null;
+  requiresClearance: boolean | null;
+};
 
 export type UpsertJobPreferenceData = {
   id: string;
   userId: string;
   workModes: StoredWorkMode[];
-  locations: string[];
-  remoteRegions: string[];
   roleKeywords: string[];
-  excludeKeywords: string[];
   salaryMin: number | null;
   salaryCurrency: string | null;
-  levelFloor: StoredLevelFloor | null;
   minMatchScore: number;
-  titleId: string | null;
-  customTitle: string | null;
-  jobsPerRun: number;
   dailyBoardScoreCap: number;
   importFromEmail: boolean;
   reviewApplyKit: boolean;
+  /** Omitted → facet columns untouched (legacy callers keep their behavior). */
+  facets?: JobPreferenceFacetData;
 };
 
 export const jobPreferenceRepository = {
@@ -48,20 +60,14 @@ export const jobPreferenceRepository = {
         .update(jobPreference)
         .set({
           workModes: input.workModes,
-          locations: input.locations,
-          remoteRegions: input.remoteRegions,
           roleKeywords: input.roleKeywords,
-          excludeKeywords: input.excludeKeywords,
           salaryMin: input.salaryMin,
           salaryCurrency: input.salaryCurrency,
-          levelFloor: input.levelFloor,
           minMatchScore: input.minMatchScore,
-          titleId: input.titleId,
-          customTitle: input.customTitle,
-          jobsPerRun: input.jobsPerRun,
           dailyBoardScoreCap: input.dailyBoardScoreCap,
           importFromEmail: input.importFromEmail,
           reviewApplyKit: input.reviewApplyKit,
+          ...input.facets,
           updatedAt: new Date()
         })
         .where(eq(jobPreference.userId, input.userId))
@@ -76,20 +82,14 @@ export const jobPreferenceRepository = {
         id: input.id,
         userId: input.userId,
         workModes: input.workModes,
-        locations: input.locations,
-        remoteRegions: input.remoteRegions,
         roleKeywords: input.roleKeywords,
-        excludeKeywords: input.excludeKeywords,
         salaryMin: input.salaryMin,
         salaryCurrency: input.salaryCurrency,
-        levelFloor: input.levelFloor,
         minMatchScore: input.minMatchScore,
-        titleId: input.titleId,
-        customTitle: input.customTitle,
-        jobsPerRun: input.jobsPerRun,
         dailyBoardScoreCap: input.dailyBoardScoreCap,
         importFromEmail: input.importFromEmail,
-        reviewApplyKit: input.reviewApplyKit
+        reviewApplyKit: input.reviewApplyKit,
+        ...input.facets
       })
       .returning();
     if (!row) throw new Error("Failed to insert job_preference");

@@ -3,7 +3,7 @@ name: job-preference-match
 description: >
   Use when scoring harvested jobs against the seeker's job preferences
   and career profile (experiences, stacks, projects).
-version: 1.3.0
+version: 1.4.0
 tags:
   - mail
   - harvest
@@ -18,7 +18,7 @@ only**.
 
 ## Inputs
 
-- Preference columns: workModes (array, multi-select), locations, remoteRegions, roleKeywords, excludeKeywords, salaryMin, salaryCurrency, levelFloor, minMatchScore
+- Preference columns: workModes (array, multi-select), roleKeywords, salaryMin, salaryCurrency, minMatchScore
 - Evidence (optional): roleTitles, organizations, featuredStackNames, stackNames, projectTitles
 - Search brief (optional markdown): who I am / flavor. Never a hard stop.
 - Jobs: title, company, location, description, workMode (single enum or null), salaryRange, listingUrl
@@ -27,13 +27,11 @@ only**.
 
 These override judgment. If any fire, score low and `passed=false`. Brief prose cannot rescue them.
 
-- **Exclude keywords (phrase identity):** hard fail if title/company/location/description matches an exclude as a **phrase**, not a raw substring. `react` is **not** `react native`. `react native` matches "Senior React Native Engineer"; `react` does not (the compound occupies that span). `react` still matches "Senior React Engineer" and "React.js Developer".
-- **Level floor:** hard fail when the title's known seniority is strictly below `levelFloor`. Unknown seniority is not a fail.
 - **Salary floor:** hard fail only when stated pay converts to monthly in the **same currency** and is below `salaryMin`. Unknown pay, currency mismatch, or unparsable range is not a fail.
 
 ## Not a harvest / inbox hard-fail
 
-- **Two-axis** (workModes + locations + remoteRegions) is the **land / evaluate** gate only. Do **not** hard-fail harvest or inbox solely for unknown work mode or missing location overlap.
+- **Two-axis** (workModes + geography facets) is the **land / evaluate** gate only. Do **not** hard-fail harvest or inbox solely for unknown work mode or location.
 - Unknown/null job workMode: **neutral**.
 
 ## Scoring guidance (ranking)
@@ -46,7 +44,7 @@ These override judgment. If any fire, score low and `passed=false`. Brief prose 
   - Soft-penalize only when the job has a **known** mode that is **none** of the preferred modes (e.g. onsite job vs `["remote","hybrid"]`).
   - Unknown/null job workMode: neutral — do not hard-fail solely for missing mode.
   - Never treat prefs as a single mode; never pick only `workModes[0]`.
-- **Locations / remoteRegions:** boost when the job location fits preferred onsite/hybrid places, or remote when remote is among preferred modes. Do **not** treat a location miss as a harvest/inbox hard-fail.
+- **Location:** ranking-neutral for harvest/inbox. Do **not** treat a location miss as a hard-fail.
 - **Salary (ranking):** if both sides present and the job is clearly below min, that is already a column hard-fail. Otherwise do not invent FX conversions.
 - **Search brief:** use only to color reasons / craft narrative. Never override a column hard-fail.
 

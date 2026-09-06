@@ -48,13 +48,15 @@ async function loadPrefs(pool: import("pg").Pool, userId: string): Promise<JobPr
   const row = rows[0];
   if (!row) return defaultJobPreference();
   return {
+    ...defaultJobPreference(),
     workModes: row.work_modes ?? [],
-    locations: row.locations ?? [],
     roleKeywords: row.role_keywords ?? [],
-    excludeKeywords: row.exclude_keywords ?? [],
     salaryMin: row.salary_min,
     salaryCurrency: row.salary_currency,
-    minMatchScore: row.min_match_score ?? 60
+    minMatchScore: row.min_match_score ?? 60,
+    regions: row.regions,
+    countries: row.countries,
+    cities: row.cities
   };
 }
 

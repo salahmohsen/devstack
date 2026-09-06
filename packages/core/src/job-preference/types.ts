@@ -2,26 +2,31 @@ import { z } from "zod";
 
 import {
   DEFAULT_DAILY_BOARD_SCORE_CAP,
-  DEFAULT_JOBS_PER_RUN,
-  JobTitleIdSchema,
   MAX_DAILY_BOARD_SCORE_CAP,
-  MAX_JOBS_PER_RUN,
   MIN_DAILY_BOARD_SCORE_CAP,
-  MIN_JOBS_PER_RUN,
-  refineDailyBoardScoreCap,
-  refineJobsPerRun
+  refineDailyBoardScoreCap
 } from "#@/job-discovery/constants";
-import { refineCustomDiscoveryTitle } from "#@/job-discovery/title-packs";
+import {
+  CategoryFacetSchema,
+  CollectionFacetSchema,
+  CompanySizeFacetSchema,
+  CompanyTypeFacetSchema,
+  DomainFacetSchema,
+  EmploymentTypeFacetSchema,
+  RegionFacetSchema,
+  RealityFacetSchema,
+  OpenFacetValueSchema,
+  SeniorityFacetSchema,
+  WorkModeSchema
+} from "#@/job-discovery/facets";
 
-export const WorkModeSchema = z.enum(["remote", "hybrid", "onsite"]);
-export type WorkMode = z.infer<typeof WorkModeSchema>;
-
-export const LevelFloorSchema = z.enum(["junior", "mid", "senior", "staff"]);
-export type LevelFloor = z.infer<typeof LevelFloorSchema>;
+export { WorkModeSchema, type WorkMode } from "#@/job-discovery/facets";
 
 const preferenceString = z.string().trim().min(1).max(120);
 
 const preferenceStringList = z.array(preferenceString).max(50);
+
+const openFacetList = z.array(OpenFacetValueSchema).max(50);
 
 const salaryCurrencyField = z
   .string()
@@ -30,13 +35,6 @@ const salaryCurrencyField = z
   .nullable()
   .transform((v) => (v === "" || v == null ? null : v.toUpperCase()));
 
-const jobsPerRunField = z
-  .number()
-  .int()
-  .min(MIN_JOBS_PER_RUN)
-  .max(MAX_JOBS_PER_RUN)
-  .transform(refineJobsPerRun);
-
 const dailyBoardScoreCapField = z
   .number()
   .int()
@@ -44,33 +42,23 @@ const dailyBoardScoreCapField = z
   .max(MAX_DAILY_BOARD_SCORE_CAP)
   .transform(refineDailyBoardScoreCap);
 
-const customTitleField = z.string().trim().max(120).nullable();
-
 /**
- * Fully resolved preference body (no optional/default ambiguity).
- * Used for storage mapping, merge base, and API output fields.
- *
- * `workModes` is multi-select (0–3 values). Empty = no work-mode filter.
- * Match semantics elsewhere treat the array as OR (any preferred mode).
+ * Harvest/matching preference body shared by the scorer, two-axis, and
+ * list-patch flows. The facet-shaped {@link JobPreferenceOutputSchema}
+ * supersedes it for the freehire discovery surface.
  */
 export const JobPreferenceFieldsSchema = z.object({
   workModes: z.array(WorkModeSchema).max(3),
-  locations: preferenceStringList,
-  remoteRegions: preferenceStringList,
   roleKeywords: preferenceStringList,
-  excludeKeywords: preferenceStringList,
   salaryMin: z.number().nonnegative().nullable(),
   salaryCurrency: z.string().nullable(),
-  levelFloor: LevelFloorSchema.nullable(),
   minMatchScore: z.number().int().min(0).max(100),
-  titleId: JobTitleIdSchema.nullable(),
-  customTitle: customTitleField,
-  jobsPerRun: jobsPerRunField,
   dailyBoardScoreCap: dailyBoardScoreCapField,
   importFromEmail: z.boolean(),
   reviewApplyKit: z.boolean()
 });
-export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
+export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema> &
+  Partial<JobPreferenceFacetFields>;
 
 /**
  * Parse-friendly shape with product defaults (task contract).
@@ -78,29 +66,69 @@ export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
  */
 export const JobPreferenceSchema = z.object({
   workModes: z.array(WorkModeSchema).max(3).default([]),
-  locations: preferenceStringList.default([]),
-  remoteRegions: preferenceStringList.default([]),
   roleKeywords: preferenceStringList.default([]),
-  excludeKeywords: preferenceStringList.default([]),
   salaryMin: z.number().nonnegative().nullable().optional(),
   salaryCurrency: salaryCurrencyField.optional(),
-  levelFloor: LevelFloorSchema.nullable().default(null),
   minMatchScore: z.number().int().min(0).max(100).default(60),
-  titleId: JobTitleIdSchema.nullable().default(null),
-  customTitle: customTitleField.default(null),
-  jobsPerRun: jobsPerRunField.default(DEFAULT_JOBS_PER_RUN),
   dailyBoardScoreCap: dailyBoardScoreCapField.default(DEFAULT_DAILY_BOARD_SCORE_CAP),
   importFromEmail: z.boolean().default(false),
   reviewApplyKit: z.boolean().default(true)
 });
 
-/** API get/upsert response. */
-export const JobPreferenceOutputSchema = JobPreferenceFieldsSchema.extend({
+/** API get/upsert response — freehire facet-shaped. Null facet = unset. */
+export const JobPreferenceOutputSchema = z.object({
+  workModes: z.array(WorkModeSchema).max(3),
+  regions: z.array(RegionFacetSchema).nullable(),
+  countries: openFacetList.nullable(),
+  cities: openFacetList.nullable(),
+  roleKeywords: preferenceStringList,
+  categories: z.array(CategoryFacetSchema).nullable(),
+  skills: openFacetList.nullable(),
+  seniority: z.array(SeniorityFacetSchema).nullable(),
+  experienceYearsMin: z.number().int().nullable(),
+  experienceYearsMax: z.number().int().nullable(),
+  salaryMin: z.number().nonnegative().nullable(),
+  salaryCurrency: z.string().nullable(),
+  employmentTypes: z.array(EmploymentTypeFacetSchema).nullable(),
+  companyTypes: z.array(CompanyTypeFacetSchema).nullable(),
+  companySizes: z.array(CompanySizeFacetSchema).nullable(),
+  domains: z.array(DomainFacetSchema).nullable(),
+  collections: z.array(CollectionFacetSchema).nullable(),
+  reality: z.array(RealityFacetSchema).nullable(),
+  openWithinDays: z.number().int().positive().nullable(),
+  visaSponsorship: z.boolean().nullable(),
+  requiresClearance: z.boolean().nullable(),
+  minMatchScore: z.number().int().min(0).max(100),
+  dailyBoardScoreCap: dailyBoardScoreCapField,
+  importFromEmail: z.boolean(),
+  reviewApplyKit: z.boolean(),
   updatedAt: z.coerce.date().nullable(),
   /** Board-search AI scores already consumed this UTC day. Not a form field. */
   boardScoresUsedToday: z.number().int().nonnegative()
 });
 export type JobPreferenceOutput = z.infer<typeof JobPreferenceOutputSchema>;
+
+/** Facet-only slice shared by upsert merge and persistence mapping. */
+export type JobPreferenceFacetFields = Pick<
+  JobPreferenceOutput,
+  | "regions"
+  | "countries"
+  | "cities"
+  | "categories"
+  | "skills"
+  | "seniority"
+  | "experienceYearsMin"
+  | "experienceYearsMax"
+  | "employmentTypes"
+  | "companyTypes"
+  | "companySizes"
+  | "domains"
+  | "collections"
+  | "reality"
+  | "openWithinDays"
+  | "visaSponsorship"
+  | "requiresClearance"
+>;
 
 export const ResetBoardScoresTodayOutputSchema = z.object({
   boardScoresUsedToday: z.literal(0)
@@ -108,35 +136,33 @@ export const ResetBoardScoresTodayOutputSchema = z.object({
 export type ResetBoardScoresTodayOutput = z.infer<typeof ResetBoardScoresTodayOutputSchema>;
 
 /** Partial upsert — omitted fields keep existing (or product defaults on first write). */
-export const UpsertJobPreferenceInputSchema = z
-  .object({
-    workModes: z.array(WorkModeSchema).max(3).optional(),
-    locations: preferenceStringList.optional(),
-    remoteRegions: preferenceStringList.optional(),
-    roleKeywords: preferenceStringList.optional(),
-    excludeKeywords: preferenceStringList.optional(),
-    salaryMin: z.number().nonnegative().nullable().optional(),
-    levelFloor: LevelFloorSchema.nullable().optional(),
-    salaryCurrency: z
-      .string()
-      .trim()
-      .max(8)
-      .nullable()
-      .optional()
-      .transform((v) => {
-        if (v === undefined) return undefined;
-        if (v === "" || v == null) return null;
-        return v.toUpperCase();
-      }),
-    minMatchScore: z.number().int().min(0).max(100).optional(),
-    titleId: JobTitleIdSchema.nullable().optional(),
-    customTitle: customTitleField.optional(),
-    jobsPerRun: jobsPerRunField.optional(),
-    dailyBoardScoreCap: dailyBoardScoreCapField.optional(),
-    importFromEmail: z.boolean().optional(),
-    reviewApplyKit: z.boolean().optional()
-  })
-  .superRefine(refineCustomDiscoveryTitle);
+export const UpsertJobPreferenceInputSchema = z.object({
+  workModes: z.array(WorkModeSchema).max(3).optional(),
+  regions: z.array(RegionFacetSchema).nullish(),
+  countries: openFacetList.nullish(),
+  cities: openFacetList.nullish(),
+  roleKeywords: preferenceStringList.optional(),
+  categories: z.array(CategoryFacetSchema).nullish(),
+  skills: openFacetList.nullish(),
+  seniority: z.array(SeniorityFacetSchema).nullish(),
+  experienceYearsMin: z.number().int().nullable().optional(),
+  experienceYearsMax: z.number().int().nullable().optional(),
+  salaryMin: z.number().nonnegative().nullable().optional(),
+  salaryCurrency: salaryCurrencyField.optional(),
+  employmentTypes: z.array(EmploymentTypeFacetSchema).nullish(),
+  companyTypes: z.array(CompanyTypeFacetSchema).nullish(),
+  companySizes: z.array(CompanySizeFacetSchema).nullish(),
+  domains: z.array(DomainFacetSchema).nullish(),
+  collections: z.array(CollectionFacetSchema).nullish(),
+  reality: z.array(RealityFacetSchema).nullish(),
+  openWithinDays: z.number().int().positive().nullable().optional(),
+  visaSponsorship: z.boolean().nullable().optional(),
+  requiresClearance: z.boolean().nullable().optional(),
+  minMatchScore: z.number().int().min(0).max(100).optional(),
+  dailyBoardScoreCap: dailyBoardScoreCapField.optional(),
+  importFromEmail: z.boolean().optional(),
+  reviewApplyKit: z.boolean().optional()
+});
 export type UpsertJobPreferenceInput = z.infer<typeof UpsertJobPreferenceInputSchema>;
 
 /**

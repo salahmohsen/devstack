@@ -21,11 +21,6 @@ import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-appli
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { JobSkillsMatch, type JobSkillChipHaveItKind } from "@/shared/ui/job-card-marks";
 
-import {
-  useGetJobPreferenceQuery,
-  useUpsertJobPreferenceMutation
-} from "@/features/job-preference";
-
 import { pushSidePanelFrame } from "@/pages/dashboard/_lib/side-panel-stack";
 
 function catalogFromHeld(held: readonly HeldSkill[] | undefined): HeldSkillWithId[] {
@@ -153,10 +148,6 @@ export function InspectJobSkillsMatch({
   const queryClient = useQueryClient();
   const catalog = useMemo(() => catalogFromHeld(held), [held]);
   const [pickerToken, setPickerToken] = useState<string | null>(null);
-  const preferenceQuery = useGetJobPreferenceQuery();
-  const upsertPreference = useUpsertJobPreferenceMutation();
-  const excludeKeywords = preferenceQuery.data?.excludeKeywords ?? [];
-
   const updateStack = useMutation(
     orpcQueryClient.stacks.update.mutationOptions({
       onSuccess: async () => {
@@ -175,35 +166,6 @@ export function InspectJobSkillsMatch({
       return;
     }
     setPickerToken(token);
-  }
-
-  function handleAvoid(token: string) {
-    const trimmed = token.trim();
-    if (!trimmed) return;
-    if (!preferenceQuery.isSuccess || !preferenceQuery.data) return;
-
-    const current = preferenceQuery.data.excludeKeywords ?? [];
-    const tokenKey = normalizeJobSkillName(trimmed);
-    if (current.some((keyword) => normalizeJobSkillName(keyword) === tokenKey)) return;
-
-    const next = [...current, trimmed];
-    void upsertPreference
-      .mutateAsync({ excludeKeywords: next })
-      .then(() => {
-        toast.success(`Avoiding ${trimmed}.`, {
-          action: {
-            label: "Undo",
-            onClick: () => {
-              void upsertPreference.mutateAsync({ excludeKeywords: current }).catch(() => {
-                toast.error("Could not undo avoid.");
-              });
-            }
-          }
-        });
-      })
-      .catch(() => {
-        toast.error("Could not update job preferences.");
-      });
   }
 
   function handleConfirmAlias(skillId: string) {
@@ -254,10 +216,7 @@ export function InspectJobSkillsMatch({
         listingMinYears={listingMinYears}
         seekerYears={seekerYears}
         onHaveIt={handleHaveIt}
-        onAvoid={handleAvoid}
         hasAliasCatalog={catalog.length > 0}
-        canAvoid={preferenceQuery.isSuccess && !upsertPreference.isPending}
-        excludedKeywords={excludeKeywords}
       />
       {pickerToken ? (
         <AliasSkillPickerDialog

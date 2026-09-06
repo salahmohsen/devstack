@@ -11,9 +11,9 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
-import { jobPosting } from "./job-posting.schema.ts";
 import { type StoredWorkMode } from "./job-preference.schema.ts";
 import { resume } from "./resume.schema.ts";
+import { userJob } from "./user-job.schema.ts";
 
 /** Persisted skill tag on an application (required vs preferred). */
 export type ApplicationJobSkillTag = {
@@ -134,8 +134,8 @@ export const application = pgTable(
     outcomeAt: timestamp("outcome_at", { withTimezone: true }),
     hiringUrgency: hiringUrgencyEnum("hiring_urgency").notNull().default("unknown"),
     resumeId: text("resume_id").references(() => resume.id, { onDelete: "set null" }),
-    /** Shared catalog row; null for manual/hub/mail. */
-    postingId: text("posting_id").references(() => jobPosting.id, { onDelete: "set null" }),
+    /** Freehire per-user staging row this application landed from. */
+    jobId: text("job_id").references(() => userJob.id, { onDelete: "set null" }),
     /** Inbox TTL; null = grandfathered (pre-discovery). */
     inboxExpiresAt: timestamp("inbox_expires_at", { withTimezone: true }),
     /** Land/discovery batch id for this inbox row. */
@@ -165,7 +165,7 @@ export const application = pgTable(
     index("application_user_id_stage_idx").on(table.userId, table.stage),
     index("application_user_id_tracking_status_idx").on(table.userId, table.trackingStatus),
     index("application_user_id_discovery_run_id_idx").on(table.userId, table.discoveryRunId),
-    index("application_posting_id_idx").on(table.postingId),
+    index("application_job_id_idx").on(table.jobId),
     // Partial unique: manual apps may omit url (multiple nulls allowed).
     uniqueIndex("application_user_id_url_uidx")
       .on(table.userId, table.url)

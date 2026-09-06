@@ -169,6 +169,7 @@ services:
       POSTGRES_HOST: hub-postgres
       REDIS_URL: redis://:${REDIS_PASSWORD}@hub-redis:6379
       AGENT_WORKER_URL: ${AGENT_WORKER_URL:-http://agent:4111}
+      FREEHIRE_API_BASE_URL: ${FREEHIRE_API_BASE_URL:-}
       # Gmail Pub/Sub push auth (OIDC and/or shared secret)
       GMAIL_PUBSUB_TOPIC: ${GMAIL_PUBSUB_TOPIC:-}
       GMAIL_PUSH_SHARED_SECRET: ${GMAIL_PUSH_SHARED_SECRET:-}

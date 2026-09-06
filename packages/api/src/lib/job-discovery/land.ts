@@ -3,7 +3,8 @@ import {
   computeLandBudget,
   dailyAiAttemptCap,
   decideTwoAxis,
-  hasValidDiscoveryTitle,
+  DISCOVERY_FETCH_POOL_SIZE,
+  hasValidRoleQuery,
   isThinJobDescription,
   MAX_OPEN_INBOX,
   scoreCatalogAgainstPreference,
@@ -13,40 +14,37 @@ import {
 } from "@tsu-stack/core";
 import {
   applicationRepository,
-  jobPostingRepository,
   userJobAiBudgetRepository,
-  type JobPostingEntity
+  userJobRepository,
+  type UserJobEntity
 } from "@tsu-stack/db";
 
-import { loadJobPreference } from "#@/lib/application/load-job-preference";
+import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
 import { requestJobInboxAi } from "#@/lib/job-discovery/enqueue";
-import { hydratePostingIfNeeded } from "#@/lib/job-discovery/hydrate";
+import { utcDay } from "#@/lib/job-discovery/enrollment";
+import { fetchUserJobs } from "#@/lib/job-discovery/fetch";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
-export type DiscoveryLandReason = "ok" | "title_required" | "inbox_full" | "empty_shelf";
+export type DiscoveryLandReason =
+  | "ok"
+  | "title_required"
+  | "fetch_failed"
+  | "inbox_full"
+  | "empty_shelf";
 
 export type DiscoveryLandResult = {
   landed: number;
   reason: DiscoveryLandReason;
 };
 
-function utcDay(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
-}
-
 function asWorkMode(value: string | null | undefined): WorkMode | null {
   const parsed = WorkModeSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 }
 
-function applicationLocation(
-  hydrateLocation: string | null,
-  catalogLocation: string | null
-): string | null {
-  const fromHydrate = hydrateLocation?.trim() ?? "";
-  if (fromHydrate.length > 0) return fromHydrate;
-  const fromCatalog = catalogLocation?.trim() ?? "";
-  return fromCatalog.length > 0 ? fromCatalog : null;
+function trimmedOrNull(value: string | null | undefined): string | null {
+  const text = value?.trim();
+  return text != null && text.length > 0 ? text : null;
 }
 
 /** Highest cheap score first, then take `toLand`. Pure helper for land selection tests. */
@@ -96,23 +94,23 @@ export function decideLandCandidate(input: {
   return { created: decision.action === "pass", reason: decision.reason };
 }
 
-type ScoredPosting = {
-  posting: JobPostingEntity;
+type ScoredUserJob = {
+  job: UserJobEntity;
   score: number;
   reasons: string[];
 };
 
-function compareScoredPostings(a: ScoredPosting, b: ScoredPosting): number {
+function compareScoredUserJobs(a: ScoredUserJob, b: ScoredUserJob): number {
   if (b.score !== a.score) return b.score - a.score;
-  const aPosted = a.posting.postedAt?.getTime() ?? 0;
-  const bPosted = b.posting.postedAt?.getTime() ?? 0;
+  const aPosted = a.job.postedAt?.getTime() ?? 0;
+  const bPosted = b.job.postedAt?.getTime() ?? 0;
   return bPosted - aPosted;
 }
 
 async function remainingLandBudget(input: {
   userId: string;
   runId: string;
-  jobsPerRun: number;
+  poolSize: number;
   dailyBoardScoreCap: number;
   hasAiKey: boolean;
 }): Promise<number> {
@@ -126,7 +124,7 @@ async function remainingLandBudget(input: {
     )
   ]);
   return computeLandBudget({
-    jobsPerRun: input.jobsPerRun,
+    poolSize: input.poolSize,
     openInbox,
     inboxThisRun,
     remainingDailyAiAttempts: remaining,
@@ -134,27 +132,23 @@ async function remainingLandBudget(input: {
   });
 }
 
-/** Hydrate + $0 two-axis. Pass enqueues evaluate — never createIfAbsentByUrl. */
+/** $0 two-axis pass enqueues evaluate on the user_job snapshot — no hydrate hop. */
 async function enqueueEvaluateIfPassed(input: {
   userId: string;
   runId: string;
-  candidate: ScoredPosting;
+  candidate: ScoredUserJob;
   hasAiKey: boolean;
   prefs: TwoAxisPrefs;
 }): Promise<boolean> {
-  const hydrate = await hydratePostingIfNeeded(input.candidate.posting.id);
-  const posting = await jobPostingRepository.findById(input.candidate.posting.id);
-  if (!posting || posting.closedAt != null || hydrate.listingClosed) return false;
-
-  const description = hydrate.description ?? posting.description;
+  const job = input.candidate.job;
   // With a BYO key, N is AI-passed keepers. Do not spend an evaluate on a thin JD.
-  if (input.hasAiKey && isThinJobDescription(description)) return false;
+  if (input.hasAiKey && isThinJobDescription(job.description)) return false;
 
   const gate = decideLandCandidate({
-    workMode: asWorkMode(hydrate.workMode ?? posting.workMode),
-    hiringRegion: hydrate.hiringRegion ?? posting.hiringRegion,
-    location: applicationLocation(hydrate.location, posting.location),
-    description,
+    workMode: asWorkMode(job.workMode),
+    hiringRegion: null,
+    location: trimmedOrNull(job.location),
+    description: job.description,
     prefs: input.prefs
   });
   if (!gate.created) return false;
@@ -162,7 +156,7 @@ async function enqueueEvaluateIfPassed(input: {
   return requestJobInboxAi({
     userId: input.userId,
     runId: input.runId,
-    postingId: posting.id
+    jobId: job.id
   });
 }
 
@@ -171,18 +165,18 @@ export async function runDiscoveryLand(input: {
   runId: string;
 }): Promise<DiscoveryLandResult> {
   const [prefs, llm] = await Promise.all([
-    loadJobPreference(input.userId),
+    loadJobPreferenceOutput(input.userId),
     resolveRuntimeAiCredentials(input.userId, "scorer")
   ]);
 
-  if (
-    !hasValidDiscoveryTitle({
-      titleId: prefs.titleId,
-      customTitle: prefs.customTitle,
-      roleKeywords: prefs.roleKeywords
-    })
-  ) {
+  if (!hasValidRoleQuery({ roleKeywords: prefs.roleKeywords, categories: prefs.categories })) {
     return { landed: 0, reason: "title_required" };
+  }
+
+  // Fetch first: the run's shelf is this user's own freehire results.
+  const fetched = await fetchUserJobs({ userId: input.userId, preference: prefs });
+  if (!fetched.ok) {
+    return { landed: 0, reason: "fetch_failed" };
   }
 
   const hasAiKey = Boolean(llm.apiKey?.trim());
@@ -194,7 +188,7 @@ export async function runDiscoveryLand(input: {
   const toLand = await remainingLandBudget({
     userId: input.userId,
     runId: input.runId,
-    jobsPerRun: prefs.jobsPerRun,
+    poolSize: DISCOVERY_FETCH_POOL_SIZE,
     dailyBoardScoreCap: prefs.dailyBoardScoreCap,
     hasAiKey
   });
@@ -202,34 +196,42 @@ export async function runDiscoveryLand(input: {
     return { landed: 0, reason: seats === 0 ? "inbox_full" : "ok" };
   }
 
-  const seen = await applicationRepository.listUserUrlsAndPostingIds(input.userId);
-  const shelf = await jobPostingRepository.listOpenForLand({
+  const seen = await applicationRepository.listUserSeenRefs(input.userId);
+  const shelf = await userJobRepository.listUnlanded({
+    userId: input.userId,
     excludeUrls: seen.urls,
-    excludePostingIds: seen.postingIds
+    excludeJobIds: seen.jobIds,
+    limit: DISCOVERY_FETCH_POOL_SIZE,
+    queryHash: fetched.hash
   });
 
-  const passed: ScoredPosting[] = [];
-  for (const posting of shelf) {
+  const passed: ScoredUserJob[] = [];
+  for (const job of shelf) {
     const cheap = scoreCatalogAgainstPreference(
       {
-        title: posting.title,
-        companyName: posting.companyName,
-        location: posting.location,
-        workMode: asWorkMode(posting.workMode),
-        skills: posting.skills ?? [],
-        salaryMin: posting.salaryMin,
-        salaryCurrency: posting.salaryCurrency
+        title: job.title,
+        companyName: job.companyName,
+        location: trimmedOrNull(job.location),
+        workMode: asWorkMode(job.workMode),
+        skills: job.skills ?? [],
+        salaryMin: job.salaryMin,
+        salaryCurrency: job.salaryCurrency
       },
       prefs
     );
     if (!cheap.passed) continue;
-    passed.push({ posting, score: cheap.score, reasons: cheap.reasons });
+    passed.push({ job, score: cheap.score, reasons: cheap.reasons });
   }
-  passed.sort(compareScoredPostings);
+  passed.sort(compareScoredUserJobs);
+
+  const twoAxisPrefs: TwoAxisPrefs = {
+    workModes: prefs.workModes,
+    locations: prefs.cities ?? [],
+    remoteRegions: prefs.regions ?? []
+  };
 
   const attempted = new Set<string>();
   let landed = 0;
-  /** Listing-page hydrate is the slow hop — run a small pool, not one-by-one. */
   const LAND_CONCURRENCY = 4;
 
   const landUpTo = async (limit: number): Promise<void> => {
@@ -246,18 +248,18 @@ export async function runDiscoveryLand(input: {
           reserved -= 1;
           return;
         }
-        if (attempted.has(candidate.posting.id)) {
+        if (attempted.has(candidate.job.id)) {
           reserved -= 1;
           continue;
         }
-        attempted.add(candidate.posting.id);
+        attempted.add(candidate.job.id);
         try {
           const enqueued = await enqueueEvaluateIfPassed({
             userId: input.userId,
             runId: input.runId,
             candidate,
             hasAiKey,
-            prefs
+            prefs: twoAxisPrefs
           });
           if (enqueued) landed += 1;
           else reserved -= 1;
@@ -279,7 +281,7 @@ export async function runDiscoveryLand(input: {
     (await remainingLandBudget({
       userId: input.userId,
       runId: input.runId,
-      jobsPerRun: prefs.jobsPerRun,
+      poolSize: DISCOVERY_FETCH_POOL_SIZE,
       dailyBoardScoreCap: prefs.dailyBoardScoreCap,
       hasAiKey
     })) - landed

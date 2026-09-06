@@ -127,10 +127,8 @@ export function HardPreferenceChangeToolUI({
       }
       const upsertInput = applyHardJobPreferencePatch(
         {
-          excludeKeywords: current.excludeKeywords,
           salaryMin: current.salaryMin ?? null,
-          salaryCurrency: current.salaryCurrency ?? null,
-          levelFloor: current.levelFloor ?? null
+          salaryCurrency: current.salaryCurrency ?? null
         },
         patch
       );

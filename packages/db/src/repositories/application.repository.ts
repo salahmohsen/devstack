@@ -29,7 +29,6 @@ import {
   type ApplicationStage,
   type ApplicationTrackingStatus
 } from "../schema/application.schema.ts";
-import { jobPosting } from "../schema/job-posting.schema.ts";
 
 export type ApplicationEntity = InferSelectModel<typeof application>;
 export type CreateApplicationData = Omit<
@@ -233,34 +232,6 @@ function applicationCursorWhere(
   );
 }
 
-/** First inbox HTTP check; keep in sync with core `LIVENESS_AFTER_MS` (~3.5d). */
-const INBOX_LIVENESS_AFTER_MS = Math.floor((7 * 24 * 60 * 60 * 1000) / 2);
-
-async function listDueLivenessByStatus(
-  dueAt: Date,
-  trackingStatus: "inbox" | "tracked",
-  limit: number,
-  updatedAtBefore: Date
-): Promise<ApplicationEntity[]> {
-  if (limit <= 0) return [];
-  const rows = await getDb()
-    .select({ application })
-    .from(application)
-    .leftJoin(jobPosting, eq(application.postingId, jobPosting.id))
-    .where(
-      and(
-        eq(application.trackingStatus, trackingStatus),
-        isNotNull(application.inboxExpiresAt),
-        lte(application.createdAt, dueAt),
-        lte(application.updatedAt, updatedAtBefore),
-        or(isNull(application.postingId), isNull(jobPosting.closedAt))
-      )
-    )
-    .orderBy(asc(application.updatedAt), asc(application.createdAt), asc(application.id))
-    .limit(limit);
-  return rows.map((row) => row.application);
-}
-
 async function insertIfAbsentByUrl(
   db: Pick<ReturnType<typeof getDb>, "insert" | "select">,
   input: CreateApplicationData & { url: string }
@@ -299,7 +270,7 @@ async function insertIfAbsentByUrl(
       outcomeAt: null,
       hiringUrgency: input.hiringUrgency ?? "unknown",
       resumeId: input.resumeId ?? null,
-      postingId: input.postingId ?? null,
+      jobId: input.jobId ?? null,
       inboxExpiresAt: input.inboxExpiresAt ?? null,
       discoveryRunId: input.discoveryRunId ?? null
     })
@@ -595,7 +566,7 @@ export const applicationRepository = {
         outcomeAt: null,
         hiringUrgency: input.hiringUrgency ?? "unknown",
         resumeId: input.resumeId ?? null,
-        postingId: input.postingId ?? null,
+        jobId: input.jobId ?? null,
         inboxExpiresAt: input.inboxExpiresAt ?? null,
         discoveryRunId: input.discoveryRunId ?? null
       })
@@ -622,7 +593,7 @@ export const applicationRepository = {
     input: CreateApplicationData & {
       url: string;
       discoveryRunId: string;
-      jobsPerRun: number;
+      poolSize: number;
       maxOpenInbox: number;
     }
   ): Promise<{ row: ApplicationEntity | null; created: boolean }> {
@@ -648,7 +619,7 @@ export const applicationRepository = {
 
       const openInbox = openRow?.n ?? 0;
       const inboxThisRun = runRow?.n ?? 0;
-      if (openInbox >= input.maxOpenInbox || inboxThisRun >= input.jobsPerRun) {
+      if (openInbox >= input.maxOpenInbox || inboxThisRun >= input.poolSize) {
         return { row: null, created: false };
       }
 
@@ -670,93 +641,37 @@ export const applicationRepository = {
     return row?.n ?? 0;
   },
 
-  async listUserUrlsAndPostingIds(
-    userId: string
-  ): Promise<{ urls: string[]; postingIds: string[] }> {
+  /** URLs / user_job ids already referenced by this user's applications. */
+  async listUserSeenRefs(userId: string): Promise<{ urls: string[]; jobIds: string[] }> {
     const rows = await getDb()
       .select({
         url: application.url,
-        postingId: application.postingId
+        jobId: application.jobId
       })
       .from(application)
       .where(eq(application.userId, userId));
 
     const urls: string[] = [];
-    const postingIds: string[] = [];
+    const jobIds: string[] = [];
     const seenUrls = new Set<string>();
-    const seenPostingIds = new Set<string>();
+    const seenJobIds = new Set<string>();
     for (const row of rows) {
       if (row.url && !seenUrls.has(row.url)) {
         seenUrls.add(row.url);
         urls.push(row.url);
       }
-      if (row.postingId && !seenPostingIds.has(row.postingId)) {
-        seenPostingIds.add(row.postingId);
-        postingIds.push(row.postingId);
+      if (row.jobId && !seenJobIds.has(row.jobId)) {
+        seenJobIds.add(row.jobId);
+        jobIds.push(row.jobId);
       }
     }
-    return { urls, postingIds };
-  },
-
-  /**
-   * Inbox + tracked rows ready for HTTP liveness.
-   * `inboxExpiresAt` set (discovery / post-ship harvest). Due at `createdAt + ~3.5d`.
-   * Skips postings already closed and rows touched after `updatedAtBefore`.
-   * Orders by `updatedAt` so a tick rotates instead of re-probing the same 100.
-   * Fills inbox first so tracked cannot starve newer probes.
-   */
-  async listInboxDueLiveness(
-    now: Date,
-    limit: number,
-    opts?: { updatedAtBefore?: Date }
-  ): Promise<ApplicationEntity[]> {
-    if (limit <= 0) return [];
-    const dueAt = new Date(now.getTime() - INBOX_LIVENESS_AFTER_MS);
-    const updatedAtBefore = opts?.updatedAtBefore ?? now;
-    const inbox = await listDueLivenessByStatus(dueAt, "inbox", limit, updatedAtBefore);
-    const tracked = await listDueLivenessByStatus(
-      dueAt,
-      "tracked",
-      limit - inbox.length,
-      updatedAtBefore
-    );
-    return [...inbox, ...tracked];
+    return { urls, jobIds };
   },
 
   /** Bump `updatedAt` so probed rows fall out of the next oldest-first batch. */
   async touchUpdatedAt(ids: string[], now = new Date()): Promise<void> {
     if (ids.length === 0) return;
     await getDb().update(application).set({ updatedAt: now }).where(inArray(application.id, ids));
-  },
-
-  /** Inbox rows (TTL-eligible) whose catalog posting is already closed. */
-  async listInboxWithClosedPosting(limit: number): Promise<ApplicationEntity[]> {
-    if (limit <= 0) return [];
-    const rows = await getDb()
-      .select({ application })
-      .from(application)
-      .innerJoin(jobPosting, eq(application.postingId, jobPosting.id))
-      .where(
-        and(
-          eq(application.trackingStatus, "inbox"),
-          isNotNull(application.inboxExpiresAt),
-          isNotNull(jobPosting.closedAt)
-        )
-      )
-      .orderBy(asc(application.createdAt))
-      .limit(limit);
-    return rows.map((row) => row.application);
-  },
-
-  /** Open inbox rows linked to the given catalog postings (shared closed-listing dismiss). */
-  async listInboxByPostingIds(postingIds: string[]): Promise<ApplicationEntity[]> {
-    if (postingIds.length === 0) return [];
-    return getDb()
-      .select()
-      .from(application)
-      .where(
-        and(eq(application.trackingStatus, "inbox"), inArray(application.postingId, postingIds))
-      );
   },
 
   async listInboxExpired(now: Date, limit: number): Promise<ApplicationEntity[]> {

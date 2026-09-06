@@ -1,6 +1,5 @@
 export * from "./constants";
 export * from "./hard-fails";
-export * from "./level";
 export * from "./list-patch";
 export * from "./phrase-match";
 export * from "./salary-compare";

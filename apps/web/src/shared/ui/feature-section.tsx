@@ -26,7 +26,7 @@ export function FeatureSection({ className }: { className?: string }) {
           What you get
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-          Adapter-fed discovery, a tracked pipeline, a Mastra hub agent on your keys, and a public
+          Freehire-fed discovery, a tracked pipeline, a Mastra hub agent on your keys, and a public
           profile for evidence you opt in.
         </p>
       </div>
@@ -78,7 +78,7 @@ const features: FeatureType[] = [
     title: "New jobs from boards",
     icon: <Radar />,
     description:
-      "Adapters pull public listings, rank to your prefs, then score with your BYO AI key. Mail harvest is optional."
+      "Public listings from Freehire rank to your prefs, then score with your BYO AI key. Mail harvest is optional."
   },
   {
     title: "Tracked jobs + mail",

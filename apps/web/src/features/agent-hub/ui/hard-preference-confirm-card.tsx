@@ -43,10 +43,8 @@ export function HardPreferenceConfirmCard({
   const preview = React.useMemo(() => {
     if (!patch || !current) return null;
     const hardCurrent = {
-      excludeKeywords: current.excludeKeywords,
       salaryMin: current.salaryMin ?? null,
-      salaryCurrency: current.salaryCurrency ?? null,
-      levelFloor: current.levelFloor ?? null
+      salaryCurrency: current.salaryCurrency ?? null
     };
     const currentPrefs = searchBriefPrefsFromPreference(current);
     const currentMd = renderSearchBriefMarkdown({ prefs: currentPrefs });
@@ -54,14 +52,11 @@ export function HardPreferenceConfirmCard({
     const proposedMd = renderSearchBriefMarkdown({
       prefs: {
         ...currentPrefs,
-        excludeKeywords: nextPrefs.excludeKeywords ?? currentPrefs.excludeKeywords,
         salaryMin: nextPrefs.salaryMin !== undefined ? nextPrefs.salaryMin : currentPrefs.salaryMin,
         salaryCurrency:
           nextPrefs.salaryCurrency !== undefined
             ? nextPrefs.salaryCurrency
-            : currentPrefs.salaryCurrency,
-        levelFloor:
-          nextPrefs.levelFloor !== undefined ? nextPrefs.levelFloor : currentPrefs.levelFloor
+            : currentPrefs.salaryCurrency
       }
     });
     return {

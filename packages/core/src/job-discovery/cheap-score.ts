@@ -1,32 +1,45 @@
 import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
 import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
-import { type JobPreference } from "#@/job-preference/types";
+import { type JobPreferenceOutput, type WorkMode } from "#@/job-preference/types";
 import { isGarbageCompany, isGarbageJobTitle } from "#@/mail/job-harvest";
 
-import { effectiveRoleKeywords } from "./title-packs";
-import { type CheapScoreResult, type NormalizedListing } from "./types";
+import { type CheapScoreResult } from "./types";
+import { applyYearsCap } from "./years-cap";
 
-type CheapListing = Pick<
-  NormalizedListing,
-  "title" | "companyName" | "location" | "workMode" | "skills" | "salaryMin" | "salaryCurrency"
->;
+type CheapListing = {
+  title: string;
+  companyName: string;
+  location: string | null;
+  workMode: WorkMode | null;
+  skills: readonly string[];
+  salaryMin: number | null;
+  salaryCurrency: string | null;
+  experienceYearsMin?: number | null;
+};
 
-function includesAny(haystack: string, needles: readonly string[]): boolean {
-  const h = haystack.toLowerCase();
-  return needles.some((n) => {
-    const k = n.trim().toLowerCase();
-    return k.length > 0 && h.includes(k);
-  });
+/**
+ * Role gate for freehire-only discovery: explicit `q` keywords or category
+ * chips must be present before a land run may fetch/score.
+ */
+export function hasValidRoleQuery(input: {
+  roleKeywords: readonly string[];
+  categories: readonly string[] | null;
+}): boolean {
+  if (input.roleKeywords.some((keyword) => keyword.trim().length > 0)) return true;
+  return (input.categories?.length ?? 0) > 0;
 }
 
 /**
  * Catalog cheap score on structured fields only (no description / JD HTML).
  * `passed` means eligible to land/rank — never gated on minMatchScore.
- * Work mode and location are not scored here; two-axis is a later gate.
+ * Work mode and place are not scored here; two-axis is a later gate, and
+ * region/geo matching happens upstream in the freehire query.
+ * Callers must run {@link hasValidRoleQuery} first — with empty needles
+ * every listing silently fails "no role keyword in title".
  */
 export function scoreCatalogAgainstPreference(
   listing: CheapListing,
-  prefs: JobPreference
+  prefs: JobPreferenceOutput
 ): CheapScoreResult {
   const reasons: string[] = [];
 
@@ -39,7 +52,6 @@ export function scoreCatalogAgainstPreference(
       title: listing.title,
       companyName: listing.companyName,
       location: listing.location,
-      description: listing.skills.join(" "),
       salaryMin: listing.salaryMin,
       salaryCurrency: listing.salaryCurrency
     },
@@ -49,11 +61,9 @@ export function scoreCatalogAgainstPreference(
     return { score: 0, passed: false, reasons: hard.reasons };
   }
 
-  const roleKeywords = effectiveRoleKeywords({
-    titleId: prefs.titleId,
-    roleKeywords: prefs.roleKeywords
-  });
-  const titleHits = roleKeywords.filter((k) => matchesKeywordPhrase(listing.title, k));
+  const roleKeywords = prefs.roleKeywords;
+  const needles = roleKeywords.length > 0 ? roleKeywords : (prefs.categories ?? []);
+  const titleHits = needles.filter((k) => matchesKeywordPhrase(listing.title, k));
 
   if (titleHits.length === 0) {
     return { score: 15, passed: false, reasons: ["no role keyword in title"] };
@@ -62,16 +72,23 @@ export function scoreCatalogAgainstPreference(
   let score = 40 + Math.min(40, 15 + titleHits.length * 10);
   reasons.push(`title keywords: ${titleHits.slice(0, 3).join(", ")}`);
 
-  // One structured skill bonus: listing.skills vs role keywords or preferred locations
-  const skillNeedles = [...roleKeywords, ...prefs.locations];
+  // One structured skill bonus: listing.skills vs role keywords / categories
   if (
     listing.skills.length > 0 &&
-    skillNeedles.length > 0 &&
-    listing.skills.some((s) => includesAny(s, skillNeedles))
+    needles.length > 0 &&
+    listing.skills.some((s) => needles.some((n) => matchesKeywordPhrase(s, n)))
   ) {
     score += 5;
     reasons.push("structured skill hit");
   }
+
+  const years = applyYearsCap({
+    aiScore: score,
+    listingMinYears: listing.experienceYearsMin ?? null,
+    seekerYears: prefs.experienceYearsMin
+  });
+  if (years.capped) reasons.push("years cap");
+  score = years.displayScore;
 
   score = Math.max(0, Math.min(100, Math.round(score)));
   return { score, passed: true, reasons };

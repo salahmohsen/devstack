@@ -19,7 +19,17 @@ import {
   stripListingChromeFromText,
   type ListingPageExtract
 } from "#@/common/extract-job-listing-page";
-import { effectiveRoleKeywords } from "#@/job-discovery/title-packs";
+import {
+  CategoryFacetSchema,
+  CollectionFacetSchema,
+  CompanySizeFacetSchema,
+  CompanyTypeFacetSchema,
+  DomainFacetSchema,
+  EmploymentTypeFacetSchema,
+  RegionFacetSchema,
+  RealityFacetSchema,
+  SeniorityFacetSchema
+} from "#@/job-discovery/facets";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
 import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
 import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
@@ -27,9 +37,8 @@ import { type SalaryPeriod } from "#@/job-preference/salary-compare";
 import {
   SeekerMatchEvidenceSchema,
   WorkModeSchema,
-  LevelFloorSchema,
   type JobPreference,
-  type LevelFloor,
+  type JobPreferenceFacetFields,
   type SeekerMatchEvidence,
   type WorkMode
 } from "#@/job-preference/types";
@@ -180,13 +189,26 @@ export type MailNotifierExtract = z.infer<typeof MailNotifierExtractSchema>;
 /** Preference slice passed into the harvest workflow for AI match scoring. */
 export const HarvestJobPreferenceSchema = z.object({
   workModes: z.array(WorkModeSchema).default([]),
-  locations: z.array(z.string()).default([]),
-  remoteRegions: z.array(z.string()).default([]),
   roleKeywords: z.array(z.string()).default([]),
-  excludeKeywords: z.array(z.string()).default([]),
+  regions: z.array(RegionFacetSchema).nullish(),
+  countries: z.array(z.string()).nullish(),
+  cities: z.array(z.string()).nullish(),
+  categories: z.array(CategoryFacetSchema).nullish(),
+  skills: z.array(z.string()).nullish(),
+  seniority: z.array(SeniorityFacetSchema).nullish(),
+  experienceYearsMin: z.number().int().nullish(),
+  experienceYearsMax: z.number().int().nullish(),
+  employmentTypes: z.array(EmploymentTypeFacetSchema).nullish(),
+  companyTypes: z.array(CompanyTypeFacetSchema).nullish(),
+  companySizes: z.array(CompanySizeFacetSchema).nullish(),
+  domains: z.array(DomainFacetSchema).nullish(),
+  collections: z.array(CollectionFacetSchema).nullish(),
+  openWithinDays: z.number().int().nullish(),
+  reality: z.array(RealityFacetSchema).nullish(),
+  visaSponsorship: z.boolean().nullish(),
+  requiresClearance: z.boolean().nullish(),
   salaryMin: z.number().nullable().optional(),
   salaryCurrency: z.string().nullable().optional(),
-  levelFloor: LevelFloorSchema.nullable().optional(),
   minMatchScore: z.number().int().min(0).max(100).default(60),
   /** Career-profile signal (experiences / stacks / projects) for fit scoring. */
   evidence: SeekerMatchEvidenceSchema.optional(),
@@ -1306,11 +1328,6 @@ export function formatJobPageTextForLlm(input: {
   return parts.join("\n\n").slice(0, max);
 }
 
-function includesAny(haystack: string, needles: string[]): boolean {
-  const h = haystack.toLowerCase();
-  return needles.some((n) => n.trim().length > 0 && h.includes(n.toLowerCase()));
-}
-
 const SENIORITY_STOP = new Set([
   "senior",
   "sr",
@@ -1494,20 +1511,14 @@ function applyEvidenceToScore(
   return { score: next, evidenceFit, reasons };
 }
 
-/**
- * Fields the harvest scorer reads. Discovery-only JobPreference keys
- * (`titleId`, `jobsPerRun`, `importFromEmail`) are not part of match.
- */
+/** Fields the harvest scorer reads. Discovery-only keys are not part of match. */
 export type ScoreJobPreferenceInput = Pick<
   JobPreference,
-  "workModes" | "locations" | "roleKeywords" | "excludeKeywords" | "minMatchScore"
+  "workModes" | "roleKeywords" | "minMatchScore"
 > & {
-  titleId?: JobPreference["titleId"];
-  remoteRegions?: readonly string[] | null;
   salaryMin?: number | null;
   salaryCurrency?: string | null;
-  levelFloor?: LevelFloor | null;
-};
+} & Partial<JobPreferenceFacetFields>;
 
 export type ScoreJobPayFields = {
   salaryMin?: number | null;
@@ -1530,10 +1541,6 @@ export function scoreJobAgainstPreference(
   const reasons: string[] = [];
   let score = 40;
 
-  const blob = [job.title, job.companyName, job.location ?? "", job.description ?? ""]
-    .join("\n")
-    .toLowerCase();
-
   if (isGarbageJobTitle(job.title) || isGarbageCompany(job.companyName)) {
     return { score: 0, passed: false, reasons: ["invalid title/company"], rulesFailed: true };
   }
@@ -1555,10 +1562,7 @@ export function scoreJobAgainstPreference(
     return { score: 0, passed: false, reasons: hard.reasons, rulesFailed: true };
   }
 
-  const roleKeywords = effectiveRoleKeywords({
-    titleId: p.titleId ?? null,
-    roleKeywords: p.roleKeywords
-  });
+  const roleKeywords = p.roleKeywords;
   if (roleKeywords.length > 0) {
     // Title-only — never score from fetched HTML description noise
     const titleHits = roleKeywords.filter((k) => matchesKeywordPhrase(job.title, k));
@@ -1586,24 +1590,6 @@ export function scoreJobAgainstPreference(
       reasons.push(`work mode ${job.workMode} not in preferred (${preferred})`);
     } else {
       reasons.push("work mode unknown");
-    }
-  }
-
-  if (p.locations.length > 0) {
-    const locFromJob =
-      job.location != null && job.location.length > 0
-        ? includesAny(job.location, p.locations)
-        : false;
-    const locHit =
-      locFromJob ||
-      includesAny(blob, p.locations) ||
-      (job.workMode === "remote" && p.workModes.includes("remote"));
-    if (locHit) {
-      score += 15;
-      reasons.push("location match");
-    } else if (job.location) {
-      score -= 15;
-      reasons.push("location mismatch");
     }
   }
 
@@ -1645,19 +1631,15 @@ export function formatJobMatchScorePrompt(input: {
     ("searchBriefMarkdown" in input.prefs ? (input.prefs.searchBriefMarkdown ?? null) : null);
   return `Score these jobs for the seeker.
 
-Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity: "react" is not "react native". Search brief is narrative flavor only and cannot pass a column hard-fail. Two-axis (workModes / locations / remoteRegions) is a land/evaluate gate — do not hard-fail harvest or inbox solely for unknown work mode or location. Do not lower score for hiring region, country, or city; location is ranking-neutral here. The server derives passed from score >= minMatchScore after column hard-fails — never set passed false when score is already at or above the bar.
+Column hard-fails are law: salary floor. Search brief is narrative flavor only and cannot pass a column hard-fail. Two-axis (workModes / geography) is a land/evaluate gate — do not hard-fail harvest or inbox solely for unknown work mode or location. Do not lower score for hiring region, country, or city; location is ranking-neutral here. The server derives passed from score >= minMatchScore after column hard-fails — never set passed false when score is already at or above the bar.
 
 JobPreference (JSON):
 ${JSON.stringify(
   {
     workModes: input.prefs.workModes ?? [],
-    locations: input.prefs.locations ?? [],
-    remoteRegions: input.prefs.remoteRegions ?? [],
     roleKeywords: input.prefs.roleKeywords ?? [],
-    excludeKeywords: input.prefs.excludeKeywords ?? [],
     salaryMin: input.prefs.salaryMin ?? null,
     salaryCurrency: input.prefs.salaryCurrency ?? null,
-    levelFloor: input.prefs.levelFloor ?? null,
     minMatchScore: input.minScore
   },
   null,

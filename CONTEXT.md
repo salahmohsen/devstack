@@ -117,42 +117,49 @@ Per-application hiring pressure: `unknown | immediate | soon | flexible`.
 Not the tenant’s job preference.
 _Avoid_: conflating with job preference.
 
-**Job posting** (`job_posting`):
-Shared pantry row for one public listing (adapter + external id). No
-`userId`. Many tenants may land the same posting onto their own
-application. HTTP/ATS fields only; never a personal match score.
-_Avoid_: duplicating the full JD per user; putting `matchScore` on the pantry.
+**User job** (`user_job`):
+Per-tenant staging row for one freehire listing (`userId` + `freehireSlug`
+unique). Snapshot of the listing (title, company, salary, skills, JD) plus
+`queryHash`/`queryFilters` — the facet settings that produced it. Raw material
+for AI scoring; the landed [Application](CONTEXT.md) is the user-facing row.
+_Avoid_: treating it as shared across tenants; putting matchScore on it
+(scores live on applications); keeping rows whose `queryHash` no longer
+matches the tenant's settings.
 
-**Job company** (`job_company`):
-Shared employer record keyed by slug. Name, optional logo URL, website,
-profile. Postings point here. Years required are _not_ a company field.
-_Avoid_: treating companyName strings as identity; storing years on the company.
+**Freehire facets**:
+The per-tenant filter vocabulary sent to the freehire search API — regions,
+countries, cities (one OR group: "any of these places"), categories, skills,
+seniority, experience years, work modes, employment types, salary floor,
+visa/clearance, company type/size/domains/collections, `openWithinDays`,
+reality. Whitelists live in `packages/core` facets.ts; invalid values are
+dropped client-side because freehire silently returns zero results for them.
+_Avoid_: sending a facet value freehire doesn't know; treating geography
+facets as ANDed.
 
 **Years required**:
-Minimum years the _role_ asks for (`experienceYearsMin` on the posting).
-Shown as a badge. Caps personal `matchScore`. Does not hide the job from
-New jobs.
+Minimum years the _role_ asks for (`experienceYearsMin` from freehire
+enrichment, mirrored on the user job and application). Shown as a badge.
+Caps personal `matchScore`. Does not hide the job from New jobs.
 _Avoid_: dropping listings that ask for more years than the profile.
 
 ## Job search
 
 **Job preference**:
-The tenant’s structured search settings: title pack, level floor, work modes,
-onsite/hybrid locations, remote regions (empty = worldwide remote), role
-keywords, exclude keywords, monthly salary floor plus currency, minimum match
-score, jobs per run, and the mail-import toggle. Source of truth for what they
-want next.
+The tenant's structured search settings: freehire facets (geography, role
+categories/keywords, seniority/years, terms, company filters, freshness),
+work modes, monthly salary floor plus currency, minimum match score, daily
+AI-scoring cap, and the mail-import toggle. Source of truth for what they
+want next; saved facets also drive the per-user freehire fetch directly.
 _Avoid_: identity, search brief, hiring urgency (that is per application).
 
-**Remote regions**:
-Preferred hiring regions for remote jobs. Empty means worldwide remote.
-Distinct from onsite/hybrid locations.
-_Avoid_: putting worldwide on the hybrid locations list.
-
-**Level floor**:
-The lowest IC seniority the tenant will consider: `junior | mid | senior |
-staff`. Roles below it are out.
-_Avoid_: hiring urgency, application stage, title pack.
+**Per-user fetch**:
+Each tenant's jobs come from freehire directly, triggered three ways through
+one coalescing land queue: a staggered daily cron (only tenants with facets
+saved and activity within 7 days), an immediate refetch on settings save,
+and the manual Find-jobs-now button (also re-enrolls lapsed tenants).
+Results upsert into `user_job`; a failed fetch keeps the previous shelf
+(fail-soft, no retries).
+_Avoid_: global catalog crawls; retry loops against freehire.
 
 **Agent take**:
 Short markdown on an application explaining fit. At most five concise
@@ -184,8 +191,8 @@ hash). Any successful write to job preference or evidence (Settings, hub
 speech, conversational evidence confirm) eagerly clears that cache. The next AI layer rebuilds lazily. Never score against the previous markdown after invalidate. Spoken hub
 edits write job preference, then invalidate the brief. “What is my
 identity?” reads this brief. Paragraphs are never hard stops — only
-Exclusions, compensation Minimum, and Level floor are law. Evidence
-changes refresh prose and skill lists only.
+Exclusions (when configured), compensation Minimum, and the seeker's facet
+floors are law. Evidence changes refresh prose and skill lists only.
 _Avoid_: a second identity file, treating the markdown as the editable
 source, scoring from prose.
 
@@ -218,9 +225,9 @@ The hub supervisor runs the seeker loop on the same objects as the dashboard:
 job preference, search brief, Find jobs now, New jobs, applications. Chat is
 another door,
 not a second product and not a replacement for Settings or the board.
-Spoken soft preference fields write immediately. Hard stops (exclude,
-salary floor, level floor) confirm on a hub ApprovalCard whose body is a
-File Diff of the proposed search brief vs current. Evidence in **chat** is
+Spoken soft preference fields write immediately. Hard stops (facet
+geography/role filters, salary floor) confirm on a hub ApprovalCard whose
+body is a File Diff of the proposed search brief vs current. Evidence in **chat** is
 the same pattern (interview, then File Diff + Confirm). Dual entry: list `+`
 and inspect Edit remount `ExperienceForm` / `ProjectForm` / `StackForm`.
 Hub inspect Edit uses `EntityFormHost` (`completeOnClose: false`) and does

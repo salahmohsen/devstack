@@ -31,10 +31,7 @@ export const explainApplicationVsPrefsTool = createTool({
     prefs: z
       .object({
         workModes: z.array(z.string()),
-        locations: z.array(z.string()),
-        remoteRegions: z.array(z.string()),
-        excludeKeywords: z.array(z.string()),
-        levelFloor: z.string().nullable()
+        roleKeywords: z.array(z.string())
       })
       .nullable(),
     mismatches: z.array(z.string()),
@@ -69,28 +66,10 @@ export const explainApplicationVsPrefsTool = createTool({
       };
     }
     const workModes = prefs?.workModes ?? [];
-    const locations = prefs?.locations ?? [];
-    const remoteRegions = prefs?.remoteRegions ?? [];
-    const excludeKeywords = prefs?.excludeKeywords ?? [];
     const mismatches: string[] = [];
     const mode = row.workMode ?? null;
     if (mode && workModes.length > 0 && !workModes.includes(mode)) {
       mismatches.push(`workMode ${mode} is not in preferred modes (${workModes.join(", ")})`);
-    }
-    const loc = (row.location ?? "").toLowerCase();
-    if (loc && locations.length > 0) {
-      const placeHit = locations.some((place) => loc.includes(place.toLowerCase()));
-      const regionHit = remoteRegions.some((region) => loc.includes(region.toLowerCase()));
-      if (!placeHit && !regionHit && mode !== "remote") {
-        mismatches.push(`location "${row.location}" is outside preferred places`);
-      }
-    }
-    const hay = `${row.title} ${row.companyName}`.toLowerCase();
-    for (const raw of excludeKeywords) {
-      const word = raw.trim().toLowerCase();
-      if (word && hay.includes(word)) {
-        mismatches.push(`exclude keyword "${raw}" appears in the title/company`);
-      }
     }
     return {
       found: true,
@@ -105,10 +84,7 @@ export const explainApplicationVsPrefsTool = createTool({
       },
       prefs: {
         workModes,
-        locations,
-        remoteRegions,
-        excludeKeywords,
-        levelFloor: prefs?.levelFloor ?? null
+        roleKeywords: prefs?.roleKeywords ?? []
       },
       mismatches,
       note: "Preferences filter new landings. Already-tracked or applied rows stay until you dismiss them."

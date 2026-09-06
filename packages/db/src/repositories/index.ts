@@ -48,25 +48,19 @@ export {
 export {
   jobPreferenceRepository,
   type JobPreferenceEntity,
+  type JobPreferenceFacetData,
   type UpsertJobPreferenceData
 } from "./job-preference.repository.ts";
-export {
-  jobCompanyRepository,
-  type JobCompanyEntity,
-  type UpsertJobCompanyBySlugInput
-} from "./job-company.repository.ts";
-export {
-  jobPostingRepository,
-  preferCatalogSkills,
-  preferLongerJobDescription,
-  type JobPostingEntity,
-  type ListOpenForLandInput,
-  type UpsertJobPostingInput
-} from "./job-posting.repository.ts";
 export {
   userJobAiBudgetRepository,
   type UserJobAiBudgetEntity
 } from "./user-job-ai-budget.repository.ts";
+export {
+  userJobRepository,
+  type ListUnlandedInput,
+  type NewUserJob,
+  type UserJobEntity
+} from "./user-job.repository.ts";
 export {
   mailCrmApplyRepository,
   type CreateMailCrmApplyData,

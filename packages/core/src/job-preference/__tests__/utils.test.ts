@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { UpsertJobPreferenceInputSchema } from "#@/job-preference/types";
 import {
-  backfillRemoteRegionsFromLocations,
   buildSeekerMatchEvidence,
   defaultJobPreference,
   emptySeekerMatchEvidence,
   isOpenJobPreference,
   mergeJobPreference,
-  normalizeRemoteRegions,
   normalizeWorkModes,
   seekerEvidenceHasSignal,
   shouldPassAllHarvestJobs
@@ -45,23 +44,15 @@ describe("isOpenJobPreference", () => {
     ).toBe(false);
   });
 
-  it("treats default empty remoteRegions as open and a set list as closed", () => {
-    expect(isOpenJobPreference({ ...defaultJobPreference(), remoteRegions: [] })).toBe(true);
-    expect(isOpenJobPreference({ ...defaultJobPreference(), remoteRegions: ["eu"] })).toBe(false);
-    expect(isOpenJobPreference({ ...defaultJobPreference(), levelFloor: "senior" })).toBe(false);
+  it("is closed when only facet geography is set", () => {
+    expect(isOpenJobPreference({ ...defaultJobPreference(), regions: ["eu"] })).toBe(false);
+    expect(isOpenJobPreference({ ...defaultJobPreference(), countries: ["Germany"] })).toBe(false);
+    expect(isOpenJobPreference({ ...defaultJobPreference(), cities: ["Cairo"] })).toBe(false);
   });
-});
 
-describe("normalizeRemoteRegions", () => {
-  it("drops worldwide tokens and keeps remaining slugs", () => {
-    expect(normalizeRemoteRegions(["worldwide", "mena"])).toEqual(["mena"]);
-    expect(normalizeRemoteRegions(["worldwide"])).toEqual([]);
-  });
-});
-
-describe("backfillRemoteRegionsFromLocations", () => {
-  it("copies a non-worldwide location slug onto remoteRegions", () => {
-    expect(backfillRemoteRegionsFromLocations(["egypt"]).remoteRegions).toContain("egypt");
+  it("is closed when a non-geography facet is set", () => {
+    expect(isOpenJobPreference({ ...defaultJobPreference(), categories: ["backend"] })).toBe(false);
+    expect(isOpenJobPreference({ ...defaultJobPreference(), seniority: ["senior"] })).toBe(false);
   });
 });
 
@@ -101,23 +92,19 @@ describe("mergeJobPreference", () => {
     expect(merged.workModes).toEqual(["hybrid", "onsite"]);
   });
 
-  it("defaults new discovery fields", () => {
+  it("defaults scoring fields", () => {
     const d = defaultJobPreference();
-    expect(d.titleId).toBeNull();
-    expect(d.customTitle).toBeNull();
-    expect(d.jobsPerRun).toBe(25);
+    expect(d.minMatchScore).toBe(60);
     expect(d.dailyBoardScoreCap).toBe(50);
     expect(d.importFromEmail).toBe(false);
     expect(d.reviewApplyKit).toBe(true);
   });
 
-  it("merges jobsPerRun and importFromEmail when provided", () => {
+  it("merges importFromEmail when provided", () => {
     const merged = mergeJobPreference(defaultJobPreference(), {
-      jobsPerRun: 17,
       importFromEmail: true,
       salaryCurrency: undefined
     });
-    expect(merged.jobsPerRun).toBe(15); // snapped
     expect(merged.importFromEmail).toBe(true);
   });
 
@@ -135,6 +122,87 @@ describe("mergeJobPreference", () => {
       salaryCurrency: undefined
     });
     expect(merged.dailyBoardScoreCap).toBe(50);
+  });
+});
+
+describe("UpsertJobPreferenceInputSchema facet validation", () => {
+  it("rejects a bogus facet value", () => {
+    expect(UpsertJobPreferenceInputSchema.safeParse({ seniority: ["bogus"] }).success).toBe(false);
+    expect(UpsertJobPreferenceInputSchema.safeParse({ companySizes: ["10-20"] }).success).toBe(
+      false
+    );
+  });
+
+  it("accepts valid facet input", () => {
+    expect(
+      UpsertJobPreferenceInputSchema.safeParse({
+        seniority: ["senior", "lead"],
+        regions: ["eu", "mena"],
+        collections: ["yc"],
+        openWithinDays: 14,
+        visaSponsorship: true
+      }).success
+    ).toBe(true);
+  });
+});
+
+describe("mergeJobPreference facet semantics", () => {
+  it("applies present facet fields and defaults the rest to unset", () => {
+    const merged = mergeJobPreference(defaultJobPreference(), {
+      seniority: ["senior"],
+      visaSponsorship: false
+    });
+    expect(merged.seniority).toEqual(["senior"]);
+    expect(merged.visaSponsorship).toBe(false);
+    expect(merged.regions).toBeNull();
+    expect(merged.openWithinDays).toBeNull();
+  });
+
+  it("keeps facet values from current and passes tri-state nulls through", () => {
+    const current = mergeJobPreference(defaultJobPreference(), {
+      regions: ["eu"],
+      collections: ["yc"],
+      requiresClearance: true
+    });
+    const patched = mergeJobPreference(current, {
+      requiresClearance: null,
+      openWithinDays: 7
+    });
+    expect(patched.regions).toEqual(["eu"]);
+    expect(patched.collections).toEqual(["yc"]);
+    expect(patched.requiresClearance).toBeNull();
+    expect(patched.openWithinDays).toBe(7);
+  });
+
+  it("defaults all facets on first write with no patch", () => {
+    const merged = mergeJobPreference(defaultJobPreference(), undefined);
+    expect(merged.seniority).toBeNull();
+    expect(merged.workModes).toEqual([]);
+    expect(merged.minMatchScore).toBe(60);
+  });
+
+  it("clears an array facet on an explicit null patch", () => {
+    const current = mergeJobPreference(defaultJobPreference(), {
+      regions: ["eu"],
+      categories: ["backend"],
+      seniority: ["senior"]
+    });
+    expect(current.regions).toEqual(["eu"]);
+    const patched = mergeJobPreference(current, { regions: null });
+    expect(patched.regions).toBeNull();
+    expect(patched.categories).toEqual(["backend"]);
+    expect(patched.seniority).toEqual(["senior"]);
+  });
+
+  it("keeps array facets when the patch omits them", () => {
+    const current = mergeJobPreference(defaultJobPreference(), {
+      regions: ["eu", "apac"],
+      collections: ["yc"]
+    });
+    const patched = mergeJobPreference(current, { seniority: ["lead"] });
+    expect(patched.regions).toEqual(["eu", "apac"]);
+    expect(patched.collections).toEqual(["yc"]);
+    expect(patched.seniority).toEqual(["lead"]);
   });
 });
 
@@ -165,6 +233,16 @@ describe("seeker match evidence", () => {
     });
     expect(
       shouldPassAllHarvestJobs({ ...defaultJobPreference(), roleKeywords: ["frontend"] }, evidence)
+    ).toBe(false);
+  });
+
+  it("never pass-all when only facet geography is set", () => {
+    expect(shouldPassAllHarvestJobs({ ...defaultJobPreference(), regions: ["eu"] })).toBe(false);
+    expect(
+      shouldPassAllHarvestJobs(
+        { ...defaultJobPreference(), regions: ["eu"] },
+        emptySeekerMatchEvidence()
+      )
     ).toBe(false);
   });
 });

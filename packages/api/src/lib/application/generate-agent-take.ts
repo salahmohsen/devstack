@@ -50,7 +50,7 @@ export type GenerateAgentTakeResult =
   | { ok: false; code: GenerateAgentTakeErrorCode; message?: string };
 
 export type GenerateAgentTakeTextResult =
-  | { ok: true; text: string; hasExclude: boolean; hasBrief: boolean }
+  | { ok: true; text: string; hasBrief: boolean }
   | { ok: false; code: Exclude<GenerateAgentTakeErrorCode, "NOT_FOUND">; message?: string };
 
 export type AgentTakeSkillsMatch = {
@@ -120,15 +120,7 @@ ${prefsSummary ?? "(not set)"}`;
 
 type TakePrefsColumns = Pick<
   JobPreference,
-  | "roleKeywords"
-  | "locations"
-  | "remoteRegions"
-  | "workModes"
-  | "excludeKeywords"
-  | "levelFloor"
-  | "salaryMin"
-  | "salaryCurrency"
-  | "minMatchScore"
+  "roleKeywords" | "workModes" | "salaryMin" | "salaryCurrency" | "minMatchScore"
 >;
 
 export function prefsSummaryFromRow(
@@ -139,11 +131,7 @@ export function prefsSummaryFromRow(
   if (!prefs && !evidence && !searchBriefMarkdown?.trim()) return null;
   const columns = {
     roleKeywords: prefs?.roleKeywords ?? [],
-    locations: prefs?.locations ?? [],
-    remoteRegions: prefs?.remoteRegions ?? [],
     workModes: prefs?.workModes ?? [],
-    excludeKeywords: prefs?.excludeKeywords ?? [],
-    levelFloor: prefs?.levelFloor ?? null,
     salaryMin: prefs?.salaryMin ?? null,
     salaryCurrency: prefs?.salaryCurrency ?? null,
     minMatchScore: prefs?.minMatchScore ?? null
@@ -158,7 +146,6 @@ ${JSON.stringify(columns, null, 2)}`,
 
 async function loadTakePromptContext(userId: string): Promise<{
   prefsSummary: string | null;
-  hasExclude: boolean;
   hasBrief: boolean;
 }> {
   const [prefs, evidence, brief] = await Promise.all([
@@ -169,7 +156,6 @@ async function loadTakePromptContext(userId: string): Promise<{
   const searchBriefMarkdown = brief?.markdown ?? null;
   return {
     prefsSummary: prefsSummaryFromRow(prefs, evidence, searchBriefMarkdown),
-    hasExclude: prefs.excludeKeywords.length > 0,
     hasBrief: Boolean(searchBriefMarkdown?.trim())
   };
 }
@@ -208,11 +194,11 @@ export async function generateAgentTakeText(input: {
 
   const takeCtx =
     input.prefsSummary !== undefined
-      ? { prefsSummary: input.prefsSummary, hasExclude: false, hasBrief: false }
+      ? { prefsSummary: input.prefsSummary, hasBrief: false }
       : await loadTakePromptContext(input.userId);
   const prompt = buildPrompt(input.job, takeCtx.prefsSummary, input.matchReasons);
   const byo = llmLogFields(llm);
-  const injectFlags = { hasExclude: takeCtx.hasExclude, hasBrief: takeCtx.hasBrief };
+  const injectFlags = { hasBrief: takeCtx.hasBrief };
 
   try {
     const sessionToken = await ensureSessionTokenForUser(input.userId);
@@ -387,7 +373,6 @@ export async function generateAgentTake(input: {
     event: "generate_agent_take_ok",
     applicationId: input.applicationId,
     takeLength: text.text.length,
-    hasExclude: text.hasExclude,
     hasBrief: text.hasBrief
   });
   log.emit();

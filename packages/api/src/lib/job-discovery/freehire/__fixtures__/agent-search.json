@@ -1,0 +1,234 @@
+{
+  "data": [
+    {
+      "public_slug": "middle-senior-product-qa-manual-ai-product-genesis-tech-dvfs55vh",
+      "source": "breezy",
+      "external_id": "gen-tech:62bc2fdcdd91",
+      "url": "https://gen-tech.breezy.hr/p/62bc2fdcdd91-middle-senior-product-qa-manual-ai-product?utm_source=freehire.me",
+      "title": "Middle/Senior Product QA (Manual) - AI Product",
+      "company": "Genesis Tech",
+      "company_slug": "genesis-tech",
+      "location": "Ukraine",
+      "description": "<p><strong>About the role</strong></p>\n<p>Hi, we&#39;re the Findies team, <strong>looking for our first dedicated Product QA Engineer</strong>. Right now, our dev team uses AI to move incredibly fast, but quality still lives in everyone&#39;s head and gets caught only in the final checks before a release. Your job is to change that. <strong>You will own quality across our entire product infrastructure: </strong>two mobile apps (iOS &amp; Android) and our web platform.</p>\n<p><strong>This is not</strong> a typical <strong>&#39;run the checklist&#39; role</strong>. We are looking for a <strong>product-minded QA who will build our testing strategy from scratch</strong>, align quality with engineering workflows, and directly influence whether we are ready to ship to our users.</p>\n<p><strong>Reality Check</strong></p>\n<p>We are a fast-moving team transforming how people shop, using non-linear AI experts. This means there are <strong>no legacy QA processes or pre-written test plans here yet. </strong>You will face constant ambiguity and will need to establish best practices entirely on your own. If you prefer rigid corporate structures and ready-made documentation, this role will likely feel overwhelming. But if you want total ownership and <strong>the chance to build a QA ecosystem from zero</strong>, you&#39;ll love it here.</p>\n<p><strong>Your Mission</strong></p>\n<ul> <li><strong>Build the QA foundation from scratch:</strong> establish risk maps, design clear test cases, maintain a regression suite, and set up test environments/accounts for our web and mobile applications.</li> <li><strong>Embed QA into the SDLC:</strong> join features at the requirements stage, define acceptance criteria alongside product and engineering, and implement structured bug triage and release checklists.</li> <li><strong>Own critical user flows: </strong>validate core customer experiences, including non-linear AI chat interactions, personalized shopping expert recommendations, product search, and database responses.</li> <li><strong>Leverage AI tools natively: </strong>actively use AI in your daily routine to optimize test coverage, analyze logs, streamline reporting, and keep pace with our development team&#39;s high-speed deployment cycle.</li> <li><strong>Drive metrics and monitoring:</strong> track and report on crash-free rates, app store performance, support tickets, and API behavior to help prioritize what the engineering team fixes next.</li> </ul>\n<p><strong>What Makes You the Perfect Fit</strong></p>\n<ul> <li><strong>3+ years of experience in QA</strong> roles testing both mobile products (iOS/Android) and web applications.</li> <li><strong>Proven track record of building QA infrastructure from scratch</strong>, rather than just maintaining an existing framework.</li> <li><strong>Strong understanding of client-server architecture</strong> and hands-on experience with API testing tools (Postman/Swagger, or Fiddler).</li> <li><strong>Solid technical toolkit: </strong>comfort analyzing database behaviors (SQL), navigating backend structures, and reviewing logs/crash reports.</li> <li><strong>An exceptional eye for detail and product taste: </strong>you care deeply about smooth animations, intuitive UI layout (Figma proficiency is a big plus), and the overall consumer feel of a product.</li> <li><strong>Extreme autonomy: </strong>high ownership and the ability to execute without requiring a manager to hand you a predefined test plan.</li><li><strong>Language:</strong> Ukrainian, Upper-Intermediate (B2+) English or higher.</li> </ul>\n<p><strong>What&#39;s in It for You</strong></p>\n<ul> <li><strong>Build your own legacy: </strong>you won&#39;t be maintaining someone else&#39;s old code or outdated processes. You will design, implement, and own the entire QA culture and infrastructure from scratch.</li> <li><strong>Work at the cutting edge of AI: </strong>our development team relies heavily on AI to ship features fast. You will have total freedom to integrate AI tools into your testing workflows, experiment with automated coverage, and push the boundaries of modern QA.</li> <li><strong>Direct business impact: </strong>your voice matters. You will have a seat at the table with product and engineering leaders, and the direct authority to block a release if it doesn&#39;t meet our product standards.</li> <li><strong>Zero bureaucracy:</strong> we value speed, common sense, and ownership. There are no useless syncs, rigid hierarchies, or endless approval chains. If something is broken, you fix it.</li> <li><strong>Growth and ownership: </strong>as the first QA engineer, you will naturally be in the perfect position to lead and scale the quality assurance team as the product grows.</li> </ul>\n<p><strong>Perks &amp; Benefits</strong></p>\n<ul> <li><strong>Remote-First &amp; Coworking Coverage:</strong> work remotely, with your coworking space membership covered..</li> <li><strong>Time Off to Recharge: </strong>20 working days of fully paid vacation per year, plus paid sick leave.</li> <li><strong>Learning &amp; Growth:</strong> compensation for professional courses, conferences, specialized workshops, and intensive English training.</li> <li><strong>Healthcare: </strong>comprehensive medical insurance and access to a corporate doctor.</li></ul>",
+      "countries": ["ua"],
+      "regions": ["eu"],
+      "work_mode": "remote",
+      "skills": [
+        "acceptance-criteria",
+        "ai",
+        "android",
+        "api",
+        "figma",
+        "ios",
+        "postman",
+        "sdlc",
+        "sql",
+        "swagger",
+        "user-flows"
+      ],
+      "cities": ["Ukraine"],
+      "collections": [],
+      "posted_at": "2026-09-05T14:43:09Z",
+      "created_at": "2026-09-02T01:26:54Z",
+      "last_seen_at": "2026-09-05T15:06:34Z",
+      "closed_at": null,
+      "enrichment": {
+        "summary": "First dedicated Product QA Engineer for Genesis Tech's Findies team, an AI-powered shopping product. You'll build the QA strategy from scratch across iOS, Android, and web apps \u2014 designing test cases, validating API/SQL behavior, and owning release quality while using AI tools to keep pace with a fast shipping cycle.",
+        "seniority": "senior",
+        "experience_years_min": 3,
+        "english_level": "b2",
+        "category": "qa",
+        "domains": ["ecommerce"],
+        "posting_language": "en",
+        "company_type": "product",
+        "requirements": [
+          {
+            "text": "4+ years of QA experience testing both mobile (iOS/Android) and web applications",
+            "priority": "required"
+          },
+          {
+            "text": "Proven track record of building QA infrastructure from scratch, not just maintaining existing frameworks",
+            "priority": "required"
+          },
+          {
+            "text": "Strong understanding of client-server architecture",
+            "priority": "required"
+          },
+          {
+            "text": "Hands-on experience with API testing tools (Postman/Swagger, or Fiddler)",
+            "priority": "required"
+          },
+          {
+            "text": "Comfort analyzing database behaviors (SQL)",
+            "priority": "required"
+          },
+          {
+            "text": "Navigating backend structures and reviewing logs/crash reports",
+            "priority": "required"
+          },
+          {
+            "text": "Exceptional eye for detail and product taste (animations, UI layout, consumer feel)",
+            "priority": "required"
+          },
+          {
+            "text": "Figma proficiency",
+            "priority": "preferred"
+          },
+          {
+            "text": "Extreme autonomy: high ownership and ability to execute without a predefined test plan",
+            "priority": "required"
+          },
+          {
+            "text": "Ukrainian language",
+            "priority": "required"
+          },
+          {
+            "text": "Upper-Intermediate (B2+) English or higher",
+            "priority": "required"
+          }
+        ]
+      },
+      "enrichment_version": 2,
+      "reality": {
+        "class": "fresh",
+        "age_days": 3,
+        "repost_count": 1,
+        "mass_posting_count": 1,
+        "fake_freshness": false
+      }
+    },
+    {
+      "public_slug": "brand-marketing-manager-we-are-rosie-rwhs26fd",
+      "source": "smartrecruiters",
+      "external_id": "wearerosie:3743990015093136",
+      "url": "https://jobs.smartrecruiters.com/WeAreRosie/3743990015093136-brand-marketing-manager?utm_source=freehire.me",
+      "title": "Brand Marketing Manager",
+      "company": "We Are Rosie",
+      "company_slug": "we-are-rosie",
+      "location": "Palmetto, GA, us",
+      "description": "<p>The Brand Marketing Manager supports the Global Brand Lead across non-campaign and special projects, including large-scale brand events, standing up a new in-house social content studio, and additional initiatives as they develop.</p><p>This role works across internal and external teams to maintain brand excellence across all touchpoints, partnering closely with product marketing and social teams to keep consumer insight and business impact at the center of every execution.</p><p>Successful candidates are cross-functional thinkers and doers. They are fluent in global brand strategy and in all things social, experienced in agency relationships and the creative development process, and operationally rigorous. They communicate clearly and persuasively with senior executives in writing and in person, and they have a strong eye for creative and social output along with the ability to influence others toward good creative decisions.</p><p><strong>KEY RESPONSIBILITIES</strong></p><ul><li>Help stand up an in-house social content studio in partnership with creative, production, and social teams</li><li>Support brand strategy development for marketing campaigns</li><li>Develop brand and go-to-market strategy for future product launches and strategic special projects</li><li>Manage relationships with internal and external creative partners, facilitating the creative development process and reviews</li><li>Ensure creative excellence and consistency in visual identity, messaging, and communications across all touchpoints</li><li>Partner closely with product marketing, social, creative, production, and owned channel teams</li><li>Work with regional teams to scale creative to local markets</li></ul><p><strong>REQUIRED QUALIFICATIONS</strong></p><ul><li>Bachelor&#39;s degree in Marketing, Business, or equivalent practical experience</li><li>7+ years of experience in brand, consumer, and social marketing</li><li>Experience shaping global brands and leading large-scale, cross-functional brand campaigns and complex global strategies</li><li>Experience managing relationships with creative agencies and production houses</li><li>Experience managing high-stakes cross-functional projects with senior-level stakeholders</li></ul><p><strong>PREFERRED QUALIFICATIONS</strong></p><ul><li>Strong problem solving and critical thinking skills, with the ability to distill complex analysis into clear, actionable guidance</li><li>Self-starter able to build strategies from scratch and manage multiple projects at once with high standards for the work</li><li>Comfortable navigating ambiguity, high-pressure situations, and a fast-paced environment</li><li>Strong communication and presentation skills in rooms of all sizes and seniority levels</li><li>Strong negotiation skills for resolving conflict</li><li>Experience in mobile devices, telecommunications, or physical goods</li></ul><p>We Are Rosie provides strategic consulting and talent solutions for the marketing industry. We partner with more than 200 of the world\u2019s biggest brands and agencies to help them solve unique marketing challenges with the best people, swiftly and at scale. Founded by former advertising executive Stephanie Nadi Olson in 2018, We Are Rosie is on a mission to redefine how marketing works, with an inclusive, human-centric approach that\u2019s better for business and better for marketers. Our company has been recognized as an industry trailblazer and earned many accolades, including being named to the 2023 Global Top 100 Inspiring Workplaces, the Inc. 5000 2022, and Adweek\u2019s Fastest Growing Agencies in 2021.<br>\n </p><div></div><p>We Are Rosie is an equal opportunity employer. We do not discriminate on the basis of race, color, religion, age, national origin, ancestry, physical or mental disability, medical\u200b\u200b\u200b condition, pregnancy, genetic information, gender, sexual orientation, gender identity or \u200bexpression, veteran status, marital status, or any other status protected under federal, state, or local law.</p>",
+      "countries": ["us"],
+      "regions": ["north_america"],
+      "work_mode": "remote",
+      "skills": ["go-to-market"],
+      "cities": ["North Myrtle Beach"],
+      "collections": [],
+      "posted_at": "2026-09-05T13:51:15Z",
+      "created_at": "2026-09-05T14:55:40Z",
+      "last_seen_at": "2026-09-05T14:55:40Z",
+      "closed_at": null,
+      "enrichment": {
+        "employment_type": "contract",
+        "seniority": "senior",
+        "experience_years_min": 7,
+        "category": "marketing",
+        "posting_language": "en"
+      },
+      "enrichment_version": 0,
+      "reality": {
+        "class": "fresh",
+        "age_days": 0,
+        "repost_count": 1,
+        "mass_posting_count": 1,
+        "fake_freshness": false
+      }
+    },
+    {
+      "public_slug": "senior-ai-engineer-harness-development-automat-it-go7a7vpb",
+      "source": "comeet",
+      "external_id": "automatit/26.003:C2.F35",
+      "url": "https://www.automat-it.com/careers/co/ukraine/C2.F35/senior-full-stack-engineer/all/?utm_source=freehire.me",
+      "title": "Senior AI Engineer (Harness Development)",
+      "company": "Automat-it",
+      "company_slug": "automat-it",
+      "location": "Ukraine, Ukraine",
+      "description": "<p>Automat-it is an all-in AWS Premier Partner and Managed Services Provider specializing in the startup ecosystem. With over 800 customers and 500+ AWS certifications, Automat-it brings hands-on expertise in AI, DevOps, and FinOps to empower fast-paced startups to grow, deliver &amp; win. Our customers save significant time-to-market and optimize their cloud performance and costs.</p><p><br></p><p>We work across EMEA and the US, fueling innovation and solving complex challenges daily. Join us to grow your skills, shape bold ideas, and help build the future of tech.</p><p><br></p><p>We are looking for a Senior AI Engineer (Harness Development) to join our dynamic R&amp;D Team, where you will own high-scale features end-to-end across our FinOps platform and AWS billing engine - contributing directly to our mission of empowering fast-paced startups.</p><p><br></p><p>This role is for an engineer who has already built AI-driven software development systems, not just used AI coding assistants. We\u2019re looking for someone with production experience designing autonomous engineering workflows, improving how software is built through agents, and turning AI from an individual coding tool into an engineering capability used across a team. We\u2019re looking for someone excited that the craft of software is changing, and who wants to operate at (and help define) the frontier of it.</p><p><br></p><p>You will work with: Node.js/TypeScript (NestJS, Fastify, Prisma ORM) + React (TanStack, TipTap, Material UI, Untitled UI) + PostgreSQL.</p><p><br></p><p>\ud83d\udccd Work location: remote from Ukraine</p><p><br></p><p><br></p><p>Curious about what it&#39;s really like to work at Automat-it?</p><p>Explore our benefits, culture, and what success in your first year could look like here.</p><p><br></p><p>If you are interested in this opportunity, please submit your CV in English.</p><h3>Key Responsibilities</h3><ul><li>Own features end-to-end, from vague stakeholder ask to production deployment, including discovery, design, implementation, testing, rollout and iteration.</li><li>Refine requirements proactively using the Value, Usability, Feasibility and Viability (VUFV) framework. Challenge weak requirements, propose better solutions and maintain a tight feedback loop with stakeholders.</li><li>Generate production code with AI while taking full ownership of architecture, correctness, security, performance and long-term maintainability.</li><li>Design and evolve company-specific AI engineering workflows, including development agents, multi-agent orchestration, evaluation pipelines and autonomous feature implementation, improving how software is built rather than simply consuming existing AI tools.</li><li>Continuously improve the engineering harness by refining context, prompts, skills, MCP integrations, validation workflows and developer automation that enable reliable AI-assisted software delivery at scale.</li><li>Solve deep technical problems across FinOps processes and AWS billing calculations.</li><li>Ship scalable, maintainable, well-tested and well-documented software, while maintaining the architecture and implementation documentation behind it.</li></ul><h3>Requirements</h3><ul><li>5+ years of experience as a Full Stack Engineer shipping production systems.</li><li>Deep expertise in the TypeScript ecosystem, particularly Node.js, NestJS, React, PostgreSQL and modern backend architecture.</li><li>Strong product engineering mindset with the ability to translate complex, ambiguous business requirements into scalable technical solutions and challenge assumptions when there\u2019s a better approach.</li><li>Proven production experience building autonomous software engineering workflows, AI engineering platforms, development agents or engineering automation, not just using AI coding assistants.</li><li>Experience designing multi-agent workflows, autonomous development pipelines, evaluation and validation frameworks, or similar AI-native engineering systems.</li><li>Strong understanding of Context Engineering, including managing repository context, engineering knowledge, MCP integrations and long-running agent workflows.</li><li>Experience validating AI-generated code through automated evaluation, testing, CI/CD and review systems.</li><li>Excellent debugging, problem-solving and software design skills, with a strong focus on code quality, scalability and maintainability.</li><li>Fluent written and verbal English.</li></ul><p><strong>Nice to have</strong></p><ul><li>Experience building autonomous feature development or ticket-to-code workflows.</li><li>Experience with planner, generator, evaluator or other multi-agent orchestration patterns.</li><li>Experience building custom MCP servers, AI developer tooling or internal engineering platforms.</li><li>Experience with AI evaluation frameworks, engineering knowledge systems or long-running autonomous agents.</li><li>Experience with vector databases.</li><li>Experience with monorepo tooling (Turborepo, Nx).</li><li>Experience with Puppeteer / Playwright.</li><li>Strong SQL knowledge.</li><li>Experience with Fastify.</li><li>Familiarity with AWS services.</li><li>Experience with financial dashboards or data-heavy products.</li><li>Strapi Framework experience.</li><li>Experience with Material UI at scale.</li></ul><p><br></p><p>Automat-it is committed to fostering a workplace that promotes equal opportunities for all. We firmly believe that cultivating a diverse workforce is crucial to our success. Our recruitment decisions are grounded in your experience and skills, recognizing the value you bring to our team.</p>",
+      "countries": ["ua"],
+      "regions": ["eu"],
+      "work_mode": "remote",
+      "skills": [
+        "ai",
+        "automation",
+        "aws",
+        "ci-cd",
+        "cloud",
+        "devops",
+        "fastify",
+        "finops",
+        "mcp",
+        "nestjs",
+        "nodejs",
+        "playwright",
+        "postgresql",
+        "puppeteer",
+        "react",
+        "sql",
+        "typescript",
+        "vector-databases"
+      ],
+      "cities": ["Ukraine"],
+      "collections": [],
+      "posted_at": "2026-09-05T13:42:53Z",
+      "created_at": "2026-09-02T09:53:28Z",
+      "last_seen_at": "2026-09-05T14:32:53Z",
+      "closed_at": null,
+      "enrichment": {
+        "summary": "Senior full-stack engineer to build AI-driven development harnesses and autonomous engineering workflows while owning features end-to-end on Automat-it's FinOps platform and AWS billing engine. Core stack: Node.js/TypeScript (NestJS, Fastify, Prisma), React, and PostgreSQL, remote from Ukraine.",
+        "seniority": "senior",
+        "experience_years_min": 5,
+        "english_level": "c1",
+        "category": "ai_engineering",
+        "domains": ["devtools"],
+        "posting_language": "en",
+        "company_type": "outsource"
+      },
+      "enrichment_version": 2,
+      "reality": {
+        "class": "fresh",
+        "age_days": 3,
+        "repost_count": 1,
+        "mass_posting_count": 1,
+        "fake_freshness": false
+      }
+    },
+    {
+      "public_slug": "senior-account-executive-asean-north-asia-personetics-wrcxlmvz",
+      "source": "comeet",
+      "external_id": "personetics/83.00A:4D.175",
+      "url": "https://personetics.com/us/careers-4/co/singapore/4D.175/senior-account-executive-asean-north-asia/all/?utm_source=freehire.me",
+      "title": "Senior Account Executive, ASEAN & North Asia",
+      "company": "Personetics",
+      "company_slug": "personetics",
+      "location": "Singapore, Singapore",
+      "description": "<p>Personetics is the financial intelligence layer for banks. Our Cognitive Banking platform turns a bank&#39;s own transaction data into real-time, personalised guidance, delivered in the bank&#39;s own channels and under its own brand. It embeds into the systems a bank already runs, extending what those investments deliver rather than replacing them. </p><p>More than 100 financial institutions use Personetics to reach over 150 million customers across 30 markets. We work from New York, London, Singapore, S\u00e3o Paulo and Tel Aviv. </p><h3>About the position</h3><p>You will work at the forefront of how AI is changing retail banking, alongside the Tier 1 and Tier 2 institutions across ASEAN and North Asia, at the level where digital and data strategy is actually set: Chief Digital Officers, Chief Data &amp; AI Officers and Heads of Retail. Some are already our customers. Others are deciding now how to build the intelligence layer between their data and their customers, and your job is to earn the right to shape that decision. </p><p>You will be working from a position of strength. Banks already have the data, the products, the rails and the customer&#39;s trust. What they do not have is a way to turn all of it into guidance that arrives at the right moment, at scale, and within the rules. That gap is costing them: 80 percent of consumers in Asia Pacific would consider switching banks to close it. You are here to make sure they close it with us. </p><h3>Responsibilities</h3><ul><li><strong>Win new Tier 1 and Tier 2 banks.</strong> Develop and execute account strategies across the region, building senior relationships and getting into banks early, before a formal process begins. Arrive with a considered point of view on a bank&#39;s position and priorities. </li><li>Own the commercial relationship in the accounts we already serve, extending into new business lines, new markets and new use cases, and ensuring long-term partnerships continue to earn their place. </li><li>Manage the full cycle from sourcing through to signature, including senior stakeholder engagement, technical and security evaluation, regulatory and outsourcing review, procurement and legal. Build the commercial case on the bank\u2019s own economics and defend it with confidence. </li><li>Direct pre-sales, and the professional services architects who come in behind them, along with product and customer success, into the accounts where they will change the outcome. Lead a coordinated pursuit rather than a solo one. </li><li>Maintain accurate qualification, pipeline and forecasting, and give the business a clear and honest view of what is real. </li><li>Represent Personetics at the industry events and client forums that matter across the region, and turn that presence into relationships and pipeline. </li></ul><p><br></p><h3>Requirements</h3><ul><li>A track record of sourcing and closing complex enterprise software deals with banks or large financial institutions, as the accountable owner of the full sales cycle </li><li>Credibility with senior banking stakeholders, and the instinct to earn a strategic conversation rather than a product one </li><li>Experience selling into environments where an incumbent platform or an in-house build already exists </li><li>The ability to build a commercial business case and defend it with a finance stakeholder </li><li>The judgement to tell a bank something it did not want to hear, and the standing to be listened to when you do </li><li>The patience for cycles measured in quarters, and the discipline to keep one moving through the months when nothing visible is happening </li><li><strong>Based in Singapore or Hong Kong </strong></li><li><strong>Willing to travel across the region, approximately 30% to 40%</strong></li></ul><p><strong><u>What You Can Expect From Us</u></strong><u> </u></p><ul><li>An established customer base in the region to build from, with 25 million active users across Asia Pacific </li><li>Referenceable customers in the region who will take a call from a prospect </li><li>Dedicated pre-sales for the region, working with you from first meeting through to solution design, with professional services architects joining for technical depth as deals progress </li><li>Regional marketing and an active presence at the industry events that matter across ASEAN </li><li>A leadership team that works alongside you in your accounts </li><li>Remote-first, with an office in Singapore and colleagues to share it with when you want to. No required days. </li></ul><p><br></p>",
+      "countries": ["hk", "sg"],
+      "regions": ["apac"],
+      "work_mode": "remote",
+      "skills": ["ai", "pre-sales", "rails", "solution-design"],
+      "cities": ["Hong Kong", "Hong Kong Island", "Singapore"],
+      "collections": [],
+      "posted_at": "2026-09-05T13:35:49Z",
+      "created_at": "2026-09-02T09:52:59Z",
+      "last_seen_at": "2026-09-05T14:33:32Z",
+      "closed_at": null,
+      "enrichment": {
+        "seniority": "senior",
+        "category": "sales",
+        "posting_language": "en"
+      },
+      "enrichment_version": 0,
+      "reality": {
+        "class": "fresh",
+        "age_days": 3,
+        "repost_count": 2,
+        "mass_posting_count": 2,
+        "fake_freshness": false
+      }
+    }
+  ],
+  "meta": {
+    "limit": 4,
+    "offset": 0,
+    "total": 7734
+  }
+}
