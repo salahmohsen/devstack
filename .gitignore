@@ -62,3 +62,12 @@ docs/superpowers/*.dev.vars
 
 # Brainstorm visual companion
 .superpowers/
+
+# Teaching workspace (job-discovery study) — never tracked
+/MISSION.md
+/NOTES.md
+/RESOURCES.md
+/lessons/
+/reference/
+/assets/
+/learning-records/
