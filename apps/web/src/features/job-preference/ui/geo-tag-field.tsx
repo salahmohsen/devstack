@@ -65,8 +65,10 @@ function GeoTagField(props: GeoTagFieldProps) {
   const [debounced, setDebounced] = useState("");
   const [focused, setFocused] = useState(false);
   const [highlight, setHighlight] = useState(-1);
+  const [entryError, setEntryError] = useState<string | null>(null);
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const skipBlurCommitRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -139,7 +141,17 @@ function GeoTagField(props: GeoTagFieldProps) {
   );
 
   const commitDraft = useCallback(() => {
-    addTokens(draftTokens(draft, props.kind));
+    const tokens = draftTokens(draft, props.kind);
+    addTokens(tokens);
+    if (props.kind === "country") {
+      const rawCount = draft
+        .split(/[,;\n]/)
+        .map((token) => token.trim())
+        .filter(Boolean).length;
+      if (rawCount > tokens.length) {
+        setEntryError("Use a 2-letter country code");
+      }
+    }
     setDraft("");
   }, [addTokens, draft, props.kind]);
 
@@ -149,8 +161,8 @@ function GeoTagField(props: GeoTagFieldProps) {
       event.preventDefault();
       const delta = event.key === "ArrowDown" ? 1 : -1;
       setHighlight((current) => {
-        const base = current < 0 ? (delta === 1 ? -1 : 0) : current;
-        return Math.min(Math.max(base + delta, 0), options.length - 1);
+        if (current < 0) return delta === 1 ? 0 : options.length - 1;
+        return Math.min(Math.max(current + delta, 0), options.length - 1);
       });
       return;
     }
@@ -166,6 +178,8 @@ function GeoTagField(props: GeoTagFieldProps) {
     }
     if (event.key === "Escape") {
       setHighlight(-1);
+      skipBlurCommitRef.current = true;
+      setDraft("");
       inputRef.current?.blur();
       return;
     }
@@ -215,12 +229,14 @@ function GeoTagField(props: GeoTagFieldProps) {
             type="text"
             role="combobox"
             aria-expanded={open}
-            aria-controls={open ? listId : undefined}
+            aria-haspopup="listbox"
+            aria-controls={open && options.length > 0 ? listId : undefined}
             aria-activedescendant={
               open && clampedHighlight >= 0 ? `${listId}-${clampedHighlight}` : undefined
             }
             aria-autocomplete="list"
             aria-label={props.label ?? props.placeholder ?? "Locations"}
+            aria-invalid={entryError != null || undefined}
             autoComplete="off"
             placeholder={values.length > 0 ? undefined : props.placeholder}
             className={cn(
@@ -228,32 +244,37 @@ function GeoTagField(props: GeoTagFieldProps) {
               values.length > 0 ? "ps-0.5" : "ps-2"
             )}
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              setEntryError(null);
+            }}
             onFocus={() => setFocused(true)}
             onBlur={() => {
               setFocused(false);
+              if (skipBlurCommitRef.current) {
+                skipBlurCommitRef.current = false;
+                return;
+              }
               if (draft.trim()) commitDraft();
             }}
             onKeyDown={handleKeyDown}
           />
         </div>
         {open ? (
-          <div
-            id={listId}
-            role="listbox"
-            aria-label={props.label}
-            className="absolute inset-x-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-popover p-1 text-sm shadow-md"
-          >
-            {options.length === 0 ? (
-              <div
-                className="px-2 py-1.5 text-muted-foreground"
-                role="option"
-                aria-selected={false}
-              >
+          options.length === 0 ? (
+            <div className="absolute inset-x-0 top-full z-50 mt-1 rounded-lg border border-border bg-popover p-1 text-sm shadow-md">
+              <div className="px-2 py-1.5 text-muted-foreground">
                 {citiesQuery.isFetching ? "Searching…" : "No matches. Type to add anyway."}
               </div>
-            ) : (
-              options.map((option, index) => (
+            </div>
+          ) : (
+            <div
+              id={listId}
+              role="listbox"
+              aria-label={props.label}
+              className="absolute inset-x-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-popover p-1 text-sm shadow-md"
+            >
+              {options.map((option, index) => (
                 <div
                   id={`${listId}-${index}`}
                   key={`${option.value}-${option.country}`}
@@ -271,12 +292,14 @@ function GeoTagField(props: GeoTagFieldProps) {
                     {option.country}
                   </span>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )
         ) : null}
       </div>
-      <p className="text-xs text-muted-foreground">{hint}</p>
+      <p className={cn("text-xs", entryError ? "text-destructive" : "text-muted-foreground")}>
+        {entryError ?? hint}
+      </p>
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );
