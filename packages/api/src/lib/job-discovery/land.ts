@@ -21,6 +21,7 @@ import {
 
 import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
 import { requestJobInboxAi } from "#@/lib/job-discovery/enqueue";
+import { utcDay } from "#@/lib/job-discovery/enrollment";
 import { fetchUserJobs } from "#@/lib/job-discovery/fetch";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
@@ -35,10 +36,6 @@ export type DiscoveryLandResult = {
   landed: number;
   reason: DiscoveryLandReason;
 };
-
-function utcDay(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
-}
 
 function asWorkMode(value: string | null | undefined): WorkMode | null {
   const parsed = WorkModeSchema.safeParse(value);

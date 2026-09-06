@@ -30,11 +30,8 @@ import {
   invalidateSearchBrief
 } from "#@/lib/application/search-brief";
 import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
+import { utcDay } from "#@/lib/job-discovery/enrollment";
 import { protectedProcedure } from "#@/lib/procedures/factory";
-
-function utcDay(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
-}
 
 function toOutput(
   row: NonNullable<Awaited<ReturnType<typeof jobPreferenceRepository.findByUserId>>>,

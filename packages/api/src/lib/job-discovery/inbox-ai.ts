@@ -39,6 +39,7 @@ import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/gen
 import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
 import { scoreApplicationMatch } from "#@/lib/application/score-application-match";
 import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
+import { utcDay } from "#@/lib/job-discovery/enrollment";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
@@ -147,10 +148,6 @@ export function decideEvaluateOutcome(input: {
     insert: { trackingStatus: "inbox", agentTake: input.takeText },
     backfill: false
   };
-}
-
-function utcDay(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
 }
 
 /** One take attempt for an inbox keeper. Failure does not block land. */
@@ -531,7 +528,7 @@ async function runInboxAiForJob(input: {
     resolveRuntimeAiCredentials(input.userId, "scorer"),
     userJobRepository.findById(input.jobId)
   ]);
-  if (!job) {
+  if (!job || job.userId !== input.userId) {
     return { outcome: "skipped" };
   }
 
