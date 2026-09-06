@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-05
 **Author:** Salah
-**Status:** Draft (grill lock)
+**Status:** Implemented (plan: [2026-09-05-freehire-only-job-discovery](../plans/2026-09-05-freehire-only-job-discovery.md))
 **Surfaces:** Job settings, New jobs page, Find jobs now (button + hub tool), server queues, packages/db, packages/api, packages/core
 **Verification skill:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) (required after implement; living lessons in that skill's `LESSONS.md`)
 **Glossary:** [CONTEXT.md](../../../CONTEXT.md)
