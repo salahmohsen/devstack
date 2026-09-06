@@ -10,7 +10,7 @@ const STAGES = [
   {
     id: "discover",
     label: "New jobs",
-    detail: "Public boards via adapters. Optional mail harvest.",
+    detail: "Freehire listings per user. Optional mail harvest.",
     icon: Radar
   },
   {
@@ -35,7 +35,7 @@ const STAGES = [
 
 /**
  * Synthetic apply-loop diagram for the product landing.
- * Adapter-first discovery; mail is an optional channel, not the only source.
+ * Freehire-only discovery; mail is an optional channel, not the only source.
  */
 export function ApplyLoopDiagram({ className }: { className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);

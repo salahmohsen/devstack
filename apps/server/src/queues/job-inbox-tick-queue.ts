@@ -4,7 +4,7 @@ import { runInboxTick } from "@tsu-stack/api/lib/job-discovery/tick";
 import {
   JOB_INBOX_TICK_JOB_NAME,
   JOB_INBOX_TICK_QUEUE_NAME,
-  LIVENESS_TICK_INTERVAL_MS
+  INBOX_TICK_INTERVAL_MS
 } from "@tsu-stack/core";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
@@ -73,7 +73,7 @@ export function startJobInboxTickQueue(redisUrl: string): void {
     {},
     {
       jobId: INBOX_TICK_JOB_ID,
-      repeat: { every: LIVENESS_TICK_INTERVAL_MS },
+      repeat: { every: INBOX_TICK_INTERVAL_MS },
       removeOnComplete: 50,
       removeOnFail: 100
     }
@@ -83,7 +83,7 @@ export function startJobInboxTickQueue(redisUrl: string): void {
   boot.set({
     event: "job_inbox_tick_queue_started",
     queue: JOB_INBOX_TICK_QUEUE_NAME,
-    intervalMs: LIVENESS_TICK_INTERVAL_MS
+    intervalMs: INBOX_TICK_INTERVAL_MS
   });
   boot.emit();
 }

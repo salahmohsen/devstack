@@ -1,4 +1,4 @@
-import { isInboxExpired, LIVENESS_TICK_BATCH, USER_JOB_TTL_MS } from "@tsu-stack/core";
+import { isInboxExpired, INBOX_TICK_BATCH, USER_JOB_TTL_MS } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
@@ -16,7 +16,7 @@ export async function runInboxTick(now = new Date()): Promise<{
   dismissedExpired: number;
   purged: number;
 }> {
-  const expired = await applicationRepository.listInboxExpired(now, LIVENESS_TICK_BATCH);
+  const expired = await applicationRepository.listInboxExpired(now, INBOX_TICK_BATCH);
   let dismissedExpired = 0;
   for (const row of expired) {
     if (!isInboxExpired({ inboxExpiresAt: row.inboxExpiresAt, now })) continue;

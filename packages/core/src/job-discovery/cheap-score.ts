@@ -1,22 +1,21 @@
 import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
 import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
-import { type JobPreferenceOutput } from "#@/job-preference/types";
+import { type JobPreferenceOutput, type WorkMode } from "#@/job-preference/types";
 import { isGarbageCompany, isGarbageJobTitle } from "#@/mail/job-harvest";
 
-import { type CheapScoreResult, type NormalizedListing } from "./types";
+import { type CheapScoreResult } from "./types";
 import { applyYearsCap } from "./years-cap";
 
-type CheapListing = Pick<
-  NormalizedListing,
-  | "title"
-  | "companyName"
-  | "location"
-  | "workMode"
-  | "skills"
-  | "salaryMin"
-  | "salaryCurrency"
-  | "experienceYearsMin"
->;
+type CheapListing = {
+  title: string;
+  companyName: string;
+  location: string | null;
+  workMode: WorkMode | null;
+  skills: readonly string[];
+  salaryMin: number | null;
+  salaryCurrency: string | null;
+  experienceYearsMin?: number | null;
+};
 
 /**
  * Role gate for freehire-only discovery: explicit `q` keywords or category

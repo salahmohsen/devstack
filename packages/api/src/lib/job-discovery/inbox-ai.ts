@@ -71,7 +71,7 @@ const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
   smartrecruiters: "SmartRecruiters"
 };
 
-/** Adapter-stated snapshot pay as a lander string, e.g. `$120k–$150k USD`. */
+/** Freehire-stated snapshot pay as a lander string, e.g. `$120k–$150k USD`. */
 function formatSnapshotSalaryRange(
   salaryMin: number | null,
   salaryMax: number | null,

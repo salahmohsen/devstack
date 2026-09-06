@@ -10,11 +10,8 @@ export const MAX_DAILY_BOARD_SCORE_CAP = 100;
 export const DAILY_BOARD_SCORE_CAP_STEP = 10;
 export const MAX_OPEN_INBOX = 50;
 export const INBOX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-export const LIVENESS_AFTER_MS = Math.floor(INBOX_TTL_MS / 2); // ~3.5d
-export const LIVENESS_TICK_INTERVAL_MS = 12 * 60 * 60 * 1000;
-export const LIVENESS_TICK_BATCH = 100;
-/** Skip due rows touched more recently than this so a 100-row tick rotates. */
-export const LIVENESS_REPROBE_AFTER_MS = Math.floor(LIVENESS_TICK_INTERVAL_MS / 2);
+export const INBOX_TICK_INTERVAL_MS = 12 * 60 * 60 * 1000;
+export const INBOX_TICK_BATCH = 100;
 
 /** Snap to 20/30/…/100 (nearest step, clamped). */
 export function refineDailyBoardScoreCap(n: number): number {

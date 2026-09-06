@@ -85,7 +85,7 @@ export const Route = createFileRoute("/(root-layout)/")({
         canonicalPath: "/"
       },
       description:
-        "Self-hostable job-apply assistant: job board adapters, New jobs, Tracked jobs, Career Inbox, hub agent with BYO AI, and a public portfolio at /{username}."
+        "Self-hostable job-apply assistant: freehire discovery, New jobs, Tracked jobs, Career Inbox, hub agent with BYO AI, and a public portfolio at /{username}."
     });
   },
   component: RootIndexPage

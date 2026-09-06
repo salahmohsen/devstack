@@ -26,7 +26,8 @@ export function FaqsSection({ className }: { className?: string }) {
             Questions
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Straight answers about invites, keys, adapters, and what shows on your public profile.
+            Straight answers about invites, keys, where jobs come from, and what shows on your
+            public profile.
           </p>
         </div>
         <div className="min-w-0 place-content-center">
@@ -79,7 +80,7 @@ const questions: FaqItem[] = [
     id: "item-4",
     title: "Where do New jobs come from?",
     content:
-      "Adapters pull public listings (Freehire, Himalayas, Arbeitnow, Remotive, RemoteOK). Rank against your prefs, then optional BYO AI scoring. Mail harvest is an opt-in channel, not the only source."
+      "Public listings come from Freehire (freehire.me) and are fetched per user. Rank against your prefs, then optional BYO AI scoring. Mail harvest is an opt-in channel, not the only source."
   },
   {
     id: "item-5",

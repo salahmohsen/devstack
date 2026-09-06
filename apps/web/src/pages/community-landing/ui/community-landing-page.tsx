@@ -14,7 +14,7 @@ import { LandingFooter } from "./landing-footer";
 /**
  * Product home at `/` (community / OSS landing).
  *
- * THESIS: Self-hostable job-apply assistant. Adapter-first discovery, tracked
+ * THESIS: Self-hostable job-apply assistant. Freehire-only discovery, tracked
  * pipeline, hub agent on BYO keys, public evidence on /{username}.
  * OWN-WORLD: App tokens + @ncdai/hero-01; quiet feature cards; Efferd
  * integrations / faqs / cta / footer adapted to PRODUCT.md facts.

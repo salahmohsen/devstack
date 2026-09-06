@@ -1,4 +1,4 @@
-import { Bot, Briefcase, Mountain, Radio } from "lucide-react";
+import { Bot, Briefcase } from "lucide-react";
 import { type ComponentProps, type ReactNode } from "react";
 import { SiGithub, SiGmail } from "react-icons/si";
 
@@ -15,7 +15,7 @@ type Integration = {
 
 /**
  * Product connectors grid — structure from @efferd/integrations-2.
- * Copy sticks to adapters and BYO services the app actually wires.
+ * Copy sticks to the integrations and BYO services the app actually wires.
  */
 export function IntegrationsSection({ className }: { className?: string }) {
   return (
@@ -25,7 +25,7 @@ export function IntegrationsSection({ className }: { className?: string }) {
           Connects to what you already use
         </h2>
         <p className="text-sm leading-relaxed wrap-break-word text-muted-foreground sm:text-base">
-          Job board adapters fill New jobs. Gmail and optional Resend feed Career Inbox. GitHub
+          Freehire listings fill New jobs. Gmail and optional Resend feed Career Inbox. GitHub
           powers the public repos surface. Model calls use keys you seal in Settings.
         </p>
       </div>
@@ -96,20 +96,8 @@ const integrations: Integration[] = [
   {
     name: "Freehire",
     description:
-      "ATS adapter for Freehire listings. Shared catalog rows keyed by adapter + external id.",
+      "Public listings from freehire.me fetch per user, rank against your prefs, then land in New jobs.",
     icon: <Briefcase aria-hidden className="size-7 stroke-[1.5]" />
-  },
-  {
-    name: "Himalayas",
-    description: "Remote board adapter. Listings land in New jobs, then rank against your prefs.",
-    icon: <Mountain aria-hidden className="size-7 stroke-[1.5]" />,
-    corner: <DecorIcon position="top-left" />
-  },
-  {
-    name: "Remotive & RemoteOK",
-    description:
-      "Feed adapters for Remotive and RemoteOK, plus Arbeitnow. Same New to Tracked promote path.",
-    icon: <Radio aria-hidden className="size-7 stroke-[1.5]" />
   },
   {
     name: "BYO AI",

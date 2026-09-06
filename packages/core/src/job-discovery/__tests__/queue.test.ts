@@ -4,7 +4,6 @@ import {
   inboxAiJobId,
   inboxAiQueueJobId,
   inboxEvaluateJobId,
-  ingestJobId,
   JobInboxAiPayloadSchema,
   sanitizeBullJobIdPart
 } from "#@/job-discovery/queue";
@@ -33,24 +32,5 @@ describe("JobInboxAiPayloadSchema", () => {
     expect(
       JobInboxAiPayloadSchema.safeParse({ userId: "u", runId: "r", applicationId: "a" }).success
     ).toBe(true);
-  });
-});
-
-describe("ingestJobId", () => {
-  it("does not put a colon in a pack query job id", () => {
-    const id = ingestJobId({
-      mode: "user_query",
-      userId: "user1",
-      queryKey: "pack:frontend",
-      now: new Date("2026-08-15T12:00:00.000Z")
-    });
-    expect(id).toBe("ingest_user1_pack_frontend_2026-08-15");
-    expect(id.includes(":")).toBe(false);
-  });
-
-  it("keeps daily cron ids date-only", () => {
-    expect(ingestJobId({ mode: "daily", now: new Date("2026-08-15T12:00:00.000Z") })).toBe(
-      "ingest_daily_2026-08-15"
-    );
   });
 });
