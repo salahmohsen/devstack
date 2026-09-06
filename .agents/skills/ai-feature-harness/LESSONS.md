@@ -17,7 +17,18 @@
 
 ---
 
-## 2026-08-23 — Apply package: LLM null optionals + humanize dashes at assemble
+## 2026-09-06 — Freehire-only discovery harness: signed-cookie traps + client-rendered SSR walls
+
+- **Trigger:** Freehire-only job discovery hardening (Task 13): settings facets, findNow, land queue, unauth probes
+- **Finding:** Better Auth session cookie = `token.HMAC-SHA256(token, secret)` encoded **standard base64, 44 chars, with trailing `=`**. `base64url` / unpadded variants verify-fail. Don't hand-roll: reuse the signing impl better-auth's test-utils use (`makeSignature`)
+- **Finding:** `curl -b FILE` treats the file as Netscape cookie-jar format — a plain `name=value` file sends **no** Cookie header (silently). Always pass the cookie as a string: `-b "$COOKIE"`. Symptom: auth endpoint returns `null` body / 401 while the identical cookie works elsewhere
+- **Finding:** Chrome headless strips trailing `=` from cookie values (CDP `Network.setCookie`, JS `document.cookie`, **and** real `Set-Cookie` response headers all lose it), and hono's signed-cookie verify requires the padded 44-char sig. No headless login path works for padded cookies. Workaround: CDP `Fetch.enable` + `continueRequest` with a rewritten `Cookie` header on **every** `:3000` and `:5200` request — SSR `$getUser`, client server-fns, and oRPC all then see the session
+- **Finding:** TanStack Start pages here are client-rendered: SSR HTML is an empty shell (title + CSS), so curl can never prove page content. Use CDP `Runtime.evaluate` `document.body.innerText` after navigation for DOM proof; synthetic `.click()` works for plain buttons (Find-jobs-now → toast island → land verified) but not for coss combobox chips — state that remainder as an explicit gap
+- **Finding:** oRPC route paths are slash-shaped (`/rpc/jobPreference/get`), not dot-shaped (`jobPreference.get`); a dot path 404s and masks the real 401-vs-200 signal — probe the slash path when reading unauth status codes
+- **Finding:** Silent zero-results defense for per-user board fetch: unsupported facet values (e.g. `salaryCurrency: EGP` outside USD/EUR/GBP/RUB) are dropped with a `droppedFacets` field on `job_discovery_fetch_completed`, not an error. When a user's inbox stays empty, check `droppedFacets` + `ratelimitRemaining` on the fetch wide event before blaming scoring
+- **Finding:** Facet-clear save (`roleKeywords/categories` emptied) intentionally skips the land enqueue via `hasValidRoleQuery` — verify the gate by counting `job_discovery_land_enqueued` deltas around the upsert, not by expecting an error; restore the user's facets after the drill
+- **User preference:** Session cookie for local oRPC harness may be reconstructed from the DB token + env secret; never commit tokens/cookies
+- **Evidence class:** oRPC 200/401 probes, `user_job` queryHash rows + inbox counts in psql, wide events (`job_discovery_land_enqueued` / `land_ok` with userId+runId+trigger), CDP DOM innerText + island toast, click→land_ok→inbox 44→46
 
 - **Trigger:** Prepare package harness; DeepSeek letters step crashed; user asked to remove double dashes / AI dash voice from package prose
 - **Finding:** Structured-output schemas must treat optional LLM strings as `.nullish()` (or union null) and coerce to `undefined`. Models often emit `"atsVendor": null` / `"notes": null`; `z.string().optional()` rejects null and aborts the whole generate after expensive rewrite steps

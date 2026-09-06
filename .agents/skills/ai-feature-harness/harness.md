@@ -29,6 +29,13 @@ Better Auth cookie: `better-auth.session_token=<token>.<hmac-sha256-base64(secre
 # cookie = better-auth.session_token=${token}.${sig}
 ```
 
+Traps:
+
+- Sig is HMAC-SHA256(token, secret) as **standard base64 (44 chars, trailing `=`)** — not base64url, not unpadded.
+- Pass the cookie as a **string** (`-b "$COOKIE"`), never `-b file` — curl treats a file as cookie-jar format and sends nothing.
+- oRPC paths are slash-shaped: `POST /rpc/jobPreference/get`, not `jobPreference.get`.
+- Headless Chrome strips trailing `=` from cookie values, so a CDP-driven browser can't hold a valid signed cookie. Drive the page with CDP `Fetch.enable` + rewritten `Cookie` header on all `:3000`/`:5200` requests (see LESSONS 2026-09-06).
+
 Never commit real cookies or tokens. Prefer user-provided session for browser; regenerate from DB only in local dev.
 
 ### Production (custom domain)
