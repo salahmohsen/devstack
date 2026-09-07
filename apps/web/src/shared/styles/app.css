@@ -249,3 +249,31 @@
 .form-dialog {
   @apply w-[calc(100%-5rem)] max-w-6xl;
 }
+
+/* AI job island (bottom-left host): sonner-style fan motion.
+   Enter — a newly mounted fan pill fades in and rises into its slot (from-only
+   keyframes: it animates to the element's resting transform via translate/scale).
+   Exit — front pill drops out of view; the host removes it after the animation. */
+@keyframes island-enter {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+    scale: 0.96;
+  }
+}
+
+/* Promote (sonner): the new front card steps up from its shrunken back-card
+   pose into place; opacity from-only so the swapped content fades in. */
+@keyframes island-promote {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--island-gap, 12px))) scale(0.95);
+  }
+}
+
+@keyframes island-exit {
+  to {
+    transform: translateY(130%) scale(0.92);
+    opacity: 0;
+  }
+}
