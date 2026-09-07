@@ -42,6 +42,11 @@ function summarizeProviderError(raw: string, apiKey: string, modelId?: string | 
   ) {
     return "Key is accepted but the account has no balance or quota. Check billing with the provider.";
   }
+  // Client-allowlist relays (e.g. AgentRouter) reject generic API access before
+  // the key is even evaluated — "unauthorized client detected" is not a key error.
+  if (/unauthorized[_\s-]?client/i.test(lower)) {
+    return "Provider only accepts its official coding-agent clients (e.g. Claude Code, Roo Code) and blocks generic API access. This key cannot be used as a BYO provider here.";
+  }
   if (
     /invalid[_\s-]?api[_\s-]?key|incorrect api key|unauthorized|authentication|forbidden|401|403/i.test(
       lower
