@@ -107,7 +107,10 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
 
   if (steps.length === 0) {
     return (
-      <p className="text-sm leading-snug font-medium text-primary-foreground" aria-live="polite">
+      <p
+        className="text-[13px] leading-snug font-medium text-primary-foreground"
+        aria-live="polite"
+      >
         {liveLabel}
       </p>
     );
@@ -122,7 +125,7 @@ function TimelineSteps({ run }: { run: AiIslandRun }) {
           <li
             key={step.id}
             className={cn(
-              "flex items-center gap-2.5 py-0.5 text-sm leading-snug",
+              "flex items-center gap-2.5 py-0.5 text-[13px] leading-snug",
               isActive && "font-medium text-primary-foreground",
               step.state === "done" && "text-primary-foreground/65",
               step.state === "pending" && "text-primary-foreground/40"
@@ -168,11 +171,17 @@ function CompactRunCopy({
   return (
     <>
       <WorkflowSolvingOrb size="toast" surface="inverted" paused={!running} />
-      <span className="flex max-w-52 min-w-0 flex-col gap-0.5 pe-0.5" aria-hidden>
-        <span className="truncate text-sm leading-snug font-medium text-primary-foreground">
+      {/* Two-tier type: semibold title over a smaller muted step that shimmers while running. */}
+      <span className="flex max-w-52 min-w-0 flex-col gap-1 pe-0.5" aria-hidden>
+        <span className="truncate text-sm leading-tight font-semibold tracking-tight text-primary-foreground">
           {title}
         </span>
-        <span className="truncate text-sm leading-snug font-medium text-primary-foreground">
+        <span
+          className={cn(
+            "truncate text-xs leading-tight font-normal text-primary-foreground/60 tabular-nums",
+            running && "shimmer shimmer-color-primary-foreground"
+          )}
+        >
           {step}
         </span>
       </span>
