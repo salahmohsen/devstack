@@ -72,6 +72,20 @@ command -v docker >/dev/null 2>&1 || fail "Docker is not installed"
 docker info >/dev/null 2>&1 || fail "Docker daemon is not running"
 command -v pnpm >/dev/null 2>&1 || fail "pnpm is not installed"
 
+# ─── Preflight: sync Mastra provider catalog ──────────────────────
+# Regenerate packages/core provider catalog when @mastra/core changed.
+# Idempotent: no write (no watcher churn) when already in sync. Non-fatal —
+# CI gates drift separately; a missing registry only means deps are not
+# installed yet, which fails later at the dotenvx/drizzle-kit preflight.
+CATALOG_SYNC="$ROOT/apps/agent/scripts/sync-mastra-provider-catalog.mjs"
+if [ -f "$CATALOG_SYNC" ]; then
+  if node "$CATALOG_SYNC"; then
+    ok "Mastra provider catalog in sync"
+  else
+    warn "Mastra provider catalog sync failed — continuing"
+  fi
+fi
+
 # ─── Step 1: Start infrastructure ─────────────────────────────────
 info "Starting infrastructure (postgres, redis, minio)..."
 docker compose -f "$INFRA_COMPOSE" up -d

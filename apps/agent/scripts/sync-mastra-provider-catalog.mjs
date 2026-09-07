@@ -3,8 +3,19 @@
  * Sync packages/core AI provider catalog from the installed @mastra/core registry.
  *
  * Run from repo root or apps/agent:
+ *   pnpm mastra:sync-catalog
  *   node apps/agent/scripts/sync-mastra-provider-catalog.mjs
+ *
+ * Modes:
+ *   (default)  regenerate the catalog; skips the write when already in sync
+ *   --check    exit 1 when the catalog is stale vs the installed registry
+ *              (no write) — CI drift gate
+ *
+ * Drift detection uses the `Catalog content hash:` comment emitted at the end
+ * of the generated file, not byte comparison: the committed file is reflowed
+ * by the repo formatter (commit hook), so raw output never matches bytes.
  */
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +23,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const agentRoot = resolve(__dirname, "..");
 const repoRoot = resolve(agentRoot, "../..");
+const checkOnly = process.argv.includes("--check");
 
 function findRegistry() {
   const candidates = [
@@ -45,10 +57,17 @@ const providers = Object.entries(reg.providers)
 
 const outPath = join(repoRoot, "packages/core/src/ai-settings/mastra-provider-catalog.ts");
 
+/** sha256 of the provider data (not the file text) — formatter-proof. */
+const catalogHash = createHash("sha256")
+  .update(JSON.stringify(providers))
+  .digest("hex")
+  .slice(0, 16);
+
 const body = `/**
  * Generated from @mastra/core provider-registry.json (installed agent version).
  * Do not hand-edit model lists — re-run:
- *   node apps/agent/scripts/sync-mastra-provider-catalog.mjs
+ *   pnpm mastra:sync-catalog
+ * CI runs this script with --check and fails when this file is stale.
  *
  * Model router format: "provider/model-name"
  */
@@ -88,7 +107,28 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   if (idx <= 0) return { provider: null, model: modelId };
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
+
+// Catalog content hash: ${catalogHash} — compared by sync script --check; do not edit.
 `;
+
+function existingHash(text) {
+  const m = text.match(/Catalog content hash: ([0-9a-f]{16})/);
+  return m ? m[1] : null;
+}
+
+const existing = existsSync(outPath) ? readFileSync(outPath, "utf8") : null;
+if (existing && existingHash(existing) === catalogHash) {
+  console.log(`Mastra provider catalog already in sync (${providers.length} providers).`);
+  process.exit(0);
+}
+
+if (checkOnly) {
+  console.error(
+    `Mastra provider catalog is stale (${providers.length} providers in installed @mastra/core).\n` +
+      "Run `pnpm mastra:sync-catalog` and commit the regenerated file."
+  );
+  process.exit(1);
+}
 
 writeFileSync(outPath, body);
 console.log(

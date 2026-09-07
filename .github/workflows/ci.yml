@@ -41,6 +41,11 @@ jobs:
           cache: true
 
       - run: vp install
+
+      # Fail PRs that bump @mastra/core without regenerating the provider catalog.
+      - name: Mastra provider catalog in sync
+        run: node apps/agent/scripts/sync-mastra-provider-catalog.mjs --check
+
       - run: vp check
 
   # Unit tests: one monorepo job (not a per-package matrix).
