@@ -148,7 +148,8 @@ export const ApplicationOutputSchema = z.object({
   workMode: WorkModeSchema.nullable(),
   hiringRegion: z.string().nullable(),
   requiredSkills: z.array(JobSkillTagSchema).default([]),
-  preferredSkills: z.array(JobSkillTagSchema).default([])
+  preferredSkills: z.array(JobSkillTagSchema).default([]),
+  domains: z.array(z.string()).default([])
 }) satisfies z.ZodType<
   Omit<ApplicationSchemaSelect, "userId" | "jobId" | "inboxExpiresAt" | "discoveryRunId"> & {
     listingClosed: boolean;
@@ -261,6 +262,7 @@ export const CreateApplicationInputSchema = z.object({
   workMode: WorkModeSchema.nullable().optional(),
   requiredSkills: z.array(JobSkillTagSchema).optional(),
   preferredSkills: z.array(JobSkillTagSchema).optional(),
+  domains: z.array(z.string()).optional(),
   description: optionalText,
   notes: optionalText,
   stage: ApplicationStageSchema.optional(),

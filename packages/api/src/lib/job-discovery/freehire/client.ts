@@ -66,6 +66,7 @@ export const FreehireAgentJobSchema = z
     regions: z.array(z.string()).nullish(),
     work_mode: z.string().nullish(),
     skills: z.array(z.string()).nullish(),
+    is_tech: z.string().nullish(),
     cities: z.array(z.string()).nullish(),
     collections: z.array(z.string()).nullish(),
     posted_at: z.string().nullish(),

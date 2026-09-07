@@ -303,15 +303,20 @@ export function extractSkillMentions(
 /**
  * Canonicalize listing names, drop misses, unique-link `stackId`.
  * Never auto-creates stacks. Never appends aliases. Collision → `stackId: null`.
+ * Dedupes by normalized display name.
  */
 export function resolveJobSkillTags(
   names: { name: string; band: JobSkillBand }[],
   stacks: readonly JobSkillStackRef[]
 ): JobSkillTag[] {
   const out: JobSkillTag[] = [];
+  const seen = new Set<string>();
   for (const entry of names) {
     const result = canonicalizeListingSkillToken(entry.name, stacks);
     if (!result.keep) continue;
+    const key = normalizeJobSkillName(result.display);
+    if (seen.has(key)) continue;
+    seen.add(key);
     out.push({
       name: result.display,
       stackId: preselectHeldSkillForAlias(result.display, stacks),
@@ -319,6 +324,176 @@ export function resolveJobSkillTags(
     });
   }
   return out;
+}
+
+/**
+ * Slug tokens that are topics, not tech — routed to domains even though they
+ * are single words. Everything else single-word defaults to tech skill.
+ */
+export const CONCEPT_SKILL_SLUGS: readonly string[] = [
+  "ai",
+  "api",
+  "cloud",
+  "agile",
+  "fintech",
+  "automation",
+  "microservices",
+  "devops",
+  "startup",
+  "analytics"
+] as const;
+
+/** Hyphenated slugs that ARE skills despite the structure heuristic. */
+export const SKILL_SLUG_HYPHEN_OVERRIDES: readonly string[] = [
+  "ci-cd",
+  "unit-testing",
+  "integration-testing",
+  "end-to-end-testing",
+  "spring-boot",
+  "ruby-on-rails",
+  "dot-net"
+] as const;
+
+/** Product spellings a naive title-case gets wrong (`mysql` → `MySQL`). */
+const WELL_KNOWN_SLUG_DISPLAY: Readonly<Record<string, string>> = {
+  mysql: "MySQL",
+  postgresql: "PostgreSQL",
+  mongodb: "MongoDB",
+  rabbitmq: "RabbitMQ",
+  graphql: "GraphQL",
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  nodejs: "Node.js",
+  nextjs: "Next.js",
+  nuxtjs: "Nuxt.js",
+  tailwindcss: "Tailwind CSS",
+  elasticsearch: "Elasticsearch",
+  "spring-boot": "Spring Boot",
+  "ruby-on-rails": "Ruby on Rails",
+  "dot-net": ".NET",
+  dotnet: ".NET",
+  github: "GitHub",
+  gitlab: "GitLab",
+  "hugging-face": "Hugging Face",
+  "claude-code": "Claude Code"
+};
+
+const SLUG_ACRONYMS = new Set([
+  "aws",
+  "gcp",
+  "sql",
+  "api",
+  "ai",
+  "rest",
+  "html",
+  "css",
+  "http",
+  "llm",
+  "mcp",
+  "nosql",
+  "ux",
+  "ui",
+  "seo",
+  "saas",
+  "cli",
+  "db",
+  "php"
+]);
+
+/** `ci-cd` → `CI/CD`; `event-driven-architecture` → `Event Driven Architecture`. */
+export function humanizeSkillSlug(slug: string): string {
+  const trimmed = slug.trim().toLowerCase();
+  if (trimmed === "ci-cd" || trimmed === "cicd") return "CI/CD";
+  const wellKnown = WELL_KNOWN_SLUG_DISPLAY[trimmed];
+  if (wellKnown) return wellKnown;
+  return trimmed
+    .split("-")
+    .filter(Boolean)
+    .map((word) =>
+      SLUG_ACRONYMS.has(word) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" ");
+}
+
+export type FreehireSkillRouting = {
+  skillSlugs: string[];
+  domainSlugs: string[];
+};
+
+/**
+ * Route freehire skill slugs: tech slugs become skills, topic slugs become
+ * domains. Hyphenated slugs default to domains; single words default to
+ * skills; override lists fix the known misfits. Nothing is rejected.
+ */
+export function splitFreehireSkillSlugs(slugs: readonly string[]): FreehireSkillRouting {
+  const skillSlugs: string[] = [];
+  const domainSlugs: string[] = [];
+  const seenSkill = new Set<string>();
+  const seenDomain = new Set<string>();
+  for (const raw of slugs) {
+    const slug = raw.trim().toLowerCase();
+    if (!slug) continue;
+    const hyphenated = slug.includes("-");
+    const isSkill = SKILL_SLUG_HYPHEN_OVERRIDES.includes(slug)
+      ? true
+      : CONCEPT_SKILL_SLUGS.includes(slug)
+        ? false
+        : !hyphenated;
+    if (isSkill) {
+      if (!seenSkill.has(slug)) {
+        seenSkill.add(slug);
+        skillSlugs.push(slug);
+      }
+    } else if (!seenDomain.has(slug)) {
+      seenDomain.add(slug);
+      domainSlugs.push(slug);
+    }
+  }
+  return { skillSlugs, domainSlugs };
+}
+
+export type FreehireSkillTags = {
+  requiredSkills: JobSkillTag[];
+  domains: string[];
+};
+
+/**
+ * Freehire skill slugs → persisted tags. Known slugs canonicalize onto the
+ * allowlist (display + `stackId`); unknown tech slugs survive with a
+ * humanized display and `stackId: null`. Concepts become domain strings.
+ * Never rejects a slug.
+ */
+export function resolveFreehireSkillTags(
+  slugs: readonly string[],
+  held: readonly JobSkillStackRef[] = []
+): FreehireSkillTags {
+  const { skillSlugs, domainSlugs } = splitFreehireSkillSlugs(slugs);
+  const requiredSkills: JobSkillTag[] = [];
+  const seen = new Set<string>();
+  for (const slug of skillSlugs) {
+    const canonical = canonicalizeListingSkillToken(slug, held);
+    const display = canonical.keep
+      ? canonical.display
+      : humanizeSkillSlug(slug);
+    const key = normalizeJobSkillName(display);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    requiredSkills.push({
+      name: display,
+      stackId: canonical.keep ? preselectHeldSkillForAlias(canonical.display, held) : null,
+      band: "required"
+    });
+  }
+  const domains: string[] = [];
+  const seenDomain = new Set<string>();
+  for (const slug of domainSlugs) {
+    const display = humanizeSkillSlug(slug);
+    const key = normalizeJobSkillName(display);
+    if (!key || seenDomain.has(key)) continue;
+    seenDomain.add(key);
+    domains.push(display);
+  }
+  return { requiredSkills, domains };
 }
 
 export const LinkedJobSkillInputSchema = z.object({

@@ -66,6 +66,7 @@ export function toUserJobRow(
     salaryMax: intOrNull(enrichment?.salary_max),
     salaryCurrency: textOrNull(enrichment?.salary_currency),
     skills: (job.skills ?? []).filter((skill) => skill.trim().length > 0),
+    isTech: textOrNull(job.is_tech),
     category: textOrNull(enrichment?.category),
     domains: enrichment?.domains ?? [],
     summary: textOrNull(enrichment?.summary),

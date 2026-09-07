@@ -28,6 +28,8 @@ export const userJob = pgTable(
     salaryMax: integer("salary_max"),
     salaryCurrency: text("salary_currency"),
     skills: jsonb("skills").$type<string[]>().notNull().default([]),
+    /** Freehire job-level tech flag ("tech" | "non-tech"); passthrough today, gate later. */
+    isTech: text("is_tech"),
     category: text("category"),
     domains: jsonb("domains").$type<string[]>().notNull().default([]),
     summary: text("summary"),

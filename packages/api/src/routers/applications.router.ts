@@ -96,6 +96,7 @@ function toApplicationOutput(row: ApplicationRow, listingClosed = false) {
     hiringRegion: row.hiringRegion ?? null,
     requiredSkills: row.requiredSkills ?? [],
     preferredSkills: row.preferredSkills ?? [],
+    domains: row.domains ?? [],
     salaryRange: row.salaryRange,
     employmentType: row.employmentType,
     description: row.description,

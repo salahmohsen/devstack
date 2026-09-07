@@ -113,6 +113,8 @@ export const application = pgTable(
       .$type<ApplicationJobSkillTag[]>()
       .notNull()
       .default([]),
+    /** Topic chips from the listing (e.g. "Event-Driven Architecture") — never skills/matching. */
+    domains: text("domains").array().notNull().default([]),
     salaryRange: text("salary_range"),
     employmentType: employmentTypeEnum("employment_type").notNull().default("unknown"),
     /** Denorm from posting at land; stable after catalog close. */
