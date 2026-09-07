@@ -15,10 +15,10 @@ export * from "#@/invite/index";
 export * from "#@/job-discovery/index";
 export * from "#@/job-preference/index";
 export * from "#@/list-query/index";
-export * from "#@/mail/index";
 export * from "#@/mail-settings/index";
-export * from "#@/notification/index";
+export * from "#@/mail/index";
 export * from "#@/notification-settings/index";
+export * from "#@/notification/index";
 export * from "#@/onboarding/index";
 
 export * from "#@/orpc-context/index";
