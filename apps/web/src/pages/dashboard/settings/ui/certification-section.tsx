@@ -12,6 +12,7 @@ import {
   htmlToText,
   type CertificationOutput
 } from "@tsu-stack/core";
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
 import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
@@ -92,7 +93,7 @@ export function CertificationSection() {
         setSheetOpen(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to add certification.");
+        toast.error(error.message ?? "Failed to add certification.");
       }
     })
   );
@@ -207,6 +208,25 @@ export function CertificationSection() {
       >
         {listQuery.isLoading ? (
           <AiLoader />
+        ) : listQuery.isError ? (
+          <Alert variant="error">
+            <AlertTitle>Could not load certifications</AlertTitle>
+            <AlertDescription className="flex flex-col items-start gap-2">
+              <span>
+                {listQuery.error instanceof Error
+                  ? listQuery.error.message
+                  : "Something went wrong. Try again."}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void listQuery.refetch()}
+              >
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
         ) : rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Add certifications to include them on generated resumes.
@@ -224,83 +244,84 @@ export function CertificationSection() {
               });
             }}
           >
-            {(item, dragHandleProps) => (
-              <Group aria-label="Certification entry" className="w-full min-w-0 items-stretch">
-                {dragHandleProps ? (
-                  <>
-                    <button
-                      type="button"
-                      data-slot="input-control"
-                      aria-label="Drag to reorder certifications"
-                      className={cn(
-                        "flex min-h-9 shrink-0 items-center justify-center self-stretch rounded-lg border border-input bg-transparent px-2",
-                        dragHandleProps.className
-                      )}
-                      {...dragHandleProps.attributes}
-                      {...dragHandleProps.listeners}
-                    >
-                      <GripVertical className="size-4" aria-hidden />
-                    </button>
-                    <GroupSeparator />
-                  </>
-                ) : null}
-
-                <div
-                  data-slot="input-control"
-                  className="flex min-h-9 min-w-0 flex-1 flex-col justify-center gap-0.5 rounded-lg border border-input px-3 py-1.5"
-                >
-                  <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground">
-                    <span className="truncate">{`${item.name} — ${item.issuer}`}</span>
-                    {item.credentialUrl ? (
-                      <a
-                        href={item.credentialUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Open credential for ${item.name}`}
-                        className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+            {(item, dragHandleProps) => {
+              const excerpt = descriptionExcerpt(item.description);
+              return (
+                <Group aria-label="Certification entry" className="w-full min-w-0 items-stretch">
+                  {dragHandleProps ? (
+                    <>
+                      <button
+                        type="button"
+                        data-slot="input-control"
+                        aria-label="Drag to reorder certifications"
+                        className={cn(
+                          "flex min-h-9 shrink-0 items-center justify-center self-stretch rounded-lg border border-input bg-transparent px-2",
+                          dragHandleProps.className
+                        )}
+                        {...dragHandleProps.attributes}
+                        {...dragHandleProps.listeners}
                       >
-                        <ExternalLink className="size-3.5" aria-hidden />
-                      </a>
-                    ) : null}
-                  </p>
-                  {certificationRange(item) ? (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {certificationRange(item)}
-                    </p>
+                        <GripVertical className="size-4" aria-hidden />
+                      </button>
+                      <GroupSeparator />
+                    </>
                   ) : null}
-                  {descriptionExcerpt(item.description) ? (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {descriptionExcerpt(item.description)}
-                    </p>
-                  ) : null}
-                </div>
 
-                <GroupSeparator />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`Edit certification ${item.name}`}
-                  className="min-h-9 shrink-0 self-stretch rounded-lg"
-                  onClick={() => {
-                    setEditing(item);
-                    setSheetOpen(true);
-                  }}
-                >
-                  <Pencil aria-hidden="true" />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`Delete certification ${item.name}`}
-                  className="min-h-9 shrink-0 self-stretch rounded-lg text-muted-foreground hover:text-destructive"
-                  onClick={() => setDeleteTarget(item)}
-                >
-                  <Trash2 aria-hidden="true" />
-                </Button>
-              </Group>
-            )}
+                  <div
+                    data-slot="input-control"
+                    className="flex min-h-9 min-w-0 flex-1 flex-col justify-center gap-0.5 rounded-lg border border-input px-3 py-1.5"
+                  >
+                    <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground">
+                      <span className="truncate">{`${item.name} — ${item.issuer}`}</span>
+                      {item.credentialUrl ? (
+                        <a
+                          href={item.credentialUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Open credential for ${item.name}`}
+                          className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <ExternalLink className="size-3.5" aria-hidden />
+                        </a>
+                      ) : null}
+                    </p>
+                    {certificationRange(item) ? (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {certificationRange(item)}
+                      </p>
+                    ) : null}
+                    {excerpt ? (
+                      <p className="truncate text-xs text-muted-foreground">{excerpt}</p>
+                    ) : null}
+                  </div>
+
+                  <GroupSeparator />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Edit certification ${item.name}`}
+                    className="min-h-9 shrink-0 self-stretch rounded-lg"
+                    onClick={() => {
+                      setEditing(item);
+                      setSheetOpen(true);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Delete certification ${item.name}`}
+                    className="min-h-9 shrink-0 self-stretch rounded-lg text-muted-foreground hover:text-destructive"
+                    onClick={() => setDeleteTarget(item)}
+                  >
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                </Group>
+              );
+            }}
           </SortableList>
         )}
       </SettingsSection>

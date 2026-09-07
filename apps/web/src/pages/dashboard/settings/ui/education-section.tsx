@@ -12,6 +12,7 @@ import {
   htmlToText,
   type EducationOutput
 } from "@tsu-stack/core";
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
 import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
@@ -102,7 +103,7 @@ export function EducationSection() {
         setSheetOpen(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to add education.");
+        toast.error(error.message ?? "Failed to add education.");
       }
     })
   );
@@ -220,6 +221,25 @@ export function EducationSection() {
       >
         {listQuery.isLoading ? (
           <AiLoader />
+        ) : listQuery.isError ? (
+          <Alert variant="error">
+            <AlertTitle>Could not load education</AlertTitle>
+            <AlertDescription className="flex flex-col items-start gap-2">
+              <span>
+                {listQuery.error instanceof Error
+                  ? listQuery.error.message
+                  : "Something went wrong. Try again."}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void listQuery.refetch()}
+              >
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
         ) : rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Add education to include it on generated resumes.
@@ -237,73 +257,74 @@ export function EducationSection() {
               });
             }}
           >
-            {(item, dragHandleProps) => (
-              <Group aria-label="Education entry" className="w-full min-w-0 items-stretch">
-                {dragHandleProps ? (
-                  <>
-                    <button
-                      type="button"
-                      data-slot="input-control"
-                      aria-label="Drag to reorder education"
-                      className={cn(
-                        "flex min-h-9 shrink-0 items-center justify-center self-stretch rounded-lg border border-input bg-transparent px-2",
-                        dragHandleProps.className
-                      )}
-                      {...dragHandleProps.attributes}
-                      {...dragHandleProps.listeners}
-                    >
-                      <GripVertical className="size-4" aria-hidden />
-                    </button>
-                    <GroupSeparator />
-                  </>
-                ) : null}
-
-                <div
-                  data-slot="input-control"
-                  className="flex min-h-9 min-w-0 flex-1 flex-col justify-center gap-0.5 rounded-lg border border-input px-3 py-1.5"
-                >
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {item.school} — {item.degree}
-                    {item.field ? `, ${item.field}` : ""}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {[educationRange(item), item.gpa ? `GPA ${item.gpa}` : null]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                  {descriptionExcerpt(item.description) ? (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {descriptionExcerpt(item.description)}
-                    </p>
+            {(item, dragHandleProps) => {
+              const excerpt = descriptionExcerpt(item.description);
+              return (
+                <Group aria-label="Education entry" className="w-full min-w-0 items-stretch">
+                  {dragHandleProps ? (
+                    <>
+                      <button
+                        type="button"
+                        data-slot="input-control"
+                        aria-label="Drag to reorder education"
+                        className={cn(
+                          "flex min-h-9 shrink-0 items-center justify-center self-stretch rounded-lg border border-input bg-transparent px-2",
+                          dragHandleProps.className
+                        )}
+                        {...dragHandleProps.attributes}
+                        {...dragHandleProps.listeners}
+                      >
+                        <GripVertical className="size-4" aria-hidden />
+                      </button>
+                      <GroupSeparator />
+                    </>
                   ) : null}
-                </div>
 
-                <GroupSeparator />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`Edit education at ${item.school}`}
-                  className="min-h-9 shrink-0 self-stretch rounded-lg"
-                  onClick={() => {
-                    setEditing(item);
-                    setSheetOpen(true);
-                  }}
-                >
-                  <Pencil aria-hidden="true" />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`Delete education at ${item.school}`}
-                  className="min-h-9 shrink-0 self-stretch rounded-lg text-muted-foreground hover:text-destructive"
-                  onClick={() => setDeleteTarget(item)}
-                >
-                  <Trash2 aria-hidden="true" />
-                </Button>
-              </Group>
-            )}
+                  <div
+                    data-slot="input-control"
+                    className="flex min-h-9 min-w-0 flex-1 flex-col justify-center gap-0.5 rounded-lg border border-input px-3 py-1.5"
+                  >
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {item.school} — {item.degree}
+                      {item.field ? `, ${item.field}` : ""}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {[educationRange(item), item.gpa ? `GPA ${item.gpa}` : null]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    {excerpt ? (
+                      <p className="truncate text-xs text-muted-foreground">{excerpt}</p>
+                    ) : null}
+                  </div>
+
+                  <GroupSeparator />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Edit education entry — ${item.school}`}
+                    className="min-h-9 shrink-0 self-stretch rounded-lg"
+                    onClick={() => {
+                      setEditing(item);
+                      setSheetOpen(true);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Delete education entry — ${item.school}`}
+                    className="min-h-9 shrink-0 self-stretch rounded-lg text-muted-foreground hover:text-destructive"
+                    onClick={() => setDeleteTarget(item)}
+                  >
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                </Group>
+              );
+            }}
           </SortableList>
         )}
       </SettingsSection>
