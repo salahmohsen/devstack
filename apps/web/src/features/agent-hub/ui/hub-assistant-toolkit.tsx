@@ -14,8 +14,10 @@ import {
   ProposeApplicationFromJdInputSchema,
   ProposeBatchGeneratePackagesInputSchema,
   ProposeBatchTrackingChangeInputSchema,
+  ProposeCertificationChangeInputSchema,
   ProposeDeleteApplicationInputSchema,
   ProposeDeleteNoteInputSchema,
+  ProposeEducationChangeInputSchema,
   ProposeEvidenceChangeInputSchema,
   ProposeHardPreferenceChangeInputSchema,
   ProposeMailCrmChangeInputSchema,
@@ -91,6 +93,14 @@ import {
   ApplicationFromJdCard,
   type ApplicationFromJdCardAction
 } from "./application-from-jd-card";
+import { CertificationChangeToolUI } from "./certification-change-tool-ui";
+import {
+  GetCertificationToolUI,
+  GetEducationToolUI,
+  ListCertificationsToolUI,
+  ListEducationsToolUI
+} from "./education-certification-read-tool-ui";
+import { EducationChangeToolUI } from "./education-change-tool-ui";
 import { EvidenceChangeToolUI } from "./evidence-change-tool-ui";
 import { GetExperienceToolUI, ListExperiencesToolUI } from "./experiences-timeline-tool-ui";
 import { FindJobsNowToolUI } from "./find-jobs-now-tool-ui";
@@ -776,6 +786,22 @@ const proposeEvidenceChangeTool = {
   render: EvidenceChangeToolUI
 };
 
+const proposeEducationChangeTool = {
+  type: "human" as const,
+  description:
+    "Propose an education create/edit/delete. Wait for Confirm/Cancel. The card writes on confirm.",
+  parameters: ProposeEducationChangeInputSchema,
+  render: EducationChangeToolUI
+};
+
+const proposeCertificationChangeTool = {
+  type: "human" as const,
+  description:
+    "Propose a certification create/edit/delete. Wait for Confirm/Cancel. The card writes on confirm.",
+  parameters: ProposeCertificationChangeInputSchema,
+  render: CertificationChangeToolUI
+};
+
 const proposeApplicationFieldChangeTool = {
   type: "human" as const,
   description: "Propose an application field update. Wait for Confirm. The card writes on confirm.",
@@ -873,6 +899,30 @@ const getExperienceToolEntry = {
   render: GetExperienceToolUI
 };
 
+const listEducationsToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: ListEducationsToolUI
+};
+
+const getEducationToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: GetEducationToolUI
+};
+
+const listCertificationsToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: ListCertificationsToolUI
+};
+
+const getCertificationToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: GetCertificationToolUI
+};
+
 const listStacksToolEntry = {
   type: "backend" as const,
   display: "standalone" as const,
@@ -904,6 +954,10 @@ export const hubAssistantToolkit = defineToolkit({
   proposeHardPreferenceChange: proposeHardPreferenceChangeTool,
   "propose-evidence-change": proposeEvidenceChangeTool,
   proposeEvidenceChange: proposeEvidenceChangeTool,
+  "propose-education-change": proposeEducationChangeTool,
+  proposeEducationChange: proposeEducationChangeTool,
+  "propose-certification-change": proposeCertificationChangeTool,
+  proposeCertificationChange: proposeCertificationChangeTool,
   "propose-application-field-change": proposeApplicationFieldChangeTool,
   proposeApplicationFieldChange: proposeApplicationFieldChangeTool,
   "propose-set-outcome": proposeSetOutcomeTool,
@@ -944,6 +998,14 @@ export const hubAssistantToolkit = defineToolkit({
   listExperiences: listExperiencesToolEntry,
   "get-experience": getExperienceToolEntry,
   getExperience: getExperienceToolEntry,
+  "list-educations": listEducationsToolEntry,
+  listEducations: listEducationsToolEntry,
+  "get-education": getEducationToolEntry,
+  getEducation: getEducationToolEntry,
+  "list-certifications": listCertificationsToolEntry,
+  listCertifications: listCertificationsToolEntry,
+  "get-certification": getCertificationToolEntry,
+  getCertification: getCertificationToolEntry,
   "list-stacks": listStacksToolEntry,
   listStacks: listStacksToolEntry
 });
