@@ -34,6 +34,18 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         to: r.portfolioEntry.id
       })
     },
+    education: {
+      user: r.one.user({
+        from: r.education.userId,
+        to: r.user.id
+      })
+    },
+    certification: {
+      user: r.one.user({
+        from: r.certification.userId,
+        to: r.user.id
+      })
+    },
     portfolioEntry: {
       user: r.one.user({
         from: r.portfolioEntry.userId,
