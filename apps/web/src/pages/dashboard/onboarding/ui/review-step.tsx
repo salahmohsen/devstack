@@ -259,7 +259,7 @@ function ReviewAccordionItem({
 }
 
 export function ReviewStep({
-  draft,
+  draft: rawDraft,
   objectKey,
   onDraftChange,
   onBack,
@@ -271,6 +271,17 @@ export function ReviewStep({
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("profile");
   const [discardOpen, setDiscardOpen] = useState(false);
+
+  // Drafts extracted before education/certification support lack these keys,
+  // while the inferred draft type requires them — normalize before any
+  // dereference so old in-memory drafts render instead of crashing.
+  const draft = useMemo(() => {
+    return {
+      ...rawDraft,
+      educations: rawDraft.educations ?? [],
+      certifications: rawDraft.certifications ?? []
+    };
+  }, [rawDraft]);
 
   const counts = useMemo(() => {
     return {
