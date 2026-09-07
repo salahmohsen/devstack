@@ -472,9 +472,7 @@ export function resolveFreehireSkillTags(
   const seen = new Set<string>();
   for (const slug of skillSlugs) {
     const canonical = canonicalizeListingSkillToken(slug, held);
-    const display = canonical.keep
-      ? canonical.display
-      : humanizeSkillSlug(slug);
+    const display = canonical.keep ? canonical.display : humanizeSkillSlug(slug);
     const key = normalizeJobSkillName(display);
     if (!key || seen.has(key)) continue;
     seen.add(key);
