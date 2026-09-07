@@ -165,7 +165,11 @@ export function EducationSection() {
   );
 
   const form = useAppForm({
-    defaultValues: EMPTY_EDUCATION_FORM,
+    // Derived from the editing row (not a constant): formApi.update() runs on
+    // every render and reapplies defaultValues while the form is untouched, so
+    // constant defaults would wipe the reset-on-open edit values (see
+    // experience-form for the same pattern).
+    defaultValues: editing ? toEducationFormValues(editing) : EMPTY_EDUCATION_FORM,
     validators: {
       onBlur: createZodFormValidator(
         isEdit ? UpdateEducationInputSchema : CreateEducationInputSchema

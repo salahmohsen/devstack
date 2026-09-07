@@ -155,7 +155,11 @@ export function CertificationSection() {
   );
 
   const form = useAppForm({
-    defaultValues: EMPTY_CERTIFICATION_FORM,
+    // Derived from the editing row (not a constant): formApi.update() runs on
+    // every render and reapplies defaultValues while the form is untouched, so
+    // constant defaults would wipe the reset-on-open edit values (see
+    // experience-form for the same pattern).
+    defaultValues: editing ? toCertificationFormValues(editing) : EMPTY_CERTIFICATION_FORM,
     validators: {
       onBlur: createZodFormValidator(
         isEdit ? UpdateCertificationInputSchema : CreateCertificationInputSchema
