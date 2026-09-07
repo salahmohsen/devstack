@@ -79,7 +79,9 @@ async function generateLinkedSkills(input: {
         ],
         llm: input.llm,
         requestContext: { userId: input.userId },
-        modelSettings: { maxOutputTokens: 900, temperature: 0.1 },
+        // Reasoning models (omen-alpha, R1) spend budget on thinking first —
+        // 900 was consumed entirely by reasoning with empty text output.
+        modelSettings: { maxOutputTokens: 4_000, temperature: 0.1 },
         extras: {
           structuredOutput: {
             schema: {
