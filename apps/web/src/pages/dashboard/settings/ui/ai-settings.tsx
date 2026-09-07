@@ -1,27 +1,41 @@
 "use client";
 
 import { useStore } from "@tanstack/react-form";
-import { CheckCircle2Icon, ChevronDownIcon, UnplugIcon } from "lucide-react";
+import {
+  BracesIcon,
+  CheckCircle2Icon,
+  CheckIcon,
+  ChevronDownIcon,
+  CircleHelpIcon,
+  TriangleAlertIcon,
+  UnplugIcon,
+  WrenchIcon,
+  XIcon
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
   AI_FEATURE_LABELS,
+  AI_FEATURE_REQUIREMENTS,
   aiProviderLabel,
   cascadeDefaultModelChange,
   defaultAiModels,
   getMastraProvider,
   isFeatureOnDefault,
+  modelCapabilityFor,
   providerKindFromModelId,
   resolveProviderRowForModel,
   toMastraModelId,
   type AiFeature,
+  type AiFeatureRequirement,
   type AiModelProviderIdsMap,
   type AiModelsMap,
   type AiProviderKind,
   type AiProviderPublic,
   type HubAvatarId,
   type HubPersonalityId,
+  type MastraModelCapability,
   HUB_PERSONALITIES,
   hubPersonalityAvatarSeed
 } from "@tsu-stack/core";
@@ -159,6 +173,172 @@ function groupModelOptions(options: ModelOption[]): ModelGroup[] {
   });
 }
 
+/** Composite capability verdict for the status dot. */
+type CapabilityState = "full" | "partial" | "none" | "unknown";
+
+function capabilityState(cap: MastraModelCapability): CapabilityState {
+  const { toolCall, structuredOutput } = cap;
+  if (toolCall === null && structuredOutput === null) return "unknown";
+  if (toolCall === true && structuredOutput === true) return "full";
+  if (toolCall === false && structuredOutput === false) return "none";
+  return "partial";
+}
+
+/**
+ * Capability label when a feature's requirement is explicitly unsupported.
+ * Unknown never warns (locked design: "?" stays neutral).
+ */
+function requirementMissing(
+  requirement: AiFeatureRequirement | null,
+  cap: MastraModelCapability
+): string | null {
+  if (requirement === "tools" && cap.toolCall === false) return "no tool support";
+  if (requirement === "structuredOutput" && cap.structuredOutput === false) {
+    return "no structured output";
+  }
+  return null;
+}
+
+const CAPABILITY_STATE_META: Record<CapabilityState, { label: string; dot: string }> = {
+  full: { label: "full", dot: "bg-emerald-500 ring-[3px] ring-emerald-500/15" },
+  partial: { label: "partial", dot: "bg-amber-500 ring-[3px] ring-amber-500/15" },
+  none: { label: "none", dot: "bg-rose-400 ring-[3px] ring-rose-400/15" },
+  unknown: { label: "unknown", dot: "border-2 border-muted-foreground/40" }
+};
+
+function CapabilityVerdict({ value }: { value: boolean | null }) {
+  if (value === true) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap text-emerald-500">
+        <CheckIcon className="size-3" aria-hidden />
+        Supported
+      </span>
+    );
+  }
+  if (value === false) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap text-rose-400">
+        <XIcon className="size-3" aria-hidden />
+        Not supported
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] whitespace-nowrap text-muted-foreground">
+      <CircleHelpIcon className="size-3" aria-hidden />
+      Unknown
+    </span>
+  );
+}
+
+/** Hover receipt: model header + icon rows with per-capability verdict. Hidden until the item is highlighted; pointer-events-none keeps the item clickable. */
+function CapabilityHoverCard({
+  cap,
+  modelName
+}: {
+  cap: MastraModelCapability;
+  modelName: string;
+}) {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-e-full top-1/2 z-10 me-2 w-56 translate-x-1 -translate-y-1/2 rounded-xl border bg-popover p-2 opacity-0 shadow-lg/10 transition-[opacity,transform] duration-150 ease-(--ease-smooth-out) group-data-[highlighted]/item:translate-x-0 group-data-[highlighted]/item:opacity-100"
+      role="presentation"
+    >
+      <p className="mb-1.5 truncate border-b border-border/60 pb-1.5 font-mono text-[10px] leading-none text-muted-foreground/70">
+        {modelName}
+      </p>
+      <div className="flex items-center justify-between gap-3 py-1">
+        <span className="inline-flex items-center gap-1.5 text-[11px] whitespace-nowrap text-muted-foreground">
+          <WrenchIcon className="size-3" aria-hidden />
+          Tools
+        </span>
+        <CapabilityVerdict value={cap.toolCall} />
+      </div>
+      <div className="flex items-center justify-between gap-3 py-1">
+        <span className="inline-flex items-center gap-1.5 text-[11px] whitespace-nowrap text-muted-foreground">
+          <BracesIcon className="size-3" aria-hidden />
+          Structured output
+        </span>
+        <CapabilityVerdict value={cap.structuredOutput} />
+      </div>
+    </div>
+  );
+}
+
+/** Right rail of a model row: dot + state tag, feature warning, hover receipt. */
+function ModelCapabilityBadge({
+  modelId,
+  modelName,
+  requirement,
+  featureLabel
+}: {
+  modelId: string;
+  modelName: string;
+  requirement: AiFeatureRequirement | null;
+  featureLabel: string | null;
+}) {
+  const cap = modelCapabilityFor(modelId);
+  const state = capabilityState(cap);
+  const meta = CAPABILITY_STATE_META[state];
+  const missing = requirement ? requirementMissing(requirement, cap) : null;
+
+  return (
+    <span className="flex items-center gap-2">
+      {missing && featureLabel ? (
+        <span
+          className="inline-flex items-center gap-1 text-[11px] leading-none text-amber-600"
+          title={`May not work for ${featureLabel} (${missing})`}
+        >
+          <TriangleAlertIcon className="size-3" aria-hidden />
+          may not work
+        </span>
+      ) : null}
+      <span
+        className="relative inline-flex items-center gap-1.5"
+        title={
+          missing && featureLabel
+            ? `May not work for ${featureLabel} (${missing})`
+            : `Tools: ${cap.toolCall === null ? "unknown" : cap.toolCall ? "supported" : "not supported"} · Structured output: ${
+                cap.structuredOutput === null
+                  ? "unknown"
+                  : cap.structuredOutput
+                    ? "supported"
+                    : "not supported"
+              }`
+        }
+      >
+        <span aria-hidden className={cn("size-2 shrink-0 rounded-full", meta.dot)} />
+        <span className="text-[10.5px] leading-none text-muted-foreground">{meta.label}</span>
+        <CapabilityHoverCard cap={cap} modelName={modelName} />
+      </span>
+    </span>
+  );
+}
+
+/** Combobox item content: model name + capability right rail. */
+function ModelItemContent({
+  item,
+  requirement,
+  featureLabel
+}: {
+  item: ModelOption;
+  requirement: AiFeatureRequirement | null;
+  featureLabel: string | null;
+}) {
+  return (
+    <div className="relative flex min-w-0 items-center gap-2">
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      <ModelCapabilityBadge
+        modelId={item.modelId}
+        modelName={item.label}
+        requirement={requirement}
+        featureLabel={featureLabel}
+      />
+    </div>
+  );
+}
+
 function ModelCombobox({
   modelId,
   providerId,
@@ -166,7 +346,9 @@ function ModelCombobox({
   onPick,
   onFreeType,
   onOpen,
-  id
+  id,
+  requirement,
+  featureLabel
 }: {
   modelId: string;
   providerId?: string;
@@ -176,6 +358,9 @@ function ModelCombobox({
   /** Lazy-load live provider models when the list opens. */
   onOpen?: () => void;
   id?: string;
+  /** Capability this picker's feature requires — drives "may not work" markers. */
+  requirement?: AiFeatureRequirement | null;
+  featureLabel?: string | null;
 }) {
   const selectedOption = useMemo(() => {
     if (providerId) {
@@ -237,8 +422,12 @@ function ModelCombobox({
                 <ComboboxGroupLabel>{group.value}</ComboboxGroupLabel>
                 <ComboboxCollection>
                   {(item: ModelOption) => (
-                    <ComboboxItem key={item.value} value={item.value}>
-                      {item.label}
+                    <ComboboxItem key={item.value} value={item.value} className="group/item">
+                      <ModelItemContent
+                        item={item}
+                        requirement={requirement ?? null}
+                        featureLabel={featureLabel ?? null}
+                      />
                     </ComboboxItem>
                   )}
                 </ComboboxCollection>
@@ -248,8 +437,12 @@ function ModelCombobox({
         ) : (
           <ComboboxList>
             {(item: ModelOption) => (
-              <ComboboxItem key={item.value} value={item.value}>
-                {item.label}
+              <ComboboxItem key={item.value} value={item.value} className="group/item">
+                <ModelItemContent
+                  item={item}
+                  requirement={requirement ?? null}
+                  featureLabel={featureLabel ?? null}
+                />
               </ComboboxItem>
             )}
           </ComboboxList>
@@ -783,6 +976,13 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
                           const isTesting = testingFeature === feature;
                           const forceEdit = Boolean(editingFeatures[feature]);
                           const showDefaultLabel = onDefault && !forceEdit;
+                          const featureRequirement = AI_FEATURE_REQUIREMENTS[feature];
+                          const selectionMissing = requirementMissing(
+                            featureRequirement,
+                            modelCapabilityFor(
+                              (showDefaultLabel ? defaultModel : featureModel).trim()
+                            )
+                          );
 
                           // Shared tile shell so Default vs override align on edges/height.
                           return (
@@ -827,6 +1027,8 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
                                       modelId={featureModel}
                                       providerId={featureProviderId}
                                       options={modelOptions}
+                                      requirement={featureRequirement}
+                                      featureLabel={AI_FEATURE_LABELS[feature]}
                                       onPick={(opt) => {
                                         setFeatureFromOption(feature, opt);
                                         setEditingFeatures((prev) => {
@@ -859,6 +1061,12 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
                                   </Button>
                                 </div>
                               )}
+                              {selectionMissing ? (
+                                <p className="flex items-center gap-1.5 text-xs text-amber-600">
+                                  <TriangleAlertIcon className="size-3 shrink-0" aria-hidden />
+                                  May not work for {AI_FEATURE_LABELS[feature]} — {selectionMissing}
+                                </p>
+                              ) : null}
                             </div>
                           );
                         })}

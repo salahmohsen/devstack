@@ -1,5 +1,6 @@
 /**
- * Generated from @mastra/core provider-registry.json (installed agent version).
+ * Generated from @mastra/core provider-registry.json (installed agent version)
+ * plus models.dev per-model capability data.
  * Do not hand-edit model lists — re-run:
  *   pnpm mastra:sync-catalog
  * CI runs this script with --check and fails when this file is stale.
@@ -2935,9 +2936,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.1",
       "minimax/minimax-m2.5",
       "minimax/minimax-m2.7",
-      "minimax/minimax-m2.7:free",
       "minimax/minimax-m3",
-      "minimax/minimax-m3:free",
       "mistralai/codestral-2508",
       "mistralai/devstral-2512",
       "mistralai/ministral-14b-2512",
@@ -5851,9 +5850,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.1",
       "minimax/minimax-m2.5",
       "minimax/minimax-m2.7",
-      "minimax/minimax-m2.7:free",
       "minimax/minimax-m3",
-      "minimax/minimax-m3:free",
       "mistralai/codestral-2508",
       "mistralai/devstral-2512",
       "mistralai/ministral-14b-2512",
@@ -8344,6 +8341,28409 @@ export function isMastraProviderId(id: string): id is MastraProviderId {
   return byId.has(id as MastraProviderId);
 }
 
+/** Capability flags for a model. null = unknown (not in models.dev, custom, free-typed). */
+export type MastraModelCapability = {
+  toolCall: boolean | null;
+  structuredOutput: boolean | null;
+};
+
+export const MASTRA_MODEL_CAPABILITIES = {
+  "302ai/chatgpt-4o-latest": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "302ai/claude-3-5-haiku-20241022": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-3-5-haiku-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-1-20250805-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-20250514": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-5-20251101-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-6-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-sonnet-4-20250514": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-sonnet-4-5-20250929-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/claude-sonnet-4-6-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/deepseek-reasoner": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/deepseek-v3.2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/doubao-seed-1-6-thinking-250715": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/doubao-seed-1-6-vision-250815": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/doubao-seed-1-8-251215": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/doubao-seed-code-preview-251028": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-2.0-flash-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "302ai/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "302ai/gemini-2.5-flash-lite-preview-09-2025": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-2.5-flash-nothink": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-2.5-flash-preview-09-2025": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "302ai/gemini-3-pro-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "302ai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.5-airx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.5-x": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/glm-for-coding": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.1-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.2-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.4-mini-2026-03-17": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.4-nano-2026-03-17": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "302ai/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/grok-4-1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/grok-4-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/grok-4.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/grok-4.20-beta-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/grok-4.20-beta-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/grok-4.20-multi-agent-beta-0309": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/kimi-k2-0905-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/kimi-k2-thinking-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/MiniMax-M1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/MiniMax-M2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/MiniMax-M2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/ministral-14b-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen-max-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen3-30b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/qwen3-max-2025-09-23": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-3-7-sonnet-20250219": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-opus-4-20250514": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-sonnet-4-20250514": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/deepseek-ai/DeepSeek-R1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/deepseek-ai/DeepSeek-V3.1-Terminus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/deepseek/deepseek-v3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "abacus/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3-pro-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "abacus/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "abacus/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "abacus/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "abacus/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.1-chat-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.2-chat-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.3-chat-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.3-codex-xhigh": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/grok-4-0709": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/grok-code-fast-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/kimi-k2-turbo-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/llama-3.3-70b-versatile": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/meta-llama/Meta-Llama-3.1-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/meta-llama/Meta-Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/o3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/qwen-2.5-coder-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/Qwen/Qwen2.5-72B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/Qwen/Qwen3-32B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/Qwen/QwQ-32B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/route-llm": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/zai-org/GLM-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/zai-org/GLM-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/zai-org/GLM-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "abacus/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abacus/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abliteration-ai/abliterated-model": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "abliteration-ai/abliterated-model-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "abliteration-ai/abliterated-model-large-v2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/glm-5.2-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "above/mimo-v2.5-pro-ultraspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "above/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "agentrouter/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "agentrouter/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "agentrouter/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "agnes/agnes-2.0-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "agnes/agnes-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "agnes/agnes-2.5-pro-alpha": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ai-router/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ai-router/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ai-router/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ai-router/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ai-router/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/deepseek-ai/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/deepseek-ai/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/motif-technologies/motif-3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aiand/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/qwen/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/zai-org/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/zai-org/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aki-io/deepseek-v4-flash-0731-284b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aki-io/gemma4-26b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aki-io/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aki-io/kimi-k2.7-code-1100b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aki-io/mistral4-119b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aki-io/qwen3.6-35b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aki-io/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qvq-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-mt-plus": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba/qwen-mt-turbo": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba/qwen-omni-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-omni-turbo-realtime": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-plus-character-ja": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-vl-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen-vl-ocr": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba/qwen-vl-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen2-5-14b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen2-5-32b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen2-5-72b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen2-5-7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen2-5-omni-7b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen2-5-vl-72b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen2-5-vl-7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-14b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-8b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-asr-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-livetranslate-flash-realtime": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-omni-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-omni-flash-realtime": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-vl-235b-a22b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-vl-30b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3-vl-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba/qwq-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-distill-llama-70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-distill-llama-8b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-distill-qwen-1-5b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-distill-qwen-14b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-distill-qwen-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-distill-qwen-7b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-v3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-v3-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-v3-2-exp": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "alibaba-cn/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "alibaba-cn/kimi/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/MiniMax/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/moonshot-kimi-k2-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "alibaba-cn/qvq-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-deep-research": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-doc-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-long": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-math-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-math-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-mt-plus": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-mt-turbo": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-omni-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-omni-turbo-realtime": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-plus-character": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-vl-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-vl-ocr": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen-vl-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-14b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-32b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-72b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-coder-32b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-coder-7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-math-72b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-math-7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-omni-7b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-vl-72b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen2-5-vl-7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-14b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-8b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-asr-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-omni-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-omni-flash-realtime": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-vl-235b-a22b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-vl-30b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3-vl-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/qwq-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/qwq-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-cn/siliconflow/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/siliconflow/deepseek-v3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/siliconflow/deepseek-v3.1-terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/siliconflow/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/tongyi-intent-detect-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-coding-plan/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/qwen3-max-2026-01-23": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-coding-plan/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-coding-plan-cn/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/qwen3-max-2026-01-23": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-coding-plan-cn/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-coding-plan-cn/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/happyhorse-1.1-i2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/happyhorse-1.1-r2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/happyhorse-1.1-t2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/qwen-image-2.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/qwen-image-2.0-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/qwen3.8-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/wan2.7-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan/wan2.7-image-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/happyhorse-1.1-i2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/happyhorse-1.1-r2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/happyhorse-1.1-t2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/qwen-image-2.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/qwen-image-2.0-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/qwen3.8-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/wan2.7-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-token-plan-cn/wan2.7-image-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "ambient/ambient/large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/zai-org/GLM-5.1-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ambient/zai-org/GLM-5.2-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/DeepSeek-V4-Flash-Vision-Exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/MiniCPM5-1B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "amd/Qwen3.8-Flash-Next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/cohere/command-r-plus-08-2024": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/deepseek/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/deepseek/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/google/gemini-3-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/mistralai/devstral-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/mistralai/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "anyapi/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anyapi/perplexity/sonar-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "anyapi/perplexity/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "anyapi/xai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/deepseek/deepseek-v4-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "arcee/trinity-large-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "arcee/zai-org/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "atomic-chat/gemma-4-E4B-it-IQ4_XS": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "atomic-chat/gemma-4-E4B-it-MLX-4bit": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "atomic-chat/Meta-Llama-3_1-8B-Instruct-GGUF": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "atomic-chat/Qwen3_5-9B-MLX-4bit": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "atomic-chat/Qwen3_5-9B-Q4_K_M": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "auriko/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "auriko/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "auriko/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "auriko/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "auriko/minimax-m2-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "auriko/minimax-m2-7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "auriko/qwen-3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "bailing/Ling-1T": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "bailing/Ring-1T": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "baseten/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "baseten/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "baseten/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/nvidia/Nemotron-120B-A12B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-5.2-Fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-5.3-Fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "berget/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "berget/mistralai/Mistral-Small-3.2-24B-Instruct-2506": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "berget/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "berget/Qwen/Qwen3.8-27B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "berget/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "berget/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "blueclaw/Qwen/Qwen3.6-35B-A3B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "blueclaw/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bothub/gemma-4-31b-it:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bothub/nemotron-3-ultra-550b-a55b:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cerebras/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cerebras/qwen-3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/llama-4-maverick-17b-128e-instruct-fp8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/qwen3-coder-480b-a35b-instruct-int4-mixed-ar": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/qwen3.6-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hyper/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hyper/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "chutes/deepseek-ai/DeepSeek-V3.2-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/deepseek-ai/DeepSeek-V4-Flash-0731-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/google/gemma-4-31B-turbo-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/moonshotai/Kimi-K2.6-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/moonshotai/Kimi-K3-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/Nemotron-3-Nano-Omni-30B-TEE": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "chutes/Qwen/Qwen3-235B-A22B-Thinking-2507-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/Qwen/Qwen3-32B-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/Qwen/Qwen3.5-397B-A17B-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/Qwen/Qwen3.6-27B-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/Qwen/Qwen3.8-27B-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/unsloth/Mistral-Nemo-Instruct-2407-TEE": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "chutes/zai-org/GLM-5.1-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "chutes/zai-org/GLM-5.2-TEE": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "clarifai/arcee_ai/AFM/models/trinity-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "clarifai/clarifai/main/models/mm-poly-8b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "clarifai/deepseek-ai/deepseek-ocr/models/DeepSeek-OCR": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "clarifai/minimaxai/chat-completion/models/MiniMax-M2_5-high-throughput": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "clarifai/mistralai/completion/models/Ministral-3-14B-Reasoning-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "clarifai/mistralai/completion/models/Ministral-3-3B-Reasoning-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "clarifai/moonshotai/chat-completion/models/Kimi-K2_6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "clarifai/openai/chat-completion/models/gpt-oss-120b-high-throughput": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "clarifai/openai/chat-completion/models/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "clarifai/qwen/qwenCoder/models/Qwen3-Coder-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "clarifai/qwen/qwenLM/models/Qwen3-30B-A3B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "clarifai/qwen/qwenLM/models/Qwen3-30B-A3B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "claudinio/claudinio": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "claudinio/claudius": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cline-pass/cline-pass/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cline-pass/cline-pass/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cline-pass/cline-pass/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cline-pass/cline-pass/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cline-pass/cline-pass/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cline-pass/cline-pass/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cline-pass/cline-pass/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudferro-sherlock/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cloudferro-sherlock/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudferro-sherlock/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudferro-sherlock/speakleash/Bielik-11B-v2.6-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudferro-sherlock/speakleash/Bielik-11B-v3.0-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/aisingapore/gemma-sea-lion-v4-27b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/deepseek-ai/deepseek-r1-distill-qwen-32b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/ibm-granite/granite-4.0-h-micro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/meta/llama-3.1-8b-instruct-fp8": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/meta/llama-3.2-11b-vision-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/meta/llama-3.2-1b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/meta/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/meta/llama-guard-3-8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/nvidia/nemotron-3-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/qwen/qwen2.5-coder-32b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/qwen/qwen3-30b-a3b-fp8": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/qwen/qwq-32b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cloudflare-workers-ai/@cf/zai-org/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/zai-org/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/zai-org/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/zai-org/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "coralbricks/glm-5.3-fp4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "coralbricks/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "coralbricks/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/apertus-70b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/claude-4-5-sonnet": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-4-6-sonnet": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-opus4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-opus4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-opus4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-opus4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/codestral-2508": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cortecs/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cortecs/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/devstral-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemma-3-27b-it": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "cortecs/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-4o": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "cortecs/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-oss-safeguard-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/hermes-4-405b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/llama-3.1-405b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/llama-3.1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/minicpm-v-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/minimax-m2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/ministral-14b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/ministral-3b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/ministral-8b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-7b-instruct-v0.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cortecs/mistral-7b-instruct-v0.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-large-2402": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-medium-3.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-nemo-instruct-2407": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-small-2503": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-small-3.2-24b-instruct-2506": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mixtral-8x7B-instruct-v0.1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "cortecs/nemotron-nano-v2-12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/nova-2-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/nova-lite-v1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/nova-micro-v1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/nova-pro-v1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/nvidia-nemotron-3-nano-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/pixtral-12b-2409": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/pixtral-large-2502": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen2.5-vl-72b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "cortecs/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3-30b-a3b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3-vl-235b-a22b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cortecs/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cortecs/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3.8-flash-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/qwen3guard-gen-0.6b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cortecs/qwen3guard-gen-8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "cortecs/voxtral-small-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crof/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/greg-1-mini": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "crof/greg-2-super": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "crof/greg-2-ultra": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "crof/greg-rp": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "crof/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/kimi-k3-eco": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crof/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crof/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crossmodel/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/moonshot/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/moonshot/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/moonshot/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/moonshot/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/qwen/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/qwen/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crossmodel/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/x-ai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/x-ai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crusoe/deepseek-ai/DeepSeek-V3-0324": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crusoe/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crusoe/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crusoe/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crusoe/nvidia/Nemotron-3-Nano-Omni-Reasoning-30B-A3B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crusoe/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crusoe/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crusoe/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crusoe/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "crusoe/zai/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crusoe/zai/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "drun/public/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "drun/public/deepseek-v3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "drun/public/minimax-m25": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "daoxe/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "daoxe/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "daoxe/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "daoxe/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "daoxe/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "daoxe/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "daoxe/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "daoxe/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "daoxe/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-claude-opus-4-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "databricks/databricks-gemini-2-5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gemini-2-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gemini-3-1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gemini-3-1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gemini-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gemini-3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-glm-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "databricks/databricks-kimi-k2-7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/ByteDance/Seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/ByteDance/Seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/ByteDance/Seed-2.0-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-R1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/google/gemma-4-26B-A4B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/google/gemma-4-E4B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/meta-llama/Llama-3.3-70B-Instruct-Turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "deepinfra/meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "deepinfra/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "deepinfra/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/nvidia/Llama-3.3-Nemotron-Super-49B-v1.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/nvidia/Nemotron-3-Nano-30B-A3B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "deepinfra/nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3-30B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3-32B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3-Max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3-Next-80B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3-VL-235B-A22B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.5-122B-A10B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.5-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.5-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.5-9B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.7-Max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.8-2.4T-A95B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/Qwen/Qwen3.8-Max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/stepfun-ai/Step-3.7-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "deepinfra/tencent/Hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "deepinfra/thinkingmachines/Inkling-Small": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/XiaomiMiMo/MiMo-V2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/XiaomiMiMo/MiMo-V2.5-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-4.7-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/auto": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/claude-sonnet-5": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/codestral-2508": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/custom": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/devstral-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/ernie-4.5-vl-424b-a47b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-4-32b-0414-128k": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-4.5-airx": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-4.5-x": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-4.6v-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-5.2-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-3.5-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/gpt-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-4o-mini-transcribe": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/gpt-4o-transcribe": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/grok-4-1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-4-20-beta-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-4-20-beta-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-4-20-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-4-20-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-4-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-4-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/grok-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/grok-build-0-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/kimi-k2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/kimi-k3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/ling-3.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/llama-3-70b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/llama-3.1-70b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/llama-3.2-11b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/llama-4-maverick-17b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/llama-4-scout-17b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-m2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-m2.1-lightning": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-m2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/minimax-text-01": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/ministral-14b-2512": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/ministral-3b-2512": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/ministral-8b-2512": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/mistral-large-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/mistral-small-2506": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/nemotron-3-ultra-550b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen-coder-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen-omni-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen-plus-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-235b-a22b-fp8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-vl-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-vl-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3-vl-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/qwen35-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/seed-1-6-250615": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/seed-1-6-250915": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/seed-1-6-flash-250715": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/seed-1-8-251228": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/sonar": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "llmgateway/sonar-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "llmgateway/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/alibaba-qwen3-32b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/all-mini-lm-l6-v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-3-opus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-3.5-haiku": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-3.5-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-3.7-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-4.1-opus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-4.5-haiku": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-4.5-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-4.6-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-5-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-opus-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/arcee-trinity-large-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/bge-m3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/bge-reranker-v2-m3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/deepseek-3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/deepseek-4-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/deepseek-r1-distill-llama-70b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/deepseek-v3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/e5-large-v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/fal-ai/elevenlabs/tts/multilingual-v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/fal-ai/fast-sdxl": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/fal-ai/flux/schnell": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/fal-ai/stable-audio-25/text-to-audio": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/gte-large-en-v1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/llama-4-maverick": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/llama3-8b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/llama3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/ministral-3-8b-instruct-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/mistral-3-14B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/mistral-7b-instruct-v0.3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/mistral-nemo-instruct-2407": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/multi-qa-mpnet-base-dot-v1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/nemotron-3-nano-30b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/nemotron-3-nano-omni": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/nemotron-3-ultra-550b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/nemotron-nano-12b-v2-vl": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/nvidia-nemotron-3-super-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/openai-gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/openai-gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-image-1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/openai-gpt-image-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/openai-gpt-image-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/openai-gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/qwen-2.5-14b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/qwen3-embedding-0.6b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/qwen3-tts-voicedesign": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/stable-diffusion-3.5-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "digitalocean/wan2-2-t2v-a14b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "dinference/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "dinference/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "dinference/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "dinference/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "dinference/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "dinference/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ebcloud/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ebcloud/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ebcloud/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ebcloud/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "echo/echo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/amazon/moonshot.kimi-k2-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/amazon/moonshotai.kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/amazon/zai.glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/amazon/zai.glm-4.7-flash@us": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-fable-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-opus-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-sonnet-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/azure/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/azure/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/azure/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/azure/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cerebras/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cloudflare/@cf/aisingapore/gemma-sea-lion-v4-27b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/cloudflare/@cf/deepseek-ai/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cloudflare/@cf/deepseek-ai/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cloudflare/@cf/meta/llama-guard-3-8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/cloudflare/@cf/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/cloudflare/@cf/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/cloudflare/@cf/qwen/qwen2.5-coder-32b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/cloudflare/@cf/zai-org/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cohere/command-a-03-2025": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cohere/command-r-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cohere/command-r-plus-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cohere/command-r7b-12-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/databricks/databricks-deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/databricks/databricks-deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/databricks/databricks-gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/databricks/databricks-gpt-oss-120b@eu": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/databricks/databricks-gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/databricks/databricks-gpt-oss-20b@eu": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/databricks/databricks-inkling": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/ByteDance/Seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/ByteDance/Seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-R1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-V3-0324": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/meta-llama/Llama-3.2-11B-Vision-Instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/meta-llama/Llama-Guard-3-8B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/meta-models/Muse-Glimmer-30B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/nvidia/Llama-3.1-Nemotron-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/nvidia/Nemotron-3-Nano-30B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/stepfun-ai/Step-3.5-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/stepfun-ai/Step-3.7-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/tencent/Hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/thinkingmachines/Inkling-Small": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/zai-org/GLM-4.7-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepseek/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/fireworks_ai/accounts/fireworks/models/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/fireworks_ai/accounts/fireworks/models/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/fireworks_ai/accounts/fireworks/models/inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/fireworks_ai/accounts/fireworks/models/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/fireworks_ai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/flexai/DeepSeek-V4-Flash-0731": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/flexai/gpt-oss-120b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/flexai/gpt-oss-20b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/flexai/Muse-Glimmer-30B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/flexai/Nemotron-3-Super-120B-A12B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/flexai/Step-3.7-Flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/google/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3-pro-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.1-flash-lite-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/groq/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/groq/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/ionos/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/ionos/openai/gpt-oss-120b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/minimax/MiniMax-M2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/minimax/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/minimax/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/minimax/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/minimax/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/codestral-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/devstral-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/devstral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/magistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-large-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-2505": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-2604": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-small-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/voxtral-small-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/moonshot/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/moonshot/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/moonshot/kimi-k2.7-code-highspeed": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/moonshot/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/nebius/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/nebius/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/nebius/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/nebius/nvidia/Nemotron-3-Ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/nebius/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-3.5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-mini-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/o1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/o3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/ovhcloud/gpt-oss-120b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/ovhcloud/gpt-oss-20b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/perplexityai/sonar": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/perplexityai/sonar-deep-research": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/perplexityai/sonar-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/perplexityai/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/qwen/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen-max": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen-vl-max": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen-vl-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/qwen/qwen3-235b-a22b-instruct-2507": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-coder-480b-a35b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/qwen/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-coder-next@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-max@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/qwq-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/scaleway/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/scaleway/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/scaleway/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/tensorx/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/tensorx/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/tensorx/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/together_ai/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/meta-models/Muse-Glimmer-30B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/thinkingmachines/Inkling-Small": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/vertex/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3-pro-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.1-flash-lite-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.1-flash-lite@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.1-flash-lite@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.5-flash-lite@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.5-flash-lite@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.5-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.5-flash@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.6-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.6-flash@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.7-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.7-flash@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.8-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-3.8-flash@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-4.20-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-4.20-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/zai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/zai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/zai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/zai/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/zai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/zai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/zai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/zai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/zai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/zai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/deepseek-v3-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/fugu-ultra-v1-0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/fugu-ultra-v1-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/gemma-4-26b-a4b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-4-5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-4-6v-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-4-7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-5-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-5-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/kimi-k2-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/kimi-k2-7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/kimi-k2-7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/mimo-v2-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/mimo-v2-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/minimax-m2-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/minimax-m2-7-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/mistral-small-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/muse-spark-1-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/muse-spark-1-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/muse-spark-1-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-4b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-5-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-6-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-8-max-0902": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/qwen3-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/seed-2-0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/seed-2-0-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/seed-2-0-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/seed-2-0-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/seed-2-1-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/step-3-5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/step-3-5-flash-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/step-3-7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "evroc/evroc/roc": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "evroc/google/gemma-4-26B-A4B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "evroc/intfloat/multilingual-e5-large-instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "evroc/KBLab/kb-whisper-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "evroc/mistralai/Mistral-Medium-3.5-128B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "evroc/mistralai/Voxtral-Small-24B-2507": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "evroc/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "evroc/nvidia/Llama-3.3-70B-Instruct-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "evroc/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "evroc/openai/whisper-large-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "evroc/openai/whisper-large-v3-turbo": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "evroc/Qwen/Qwen3-Embedding-8B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "evroc/Qwen/Qwen3-Reranker-4B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "evroc/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "evroc/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "evroc/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/anthropic/claude-opus-4.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/anthropic/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/bytedance/seedance-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/deepseek-ai/deepseek-r1-distill-llama-70b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/google/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/google/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/google/imagen-4.0-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/google/imagen-4.0-ultra": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/google/veo3.1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/google/veo3.1-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/google/veo3.1-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/leonardo-ai/lucid-origin": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/leonardo-ai/lucid-realism": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/moonshotai/kimi-k2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/openai/gpt-image-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/openai/gpt-realtime-1.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/qwen/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/sarvam/sarvam-105b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/sarvam/sarvam-30b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/wanx/wan-v2-6": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "fastrouter/x-ai/grok-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/x-ai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fastrouter/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fastrouter/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/glm-5p2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/glm-5p3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/glm-5p3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/kimi-k2p6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/kimi-k2p7-code": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/nemotron-3-ultra-nvfp4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/qwen3p7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/models/qwen3p8-2p4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/models/qwen3p8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/routers/glm-5p2-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "fireworks-ai/accounts/fireworks/routers/kimi-k3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "freemodel/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "freemodel/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "freemodel/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "freemodel/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "freemodel/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "freemodel/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "freemodel/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "freemodel/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "freemodel/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "freemodel/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "friendli/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "friendli/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "friendli/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "friendli/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "friendli/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "friendli/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/gemini-3-1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/gpt-5-3-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/gpt-5-4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/gpt-5-4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/gpt-5-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/grok-4-1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/grok-4-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/grok-code-fast-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/kimi-k2-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "frogbot/minimax-m2-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/minimax-m2-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/qwen-3-6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "frogbot/zai-glm-5-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "gmicloud/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "gmicloud/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "gmicloud/moonshotai/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "gmicloud/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "gmicloud/Qwen/Qwen3.7-Max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/zai-org/GLM-5-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "gmicloud/zai-org/GLM-5.1-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "gmicloud/zai-org/GLM-5.2-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/deep-research-max-preview-04-2026": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "google/deep-research-preview-04-2026": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "google/gemini-2.5-computer-use-preview-10-2025": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-2.5-flash-preview-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-2.5-pro-preview-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3-pro-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.1-flash-lite-image": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.1-flash-live-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "google/gemini-3.1-flash-tts-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.5-live-translate-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-embedding-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-embedding-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-flash-lite-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemini-omni-flash-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "google/lyria-3-clip-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "google/lyria-3-pro-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "google/veo-3.1-fast-generate-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/veo-3.1-generate-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "google/veo-3.1-lite-generate-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "greenpt/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/devstral-2-123b-instruct-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/gemma4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-caveman": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-caveman-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-caveman-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-honey": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-honey-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-honey-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-ponytail": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-ponytail-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.2-ponytail-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/green-l": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/green-l-raw": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/green-r": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/green-r-raw": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/green-s": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "greenpt/green-s-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "greenpt/holo2-30b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "greenpt/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/kimi-k2.6-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/mistral-medium-3.5-128b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/mistral-small-3.2-24b-instruct-2506": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/pixtral-12b-2409": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "greenpt/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/voxtral-small-24b-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "groq/allam-2-7b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/canopylabs/orpheus-arabic-saudi": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/canopylabs/orpheus-v1-english": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/groq/compound": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/groq/compound-mini": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/llama-3.1-8b-instant": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "groq/llama-3.3-70b-versatile": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "groq/meta-llama/llama-prompt-guard-2-22m": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/meta-llama/llama-prompt-guard-2-86m": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "groq/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "groq/openai/gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "groq/qwen/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "groq/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "groq/whisper-large-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "groq/whisper-large-v3-turbo": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/chatgpt-4o-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-3-haiku-20240307": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-3.5-haiku": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-3.5-sonnet-v2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-3.7-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-4.5-haiku": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-4.5-opus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-4.5-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-opus-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-opus-4-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/deepseek-r1-distill-llama-70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/deepseek-reasoner": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/deepseek-tng-r1t2-chimera": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/deepseek-v3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/deepseek-v3.1-terminus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/ernie-4.5-21b-a3b-thinking": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gemini-3-pro-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gemma-3-12b-it": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/gemma2-9b-it": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-4.1-mini-2025-04-14": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-4o": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5-chat-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5.1-chat-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-3-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-4-1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-4-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/grok-code-fast-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/hermes-2-pro-llama-3-8b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/kimi-k2-0711": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-3.1-8b-instant": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-3.1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-3.1-8b-instruct-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-3.3-70b-versatile": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-4-maverick": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-4-scout": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/llama-guard-4": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/llama-prompt-guard-2-22m": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/llama-prompt-guard-2-86m": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/mistral-large-2411": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/mistral-nemo": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/mistral-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/o1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/o1-mini": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/o3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/o3-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/o3-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/o4-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/qwen2.5-coder-7b-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/qwen3-235b-a22b-thinking": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/qwen3-30b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "helicone/sonar": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/sonar-deep-research": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/sonar-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/sonar-reasoning": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "helicone/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "hetzner/Qwen/Qwen3.6-35B-A3B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hetzner/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "hpc-ai/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/zai-org/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hpc-ai/zai-org/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-R1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-R1-0528": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/google/gemma-4-26B-A4B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/meta-llama/Llama-3.1-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/MiniMaxAI/MiniMax-M2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/MiniMaxAI/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/moonshotai/Kimi-K2-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/moonshotai/Kimi-K2-Instruct-0905": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/moonshotai/Kimi-K2-Thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen2.5-Coder-32B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-235B-A22B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3-30B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-32B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-Coder-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3-Coder-Next": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3-Embedding-4B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3-Embedding-8B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3-Next-80B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3-Next-80B-A3B-Thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3-VL-235B-A22B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-VL-235B-A22B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.5-122B-A10B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.5-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.5-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/Qwen/Qwen3.5-9B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.8-2.4T-A95B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/stepfun-ai/Step-3.5-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/stepfun-ai/Step-3.7-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/tencent/Hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/thinkingmachines/Inkling-Small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/XiaomiMiMo/MiMo-V2-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/XiaomiMiMo/MiMo-V2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/XiaomiMiMo/MiMo-V2.5-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/zai-org/GLM-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-4.5-Air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-4.5V": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-4.6V-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-4.7-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "huggingface/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "iflowcn/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/deepseek-v3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/kimi-k2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-235b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iflowcn/qwen3-vl-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/cerebras/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/fireworks/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/fireworks/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/fireworks/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/groq/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/groq/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-3.5-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "impossibl/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "impossibl/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "impossibl/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/qwen/qwen3.8-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/xai/grok-4.20-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/xai/grok-4.20-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/xai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/xai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/xai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/zai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/zai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/zai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/zai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/zai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "impossibl/zai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/zai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "impossibl/zai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inception/mercury-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inception/mercury-edit-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "inceptron/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inceptron/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inceptron/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inceptron/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inference/google/gemma-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/meta/llama-3.1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/meta/llama-3.2-11b-vision-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/meta/llama-3.2-1b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/meta/llama-3.2-3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/mistral/mistral-nemo-12b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/osmosis/osmosis-structure-0.6b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/qwen/qwen-2.5-7b-vision-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inference/qwen/qwen3-embedding-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "inferx/Agents-A1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inferx/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inferx/Devstral-2-123B-Instruct-2512-int4-AutoRound": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inferx/gemma-4-31B-it-fp8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inferx/mimo-v25": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inferx/Ornith-1.0-35B-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inferx/Qwen3-Coder-Next-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inferx/Qwen3-Coder-Next-FP8-no-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inferx/Qwen3-Embedding-8B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "inferx/Qwen3.6-27B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inferx/Qwen3.6-35B-A3B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inferx/Qwen3.6-35B-A3B-fp8-no-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "infomaniak/bge_multilingual_gemma2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "infomaniak/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "infomaniak/mini_lm_l12_v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "infomaniak/mistralai/Ministral-3-14B-Instruct-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "infomaniak/mistralai/Mistral-Small-4-119B-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "infomaniak/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "infomaniak/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "infomaniak/Qwen/Qwen3.5-122B-A10B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "infomaniak/Qwen/Qwen3.5-397B-A17B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "infomaniak/swiss-ai/Apertus-v1.5-70B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/deepseek-ai/DeepSeek-R1-0528": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/meta-llama/Llama-3.2-90B-Vision-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/mistralai/Devstral-Small-2505": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/mistralai/Magistral-Small-2506": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/mistralai/Mistral-Large-Instruct-2411": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/mistralai/Mistral-Nemo-Instruct-2407": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/moonshotai/Kimi-K2-Instruct-0905": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/moonshotai/Kimi-K2-Thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/Qwen/Qwen2.5-VL-32B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/Qwen/Qwen3-Next-80B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "io-net/zai-org/GLM-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "iteracompute/iteracompute/ornith-1.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "iteracompute/iteracompute/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3-Next-80B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3-Next-80B-A3B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3-VL-235B-A22B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3-VL-235B-A22B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3.5-122B-A10B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3.5-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3.5-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jalapeno/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/baidu/ernie-4.5-300b-a47b-paddle": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/baidu/ernie-4.5-vl-424b-a47b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "jiekou/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/claude-opus-4-20250514": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/claude-sonnet-4-20250514": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/deepseek/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/deepseek/deepseek-v3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/deepseek/deepseek-v3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-2.5-flash-lite-preview-06-17": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-2.5-flash-lite-preview-09-2025": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-2.5-flash-preview-05-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-2.5-pro-preview-06-05": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gemini-3-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/grok-4-0709": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/grok-4-1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/grok-4-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/grok-code-fast-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/minimaxai/minimax-m1-80k": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "jiekou/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/moonshotai/kimi-k2-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/qwen/qwen3-235b-a22b-fp8": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "jiekou/qwen/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/qwen/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/qwen/qwen3-30b-a3b-fp8": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "jiekou/qwen/qwen3-32b-fp8": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "jiekou/qwen/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/qwen/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/xiaomimimo/mimo-v2-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/zai-org/glm-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/zai-org/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/zai-org/glm-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "jiekou/zai-org/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/deepseek-v4-flash:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemini-2-5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemini-2-5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemini-3-1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemini-3-1-flash-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "kenari/gemini-3-1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemini-3-5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemini-3-6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemini-3-7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/glm-4-7-flash:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/glm-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/glm-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/glm-5-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/glm-5-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gpt-5-4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gpt-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gpt-5-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gpt-5-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gpt-5-6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gpt-image-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "kenari/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/grok-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/grok-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/grok-build-0-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/grok-imagine-image-2-0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "kenari/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/hy3:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/kimi-k2-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/kimi-k2-6:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/kimi-k2-7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/kimi-k2-7-code:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/mimo-v2-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/mimo-v2-5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/mimo-v2-5:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/minimax-m2-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/minimax-m2-7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/mistral-large:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/mistral-medium-3-5:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kenari/nemotron-3-nano-30b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/nemotron-3-super-120b-a12b:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/qwen3-7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/qwen3-8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/step-3-7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/step-3-7-flash:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kenari/whisper-large-v3-turbo": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "kilo/~anthropic/claude-fable-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~anthropic/claude-haiku-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~anthropic/claude-opus-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~anthropic/claude-sonnet-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~deepseek/deepseek-v4-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~google/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~moonshotai/kimi-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~openai/gpt-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~openai/gpt-mini-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~x-ai/grok-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~z-ai/glm-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~z-ai/glm-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/aion-labs/aion-2.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/aion-labs/aion-3.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/aion-labs/aion-3.0-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/aion-labs/aion-rp-llama-3.1-8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/amazon/nova-2-lite-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/amazon/nova-lite-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/amazon/nova-micro-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/amazon/nova-premier-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/amazon/nova-pro-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/anthracite-org/magnum-v4-72b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-3-haiku": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-opus-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/anthropic/claude-opus-4.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/arcee-ai/trinity-large-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/baidu/ernie-4.5-vl-424b-a47b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/bytedance-seed/seed-1.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/bytedance-seed/seed-1.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/bytedance-seed/seed-2-1-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/bytedance-seed/seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/bytedance-seed/seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/bytedance-seed/seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/bytedance/ui-tars-1.5-7b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/cognitivecomputations/dolphin-mistral-24b-venice-edition": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/cohere/command-a": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/cohere/command-r-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/cohere/command-r-plus-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/cohere/command-r7b-12-2024": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/cohere/north-mini-code:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/deepseek/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-chat-v3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-chat-v3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-r1-distill-llama-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/deepseek/deepseek-v3.1-terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-v3.2-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/dots-studio/dots-3-note-preview:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-2.5-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-2.5-pro-preview-05-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3-pro-image": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.1-flash-lite-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemma-2-27b-it": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/google/gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemma-3-4b-it": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/lyria-3-clip-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/google/lyria-3-pro-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/gryphe/mythomax-l2-13b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/ibm-granite/granite-4.0-h-micro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/ibm-granite/granite-4.2-8b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/inception/mercury-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/inception/mercury-2.5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/inclusionai/ling-3.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/inclusionai/ling-3.0-flash-fin": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/inclusionai/ling-3.0-flash-fin:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/inclusionai/ling-3.0-flash-sante:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/kilo-auto/balanced": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/kilo-auto/efficient": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/kilo-auto/free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/kilo-auto/frontier": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/kilo-auto/small": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/kwaipilot/kat-coder-pro-v2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/kwaipilot/kat-coder-pro-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/liquid/lfm-2.5-2.6b:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mancer/weaver": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/meituan/longcat-2.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/meta-llama/llama-3.1-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta-llama/llama-3.1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta-llama/llama-3.2-1b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/meta-llama/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/meta-llama/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta-llama/llama-4-maverick": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta-llama/llama-4-scout": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta-llama/llama-guard-4-12b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/meta/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/microsoft/phi-4": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/microsoft/wizardlm-2-8x22b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/minimax/minimax-01": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/minimax/minimax-m1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/minimax/minimax-m2-her": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/codestral-2508": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/devstral-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/ministral-14b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/ministral-3b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/ministral-8b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-large-2407": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-medium-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-medium-3-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-medium-3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-nemo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-saba": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-small-24b-instruct-2501": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mistral-small-3.1-24b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/mistralai/mistral-small-3.2-24b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/mixtral-8x22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/mistralai/voxtral-small-24b-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/moonshotai/kimi-k2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/morph/morph-v3-fast": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/morph/morph-v3-large": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/nex-agi/nex-n2-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/nex-agi/nex-n2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/nousresearch/hermes-3-llama-3.1-405b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/nousresearch/hermes-3-llama-3.1-70b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/nousresearch/hermes-4-405b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/nousresearch/hermes-4-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/nvidia/nemotron-3-super-120b-a12b:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/nvidia/nemotron-3-ultra-550b-a55b:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/nvidia/nemotron-3.5-content-safety": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/nvidia/nemotron-3.5-content-safety:free": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/nvidia/nemotron-3.5-lightning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/nvidia/nemotron-3.5-lightning:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/openai/gpt-3.5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-3.5-turbo-0613": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-3.5-turbo-16k": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-3.5-turbo-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4-turbo-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4o-2024-05-13": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-4o-mini-2024-07-18": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5-image-mini": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.2-chat": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.4-image-2": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.6-sol-discounted": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/openai/gpt-5.6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-5.6-terra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6-astra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-audio": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-audio-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/o1-pro": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/o3-mini-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/o3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/o4-mini-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openrouter/auto": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kilo/openrouter/bodybuilder": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "kilo/openrouter/free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openrouter/pareto-code": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "kilo/perceptron/perceptron-mk1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/perplexity/sonar": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/perplexity/sonar-deep-research": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/perplexity/sonar-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/perplexity/sonar-pro-search": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/perplexity/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/poolside/laguna-s-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/poolside/laguna-s-2.1:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/poolside/laguna-xs-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/poolside/laguna-xs-2.1:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen-2.5-72b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen-2.5-7b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen-2.5-coder-32b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen-plus-2025-07-28": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen2.5-vl-72b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-14b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen3-235b-a22b-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen3-30b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen3-30b-a3b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-30b-a3b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-8b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-max-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-vl-30b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-vl-32b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-vl-8b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3-vl-8b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-flash-02-23": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-plus-02-15": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.5-plus-20260420": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/rekaai/reka-edge": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/rekaai/reka-flash-3": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/relace/relace-apply-3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/relace/relace-search": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/sakana/sakana-namazu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/sao10k/l3-lunaris-8b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/sao10k/l3.1-euryale-70b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/sao10k/l3.3-euryale-70b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/stealth/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/stealth/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/stealth/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/stealth/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/stealth/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/stepfun/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/stepfun/step-3.7-flash:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/tencent/hunyuan-a13b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/tencent/hy-mt2-1.8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/tencent/hy-mt2-30b-a3b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/tencent/hy-mt2-7b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/tencent/hy3-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/thedrummer/cydonia-24b-v4.1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/thedrummer/skyfall-36b-v2": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/thedrummer/unslopnemo-12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/thinkingmachines/inkling-small:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/thinkingmachines/inkling:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/undi95/remm-slerp-l2-13b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/upstage/solar-pro-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/upstage/solar-pro4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/writer/palmyra-x5": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/x-ai/grok-4.20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/x-ai/grok-4.20-multi-agent": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/x-ai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/x-ai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/z-ai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/z-ai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/z-ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/z-ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kimi-for-coding/k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-for-coding/k3-256k": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-for-coding/kimi-for-coding": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-for-coding/kimi-for-coding-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "klokintegration/Kloker": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "klokintegration/Kloker-Integration-Architect": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "klokintegration/Kloker-Integration-Developer": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kosmik/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kuae-cloud-coding-plan/GLM-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lilac/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lilac/minimaxai/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lilac/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lilac/zai-org/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llama/cerebras-llama-4-maverick-17b-128e-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llama/cerebras-llama-4-scout-17b-16e-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llama/groq-llama-4-maverick-17b-128e-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llama/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llama/llama-3.3-8b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llama/llama-4-maverick-17b-128e-instruct-fp8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llama/llama-4-scout-17b-16e-instruct-fp8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway-providers/alibaba/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen-coder-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen-omni-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen-plus-latest": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3-vl-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3-vl-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/alibaba/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen35-397b-a17b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/grok-4-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/grok-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-bedrock/llama-3.1-70b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/llama-4-maverick-17b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/llama-4-scout-17b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-mantle/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-mantle/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/aws-mantle/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure-ai-foundry/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure-ai-foundry/grok-4-1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure-ai-foundry/grok-4-3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure-anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure-anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure-anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure-anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure-anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure-anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-3.5-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-4o": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/azure/o1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/o3": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/o3-mini": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/baidu/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/baidu/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/baidu/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/baidu/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/baidu/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/baidu/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/baidu/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/seed-1-6-250615": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/seed-1-6-250915": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/seed-1-6-flash-250715": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/seed-1-8-251228": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/canopywave/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/canopywave/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/canopywave/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/canopywave/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/canopywave/kimi-k3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/cerebras/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/cerebras/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/cerebras/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/cerebras/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/cerebras/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/consensusprotocol/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/consensusprotocol/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/consensusprotocol/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/consensusprotocol/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/deepinfra/ling-3.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/deepinfra/mimo-v2.5-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/nemotron-3-ultra-550b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepinfra/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/glm-4.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/embercloud/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/fireworks/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/fireworks/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/fireworks/kimi-k3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/fireworks/kimi-k3-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/gonka24/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/gonka24/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/gonka24/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/google-ai-studio/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-ai-studio/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/google-vertex/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/groq/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/groq/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/inference.net/llama-3.2-11b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/meta-contributor/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/meta-contributor/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-m2.1-lightning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-m2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/minimax/minimax-text-01": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/codestral-2508": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/devstral-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/ministral-14b-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/ministral-3b-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/ministral-8b-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/mistral-large-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/mistral-large-latest": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/mistral/mistral-small-2506": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/moonshot/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/moonshot/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/moonshot/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/moonshot/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/moonshot/kimi-k3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/ernie-4.5-vl-424b-a47b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-4.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/novita/kimi-k2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/novita/kimi-k3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/ling-3.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/llama-3-70b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/llama-4-maverick-17b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/llama-4-scout-17b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-235b-a22b-fp8": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-vl-235b-a22b-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/novita/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/novita/qwen35-397b-a17b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-3.5-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-4o-mini-transcribe": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-4o-transcribe": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/o1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/o3": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/o3-mini": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/perplexity/sonar": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/perplexity/sonar-pro": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/perplexity/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/quartz/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/ranoai/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runware/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runware/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runware/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/runware/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/runware/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runware/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runware/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/runware/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/runware/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai-gp/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai-gp/glm-5.2-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai-gp/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai-gp/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai-gp/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai-gp/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/scx-ai-gp/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai/llama-4-maverick-17b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/together-ai/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/together-ai/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/together-ai/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/together-ai/glm-4.7": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/together-ai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/together-ai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/together-ai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/together-ai/minimax-m3": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-anthropic/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-openai/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/grok-4-20-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/grok-4-20-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/grok-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/vertex-openai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/vertex-openai/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xai/grok-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xai/grok-4-20-beta-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xai/grok-4-20-beta-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xai/grok-4-3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xai/grok-4-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xai/grok-4-6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xai/grok-build-0-1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4-32b-0414-128k": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.5-airx": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.5-x": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.6v-flashx": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/zai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmtech/unsloth/Qwen3.8-27B-NVFP4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/gemma-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/magibu-11b-v8": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "llmtr/medgemma-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "llmtr/meta/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/mimo/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/mimo/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/mistral/voxtral-small-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/muse-glimmer-30b-tr": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/perplexity/sonar-deep-research": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "llmtr/poolside/laguna-xs-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmtr/publicai/apertus-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/publicai/apertus-8b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen3-vl-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/qwen/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/qwen3-6-35b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmtr/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmtr/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/trendyol-asure-12b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "llmtr/upstage/solar-pro2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/upstage/solar-pro3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmtr/upstage/solar-pro4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lmstudio/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lmstudio/qwen/qwen3-30b-a3b-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lmstudio/qwen/qwen3-coder-30b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "longcat/LongCat-2.0": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lucidquery/lucidnova-rf1-100b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lucidquery/lucidquery-agi-01-frontier": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lucidquery/lucidquery-agi-01-swift": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lucidquery/lucidquery-nexus-coder": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lynkr/lynkr-auto": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/deepseek-ai/DeepSeek-R1-0528": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "meganova/deepseek-ai/DeepSeek-V3-0324": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meganova/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meganova/deepseek-ai/DeepSeek-V3.2-Exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meganova/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/MiniMaxAI/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/mistralai/Mistral-Nemo-Instruct-2407": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meganova/mistralai/Mistral-Small-3.2-24B-Instruct-2506": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meganova/moonshotai/Kimi-K2-Thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/Qwen/Qwen2.5-VL-32B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meganova/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meganova/Qwen/Qwen3.5-Plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/XiaomiMiMo/MiMo-V2-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/zai-org/GLM-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/zai-org/GLM-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "meganova/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/anthropic/claude-3-7-sonnet-20250219": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-opus-4-20250514": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-sonnet-4-20250514": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/anthropic/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/bytedance/dola-seed-2.0-code": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/bytedance/dola-seed-2.0-code-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/bytedance/dola-seed-2.0-lite": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/bytedance/dola-seed-2.0-mini": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/bytedance/dola-seed-2.0-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/cohere/command-a-03-2025": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/cohere/command-r-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/cohere/command-r-plus-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/cohere/command-r7b-12-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-r1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/deepseek/deepseek-v3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/deepseek/deepseek-v3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v3.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v4-flash-0731-fast": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v4-pro-0423": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-2.5-computer-use-preview-10-2025": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3-pro-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemini-3-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-embedding-001": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemini-flash-lite-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/google/gemma-4-26b-a4b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemma-4-31b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/meta/llama-3.1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/meta/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/minimax/minimax-m2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/mistral/codestral-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/devstral-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/mistral/devstral-medium-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/devstral-medium-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/devstral-small-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/magistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/mistral-large-2411": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/mistral/mistral-large-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/mistral-medium-2505": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/mistral/mistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/mistral/mistral-small-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/mistral/pixtral-large-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/moonshot/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/moonshot/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/moonshot/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/moonshot/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/moonshot/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "merge-gateway/nvidia/nemotron-3.5-lightning-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/nvidia/nemotron-nano-9b-v2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/openai/gpt-3.5-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/openai/gpt-4": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4o-2024-05-13": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5-chat-latest": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.1-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.2-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.3-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-oss-120b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/openai/gpt-oss-20b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/openai/gpt-oss-safeguard-120b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/openai/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/qwen/qwen3-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/qwen/qwen3-coder-480b-a35b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/qwen/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-coder-next": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/qwen/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-next-80b-a3b-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-vl-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/qwen/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.8-2.4t-a95b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/qwen/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/sakana/sakana-namazu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/writer/palmyra-x4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/writer/palmyra-x5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/xai/grok-4.20-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/xai/grok-4.20-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/xai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/xai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/xai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/zai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/zai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "merge-gateway/zai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/zai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meta/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "meta/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "minimax/MiniMax-M2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax/MiniMax-M2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax/MiniMax-M2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn/MiniMax-M2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn/MiniMax-M2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn/MiniMax-M2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-coding-plan/MiniMax-M2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-coding-plan/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-coding-plan/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-coding-plan/MiniMax-M2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-coding-plan/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-coding-plan/MiniMax-M2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-coding-plan/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn-coding-plan/MiniMax-M2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn-coding-plan/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn-coding-plan/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn-coding-plan/MiniMax-M2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn-coding-plan/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn-coding-plan/MiniMax-M2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "minimax-cn-coding-plan/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/codestral-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/devstral-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/devstral-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/devstral-medium-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/devstral-medium-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/devstral-small-2505": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/devstral-small-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/labs-devstral-small-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/magistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/magistral-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/ministral-3b-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/ministral-8b-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-embed": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "mistral/mistral-large-2411": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-large-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-medium-2505": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-medium-2508": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-medium-2604": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "mistral/mistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "mistral/mistral-nemo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-small-2506": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/mistral-small-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/open-mistral-7b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/open-mistral-nemo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/open-mixtral-8x22b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/open-mixtral-8x7b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/pixtral-12b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/pixtral-large-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/voxtral-mini-latest": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "mistral/voxtral-mini-tts-latest": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "mistral/voxtral-small-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mistral/zai-glm-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "mixlayer/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mixlayer/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mixlayer/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mixlayer/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "mixlayer/qwen/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "moark/GLM-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "moark/MiniMax-M2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modal/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modal/Qwen/Qwen3.8-2.4T-A95B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modal/thinkingmachines/Inkling-NVFP4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "modal/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/auto": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "model-oracle-ai/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "model-oracle-ai/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "model-oracle-ai/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "model-oracle-ai/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "model-oracle-ai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modelis/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelis/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelis/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelis/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modelis/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modelis/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modelis/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modelis/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelis/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelscope/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelscope/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelscope/Qwen/Qwen3-30B-A3B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelscope/Qwen/Qwen3-30B-A3B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelscope/Qwen/Qwen3-Coder-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelscope/ZhipuAI/GLM-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modelscope/ZhipuAI/GLM-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai-cn/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai-cn/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai-cn/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai-cn/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/auto": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "morph/morph-v3-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "morph/morph-v3-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nan/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nan/gemma4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nan/glm5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nan/glm5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nan/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nan/qwen3.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nan/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/abacusai/Dracarys-72B-Instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/abliteration-ai/abliterated-model": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nano-gpt/abliteration-ai/abliterated-model-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/abliteration-ai/abliterated-model-large-v2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/aion-labs/aion-2.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/aion-labs/aion-3.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/aion-labs/aion-3.0-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/aion-labs/aion-rp-llama-3.1-8b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/alibaba/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/alibaba/qwen3.6-27b:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/alibaba/qwen3.6-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/alibaba/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/alibaba/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/amazon/nova-2-lite-v1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/amazon/nova-lite-v1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/amazon/nova-pro-v1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/anthracite-org/magnum-v2-72b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/anthracite-org/magnum-v4-72b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-fable-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-haiku-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.6:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.6:thinking:low": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.6:thinking:max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.6:thinking:medium": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.7:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.8:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-4.6:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/arcee-ai/trinity-large-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/asi1-mini": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/auto-model": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/auto-model-basic": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/auto-model-premium": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/auto-model-standard": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/azure-gpt-4-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/azure-gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/azure-gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/azure-o1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/azure-o3-mini": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/baseten/Kimi-K2-Instruct-FP4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/brave": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/brave-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/brave-research": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/bytedance-seed/seed-2-1-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/bytedance-seed/seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/bytedance-seed/seed-2.0-lite": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nano-gpt/bytedance/doubao-seed-2.1-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/bytedance/doubao-seed-2.1-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/bytedance/doubao-seed-character": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/celeris-1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/chutesai/Mistral-Small-3.2-24B-Instruct-2506": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-haiku-4-5-20251001-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-1-20250805": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-1-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-1-thinking:1024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-1-thinking:32768": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-1-thinking:8192": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-20250514": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-5-20251101:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-thinking:1024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-thinking:32768": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-opus-4-thinking:8192": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-20250514": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-5-20250929-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-thinking:1024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-thinking:32768": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-thinking:64000": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claude-sonnet-4-thinking:8192": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claw-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claw-low": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/claw-medium": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/cohere/command-r-plus-08-2024": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/command-a-reasoning-08-2025": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/crofai/greg-2-super": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/crofai/greg-2-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepclaude": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/deepcogito/cogito-v1-preview-qwen-32B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-ai/DeepSeek-R1-0528": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-ai/DeepSeek-V3.1-Terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek-ai/DeepSeek-V3.1-Terminus:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek-ai/DeepSeek-V3.1:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-ai/deepseek-v3.2-exp": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-ai/deepseek-v3.2-exp-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek-chat-cheaper": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-r1-sambanova": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-reasoner": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-reasoner-cheaper": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek-v3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v3.2:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash-0731:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash-vision-exp-uncensored": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-pro-0813:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-pro:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/Doctor-Shotgun/MS3.2-24B-Magnum-Diamond": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-1.5-pro-256k": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-1.5-pro-32k": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-1.5-vision-pro-32k": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-seed-1-6-250615": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-seed-1-6-flash-250615": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-seed-2-0-code-preview-260215": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-seed-2-0-lite-260215": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-seed-2-0-mini-260215": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/doubao-seed-2-0-pro-260215": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Envoid/Llama-3.05-Nemotron-Tenyxchat-Storybreaker-70B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Envoid/Llama-3.05-NT-Storybreaker-Ministral-70B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/ernie-5.0-thinking-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/ernie-5.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/ernie-5.1:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/ernie-x1.1-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/EVA-UNIT-01/EVA-LLaMA-3.33-70B-v0.0": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/EVA-UNIT-01/EVA-LLaMA-3.33-70B-v0.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/EVA-UNIT-01/EVA-Qwen2.5-72B-v0.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/exa-answer": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/failspy/Meta-Llama-3-70B-Instruct-abliterated-v3.5": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/fastgpt": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/featherless-ai/Qwerky-72B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/GalrionSoftworks/MN-LooseCannon-12B-v1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.0-pro-exp-02-05": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.0-pro-reasoner": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-lite-preview-06-17": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-lite-preview-09-2025": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/gemini-2.5-flash-lite-preview-09-2025-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/gemini-2.5-flash-nothinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-preview-04-17": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-preview-04-17:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-preview-05-20": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-preview-05-20:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-flash-preview-09-2025": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/gemini-2.5-flash-preview-09-2025-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-pro-exp-03-25": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-pro-preview-03-25": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-pro-preview-05-06": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-2.5-pro-preview-06-05": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemini-exp-1206": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-12b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-chimerax": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-darksoul": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-luminous": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-moonlight": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-musica": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-opusdistill": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-shadowsiren": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-26B-A4B-MeroMero": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-26B-A4B-MeroMero:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-uncensored": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/gemma-4-26b-a4b-uncensored:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/Gemma-4-31B-Claude-4.6-Opus-Reasoning-Distilled": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-Cognitive-Unshackled": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-DarkIdol": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-GarnetV2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-31b-it-darkidol": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-31b-it-fabled": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-31b-it-garnet": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-31b-it-gembrain": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-31b-it-gemsicle": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-31b-it-isometry": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-31b-it-novelist": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-MeroMero-v2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-MeroMero-v2:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-Queen": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-e2b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/gemma-4-e4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/glm-4-air-0111": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/glm-4-long": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/glm-4-plus-0111": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/glm-4.1v-thinking-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/glm-4.1v-thinking-flashx": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/GLM-4.6-Derestricted-v5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/glm-z1-airx": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3-flash-preview-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.1-pro-preview-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.1-pro-preview-low": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.5-flash-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-flash-lite-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemma-4-26b-a4b-it:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/google/gemma-4-31b-it:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/Gryphe/MythoMax-L2-13b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/hermes-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/hermes-low": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/hermes-medium": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/holo3-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/holo3-35b-a3b:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/huihui-ai/DeepSeek-R1-Distill-Llama-70B-abliterated": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/huihui-ai/DeepSeek-R1-Distill-Qwen-32B-abliterated": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/huihui-ai/Llama-3.3-70B-Instruct-abliterated": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/huihui-ai/Qwen2.5-32B-Instruct-abliterated": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/ibm-granite/granite-4.2-8b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/inception/mercury-2.5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/inclusionai/ling-3.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/inclusionai/ling-3.0-flash:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/inflatebot/MN-12B-Mag-Mell-R1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/kimi-k2-instruct-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/LatitudeGames/Wayfarer-Large-70B-Llama-3.3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/liquid/lfm-2.5-2.6b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/LLM360/K2-Think": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/longcat-2.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/longcat-2.0:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/MarinaraSpaghetti/NemoMix-Unleashed-12B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/meganova-ai/manta-flash-1.0": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/meganova-ai/manta-mini-1.0": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/meganova-ai/manta-pro-1.0": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mercury-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mercury-coder-small": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Meta-Llama-3-1-8B-Instruct-FP8": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/meta-llama/llama-3.1-8b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/meta-llama/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/meta-llama/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta-llama/llama-4-maverick": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta-llama/llama-4-scout": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta/muse-spark-1.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/microsoft/wizardlm-2-8x22b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/MiniMax-M1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/MiniMax-M2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/minimax/minimax-01": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/minimax/minimax-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/minimax/minimax-m2-her": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/minimax/minimax-m2.7-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/minimax/minimax-m3:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/MiniMaxAI/MiniMax-M1-80k": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistral-code-agent-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistral-code-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistral-small-31-24b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistral/mistral-medium-3.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistral/mistral-medium-3.5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistralai/codestral-2508": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/devstral-2-123b-instruct-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/Devstral-Small-2505": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/ministral-14b-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/ministral-14b-instruct-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/ministral-3b-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/ministral-8b-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-large": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-large-3-675b-instruct-2512": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-medium-3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-medium-3.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/Mistral-Nemo-Instruct-2407": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-saba": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-small-4-119b-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistralai/mistral-small-4-119b-2603:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistralai/mixtral-8x22b-instruct-v0.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mlabonne/NeuralDaredevil-8B-abliterated": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/moonshotai/kimi-k2-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/moonshotai/kimi-k2-instruct-0711": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/moonshotai/Kimi-K2-Instruct-0905": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/moonshotai/kimi-k2.5:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/moonshotai/kimi-k2.6:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/moonshotai/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/moonshotai/kimi-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/nano-gpt-help": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/nanogpt/coding-router": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/nanogpt/coding-router:high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/nanogpt/coding-router:low": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/nanogpt/coding-router:max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/nanogpt/coding-router:medium": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/NeverSleep/Lumimaid-v0.2-70B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/nex-agi/nex-n2-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/nex-agi/nex-n2-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/nothingiisreal/L3.1-70B-Celeste-V0.1-BF16": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/NousResearch/hermes-3-llama-3.1-70b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/NousResearch/hermes-4-405b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nano-gpt/NousResearch/hermes-4-405b:thinking": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nano-gpt/nvidia/Llama-3.1-Nemotron-70B-Instruct-HF": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/Llama-3.3-Nemotron-Super-49B-v1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3-super-120b-a12b:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3-ultra-550b-a55b:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3.5-lightning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/nvidia/nemotron-3.5-lightning:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-3.5-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-4-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-4.1-mini": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-4.1-nano": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-4o-mini": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5-mini": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-5-nano": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-5-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.1-2025-11-13": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.1-codex": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.1-codex-mini": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-5.6-terra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6-astra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-oss-safeguard-20b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/o1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/o1-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/o3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/o3-mini-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/o3-mini-low": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/o3-pro-2025-06-10": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/o4-mini-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/ornith-ai/ornith-1.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/ornith-ai/ornith-1.5-35b-a3b:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/ornith-ai/ornith-1.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/ornith-ai/ornith-1.5-9b:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/pamanseau/OpenReasoning-Nemotron-32B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/perceptron/perceptron-mk1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nano-gpt/perplexity-academic-researcher": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/phi-4-mini-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/phi-4-multimodal-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/pokee-isaac": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/poolside/laguna-s-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/poolside/laguna-s-2.1:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qvq-max": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen-3.6-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen-long": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen-max": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen-2.5-72b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/Qwen2.5-Coder-32B-Instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-14b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-30b-a3b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/Qwen3-8B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3-coder-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3-coder-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-max": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/Qwen3-Next-80B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3-next-80b-a3b-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/Qwen3-VL-235B-A22B-Instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-397b-a17b-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-plus-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.6-35b-a3b-uncensored": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.6-35b-a3b-uncensored:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/Qwen3.6-35B-A3B:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-27b-fable": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-obliterated": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-27b-obliterated:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-27b-uncensored": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-27b-uncensored:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen25-vl-72b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3-30b-a3b-instruct-2507": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3-max-2026-01-23": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3-vl-235b-a22b-instruct-original": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3-vl-235b-a22b-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-0.8b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.5-122b-a10b:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Qwen3.5-27B-BlueStar-v3-Derestricted": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Qwen3.5-27B-Queen-Derestricted": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-27b:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-2b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-35b-a3b:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-4b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.5-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-flash:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-omni-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.5-omni-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.6-max-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.7-flash:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.7-max:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.7-plus:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.8-27b:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen3.8-max:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/ReadyArt/MS3.2-The-Omega-Directive-24B-Unslop-v2.0": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/sakana/fugu-ultra-v1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/Salesforce/Llama-xLAM-2-70b-fc-r": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Sao10K/L3-8B-Stheno-v3.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Sao10K/L3.1-70B-Euryale-v2.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Sao10K/L3.1-70B-Hanami-x1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Sao10K/L3.3-70B-Euryale-v2.3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/sarvam-105b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/shisa-ai/shisa-v2-llama3.3-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/shisa-ai/shisa-v2.1-llama3.3-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/sonar": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/sonar-deep-research": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/sonar-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/soob3123/amoral-gemma3-27B-v2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/soob3123/GrayLine-Qwen3-8B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/soob3123/Veiled-Calla-12B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Steelskull/L3.3-Cu-Mai-R1-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Steelskull/L3.3-Electra-R1-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Steelskull/L3.3-MS-Nevoria-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/Steelskull/L3.3-Nevoria-R1-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/stepfun-ai/step-3.5-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/stepfun-ai/step-3.5-flash-2603": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/stepfun/step-3.7-flash:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/deepseek-v3.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/gemma-4-26b-a4b-uncensored": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/gemma4-31b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/gemma4-31b:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/glm-5.1-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/glm-5.2:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/gpt-oss-120b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/gpt-oss-20b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/llama3-3-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/qwen2.5-vl-72b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/qwen3.5-27b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/qwen3.5-397b-a17b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/qwen3.6-27b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/qwen3.6-35b-a3b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TEE/qwen3.6-35b-a3b-uncensored": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TEE/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/TheDrummer/Anubis-70B-v1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Anubis-70B-v1.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Artemis-v1.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Cydonia-24B-v2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Cydonia-24B-v4": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Cydonia-24B-v4.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Cydonia-24B-v4.3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Magidonia-24B-v4.3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/Rocinante-12B-v1.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/skyfall-36b-v2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/TheDrummer/UnslopNemo-12B-v4.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/thinkingmachines/Inkling-Small": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/thinkingmachines/Inkling-Small:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/thinkingmachines/inkling:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/THUDM/GLM-4-32B-0414": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/THUDM/GLM-4-9B-0414": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/THUDM/GLM-Z1-9B-0414": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/undi95/remm-slerp-l2-13b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/universal-summarizer": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/unsloth/gemma-3-12b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/unsloth/gemma-3-27b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/unsloth/gemma-3-4b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/upstage/solar-pro-3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/upstage/solar-pro4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/upstage/solar-pro4:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/venice-uncensored": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/VongolaChouko/Starcannon-Unleashed-12B-v1.0": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/x-ai/grok-4.20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/x-ai/grok-4.20-multi-agent": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/x-ai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/x-ai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/x-ai/grok-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.5-pro-crof": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.5-pro-crof:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.5-pro:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/yi-large": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/yi-medium-200k": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.5": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/GLM-4.5-Air": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/GLM-4.5-Air:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/GLM-4.5:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.5v": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.5v:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-4.6-original": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/GLM-4.6-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/GLM-4.6-turbo:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.6:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-4.6v": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.6v-original": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-4.7-flash-original": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-4.7-flash-original:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.7-flash:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-4.7-original": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-4.7-original:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-4.7:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5-original": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5-original:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.1:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.2:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.3-flash-uncensored": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.3:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5v-turbo:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/black-forest-labs/FLUX.2-klein-4B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nearai/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/google/gemini-3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/whisper-large-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nearai/Qwen/Qwen3-30B-A3B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/Qwen/Qwen3-Embedding-0.6B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nearai/Qwen/Qwen3-Reranker-0.6B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nearai/Qwen/Qwen3-VL-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/Qwen/Qwen3.5-122B-A10B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/Qwen/Qwen3.6-35B-A3B-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/zai-org/GLM-5.1-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nebius/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/NousResearch/Hermes-4-405B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/nvidia/Nemotron-3_5-Lightning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/nvidia/Nemotron-3-Ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nebius/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nebius/Qwen/Qwen3-30B-A3B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/Qwen/Qwen3-Embedding-8B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nebius/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neon/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-opus-4-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-3-1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-3-1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-3-5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-3-5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-3-6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemma-3-12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/glm-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/glm-5-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/grok-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/inkling": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neon/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/llama-4-maverick": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/meta-llama-3-1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/meta-llama-3-3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/qwen35-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neosmith/neosmith.intelligent-basic": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neosmith/neosmith.intelligent-maestro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neosmith/neosmith.intelligent-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neosmith/neosmith.neolite": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "netlify/anthropic/claude-fable-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-fable-5-1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-haiku-4-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-haiku-4-5-20251001": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-opus-4-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-opus-4-5-20251101": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-opus-4-6": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-opus-4-7": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-opus-4-8": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-opus-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-sonnet-4-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-sonnet-4-5-20250929": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-sonnet-4-6": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/anthropic/claude-sonnet-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-2.5-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-2.5-flash-image": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-2.5-flash-lite": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-2.5-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3-flash-preview": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3-pro-image": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.1-flash-image": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.1-flash-lite": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.1-flash-lite-image": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.1-pro-preview": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.1-pro-preview-customtools": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.5-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.5-flash-lite": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.6-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.7-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-3.8-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-flash-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-flash-lite-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/chat-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-4.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-4.1-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-4.1-nano": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-4o": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-4o-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5-2025-08-07": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5-mini-2025-08-07": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5-nano": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.1-2025-11-13": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.2-2025-12-11": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.2-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.2-pro-2025-12-11": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.3-codex": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4-2026-03-05": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4-mini-2026-03-17": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4-nano": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4-nano-2026-03-17": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.4-pro-2026-03-05": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.5-2026-04-23": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.5-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.5-pro-2026-04-23": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.6-luna": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.6-sol": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-5.6-terra": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-6-astra": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/o3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/o3-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/o4-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/~deepseek/deepseek-v4-flash-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/~moonshotai/kimi-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/~x-ai/grok-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/~z-ai/glm-flash-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/~z-ai/glm-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/anthracite-org/magnum-v4-72b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/baidu/ernie-4.5-vl-424b-a47b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/bytedance-seed/seed-1.6": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/bytedance-seed/seed-1.6-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/bytedance-seed/seed-2-1-turbo": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/bytedance-seed/seed-2.0-code": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/bytedance-seed/seed-2.0-lite": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/bytedance-seed/seed-2.0-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/bytedance/ui-tars-1.5-7b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-chat": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-chat-v3-0324": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-chat-v3.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-r1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-r1-0528": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-r1-distill-llama-70b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v3.1-terminus": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v3.2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v3.2-exp": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v4-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v4-flash-0731": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v4-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v4-pro-0813": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/google/gemma-2-27b-it": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/google/gemma-3-12b-it": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/google/gemma-3-27b-it": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/google/gemma-3-4b-it": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/google/gemma-4-26b-a4b-it": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/google/gemma-4-31b-it": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/gryphe/mythomax-l2-13b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/ibm-granite/granite-4.2-8b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/inception/mercury-2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/inception/mercury-2.5-preview": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/inclusionai/ling-3.0-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/inclusionai/ling-3.0-flash-fin": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/inclusionai/ling-3.0-flash-fin:free": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/inclusionai/ling-3.0-flash-sante:free": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mancer/weaver": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-3.1-70b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-3.1-8b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-3.2-3b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-3.3-70b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-4-maverick": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-4-scout": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-guard-4-12b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta/muse-glimmer-30b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/microsoft/phi-4": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/microsoft/wizardlm-2-8x22b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/minimax/minimax-m1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/minimax/minimax-m2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/minimax/minimax-m2.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/minimax/minimax-m2.5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/minimax/minimax-m2.7": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/minimax/minimax-m3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/devstral-2512": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/ministral-14b-2512": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/ministral-3b-2512": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/ministral-8b-2512": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-large-2407": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-large-2512": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-medium-3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-medium-3-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-medium-3.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-nemo": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-saba": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-small-24b-instruct-2501": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-small-2603": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-small-3.2-24b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mixtral-8x22b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/voxtral-small-24b-2507": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moonshotai/kimi-k2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moonshotai/kimi-k2-0905": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moonshotai/kimi-k2-thinking": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moonshotai/kimi-k2.5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moonshotai/kimi-k2.6": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moonshotai/kimi-k2.7-code": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moonshotai/kimi-k3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/morph/morph-v3-fast": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/morph/morph-v3-large": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nousresearch/hermes-3-llama-3.1-405b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nousresearch/hermes-3-llama-3.1-70b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nousresearch/hermes-4-405b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nousresearch/hermes-4-70b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nvidia/nemotron-3.5-content-safety": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nvidia/nemotron-3.5-lightning": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/openai/gpt-oss-120b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/openai/gpt-oss-20b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/openai/gpt-oss-safeguard-20b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/openrouter/auto": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/openrouter/auto-beta": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/openrouter/free": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/openrouter/pareto-code": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/perceptron/perceptron-mk1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/perplexity/sonar": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/perplexity/sonar-deep-research": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/perplexity/sonar-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/perplexity/sonar-pro-search": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/perplexity/sonar-reasoning-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen-2.5-72b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen-2.5-7b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen2.5-vl-72b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-14b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-235b-a22b-2507": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-235b-a22b-thinking-2507": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-30b-a3b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-30b-a3b-instruct-2507": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-32b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-coder": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-coder-30b-a3b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-coder-next": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-vl-30b-a3b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3-vl-8b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.5-122b-a10b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.5-27b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.5-35b-a3b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.5-397b-a17b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.5-9b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.6-27b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.6-35b-a3b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.8-2.4t-a95b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.8-27b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/rekaai/reka-edge": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/rekaai/reka-flash-3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/relace/relace-apply-3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/relace/relace-search": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/sao10k/l3-lunaris-8b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/sao10k/l3.1-euryale-70b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/sao10k/l3.3-euryale-70b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/stepfun/step-3.7-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/tencent/hy-mt2-1.8b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/tencent/hy-mt2-30b-a3b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/tencent/hy-mt2-7b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/tencent/hy3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/tencent/hy4-preview": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/thedrummer/cydonia-24b-v4.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/thedrummer/skyfall-36b-v2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/thedrummer/unslopnemo-12b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/thinkingmachines/inkling": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/thinkingmachines/inkling-small": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/undi95/remm-slerp-l2-13b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/upstage/solar-pro4": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/x-ai/grok-4.20": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/x-ai/grok-4.20-multi-agent": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/x-ai/grok-4.3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/x-ai/grok-4.5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/x-ai/grok-4.6": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/x-ai/grok-build-0.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/xiaomi/mimo-v2.5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/xiaomi/mimo-v2.5-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-4.5-air": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-4.5v": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-4.6": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-4.6v": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-4.7": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-4.7-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-5.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-5.2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-5.3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/z-ai/glm-5.3-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "neuralwatt/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/deepseek-v4-flash-flex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/gemma-4-31b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/glm-5.2-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/glm-5.2-flex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/glm-5.2-short": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/glm-5.2-short-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/glm-5.2-short-fast-flex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/glm-5.2-short-flex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "neuralwatt/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/kimi-k2.7-code-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/kimi-k2.7-code-flex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/kimi-k3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/kimi-k3-flex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/qwen-3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/qwen3.6-35b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/qwen3.6-35b-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nova/nova-2-lite-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nova/nova-2-pro-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/baichuan/baichuan-m2-32b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "novita-ai/baidu/ernie-4.5-21B-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/baidu/ernie-4.5-21B-a3b-thinking": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/baidu/ernie-4.5-300b-a47b-paddle": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/baidu/ernie-4.5-vl-28b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/baidu/ernie-4.5-vl-28b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/baidu/ernie-4.5-vl-424b-a47b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-ocr": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-ocr-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-prover-v2-671b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-r1-0528-qwen3-8b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-r1-distill-llama-70b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-r1-distill-qwen-14b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-r1-distill-qwen-32b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-r1-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-v3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v3-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/deepseek/deepseek-v3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v3.1-terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v3.2-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/google/gemma-3-12b-it": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/google/gemma-3-27b-it": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/gryphe/mythomax-l2-13b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/inclusionai/ling-2.6-1t": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/inclusionai/ling-2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/inclusionai/ring-2.6-1t": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/kwaipilot/kat-coder-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/meta-llama/llama-3-70b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/meta-llama/llama-3-8b-instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/meta-llama/llama-3.1-8b-instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/meta-llama/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/meta-llama/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/meta-llama/llama-4-maverick-17b-128e-instruct-fp8": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/meta-llama/llama-4-scout-17b-16e-instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/microsoft/wizardlm-2-8x22b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/minimax/minimax-m2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/minimaxai/minimax-m1-80k": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/mistralai/mistral-nemo": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/moonshotai/kimi-k2-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/nousresearch/hermes-2-pro-llama-3-8b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/openai/gpt-oss-20b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/paddlepaddle/paddleocr-vl": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen-2.5-72b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen-mt-plus": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen2.5-7b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen2.5-vl-72b-instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-235b-a22b-fp8": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-30b-a3b-fp8": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-32b-fp8": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-4b-fp8": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-8b-fp8": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-omni-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-omni-30b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/qwen/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-vl-30b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3-vl-8b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/sao10K/l3-70b-euryale-v2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/sao10K/l3-8b-lunaris": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/sao10K/L3-8B-stheno-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/sao10K/l31-70b-euryale-v2.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/xiaomimimo/mimo-v2-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/xiaomimimo/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/xiaomimimo/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/autoglm-phone-9b-multilingual": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/zai-org/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/zai-org/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/zai-org/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/glm-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/glm-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/zai-org/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/abacusai/dracarys-llama-3.1-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/baai/bge-m3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/black-forest-labs/flux_1-kontext-dev": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/black-forest-labs/flux_1-schnell": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nvidia/black-forest-labs/flux_2-klein-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/black-forest-labs/flux.1-dev": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/bytedance/seed-oss-36b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/deepseek-ai/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/deepseek-ai/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/deepseek-ai/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/deepseek-ai/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/google/gemma-2-2b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/google/gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/google/gemma-3-4b-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/google/gemma-3n-e2b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/google/gemma-3n-e4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/google/google-paligemma": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/meta/esm2-650m": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/meta/esmfold": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/meta/llama-3.1-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/meta/llama-3.1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/meta/llama-3.2-11b-vision-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/meta/llama-3.2-1b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/meta/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nvidia/meta/llama-3.2-90b-vision-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/meta/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/meta/llama-4-maverick-17b-128e-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/meta/llama-guard-4-12b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/meta/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/microsoft/phi-4-mini-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/microsoft/phi-4-multimodal-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nvidia/minimaxai/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/minimaxai/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/mistralai/magistral-small-2506": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nvidia/mistralai/ministral-14b-instruct-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/mistralai/mistral-7b-instruct-v0.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/mistralai/mistral-large-3-675b-instruct-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/mistralai/mistral-medium-3-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nvidia/mistralai/mistral-medium-3.5-128b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/mistralai/mistral-nemotron": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/mistralai/mistral-small-4-119b-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/mistralai/mixtral-8x22b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/mistralai/mixtral-8x7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/moonshotai/kimi-k2-instruct-0905": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/nvidia/active-speaker-detection": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/bevformer": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/cosmos-predict1-5b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/cosmos-reason2-8b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/cosmos-transfer1-7b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/cosmos-transfer2_5-2b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/gliner-pii": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3_2-nemoretriever-300m-embed-v1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3.1-nemotron-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3.1-nemotron-nano-8b-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3.1-nemotron-nano-vl-8b-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3.1-nemotron-safety-guard-8b-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3.1-nemotron-ultra-253b-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3.3-nemotron-super-49b-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-3.3-nemotron-super-49b-v1.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-nemotron-embed-vl-1b-v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/llama-nemotron-rerank-vl-1b-v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/magpie-tts-zeroshot": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nemotron-3-content-safety": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/nvidia/nemotron-3.5-lightning-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/nvidia/nemotron-content-safety-reasoning-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nemotron-mini-4b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nemotron-nano-12b-v2-vl": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nemotron-voicechat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nv-embed-v1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nv-embedcode-7b-v1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/nvidia-nemotron-nano-9b-v2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/rerank-qa-mistral-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/riva-translate-4b-instruct-v1.1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/sparsedrive": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/streampetr": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/studiovoice": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/synthetic-video-detector": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/usdcode": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/nvidia/usdvalidate": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/openai/whisper-large-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "nvidia/poolside/laguna-xs-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nvidia/qwen/qwen-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nvidia/qwen/qwen-image-edit": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nvidia/qwen/qwen2.5-coder-32b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/qwen/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nvidia/sarvamai/sarvam-m": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/stepfun-ai/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/stepfun-ai/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/upstage/solar-10.7b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nvidia/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen-vl-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/bailian/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/bailian/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4-pro-0423": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/minimax/m2-her": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m2.1-lightning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m2.5-lightning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/moonshotai/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "ofox/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-1-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-1-6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-1-6-vision": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-1-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-2.0-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-2.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-2.1-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-character": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/volcengine/doubao-seed-evolving": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/x-ai/grok-4.1-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/x-ai/grok-4.20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/x-ai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/z-ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/z-ai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/z-ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/deepseek-v4-flash:0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ollama-cloud/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/gemma4:31b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/glm-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ollama-cloud/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ollama-cloud/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ollama-cloud/gpt-oss:120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/gpt-oss:20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ollama-cloud/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ollama-cloud/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/mistral-large-3:675b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/nemotron-3-nano:30b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/nemotron-3-super": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/nemotron-3-ultra": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ollama-cloud/qwen3.5:397b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "openai/chatgpt-image-latest": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "openai/gpt-3.5-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openai/gpt-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-4o-2024-05-13": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.2-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openai/gpt-5.3-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.3-codex-spark": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-image-1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "openai/gpt-image-1-mini": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "openai/gpt-image-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "openai/gpt-image-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "openai/gpt-realtime-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openai/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/o1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/o3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/text-embedding-3-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "openai/text-embedding-3-small": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "openai/text-embedding-ada-002": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "opencode-go/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/glm-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/longcat-2.0": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2-omni": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/omen-alpha": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/ox-alpha-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/big-pickle": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/claude-3-5-haiku": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-opus-4-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/deepseek-v4-flash-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/glm-4.7-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/glm-5-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/glm-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.3-codex-spark": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opencode/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opencode/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/grok-code": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/hy3-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/hy3-preview-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/kimi-k2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/kimi-k2.5-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/laguna-s-2.1-free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opencode/ling-2.6-flash-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/ling-3.0-flash-fin-free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opencode/ling-3.0-flash-free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opencode/ling-3.0-tiny-free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opencode/longcat-2.0-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/mimo-v2-flash-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/mimo-v2-omni-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/mimo-v2-pro-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/mimo-v2.5-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/minimax-m2.1-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/minimax-m2.5-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/minimax-m3-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/muse-spark-1.2-contributor-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/muse-spark-1.3-contributor-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/nemotron-3-super-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/nemotron-3-ultra-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/nemotron-3.5-lightning-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/north-mini-code-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/qwen3.6-plus-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/ring-2.6-1t-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/trinity-large-preview-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode/x-preview-f-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openreason/deepseek-ai/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openreason/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openreason/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~anthropic/claude-fable-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~anthropic/claude-haiku-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~anthropic/claude-opus-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~anthropic/claude-sonnet-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~deepseek/deepseek-v4-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~google/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~moonshotai/kimi-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~openai/gpt-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~openai/gpt-mini-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~x-ai/grok-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~z-ai/glm-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~z-ai/glm-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/aion-labs/aion-2.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/aion-labs/aion-3.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/aion-labs/aion-3.0-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/aion-labs/aion-rp-llama-3.1-8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/amazon/nova-2-lite-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/amazon/nova-lite-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/amazon/nova-micro-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/amazon/nova-premier-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/amazon/nova-pro-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/anthracite-org/magnum-v4-72b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-3-haiku": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-opus-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/anthropic/claude-opus-4.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/arcee-ai/trinity-large-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/baidu/ernie-4.5-vl-424b-a47b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/bytedance-seed/seed-1.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/bytedance-seed/seed-1.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/bytedance-seed/seed-2-1-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/bytedance-seed/seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/bytedance-seed/seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/bytedance-seed/seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/bytedance/ui-tars-1.5-7b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/cohere/command-a": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/cohere/command-r-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/cohere/command-r-plus-08-2024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/cohere/command-r7b-12-2024": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/cohere/north-mini-code:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/deepseek/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-chat-v3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-chat-v3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-r1-distill-llama-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/deepseek/deepseek-v3.1-terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-v3.2-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/dots-studio/dots-3-note-preview:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-2.5-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-2.5-pro-preview-05-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3-pro-image": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.1-flash-lite-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemma-2-27b-it": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/google/gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemma-3-4b-it": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemma-4-26b-a4b-it:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemma-4-31b-it:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/google/lyria-3-clip-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/google/lyria-3-pro-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/gryphe/mythomax-l2-13b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/ibm-granite/granite-4.0-h-micro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/ibm-granite/granite-4.2-8b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/inception/mercury-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/inception/mercury-2.5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/inclusionai/ling-3.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/inclusionai/ling-3.0-flash-fin": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/inclusionai/ling-3.0-flash-fin:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/inclusionai/ling-3.0-flash-sante:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/kwaipilot/kat-coder-pro-v2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/kwaipilot/kat-coder-pro-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/liquid/lfm-2.5-2.6b:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mancer/weaver": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/meituan/longcat-2.0": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/meta-llama/llama-3.1-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta-llama/llama-3.1-8b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta-llama/llama-3.2-1b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/meta-llama/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/meta-llama/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta-llama/llama-4-maverick": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta-llama/llama-4-scout": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta-llama/llama-guard-4-12b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/meta/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/microsoft/phi-4": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/microsoft/wizardlm-2-8x22b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/minimax/minimax-01": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/minimax/minimax-m1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/minimax/minimax-m2-her": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/codestral-2508": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/devstral-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/ministral-14b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/ministral-3b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/ministral-8b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-large-2407": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-medium-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-medium-3-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-medium-3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-nemo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-saba": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-small-24b-instruct-2501": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mistral-small-3.1-24b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/mistralai/mistral-small-3.2-24b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/mixtral-8x22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/mistralai/voxtral-small-24b-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/moonshotai/kimi-k2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/morph/morph-v3-fast": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/morph/morph-v3-large": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/nex-agi/nex-n2-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/nex-agi/nex-n2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/nousresearch/hermes-3-llama-3.1-405b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/nousresearch/hermes-3-llama-3.1-70b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/nousresearch/hermes-4-405b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/nousresearch/hermes-4-70b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/nvidia/nemotron-3-super-120b-a12b:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/nvidia/nemotron-3.5-content-safety": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/nvidia/nemotron-3.5-content-safety:free": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/nvidia/nemotron-3.5-lightning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/nvidia/nemotron-3.5-lightning:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/openai/gpt-3.5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-3.5-turbo-0613": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-3.5-turbo-16k": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-3.5-turbo-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4-turbo-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4o-2024-05-13": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-4o-mini-2024-07-18": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5-image": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5-image-mini": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.2-chat": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.4-image-2": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-5.6-terra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6-astra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-audio": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-audio-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/o1-pro": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/o3-mini-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/o3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/o4-mini-high": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openrouter/auto": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openrouter/bodybuilder": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/openrouter/free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openrouter/fusion": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/openrouter/pareto-code": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/perceptron/perceptron-mk1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/perplexity/sonar": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/perplexity/sonar-deep-research": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/perplexity/sonar-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/perplexity/sonar-pro-search": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/perplexity/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/poolside/laguna-s-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/poolside/laguna-s-2.1:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/poolside/laguna-xs-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/poolside/laguna-xs-2.1:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen-2.5-72b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen-2.5-7b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen-2.5-coder-32b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen-plus-2025-07-28": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen2.5-vl-72b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-14b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen3-235b-a22b-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen3-30b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen3-30b-a3b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-30b-a3b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-8b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-max-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-vl-30b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-vl-32b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-vl-8b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3-vl-8b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-flash-02-23": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-plus-02-15": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.5-plus-20260420": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/rekaai/reka-edge": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/rekaai/reka-flash-3": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/relace/relace-apply-3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/relace/relace-search": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/sakana/sakana-namazu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/sao10k/l3-lunaris-8b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/sao10k/l3.1-euryale-70b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/sao10k/l3.3-euryale-70b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/stepfun/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/tencent/hunyuan-a13b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/tencent/hy-mt2-1.8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/tencent/hy-mt2-30b-a3b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/tencent/hy-mt2-7b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/tencent/hy3-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/thedrummer/cydonia-24b-v4.1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/thedrummer/skyfall-36b-v2": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/thedrummer/unslopnemo-12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/thinkingmachines/inkling-small:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/thinkingmachines/inkling:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/undi95/remm-slerp-l2-13b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/upstage/solar-pro-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/upstage/solar-pro4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/writer/palmyra-x5": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/x-ai/grok-4.20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/x-ai/grok-4.20-multi-agent": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/x-ai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/x-ai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/z-ai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/z-ai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/z-ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/z-ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opper/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gemini/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gemini/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gemini/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gemini/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/minimax/m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opper/mistral/devstral-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opper/mistral/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opper/mistral/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opper/moonshot/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.3-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opper/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/perplexity/sonar": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "opper/perplexity/sonar-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "opper/perplexity/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "opper/vertexai/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/vertexai/gemini-3.7-flash-eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/xai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/xai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/xai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/deepseek/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/deepseek/deepseek-reasoner": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/deepseek/deepseek-v4-flash-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-flash-lite-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemini-robotics-er-1.6-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/grok/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/grok/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/grok/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/kimi/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/kimi/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/kimi/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/kimi/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/minimax/minimax-m2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/openai/gpt-3.5-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "orcarouter/openai/gpt-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "orcarouter/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "orcarouter/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-4o-2024-05-13": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5-chat-latest": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.1-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.2-chat-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "orcarouter/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "orcarouter/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/orcarouter/auto": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/orcarouter/free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/orcarouter/fusion": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/orcarouter/fusion-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/orcarouter/fusion-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/qwen/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/qwen/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.8-27b-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/qwen/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/tencent/hy3-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/z-ai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/z-ai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/z-ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "orcarouter/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "orcarouter/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/meta-llama-3_3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/mistral-7b-instruct-v0.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/mistral-nemo-instruct-2407": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/mistral-small-3.2-24b-instruct-2506": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen2.5-vl-72b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ovhcloud/qwen3guard-gen-0.6b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "ovhcloud/qwen3guard-gen-8b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pendra/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pendra/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pendra/gpt-oss:120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pendra/llama3.3:70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pendra/qwen3-coder:30b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pendra/qwen3.6:27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity/sonar": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "perplexity/sonar-deep-research": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "perplexity/sonar-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "perplexity/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "perplexity-agent/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/anthropic/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/moonshot-ai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/moonshot-ai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/perplexity/sonar": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/xai/grok-4-1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "perplexity-agent/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/claude-3-7-sonnet-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-opus-4-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/devstral-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/fastino/gliguard-LLMGuardrails-300M": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/fastino/gliner2-base-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/fastino/gliner2-large-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/fastino/gliner2-multi-large-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/fastino/gliner2-multi-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/fastino/gliner2-privacy-filter-PII-multi": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/gemini-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gemini-3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/google/diffusiongemma-26B-A4B-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/google/gemma-3-4b-pt": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/google/gemma-4-12B-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/google/gemma-4-E2B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/google/gemma-4-E4B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/HuggingFaceTB/SmolLM3-3B-Base": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/LiquidAI/LFM2-24B-A2B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/meta-llama/Llama-3.1-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/meta-llama/Llama-3.2-1B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/meta-llama/Llama-3.2-1B-Instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/meta-llama/Llama-3.2-3B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/meta-llama/Llama-3.2-3B-Instruct": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/mistral-large-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/mistral-medium-3.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/mistralai/Codestral-22B-v0.1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/mistralai/Magistral-Small-2506": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/mistralai/Ministral-8B-Instruct-2410": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/mistralai/Mistral-7B-Instruct-v0.3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/mistralai/Mistral-Nemo-Instruct-2407": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/mistralai/Mistral-Small-4-119B-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/mistralai/Pixtral-12B-2409": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/pioneer/auto": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/poolside/laguna-s-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "pioneer/Qwen/Qwen2.5-Coder-0.5B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/Qwen/Qwen3-1.7B-Base": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/Qwen/Qwen3-32B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/Qwen/Qwen3-4B-Base": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/Qwen/Qwen3-4B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/Qwen/Qwen3-8B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/Qwen/Qwen3.5-9B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/XiaomiMiMo/MiMo-V2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/XiaomiMiMo/MiMo-V2.5-Pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "pioneer/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "pioneer/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "poe/anthropic/claude-haiku-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-haiku-3.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-opus-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-opus-4.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-sonnet-3.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-sonnet-3.5-june": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-sonnet-3.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/cerebras/gpt-oss-120b-cs": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/cerebras/llama-3.1-8b-cs": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/cerebras/llama-3.3-70b-cs": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "poe/cerebras/qwen3-235b-2507-cs": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/cerebras/qwen3-32b-cs": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/elevenlabs/elevenlabs-music": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/elevenlabs/elevenlabs-v2.5-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/elevenlabs/elevenlabs-v3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/empiriolabs/deepseek-v4-flash-el": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/empiriolabs/deepseek-v4-pro-el": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/fireworks-ai/kimi-k2.5-fw": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-2.0-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-2.0-flash-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-3-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-3-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-3.1-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "poe/google/gemini-deep-research": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/gemma-4-31b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/imagen-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/imagen-3-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/imagen-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/imagen-4-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/imagen-4-ultra": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/lyria": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/nano-banana": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/nano-banana-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/veo-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/veo-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/veo-3-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/veo-3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/google/veo-3.1-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/ideogramai/ideogram": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/ideogramai/ideogram-v2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/ideogramai/ideogram-v2a": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/ideogramai/ideogram-v2a-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/lumalabs/ray2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/glm-4.7-n": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/novita/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/chatgpt-4o-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/dall-e-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-3.5-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-3.5-turbo-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-3.5-turbo-raw": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4-classic": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4-classic-0314": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4o-aug": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4o-mini-search": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-4o-search": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5-chat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.1-instant": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.2-instant": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.3-codex-spark": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.3-instant": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "poe/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "poe/openai/gpt-image-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-image-1-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-image-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "poe/openai/gpt-image-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "poe/openai/o1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o1-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o3-deep-research": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o3-mini-high": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o3-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/o4-mini-deep-research": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/sora-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/openai/sora-2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/poetools/claude-code": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/runwayml/runway": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/runwayml/runway-gen-4-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/stabilityai/stablediffusionxl": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/topazlabs-co/topazlabs": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/trytako/tako": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-3-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-4-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-4.1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-4.1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-4.20-multi-agent": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poe/xai/grok-code-fast-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "poolside/poolside/laguna-m.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "poolside/poolside/laguna-s-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "poolside/poolside/laguna-xs-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "privatemode-ai/deepseek-ocr-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "privatemode-ai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "privatemode-ai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "privatemode-ai/kimi-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "privatemode-ai/qwen3-embedding-4b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "privatemode-ai/voxtral-mini-3b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "privatemode-ai/whisper-large-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "qihang-ai/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "qihang-ai/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "qihang-ai/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "qihang-ai/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "qihang-ai/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "qihang-ai/gemini-3-pro-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "qihang-ai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "qihang-ai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "qihang-ai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "qiniu-ai/claude-3.5-haiku": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-3.5-sonnet": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-3.7-sonnet": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-4.0-opus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-4.0-sonnet": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-4.1-opus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-4.5-haiku": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-4.5-opus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/claude-4.5-sonnet": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek-v3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek-v3-0324": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek-v3.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek/deepseek-math-v2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek/deepseek-v3.1-terminus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek/deepseek-v3.1-terminus-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek/deepseek-v3.2-251201": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek/deepseek-v3.2-exp": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/deepseek/deepseek-v3.2-exp-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-1.5-pro-32k": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-1.5-thinking-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-1.5-vision-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-seed-1.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-seed-1.6-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-seed-1.6-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/doubao-seed-2.0-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-2.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-2.0-flash-lite": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-3.0-flash-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-3.0-pro-image-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/gemini-3.0-pro-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/kimi-k2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/kling-v2-6": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/meituan/longcat-flash-chat": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/meituan/longcat-flash-lite": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/mimo-v2-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "qiniu-ai/MiniMax-M1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/minimax/minimax-m2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen-max-2025-01-25": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen-vl-max-2025-01-25": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen2.5-vl-72b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen2.5-vl-7b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-235b-a22b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-235b-a22b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-30b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-30b-a3b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-30b-a3b-thinking-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-32b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-max-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3-vl-30b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/stepfun-ai/gelab-zero-4b-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/stepfun/step-3.5-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "qiniu-ai/x-ai/grok-4-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/x-ai/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/x-ai/grok-4-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/x-ai/grok-4.1-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/x-ai/grok-4.1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/x-ai/grok-4.1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/x-ai/grok-code-fast-1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/xiaomi/mimo-v2-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "qiniu-ai/z-ai/autoglm-phone-9b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/z-ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "qiniu-ai/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "regolo-ai/apertus-70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/brick-complexity-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/brick-v1-beta": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/deepseek-ocr-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "regolo-ai/faster-whisper-large-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "regolo-ai/gemma4-31b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "regolo-ai/glm5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "regolo-ai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/mistral-small-4-119b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/qwen-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "regolo-ai/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/qwen3-embedding-8b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "regolo-ai/qwen3-reranker-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "regolo-ai/qwen3.5-122b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "regolo-ai/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-fable-5.1@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-fable-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-haiku-4-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-6@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-7@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-4-8@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-4-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-4-6@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-4@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4-flash-0731@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4-pro-0813@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4-pro@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/devstral-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/devstral-latest@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/gemini-2.5-flash-lite@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-2.5-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-2.5-pro@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3-pro-image": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.1-flash-image": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.1-flash-lite@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.5-flash-lite@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.5-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.7-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-3.8-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/glm-5.1@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/glm-5.2-fast": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/glm-5.2@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/glm-5.3-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/glm-5.3@eu": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/gpt-4.1-mini@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-4.1-nano@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-4.1@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-4o-mini@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5-mini@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5-nano@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.1@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.4@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.6-luna@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.6-sol@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5.6-terra@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/grok-4.2-beta": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/inkling": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/inkling-256k": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/kat-coder-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/kimi-k2.6@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/kimi-k2.7-code@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/kimi-k3@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/laguna-m.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "requesty/laguna-xs.2": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "requesty/leanstral-1-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/leanstral-1-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/ling-2.6-1t": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/ling-2.6-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/ling-3.0-tiny": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/minimax-m3@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-medium-3-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-medium-3-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-medium-latest@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-small-2603@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/nemotron-3-nano-omni": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/nemotron-3-nano-omni-30b-a3b-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/nemotron-3-nano-omni@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/nemotron-3-ultra-nvfp4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/nemotron-3.5-content-safety": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "requesty/nemotron-3.5-lightning-30b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/nemotron-lightning-3.5-30b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/nvidia-nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/nvidia-nemotron-3-ultra": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "requesty/o4-mini@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.5-2b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.8-2.4T-A95B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.8-2.4T-A95B@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.8-flash-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.8-flash-next@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/ring-2.6-1t": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/seed-1.8": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/seed-2.0-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/thinkingcap-qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/thinkingcap-qwen3.6-27b@eu": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "routing-run/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "routing-run/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "routing-run/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/glm-5.2-nitro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/kimi-k2.6-nitro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/kimi-k2.7-code-nitro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "routing-run/nemotron-3-ultra": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "routing-run/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/Inferact/Qwen3.8-2.4T-A95B-NVFP4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/ornith-ai/Ornith-1.5-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sakana/fugu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sakana/fugu-ultra-20260615": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sakana/sakana-namazu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sarvam/sarvam-105b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "sarvam/sarvam-30b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scaleway/bge-multilingual-gemma2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "scaleway/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scaleway/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scaleway/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scaleway/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scaleway/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scaleway/mistral-medium-3.5-128b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scaleway/mistral-small-3.2-24b-instruct-2506": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scaleway/pixtral-12b-2409": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scaleway/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scaleway/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scaleway/qwen3-embedding-8b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "scaleway/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scaleway/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scaleway/whisper-large-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "scnet-token-plan/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/GLM-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scnet-token-plan/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/MiMo-V2.5-Pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scnet-token-plan/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scnet-token-plan/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scnet-token-plan/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scnet-token-plan/Qwen3.8-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/Qwen3.8-Max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "scx-ai/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scx-ai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scx-ai/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scx-ai/Qwen3.8-Max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sensenova/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sensenova/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sensenova/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sensenova/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sensenova/sensenova-6.8-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/baidu/ERNIE-4.5-300B-A47B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/ByteDance-Seed/Seed-OSS-36B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-R1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V3.1-Terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V3.2-Exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/google/gemma-4-26B-A4B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/inclusionAI/Ling-flash-2.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "siliconflow/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen2.5-72B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen2.5-7B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-14B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-30B-A3B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-32B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-8B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-Coder-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-VL-235B-A22B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-VL-235B-A22B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-VL-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-VL-30B-A3B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-VL-32B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-VL-32B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3-VL-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3.5-122B-A10B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3.5-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3.5-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3.5-9B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/stepfun-ai/Step-3.5-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/tencent/Hunyuan-A13B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/tencent/Hy3-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow/zai-org/GLM-4.5-Air": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/zai-org/GLM-5V-Turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/baidu/ERNIE-4.5-300B-A47B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/ByteDance-Seed/Seed-OSS-36B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/deepseek-ai/DeepSeek-OCR": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "siliconflow-cn/deepseek-ai/DeepSeek-R1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/deepseek-ai/DeepSeek-V3.1-Terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "siliconflow-cn/inclusionAI/Ling-flash-2.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/PaddlePaddle/PaddleOCR-VL-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "siliconflow-cn/Pro/deepseek-ai/DeepSeek-R1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/deepseek-ai/DeepSeek-V3.1-Terminus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/deepseek-ai/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Pro/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen2.5-72B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen2.5-7B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-14B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-30B-A3B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-32B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-8B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-Coder-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-VL-235B-A22B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-VL-235B-A22B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-VL-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-VL-30B-A3B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-VL-32B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-VL-32B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3-VL-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/Qwen/Qwen3.5-122B-A10B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/Qwen/Qwen3.5-27B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/Qwen/Qwen3.5-35B-A3B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/Qwen/Qwen3.5-4B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/Qwen/Qwen3.5-9B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "siliconflow-cn/stepfun-ai/Step-3.5-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/tencent/Hunyuan-A13B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/zai-org/GLM-4.5-Air": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow-cn/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/gemini-3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/mistral-large2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "snowflake-cortex/openai-gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/openai-gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "snowflake-cortex/snowflake-llama3.3-70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stackit/cortecs/Llama-3.3-70B-Instruct-FP8-Dynamic": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "stackit/google/gemma-3-27b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "stackit/intfloat/e5-mistral-7b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "stackit/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "stackit/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "stackit/Qwen/Qwen3-VL-235B-A22B-Instruct-FP8": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "stackit/Qwen/Qwen3-VL-Embedding-8B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "stackit/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "standardcompute/standardcompute": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "stepfun/step-1-32k": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun/step-2-16k": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun/step-3.5-flash-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun/step-tts-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "stepfun/stepaudio-2.5-asr": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "stepfun/stepaudio-2.5-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "stepfun-ai/step-1-32k": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai/step-2-16k": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai/step-3.5-flash-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai/step-tts-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "stepfun-ai/stepaudio-2.5-asr": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "stepfun-ai/stepaudio-2.5-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "stepfun-step-plan/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-step-plan/step-3.5-flash-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-step-plan/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-step-plan/step-router-v1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai-step-plan/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai-step-plan/step-3.5-flash-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "stepfun-ai-step-plan/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "subconscious/subconscious/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "subconscious/subconscious/tim-qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "submodel/deepseek-ai/DeepSeek-R1-0528": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/deepseek-ai/DeepSeek-V3-0324": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/zai-org/GLM-4.5-Air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "submodel/zai-org/GLM-4.5-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "synthetic/hf:MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "synthetic/hf:moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "synthetic/hf:moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "synthetic/hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "synthetic/hf:openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "synthetic/hf:Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "synthetic/hf:zai-org/GLM-4.7-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "synthetic/hf:zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "synthetic/hf:zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tencent-coding-plan/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-coding-plan/hunyuan-2.0-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-coding-plan/hunyuan-2.0-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-coding-plan/hunyuan-t1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-coding-plan/hunyuan-turbos": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-coding-plan/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-coding-plan/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-coding-plan/tc-code-latest": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-token-plan/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-token-plan/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-tokenhub/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-tokenhub/hy3-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tencent-tokenhub/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/deepseek/deepseek-chat-v3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/deepseek/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/qwen/qwen3-235b-a22b-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/qwen/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/qwen/qwen3.5-9b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tensorx/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tensorx/z-ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "the-grid-ai/agent-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/agent-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/agent-standard": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/code-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/code-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/code-standard": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/text-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/text-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/text-standard": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "thinkingmachines/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/thinkingmachines/Inkling:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tinfoil/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tinfoil/gemma4-31b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tinfoil/glm-5-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tinfoil/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tinfoil/gpt-oss-safeguard-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tinfoil/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tinfoil/llama3-3-70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tinfoil/nomic-embed-text": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "togetherai/deepcogito/cogito-v2-1-671b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "togetherai/deepseek-ai/DeepSeek-R1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "togetherai/deepseek-ai/DeepSeek-V3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/deepseek-ai/DeepSeek-V3-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/essentialai/Rnj-1-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/google/gemma-3n-E4B-it": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "togetherai/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/LiquidAI/LFM2-24B-A2B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "togetherai/meta-llama/Llama-3.3-70B-Instruct-Turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/meta-llama/Meta-Llama-3-8B-Instruct-Lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "togetherai/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/moonshotai/Kimi-K2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/pearl-ai/gemma-4-31b-it": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "togetherai/Qwen/Qwen2.5-7B-Instruct-Turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/Qwen/Qwen3-235B-A22B-Instruct-2507-tput": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/Qwen/Qwen3-Coder-Next-FP8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/Qwen/Qwen3.5-9B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/Qwen/Qwen3.6-Plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/Qwen/Qwen3.7-Max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "togetherai/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/zai-org/GLM-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/zai-org/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "togetherai/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/deepseek/deepseek-v3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tokengo/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tokengo/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tokengo/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokengo/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tokenrouter/z-ai/glm-5.3-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "trustedrouter/trustedrouter/auto": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "trustedrouter/trustedrouter/cheap": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "trustedrouter/trustedrouter/e2e": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "trustedrouter/trustedrouter/fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "trustedrouter/trustedrouter/synth": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "trustedrouter/trustedrouter/synth-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "trustedrouter/trustedrouter/zdr": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-coder": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-kimi-k2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-coder": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-kimi-k2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "unorouter/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "unorouter/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "unorouter/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/deepseek-v4-flash:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/deepseek-v4-pro:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/gemma-4-31b-it:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/glm-4.5-flash:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "unorouter/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/glm-5.2:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/gpt-5.4:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/gpt-5.5:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "unorouter/minimax-m2.7:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "unorouter/nemotron-3-ultra-550b-a55b:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "unorouter/qwen3.5-397b-a17b:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "unorouter/step-3.7-flash:free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "upstage/solar-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "upstage/solar-pro2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "upstage/solar-pro3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "upstage/solar-pro4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vancine/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vancine/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vancine/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen-3-14b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen-3-235b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen-3-30b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen-3-32b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen-3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-coder-30b-a3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-embedding-0.6b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-embedding-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-embedding-8b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-max-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-next-80b-a3b-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-vl-235b-a22b-instruct": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3-vl-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3-vl-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.8-flash-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.5-t2v-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.6-i2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.6-i2v-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.6-r2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.6-r2v-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.6-t2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.7-r2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v2.7-t2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v3.0-video": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/alibaba/wan-v3.0-video-prime": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/amazon/nova-2-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/amazon/nova-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/amazon/nova-micro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/amazon/nova-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/amazon/titan-embed-text-v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-3-haiku": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-4.8-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-5-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/arcee-ai/trinity-large-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-2-flex": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-2-klein-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-2-klein-9b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-2-max": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-2-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-3-video": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-kontext-max": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-kontext-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-pro-1.0-fill": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-pro-1.1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-pro-1.1-ultra": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seed-1.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seed-1.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedance-2.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedance-2.0-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedance-2.0-mini": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedance-2.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedance-v1.0-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedance-v1.0-pro-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedance-v1.5-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedream-4.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedream-4.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedream-5.0-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bytedance/seedream-5.0-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/cohere/command-a": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/cohere/embed-v4.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/cohere/rerank-v3.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/cohere/rerank-v4-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/cohere/rerank-v4-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/deepseek/deepseek-r1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/deepseek/deepseek-v3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/deepseek/deepseek-v3.1-terminus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/deepseek/deepseek-v3.2": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "vercel/deepseek/deepseek-v3.2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/fish-audio/s1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/s1-free": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/s2-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/s2-pro-free": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/s2.1-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/s2.1-pro-free": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/transcribe-1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/transcribe-1-free": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-2.5-flash-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-3-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3-pro-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.1-flash-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.1-flash-image-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-3.1-flash-lite-image": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "vercel/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-3.5-transcribe": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.5-transcribe-live": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemini-embedding-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-embedding-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-omni-flash-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/google/text-embedding-005": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/text-multilingual-embedding-002": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/veo-3.0-fast-generate-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/veo-3.0-generate-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/veo-3.1-fast-generate-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/veo-3.1-generate-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/veo-3.1-lite-generate-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/inception/mercury-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inception/mercury-coder-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inclusionai/ling-3.0-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inclusionai/ling-3.0-flash-fin": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inclusionai/ling-3.0-flash-fin-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inclusionai/ling-3.0-flash-sante": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inclusionai/ling-3.0-flash-sante-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/interfaze/interfaze-beta": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v2.5-turbo-i2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v2.5-turbo-t2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v2.6-i2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v2.6-motion-control": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v2.6-t2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v3.0-i2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v3.0-motion-control": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/klingai/kling-v3.0-t2v": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/kwaipilot/kat-coder-air-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/kwaipilot/kat-coder-pro-v1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/kwaipilot/kat-coder-pro-v2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/kwaipilot/kat-coder-pro-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/meta/llama-3.1-70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/meta/llama-3.1-8b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/meta/llama-3.3-70b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/meta/llama-4-maverick": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/meta/llama-4-scout": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/meta/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/meta/muse-image-1.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/meta/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/meta/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-h3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-h3-max": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m2.1-lightning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m2.5-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/codestral": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/codestral-embed": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/mistral/devstral-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/devstral-small-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/ministral-14b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/mistral/ministral-3b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/ministral-8b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/mistral-embed": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/mistral/mistral-large-3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/mistral/mistral-medium": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/mistral-medium-3.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/mistral-nemo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/mistral-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/mistral/pixtral-12b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/moonshotai/kimi-k2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/moonshotai/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/moonshotai/kimi-k3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/morph/morph-v3-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/morph/morph-v3-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/nvidia/nemotron-3.5-lightning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/nvidia/nemotron-nano-12b-v2-vl": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/nvidia/nemotron-nano-9b-v2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-3.5-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "vercel/openai/gpt-4-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "vercel/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4.1-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4.1-mini-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4.1-nano-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4o-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4o-mini-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-4o-mini-transcribe": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-4o-transcribe": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5-mini-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.1-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-5.1-thinking-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.2-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "vercel/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.3-codex-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.4-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.4-mini-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "vercel/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.5-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.6-luna-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.6-sol-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-5.6-terra-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6-astra-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-image-1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-image-1-mini": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-image-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-image-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-oss-safeguard-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-realtime-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-realtime-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-realtime-2.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "vercel/openai/gpt-realtime-mini": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-realtime-whisper": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/o1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/o3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/o3-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/o3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/o4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/o4-mini-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/text-embedding-3-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/text-embedding-3-small": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/text-embedding-ada-002": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/tts-1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/tts-1-hd": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/openai/whisper-1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/perplexity/pplx-embed-v1-0.6b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/perplexity/pplx-embed-v1-4b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/perplexity/sonar": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/perplexity/sonar-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/perplexity/sonar-reasoning-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/poolside/laguna-s-2.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "vercel/poolside/laguna-s-2.1-free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "vercel/prodia/flux-fast-schnell": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/quiverai/arrow-1.1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v4": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v4-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v4.1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v4.1-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v4.1-utility": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/recraft/recraft-v4.1-utility-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/sakana/namazu": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.1-fast-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.20-multi-agent": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.20-multi-agent-beta": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.20-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.20-non-reasoning-beta": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.20-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.20-reasoning-beta": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/spacexai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/spacexai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/spacexai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/spacexai/grok-imagine-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-imagine-image-2.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-imagine-video": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-imagine-video-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-imagine-video-1.5-preview": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-stt": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-voice-think-fast-1.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/spacexai/grok-voice-think-fast-2.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/stepfun/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/tencent/hy-mt2-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/tencent/hy-mt2-plus": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/tencent/hy-mt2-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/voyage/rerank-2.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/rerank-2.5-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-3-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-3.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-3.5-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-4": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-4-large": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-4-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-code-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-code-3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-finance-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/voyage-law-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/xiaomi/mimo-v2.5-pro-ultraspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/zai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/zai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/zai/glm-5.2-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/zai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/zai/glm-5.3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/zai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/zai/glm-5.3-promo-50": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/zai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vivgrid/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vivgrid/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vivgrid/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vivgrid/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/deepseek-v4-flash-ga-260731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/deepseek-v4-pro-ga-260813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-1-6-251015": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-1-6-flash-250828": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-1-6-vision-250815": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-1-8-251228": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-2-0-code-preview-260215": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-2-0-lite-260428": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-2-0-mini-260428": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-2-0-pro-260215": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-2-1-pro-260628": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-2-1-turbo-260628": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-character-260628": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/doubao-seed-evolving": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine/glm-5-2-260617": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/doubao-seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/doubao-seed-2.1-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/doubao-seed-evolving": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "volcengine-coding-plan/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vultr/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vultr/nvidia/DeepSeek-V3.2-NVFP4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/nvidia/Nemotron-Cascade-2-30B-A3B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vultr/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vultr/XiaomiMiMo/MiMo-V2.5-Pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/zai-org/GLM-5.2-FP8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wafer.ai/GLM-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wafer.ai/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wafer.ai/glm5.2-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wafer.ai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wafer.ai/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/ibm-granite/granite-4.1-8b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/ibm-granite/granite-4.2-8b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/JetBrains/Mellum2-12B-A2.5B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/meta-llama/Llama-3.1-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/meta-llama/Llama-3.1-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/OpenPipe/Qwen3-14B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/Qwen/Qwen3-30B-A3B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/Qwen/Qwen3.5-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xai/grok-4.20-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xai/grok-4.20-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xai/grok-4.20-multi-agent-0309": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "xai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xai/grok-imagine-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xai/grok-imagine-image-2.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xai/grok-imagine-image-quality": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xai/grok-imagine-video": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xai/grok-imagine-video-1.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi/mimo-v2-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi/mimo-v2-omni": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi/mimo-v2.5-pro-ultraspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-cn/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-cn/mimo-v2-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-cn/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-cn/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-cn/mimo-v2.5-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-cn/mimo-v2.5-tts-voiceclone": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-cn/mimo-v2.5-tts-voicedesign": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-ams/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-ams/mimo-v2-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-ams/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-ams/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-ams/mimo-v2.5-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-ams/mimo-v2.5-tts-voiceclone": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-ams/mimo-v2.5-tts-voicedesign": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2.5-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2.5-tts-voiceclone": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2.5-tts-voicedesign": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "xpersona/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xpersona/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xpersona/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xpersona/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "xpersona/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/gpt-5.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/xpersona-frieren-coder": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xpersona/xpersona-gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai-coding-plan/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai-coding-plan/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai-coding-plan/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai-coding-plan/glm-5.2-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai-coding-plan/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai-coding-plan/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zai-coding-plan/glm-5.3-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zeldoc/zdev": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenifra/alibaba/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/anthropic/claude-3.5-haiku": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-3.7-sonnet": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-opus-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-opus-4.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-sonnet-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/anthropic/claude-sonnet-5-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/baidu/ernie-5.0-thinking-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/deepseek/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/deepseek/deepseek-v3.2-exp": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/google/gemini-2.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/inclusionai/ling-1t": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/inclusionai/ring-1t": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/inclusionai/ring-2.6-1t": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/kuaishou/kat-coder-pro-v2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/minimax/minimax-m2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/minimax/minimax-m2.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/minimax/minimax-m2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/minimax/minimax-m2.5-lightning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/minimax/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/minimax/minimax-m2.7-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/moonshotai/kimi-k2-thinking-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/moonshotai/kimi-k2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/moonshotai/kimi-k2.7-code-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/moonshotai/kimi-k3-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.1-chat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.1-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.1-codex-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.2-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.3-chat": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/openai/gpt-5.5-instant": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/qwen/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/qwen/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/qwen/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/sapiens-ai/agnes-1.5-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/sapiens-ai/agnes-1.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/stepfun/step-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/stepfun/step-3.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/stepfun/step-3.7-flash-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/tencent/hy3-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/volcengine/doubao-seed-1.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/volcengine/doubao-seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/volcengine/doubao-seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/volcengine/doubao-seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/volcengine/doubao-seed-2.0-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/volcengine/doubao-seed-code": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/x-ai/grok-4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/x-ai/grok-4-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/x-ai/grok-4.1-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/x-ai/grok-4.1-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/x-ai/grok-4.2-fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/x-ai/grok-4.2-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/x-ai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/x-ai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/x-ai/grok-code-fast-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/xiaomi/mimo-v2-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/xiaomi/mimo-v2-omni": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/xiaomi/mimo-v2-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.6v-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.6v-flash-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.7-flash-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/z-ai/glm-5.2-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/z-ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.5-air": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai-coding-plan/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai-coding-plan/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai-coding-plan/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai-coding-plan/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai-coding-plan/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai-coding-plan/glm-5.2-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai-coding-plan/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai-coding-plan/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai-coding-plan/glm-5.3-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zhipuai-coding-plan/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  }
+} as const satisfies Record<string, MastraModelCapability>;
+
+const UNKNOWN_MODEL_CAPABILITY: MastraModelCapability = {
+  toolCall: null,
+  structuredOutput: null
+};
+
+export function modelCapabilityFor(modelId: string): MastraModelCapability {
+  const map = MASTRA_MODEL_CAPABILITIES as Record<string, MastraModelCapability>;
+  return map[modelId] ?? UNKNOWN_MODEL_CAPABILITY;
+}
+
 /** Mastra model router id: provider/model */
 export function toMastraModelId(providerId: string, modelName: string): string {
   if (modelName.includes("/")) return modelName;
@@ -8356,4 +36756,4 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
 
-// Catalog content hash: 993b63458a03ef8f — compared by sync script --check; do not edit.
+// Catalog content hash: 1a13064306fd3299 — compared by sync script --check; do not edit.
