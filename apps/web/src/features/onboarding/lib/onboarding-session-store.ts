@@ -14,6 +14,8 @@ export const ONBOARDING_DESTINATION_STEPS = [
 
 export type OnboardingApplySummary = {
   experiences: number;
+  educations: number;
+  certifications: number;
   projects: number;
   stacks: number;
 };

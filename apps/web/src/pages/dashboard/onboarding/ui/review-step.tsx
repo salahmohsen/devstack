@@ -5,7 +5,9 @@ import { toast } from "sonner";
 
 import {
   contactTypeSchema,
+  type ResumeImportCertificationDraft,
   type ResumeImportDraft,
+  type ResumeImportEducationDraft,
   type ResumeImportExperienceDraft,
   type ResumeImportProjectDraft,
   type ResumeImportStackDraft
@@ -59,8 +61,14 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { ContactIcon } from "@/shared/lib/contact-icon";
 import { AiErrorBanner } from "@/shared/ui/ai-error-banner";
 
-import { useApplyOnboardingMutation, useDiscardSourceMutation } from "@/features/onboarding";
+import {
+  useApplyOnboardingMutation,
+  useDiscardSourceMutation,
+  type OnboardingApplySummary
+} from "@/features/onboarding";
 
+import { DraftCertificationFields } from "@/pages/dashboard/onboarding/ui/draft-certification-fields";
+import { DraftEducationFields } from "@/pages/dashboard/onboarding/ui/draft-education-fields";
 import { DraftExperienceFields } from "@/pages/dashboard/onboarding/ui/draft-experience-fields";
 import { DraftProjectFields } from "@/pages/dashboard/onboarding/ui/draft-project-fields";
 
@@ -86,7 +94,7 @@ export type ReviewStepProps = {
   objectKey: string | null;
   onDraftChange: (draft: ResumeImportDraft) => void;
   onBack: () => void;
-  onApplied: (summary: { experiences: number; projects: number; stacks: number }) => void;
+  onApplied: (summary: OnboardingApplySummary) => void;
   onDiscarded: () => void;
 };
 
@@ -197,8 +205,9 @@ function ReviewAccordionItem({
   onSelectedChange: (next: boolean) => void;
   title: string;
   subtitle?: string;
-  includedInPortfolio: boolean;
-  onPortfolioChange: (next: boolean) => void;
+  /** Omitted for collections without a portfolio surface (education, certifications). */
+  includedInPortfolio?: boolean;
+  onPortfolioChange?: (next: boolean) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -229,14 +238,16 @@ function ReviewAccordionItem({
             ) : null}
           </span>
         </AccordionTrigger>
-        <div className="mt-2.5 shrink-0">
-          <PortfolioSwitch
-            id={`portfolio-${value}`}
-            checked={selected && includedInPortfolio}
-            disabled={!selected}
-            onCheckedChange={onPortfolioChange}
-          />
-        </div>
+        {onPortfolioChange ? (
+          <div className="mt-2.5 shrink-0">
+            <PortfolioSwitch
+              id={`portfolio-${value}`}
+              checked={selected && (includedInPortfolio ?? false)}
+              disabled={!selected}
+              onCheckedChange={onPortfolioChange}
+            />
+          </div>
+        ) : null}
       </div>
       {selected ? (
         <AccordionPanel className="pb-4 text-foreground">
@@ -264,6 +275,8 @@ export function ReviewStep({
   const counts = useMemo(() => {
     return {
       experiences: draft.experiences.filter((e) => e.selected).length,
+      educations: draft.educations.filter((e) => e.selected).length,
+      certifications: draft.certifications.filter((c) => c.selected).length,
       projects: draft.projects.filter((p) => p.selected).length,
       stacks: draft.stacks.filter((s) => s.selected).length
     };
@@ -272,12 +285,19 @@ export function ReviewStep({
   const totals = useMemo(() => {
     return {
       experiences: draft.experiences.length,
+      educations: draft.educations.length,
+      certifications: draft.certifications.length,
       projects: draft.projects.length,
       stacks: draft.stacks.length
     };
   }, [draft]);
 
-  const totalSelected = counts.experiences + counts.projects + counts.stacks;
+  const totalSelected =
+    counts.experiences +
+    counts.educations +
+    counts.certifications +
+    counts.projects +
+    counts.stacks;
   const hasProfileContent =
     (draft.profile.name?.trim().length ?? 0) > 0 ||
     (draft.profile.summary?.trim().length ?? 0) > 0 ||
@@ -353,6 +373,28 @@ export function ReviewStep({
     });
   };
 
+  // Education / certifications have no portfolio surface — selection only.
+  const updateEducation = (clientId: string, patch: Partial<ResumeImportEducationDraft>) => {
+    onDraftChange({
+      ...draft,
+      educations: draft.educations.map((edu) =>
+        edu.clientId === clientId ? { ...edu, ...patch } : edu
+      )
+    });
+  };
+
+  const updateCertification = (
+    clientId: string,
+    patch: Partial<ResumeImportCertificationDraft>
+  ) => {
+    onDraftChange({
+      ...draft,
+      certifications: draft.certifications.map((cert) =>
+        cert.clientId === clientId ? { ...cert, ...patch } : cert
+      )
+    });
+  };
+
   const updateContact = (
     index: number,
     patch: Partial<ResumeImportDraft["profile"]["contacts"][number]>
@@ -373,11 +415,32 @@ export function ReviewStep({
     );
   };
 
-  const setAllSelected = (kind: "experiences" | "projects" | "stacks", selected: boolean) => {
+  const setAllSelected = (
+    kind: "experiences" | "educations" | "certifications" | "projects" | "stacks",
+    selected: boolean
+  ) => {
     if (kind === "experiences") {
       onDraftChange({
         ...draft,
         experiences: draft.experiences.map((e) => mergeItem(e, { selected }))
+      });
+      return;
+    }
+    if (kind === "educations") {
+      onDraftChange({
+        ...draft,
+        educations: draft.educations.map((e) => {
+          return { ...e, selected };
+        })
+      });
+      return;
+    }
+    if (kind === "certifications") {
+      onDraftChange({
+        ...draft,
+        certifications: draft.certifications.map((c) => {
+          return { ...c, selected };
+        })
       });
       return;
     }
@@ -411,6 +474,8 @@ export function ReviewStep({
       toast.success("Resume saved — next, set job filters");
       onApplied({
         experiences: result.experiencesCreated,
+        educations: result.educationsCreated,
+        certifications: result.certificationsCreated,
         projects: result.projectsCreated,
         stacks: result.stacksUpserted
       });
@@ -472,6 +537,14 @@ export function ReviewStep({
                 <TabsTab value="experiences">
                   Experiences
                   <TabCount selected={counts.experiences} total={totals.experiences} />
+                </TabsTab>
+                <TabsTab value="educations">
+                  Education
+                  <TabCount selected={counts.educations} total={totals.educations} />
+                </TabsTab>
+                <TabsTab value="certifications">
+                  Certifications
+                  <TabCount selected={counts.certifications} total={totals.certifications} />
                 </TabsTab>
                 <TabsTab value="projects">
                   Projects
@@ -618,6 +691,86 @@ export function ReviewStep({
                         <DraftExperienceFields
                           value={exp}
                           onChange={(patch) => updateExperience(exp.clientId, patch)}
+                        />
+                      </ReviewAccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </TabsPanel>
+
+              {/* —— Education —— */}
+              <TabsPanel value="educations" className="mt-5 flex flex-col gap-3">
+                <BulkSelectGroup
+                  label="education entries"
+                  total={draft.educations.length}
+                  selected={counts.educations}
+                  onSelectAll={() => setAllSelected("educations", true)}
+                  onSelectNone={() => setAllSelected("educations", false)}
+                />
+                {draft.educations.length === 0 ? (
+                  <Empty className="rounded-xl border border-dashed py-8">
+                    <EmptyHeader>
+                      <EmptyTitle>No education extracted</EmptyTitle>
+                      <EmptyDescription>
+                        Add it later from Settings → Profile, or continue with the other sections.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                ) : (
+                  <Accordion multiple className={ITEM_FLEX}>
+                    {draft.educations.map((edu) => (
+                      <ReviewAccordionItem
+                        key={edu.clientId}
+                        value={edu.clientId}
+                        selected={edu.selected}
+                        onSelectedChange={(selected) => updateEducation(edu.clientId, { selected })}
+                        title={edu.school || "Untitled school"}
+                        subtitle={edu.degree || undefined}
+                      >
+                        <DraftEducationFields
+                          value={edu}
+                          onChange={(patch) => updateEducation(edu.clientId, patch)}
+                        />
+                      </ReviewAccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </TabsPanel>
+
+              {/* —— Certifications —— */}
+              <TabsPanel value="certifications" className="mt-5 flex flex-col gap-3">
+                <BulkSelectGroup
+                  label="certifications"
+                  total={draft.certifications.length}
+                  selected={counts.certifications}
+                  onSelectAll={() => setAllSelected("certifications", true)}
+                  onSelectNone={() => setAllSelected("certifications", false)}
+                />
+                {draft.certifications.length === 0 ? (
+                  <Empty className="rounded-xl border border-dashed py-8">
+                    <EmptyHeader>
+                      <EmptyTitle>No certifications extracted</EmptyTitle>
+                      <EmptyDescription>
+                        Add them later from Settings → Profile, or continue with the other sections.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                ) : (
+                  <Accordion multiple className={ITEM_FLEX}>
+                    {draft.certifications.map((cert) => (
+                      <ReviewAccordionItem
+                        key={cert.clientId}
+                        value={cert.clientId}
+                        selected={cert.selected}
+                        onSelectedChange={(selected) =>
+                          updateCertification(cert.clientId, { selected })
+                        }
+                        title={cert.name || "Untitled certification"}
+                        subtitle={cert.issuer || undefined}
+                      >
+                        <DraftCertificationFields
+                          value={cert}
+                          onChange={(patch) => updateCertification(cert.clientId, patch)}
                         />
                       </ReviewAccordionItem>
                     ))}
@@ -806,8 +959,9 @@ export function ReviewStep({
           <p className="min-w-0 text-xs text-muted-foreground tabular-nums sm:text-sm">
             <span className="font-medium text-foreground">{totalSelected}</span>
             {" selected · "}
-            {counts.experiences}/{totals.experiences} exp · {counts.projects}/{totals.projects}{" "}
-            projects · {counts.stacks}/{totals.stacks} stacks
+            {counts.experiences}/{totals.experiences} exp · {counts.educations}/{totals.educations}{" "}
+            edu · {counts.certifications}/{totals.certifications} certs · {counts.projects}/
+            {totals.projects} projects · {counts.stacks}/{totals.stacks} stacks
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -847,7 +1001,8 @@ export function ReviewStep({
         </div>
         {!canApply ? (
           <p className="mt-2 text-xs text-muted-foreground">
-            Select experiences, projects, or stacks — or edit the profile — before applying.
+            Select experiences, education, certifications, projects, or stacks — or edit the profile
+            — before applying.
           </p>
         ) : null}
       </div>

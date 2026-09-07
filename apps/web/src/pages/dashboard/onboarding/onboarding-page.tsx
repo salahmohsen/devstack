@@ -12,6 +12,7 @@ import {
   setOnboardingSessionState,
   startExtractResumeJob,
   useOnboardingSession,
+  type OnboardingApplySummary,
   type OnboardingFlowStep
 } from "@/features/onboarding";
 
@@ -116,22 +117,19 @@ export function OnboardingPage() {
     setOnboardingSessionState({ draft: next });
   }, []);
 
-  const handleApplySuccess = useCallback(
-    (summary: { experiences: number; projects: number; stacks: number }) => {
-      setOnboardingSessionState({
-        applySummary: summary,
-        step: "jobs",
-        draft: null,
-        objectKey: null,
-        filename: null,
-        extractStatus: "idle",
-        extractError: null,
-        extractStepLabel: null,
-        extractRunId: null
-      });
-    },
-    []
-  );
+  const handleApplySuccess = useCallback((summary: OnboardingApplySummary) => {
+    setOnboardingSessionState({
+      applySummary: summary,
+      step: "jobs",
+      draft: null,
+      objectKey: null,
+      filename: null,
+      extractStatus: "idle",
+      extractError: null,
+      extractStepLabel: null,
+      extractRunId: null
+    });
+  }, []);
 
   const handleSkippedResume = useCallback(() => {
     setOnboardingSessionState({

@@ -21,10 +21,10 @@ import {
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
 
-import { useSkipOnboardingMutation } from "@/features/onboarding";
+import { useSkipOnboardingMutation, type OnboardingApplySummary } from "@/features/onboarding";
 
 export type DoneStepProps = {
-  summary?: { experiences: number; projects: number; stacks: number } | null;
+  summary?: OnboardingApplySummary | null;
   skipped?: boolean;
   onImportAnother?: () => void;
 };
@@ -42,7 +42,12 @@ export function DoneStep({ summary, skipped, onImportAnother }: DoneStepProps) {
   }, [skipped, skipMutation]);
 
   const hasImports =
-    summary && (summary.experiences > 0 || summary.projects > 0 || summary.stacks > 0);
+    summary &&
+    (summary.experiences > 0 ||
+      summary.projects > 0 ||
+      summary.stacks > 0 ||
+      summary.educations > 0 ||
+      summary.certifications > 0);
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-1 items-center justify-center py-4">
@@ -54,7 +59,7 @@ export function DoneStep({ summary, skipped, onImportAnother }: DoneStepProps) {
           <EmptyTitle>You’re ready</EmptyTitle>
           <EmptyDescription>
             {hasImports
-              ? `Imported ${summary.experiences} experience${summary.experiences === 1 ? "" : "s"}, ${summary.projects} project${summary.projects === 1 ? "" : "s"}, and ${summary.stacks} stack${summary.stacks === 1 ? "" : "s"}. Job filters and connections can be changed anytime in Settings.`
+              ? `Imported ${summary.experiences} experience${summary.experiences === 1 ? "" : "s"}, ${summary.projects} project${summary.projects === 1 ? "" : "s"}, ${summary.stacks} stack${summary.stacks === 1 ? "" : "s"}, ${summary.educations} education ${summary.educations === 1 ? "entry" : "entries"}, and ${summary.certifications} certification${summary.certifications === 1 ? "" : "s"}. Job filters and connections can be changed anytime in Settings.`
               : skipped
                 ? "You can import a resume later from the sidebar. Job filters and connections are in Settings."
                 : "Your portfolio is ready. Refine experiences, projects, and stacks from the dashboard."}
