@@ -14,7 +14,9 @@ import {
 } from "@tsu-stack/core";
 import {
   applicationRepository,
+  certificationRepository,
   contactRepository,
+  educationRepository,
   experienceRepository,
   projectRepository,
   resumeRepository,
@@ -162,9 +164,12 @@ export async function acceptApplyPackage(input: {
   const includedProjects = draft.projects.filter((p) => p.include);
   const includedStacks = draft.stacks.filter((s) => s.include);
 
-  const [userRow, contactsRaw] = await Promise.all([
+  const [userRow, contactsRaw, educationRows, certificationRows] = await Promise.all([
     userRepository.findById(input.userId),
-    contactRepository.findOptedInByUserId(input.userId)
+    contactRepository.findOptedInByUserId(input.userId),
+    // Include-when-present (spec): tailored resumes also carry education/certifications.
+    educationRepository.findAllByUserId(input.userId),
+    certificationRepository.findAllByUserId(input.userId)
   ]);
 
   if (!userRow) return { ok: false, code: "NOT_FOUND" };
@@ -268,6 +273,29 @@ export async function acceptApplyPackage(input: {
     stacks: resumeStacks,
     contacts: contactsRaw.map((c) => {
       return { type: c.type, value: c.value, sortOrder: c.sortOrder };
+    }),
+    educations: educationRows.map((edu) => {
+      return {
+        school: edu.school,
+        degree: edu.degree,
+        field: edu.field ?? null,
+        location: edu.location ?? null,
+        fromDate: edu.fromDate ?? null,
+        toDate: edu.toDate ?? null,
+        isPresent: edu.isPresent ?? false,
+        description: edu.description ?? null,
+        gpa: edu.gpa ?? null
+      };
+    }),
+    certifications: certificationRows.map((cert) => {
+      return {
+        name: cert.name,
+        issuer: cert.issuer,
+        issuedAt: cert.issuedAt ?? null,
+        expiresAt: cert.expiresAt ?? null,
+        credentialUrl: cert.credentialUrl ?? null,
+        description: cert.description ?? null
+      };
     })
   };
 

@@ -23,6 +23,31 @@ function toRenderCvDate(raw: string | null): string | undefined {
   return undefined;
 }
 
+/** "2025-03-01" → "Mar 2025" for certification one-liners. */
+function toCertDisplayDate(raw: string | null): string | undefined {
+  if (!raw?.trim()) return undefined;
+  const trimmed = raw.trim();
+  const ymd = trimmed.match(/^(\d{4})-(\d{2})/);
+  if (!ymd) return trimmed; // already display text (year etc.) — pass through
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ];
+  const month = Number(ymd[2]);
+  if (month < 1 || month > 12) return ymd[1]!;
+  return `${months[month - 1]} ${ymd[1]}`;
+}
+
 function collectEmails(contacts: PdfContact[], profileEmail: string): string[] {
   const emails: string[] = [];
   const seen = new Set<string>();
@@ -117,6 +142,25 @@ function experienceEntries(experiences: ResumePdfPortfolio["experiences"]) {
     });
 }
 
+function educationEntries(educations: ResumePdfPortfolio["educations"] = []) {
+  return educations.map((edu) => {
+    const entry: Record<string, unknown> = {
+      institution: edu.school,
+      studyType: edu.degree
+    };
+    if (edu.field?.trim()) entry.area = edu.field.trim();
+    if (edu.location?.trim()) entry.location = edu.location.trim();
+    const start = toRenderCvDate(edu.fromDate);
+    const end = edu.isPresent ? "present" : toRenderCvDate(edu.toDate);
+    if (start) entry.start_date = start;
+    if (end) entry.end_date = end;
+    const highlights = extractBullets(edu.description ?? "");
+    if (edu.gpa?.trim()) highlights.push(`GPA: ${edu.gpa.trim()}`);
+    if (highlights.length > 0) entry.highlights = highlights;
+    return entry;
+  });
+}
+
 function projectDemoHttpUrl(proj: ResumePdfPortfolio["projects"][number]): string | null {
   return proj.demoUrl?.trim() ? toRenderCvHttpUrl(proj.demoUrl) : null;
 }
@@ -172,6 +216,20 @@ function skillEntries(stacks: ResumePdfPortfolio["stacks"]) {
       label: group.label,
       details: group.names.join(", ")
     };
+  });
+}
+
+/** One-liner per certification: `Name — Issuer, Issued Mon YYYY · Expires Mon YYYY`. */
+function certificationEntries(certifications: ResumePdfPortfolio["certifications"] = []) {
+  return certifications.map((cert) => {
+    const name = cert.credentialUrl?.trim()
+      ? `[${cert.name}](${cert.credentialUrl.trim()})`
+      : cert.name;
+    const parts = [toCertDisplayDate(cert.issuedAt), toCertDisplayDate(cert.expiresAt)]
+      .filter((part) => part !== undefined)
+      .map((part, i) => (i === 1 ? `Expires ${part}` : part));
+    const tail = parts.length > 0 ? `, ${parts.join(" · ")}` : "";
+    return `${name} — ${cert.issuer}${tail}`;
   });
 }
 
@@ -238,11 +296,17 @@ function buildCv(input: ResumePdfInput): Record<string, unknown> {
   const experience = experienceEntries(input.portfolio.experiences);
   if (experience.length > 0) sections.experience = experience;
 
+  const education = educationEntries(input.portfolio.educations);
+  if (education.length > 0) sections.education = education;
+
   const projects = projectEntries(input.portfolio.projects, input.portfolio.stacks);
   if (projects.length > 0) sections.projects = projects;
 
   const skills = skillEntries(input.portfolio.stacks);
   if (skills.length > 0) sections.skills = skills;
+
+  const certifications = certificationEntries(input.portfolio.certifications);
+  if (certifications.length > 0) sections.certifications = certifications;
 
   if (Object.keys(sections).length > 0) cv.sections = sections;
   return cv;

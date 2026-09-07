@@ -50,6 +50,33 @@ export type ResumePdfPortfolio = {
     includedInPortfolio: boolean;
     sortOrder?: number;
   }>;
+  /**
+   * Education rows (include-when-present: section renders only when non-empty).
+   * Dates are freeform text ("2015-09", "2025-03-01", …); mapper normalizes.
+   */
+  educations?: Array<{
+    school: string;
+    degree: string;
+    field: string | null;
+    location: string | null;
+    fromDate: string | null;
+    toDate: string | null;
+    isPresent: boolean;
+    description: string | null;
+    gpa: string | null;
+  }>;
+  /**
+   * Certification rows (include-when-present: section renders only when non-empty).
+   * Dates are freeform text; mapper renders "Mon YYYY" one-liners.
+   */
+  certifications?: Array<{
+    name: string;
+    issuer: string;
+    issuedAt: string | null;
+    expiresAt: string | null;
+    credentialUrl: string | null;
+    description: string | null;
+  }>;
   contacts: PdfContact[];
 };
 
