@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import {
   pickProbeModelId,
   type TestAiProviderInput,
@@ -103,7 +105,8 @@ async function directOpenCodeChatProbe(args: {
         Authorization: `Bearer ${args.apiKey}`,
         "Content-Type": "application/json",
         Accept: "application/json",
-        "User-Agent": "curl/8.7.1"
+        "User-Agent": "tsu-stack-agent/1.0",
+        "x-opencode-session": createHash("sha256").update(args.apiKey).digest("hex").slice(0, 32)
       },
       signal: args.signal,
       body: JSON.stringify({
