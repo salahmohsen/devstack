@@ -8,7 +8,7 @@
  * @see https://mastra.ai/docs/server/auth/better-auth
  */
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
-import { betterAuth } from "better-auth";
+import { betterAuth, type Auth, type BetterAuthOptions } from "better-auth";
 
 import { db } from "@tsu-stack/db";
 import * as schema from "@tsu-stack/db/schema";
@@ -29,8 +29,13 @@ const baseURL =
 /**
  * Shared-secret session store with the API. Do not enable social/email plugins
  * here — this instance only powers `auth.api.getSession` for agent HTTP.
+ *
+ * Options are widened to `BetterAuthOptions` so `betterAuth()` returns the
+ * generic `Auth` (not a narrowed `Auth<{...}>`) — `DBAdapter` is invariant in
+ * its options generic, so the narrowed instance is not assignable to
+ * `MastraAuthBetterAuth`'s `auth?: Auth`.
  */
-export const agentSessionAuth = betterAuth({
+const sessionAuthOptions: BetterAuthOptions = {
   database: drizzleAdapter(db, {
     provider: "pg",
     schema
@@ -41,4 +46,6 @@ export const agentSessionAuth = betterAuth({
   telemetry: {
     enabled: false
   }
-});
+};
+
+export const agentSessionAuth: Auth = betterAuth(sessionAuthOptions);

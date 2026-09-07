@@ -101,8 +101,7 @@ const storage = new MastraCompositeStore({
  */
 const mastraAuth = new MastraAuthBetterAuth({
   // Session-only Better Auth (same secret + session tables as API).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- better-auth Auth generics differ by version
-  auth: agentSessionAuth as any,
+  auth: agentSessionAuth,
   public: ["/api/health", "/health", "/", "/api", "/openapi.json", "/api/openapi.json"],
   // Multi-tenant memory / threads: bind Mastra resourceId to Better Auth user id
   // (docs: mapUserToResourceId — prevents client-supplied resourceId spoofing).
