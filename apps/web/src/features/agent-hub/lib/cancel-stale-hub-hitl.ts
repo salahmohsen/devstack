@@ -10,6 +10,8 @@ import {
   isHubCrmWriteConfirmToolName,
   isProposeBatchGeneratePackagesToolName,
   isProposeBatchTrackingChangeToolName,
+  isProposeCertificationChangeToolName,
+  isProposeEducationChangeToolName,
   isProposeEvidenceChangeToolName,
   isProposeHardPreferenceChangeToolName,
   isProposeMailCrmChangeToolName,
@@ -40,6 +42,8 @@ export function isHubConfirmHitlToolName(name: string): boolean {
     isProposeNewJobsTriageToolName(name) ||
     isProposeHardPreferenceChangeToolName(name) ||
     isProposeEvidenceChangeToolName(name) ||
+    isProposeEducationChangeToolName(name) ||
+    isProposeCertificationChangeToolName(name) ||
     isProposeMailCrmChangeToolName(name) ||
     isHubCrmWriteConfirmToolName(name) ||
     isOpenEntityFormToolName(name)

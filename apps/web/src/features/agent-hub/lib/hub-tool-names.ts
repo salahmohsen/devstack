@@ -53,12 +53,12 @@ import {
   type ProposeHardPreferenceChangeOutput,
   type ProposeMailCrmChangeInput,
   type ProposeMailCrmChangeOutput,
+  type ProposeNewJobsTriageOutput,
+  type ProposeNewJobsTriageRow,
   type ProposeRefreshFromUrlInput,
   type ProposeRefreshFromUrlOutput,
   type ProposeSetOutcomeInput,
   type ProposeSetOutcomeOutput,
-  type ProposeNewJobsTriageOutput,
-  type ProposeNewJobsTriageRow,
   type WorkMode
 } from "@tsu-stack/core";
 

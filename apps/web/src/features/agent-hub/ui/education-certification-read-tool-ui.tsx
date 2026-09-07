@@ -3,12 +3,12 @@
 import { type ToolCallMessagePartProps } from "@assistant-ui/react";
 
 import {
-  parseGetEducationResult,
   parseGetCertificationResult,
-  parseListEducationsResult,
+  parseGetEducationResult,
   parseListCertificationsResult,
-  type EducationRow,
-  type CertificationRow
+  parseListEducationsResult,
+  type CertificationRow,
+  type EducationRow
 } from "@/features/agent-hub/lib/education-certification-results";
 
 export function ListEducationsToolUI({

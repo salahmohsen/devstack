@@ -10,6 +10,7 @@ import * as React from "react";
 import { z } from "zod";
 
 import {
+  normalizeAgentTakeText,
   ProposeApplicationFieldChangeInputSchema,
   ProposeApplicationFromJdInputSchema,
   ProposeBatchGeneratePackagesInputSchema,
@@ -24,7 +25,6 @@ import {
   ProposeNewJobsTriageInputSchema,
   ProposeRefreshFromUrlInputSchema,
   ProposeSetOutcomeInputSchema,
-  normalizeAgentTakeText,
   type ProposeApplicationFromJdOutput,
   type ProposeNewJobsTriageOutput
 } from "@tsu-stack/core";
