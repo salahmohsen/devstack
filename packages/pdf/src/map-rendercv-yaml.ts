@@ -23,29 +23,30 @@ function toRenderCvDate(raw: string | null): string | undefined {
   return undefined;
 }
 
+const CERT_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
+
 /** "2025-03-01" → "Mar 2025" for certification one-liners. */
 function toCertDisplayDate(raw: string | null): string | undefined {
   if (!raw?.trim()) return undefined;
   const trimmed = raw.trim();
   const ymd = trimmed.match(/^(\d{4})-(\d{2})/);
   if (!ymd) return trimmed; // already display text (year etc.) — pass through
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec"
-  ];
   const month = Number(ymd[2]);
   if (month < 1 || month > 12) return ymd[1]!;
-  return `${months[month - 1]} ${ymd[1]}`;
+  return `${CERT_MONTHS[month - 1]} ${ymd[1]}`;
 }
 
 function collectEmails(contacts: PdfContact[], profileEmail: string): string[] {
@@ -222,12 +223,12 @@ function skillEntries(stacks: ResumePdfPortfolio["stacks"]) {
 /** One-liner per certification: `Name — Issuer, Issued Mon YYYY · Expires Mon YYYY`. */
 function certificationEntries(certifications: ResumePdfPortfolio["certifications"] = []) {
   return certifications.map((cert) => {
-    const name = cert.credentialUrl?.trim()
-      ? `[${cert.name}](${cert.credentialUrl.trim()})`
-      : cert.name;
-    const parts = [toCertDisplayDate(cert.issuedAt), toCertDisplayDate(cert.expiresAt)]
-      .filter((part) => part !== undefined)
-      .map((part, i) => (i === 1 ? `Expires ${part}` : part));
+    const credentialUrl = cert.credentialUrl?.trim() ? toRenderCvHttpUrl(cert.credentialUrl) : null;
+    const name =
+      credentialUrl && !/[[\]]/.test(cert.name) ? `[${cert.name}](${credentialUrl})` : cert.name;
+    const issued = toCertDisplayDate(cert.issuedAt);
+    const expires = toCertDisplayDate(cert.expiresAt);
+    const parts = [issued, expires && `Expires ${expires}`].filter((part) => part !== undefined);
     const tail = parts.length > 0 ? `, ${parts.join(" · ")}` : "";
     return `${name} — ${cert.issuer}${tail}`;
   });

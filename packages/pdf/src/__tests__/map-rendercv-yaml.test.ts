@@ -417,6 +417,58 @@ describe("education", () => {
     );
     expect(doc.cv.sections?.education?.[0]?.end_date).toBe("present");
   });
+
+  it("education isPresent wins over a set toDate", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "BSc",
+              field: null,
+              location: null,
+              fromDate: "2024-09-01",
+              toDate: "2026-06-30",
+              isPresent: true,
+              description: null,
+              gpa: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.education?.[0]?.end_date).toBe("present");
+  });
+
+  it("education omits highlights when description is empty and gpa is null", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "BSc",
+              field: null,
+              location: null,
+              fromDate: "2020-09-01",
+              toDate: "2024-06-30",
+              isPresent: false,
+              description: "",
+              gpa: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.education?.[0]).toMatchObject({
+      institution: "Cairo University",
+      studyType: "BSc"
+    });
+    expect(doc.cv.sections?.education?.[0]?.highlights).toBeUndefined();
+  });
 });
 
 describe("projects and skills", () => {
@@ -571,6 +623,52 @@ describe("certifications", () => {
     expect(doc.cv.sections?.certifications).toEqual([
       "[AWS Certified Solutions Architect - Associate](https://credverify.example.com/abc) — Amazon Web Services, Mar 2025 · Expires Mar 2028",
       "Project Management Professional (PMP) — Project Management Institute, Jun 2024"
+    ]);
+  });
+
+  it("keeps a bracketed cert name plain instead of emitting broken markdown", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          certifications: [
+            {
+              name: "Kubernetes [CKA]",
+              issuer: "Cloud Native Computing Foundation",
+              issuedAt: "2025-01-01",
+              expiresAt: null,
+              credentialUrl: "https://training.example.com/cka",
+              description: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.certifications).toEqual([
+      "Kubernetes [CKA] — Cloud Native Computing Foundation, Jan 2025"
+    ]);
+  });
+
+  it("labels Expires even when issuedAt is null", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          certifications: [
+            {
+              name: "Google Cloud Digital Leader",
+              issuer: "Google Cloud",
+              issuedAt: null,
+              expiresAt: "2027-08-01",
+              credentialUrl: null,
+              description: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.certifications).toEqual([
+      "Google Cloud Digital Leader — Google Cloud, Expires Aug 2027"
     ]);
   });
 
