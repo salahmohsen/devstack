@@ -2031,6 +2031,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "accounts/fireworks/models/qwen3p8-2p4t-a95b",
       "accounts/fireworks/models/qwen3p8-max",
       "accounts/fireworks/routers/glm-5p2-fast",
+      "accounts/fireworks/routers/glm-5p3-fast",
       "accounts/fireworks/routers/kimi-k3-fast"
     ]
   },
@@ -4498,6 +4499,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "pokee-isaac",
       "poolside/laguna-s-2.1",
       "poolside/laguna-s-2.1:thinking",
+      "poolside/laguna-xs-2.1",
       "qvq-max",
       "qwen-3.6-plus",
       "qwen-long",
@@ -15088,6 +15090,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "fireworks-ai/accounts/fireworks/routers/glm-5p3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "fireworks-ai/accounts/fireworks/routers/kimi-k3-fast": {
     toolCall: true,
     structuredOutput: true
@@ -23581,6 +23587,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "nano-gpt/poolside/laguna-s-2.1:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/poolside/laguna-xs-2.1": {
     toolCall: true,
     structuredOutput: false
   },
@@ -36756,4 +36766,4 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
 
-// Catalog content hash: 1a13064306fd3299 — compared by sync script --check; do not edit.
+// Catalog content hash: 7fbf51513b7548d3 — compared by sync script --check; do not edit.

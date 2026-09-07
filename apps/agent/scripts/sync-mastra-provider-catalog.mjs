@@ -13,13 +13,15 @@
  *              (no write) — CI drift gate
  *
  * Drift detection uses the `Catalog content hash:` comment emitted at the end
- * of the generated file, not byte comparison: the committed file is reflowed
- * by the repo formatter (commit hook), so raw output never matches bytes.
+ * of the generated file, not byte comparison: the hash covers data only, so
+ * reflowing the file (the script formats its own output via vp fmt after
+ * writing) never trips a false drift.
  *
  * models.dev is the source of truth for capabilities. When it is unreachable
  * the script fails (exit 1) and keeps the last committed catalog — CI goes
  * red; dev.sh warns and continues with the stale-but-consistent file.
  */
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -193,6 +195,24 @@ function existingHash(text) {
   return m ? m[1] : null;
 }
 
+/**
+ * The generated body embeds raw JSON.stringify output (quoted keys, exploded
+ * arrays). Reflow it to repo style right after writing so the worktree file
+ * matches the committed file without relying on the commit hook — the dev.sh
+ * self-heal path never runs a formatter.
+ */
+function formatGeneratedFile(path) {
+  const res = spawnSync("pnpm", ["exec", "vp", "fmt", "--write", path], {
+    cwd: repoRoot,
+    stdio: "ignore"
+  });
+  if (res.status !== 0) {
+    console.warn(
+      "vp fmt unavailable — catalog written unformatted; run `vp fmt` before committing."
+    );
+  }
+}
+
 const existing = existsSync(outPath) ? readFileSync(outPath, "utf8") : null;
 if (existing && existingHash(existing) === catalogHash) {
   console.log(
@@ -210,6 +230,7 @@ if (checkOnly) {
 }
 
 writeFileSync(outPath, body);
+formatGeneratedFile(outPath);
 console.log(
   `Synced ${providers.length} providers / ${total} models (capabilities: ${covered}/${total} from models.dev) from ${regPath}\n→ ${outPath} (${body.length} bytes)`
 );
