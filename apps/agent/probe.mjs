@@ -1,4 +1,5 @@
 import http from "node:http";
+
 import { ModelRouterLanguageModel } from "@mastra/core/llm";
 
 const server = http.createServer((req, res) => {
@@ -15,7 +16,9 @@ const server = http.createServer((req, res) => {
         object: "chat.completion",
         created: 0,
         model: "omen-alpha",
-        choices: [{ index: 0, message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
+        choices: [
+          { index: 0, message: { role: "assistant", content: "ok" }, finish_reason: "stop" }
+        ],
         usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }
       })
     );

@@ -31,7 +31,9 @@ import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai"
 const OnboardingApplyOutputSchema = z.object({
   experiencesCreated: z.number().int(),
   projectsCreated: z.number().int(),
-  stacksUpserted: z.number().int()
+  stacksUpserted: z.number().int(),
+  educationsCreated: z.number().int(),
+  certificationsCreated: z.number().int()
 });
 
 const SuccessOutputSchema = z.object({

@@ -48,6 +48,35 @@ export const ResumeImportStackDraftSchema = z.object({
 
 export type ResumeImportStackDraft = z.infer<typeof ResumeImportStackDraftSchema>;
 
+export const ResumeImportEducationDraftSchema = z.object({
+  clientId: z.string().min(1),
+  selected: z.boolean().default(true),
+  school: z.string(),
+  degree: z.string(),
+  field: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  fromDate: z.string().nullable().optional(),
+  toDate: z.string().nullable().optional(),
+  isPresent: z.boolean().optional(),
+  description: z.string().nullable().optional(),
+  gpa: z.string().nullable().optional()
+});
+
+export type ResumeImportEducationDraft = z.infer<typeof ResumeImportEducationDraftSchema>;
+
+export const ResumeImportCertificationDraftSchema = z.object({
+  clientId: z.string().min(1),
+  selected: z.boolean().default(true),
+  name: z.string(),
+  issuer: z.string(),
+  issuedAt: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  credentialUrl: z.string().nullable().optional(),
+  description: z.string().nullable().optional()
+});
+
+export type ResumeImportCertificationDraft = z.infer<typeof ResumeImportCertificationDraftSchema>;
+
 export const ResumeImportDraftMetaSchema = z.object({
   warnings: z.array(z.string()).optional(),
   sourceFilename: z.string().optional()
@@ -77,15 +106,18 @@ export type ResumeImportProfileDraft = z.infer<typeof ResumeImportProfileDraftSc
  * Client-held resume import draft (review → Apply).
  *
  * **EMPTY_DRAFT:** Reject Apply only when there are no selected experiences,
- * projects, or stacks **and** the profile is a no-op (name/email/summary/contacts
- * all effectively unchanged vs the current user). Profile-only meaningful updates
- * (real name/summary/contact change) are allowed.
+ * projects, stacks, educations, or certifications **and** the profile is a
+ * no-op (name/email/summary/contacts all effectively unchanged vs the current
+ * user). Profile-only meaningful updates (real name/summary/contact change) are
+ * allowed.
  */
 export const ResumeImportDraftSchema = z.object({
   profile: ResumeImportProfileDraftSchema,
   experiences: z.array(ResumeImportExperienceDraftSchema).default([]),
   projects: z.array(ResumeImportProjectDraftSchema).default([]),
   stacks: z.array(ResumeImportStackDraftSchema).default([]),
+  educations: z.array(ResumeImportEducationDraftSchema).default([]),
+  certifications: z.array(ResumeImportCertificationDraftSchema).default([]),
   meta: ResumeImportDraftMetaSchema.optional()
 });
 
@@ -135,7 +167,8 @@ export type OnboardingStatusOutput = z.infer<typeof OnboardingStatusOutputSchema
  * temporary `resume-sources/` object is removed).
  *
  * **EMPTY_DRAFT:** same rule as {@link ResumeImportDraftSchema} — reject only when
- * no selected exp/project/stack **and** profile is effectively a no-op.
+ * no selected exp/project/stack/education/certification **and** profile is
+ * effectively a no-op.
  */
 export const OnboardingApplyInputSchema = ResumeImportDraftSchema.extend({
   objectKey: z.string().optional()

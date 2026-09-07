@@ -7,7 +7,7 @@ export function createResumeImportExtractorAgent() {
     id: "resume-import-extractor",
     name: "Resume Import Extractor",
     description:
-      "Extracts profile, experiences, projects, and skills/stacks from resume plain text. Pure structured extract; no tools.",
+      "Extracts profile, experiences, projects, education, certifications, and skills/stacks from resume plain text. Pure structured extract; no tools.",
     instructions: `You extract structured portfolio data from resume plain text.
 
 Return only facts present or clearly implied in the text. Prefer empty arrays over invention.
@@ -19,6 +19,10 @@ Output sections:
 3. projects — portfolio-worthy projects with title, summary/description, year, related tech
 4. stacks — technologies/skills as objects: { "name": "React", "description"?: "...", "type"?: "framework" }
    Never emit stacks as bare strings; each entry must be an object with a name field.
+5. education — degrees with school, full degree name, field, dates (isPresent when enrolled),
+   honors/coursework/thesis in description, GPA verbatim when stated
+6. certifications — full official name verbatim + issuing organization + issue date
+   (+ expiry, credential URL when present)
 
 Linking:
 - When a project is nested under a job/role, set experienceIndex to that experience's
@@ -48,6 +52,7 @@ IMPORTANT RULES:
 - Do NOT use any tools. Process only the resume text and existing context provided.
 - Prefer empty arrays over guessing.
 - Keep descriptions concise; preserve key achievements when present.
+- Copy credential names and honors verbatim — never abbreviate an official name that is spelled out.
 - Return structured output matching the requested schema exactly.`,
     model: byoModelFromRequestContext
   });

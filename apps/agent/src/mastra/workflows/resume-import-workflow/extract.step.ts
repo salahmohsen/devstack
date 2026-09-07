@@ -27,6 +27,8 @@ function emptyExtract(warnings: string[]): ResumeExtractOutput {
     experiences: [],
     projects: [],
     stacks: [],
+    educations: [],
+    certifications: [],
     warnings
   };
 }
@@ -90,9 +92,10 @@ Source filename: ${sourceFilename ?? "(unknown)"}
 ${resumeText}
 --- END RESUME TEXT ---
 
-Return structured data for profile, experiences, projects, and stacks/skills.
+Return structured data for profile, experiences, projects, education, certifications, and stacks/skills.
 Link projects to experiences when nested under a job (experienceIndex or matching experienceClientId).
-Dates ISO when possible. Prefer empty arrays over invention.`;
+Dates ISO when possible. Prefer empty arrays over invention.
+Copy credential names and honors verbatim — never abbreviate an official name that is spelled out.`;
 
     try {
       const result = await Promise.race([

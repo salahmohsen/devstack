@@ -12,6 +12,13 @@ function coerceText(value: string | null | undefined): string {
   return value.trim();
 }
 
+/** Trimmed text, or null when empty — for optional metadata columns. */
+function textOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed;
+}
+
 function fallbackDisplayName(existingName: string, extractedName?: string | null): string {
   const fromExtract = extractedName?.trim() ?? "";
   if (fromExtract.length >= 2) {
@@ -112,6 +119,33 @@ export const normalize = createStep({
         includedInPortfolio: z.boolean()
       })
     ),
+    educations: z.array(
+      z.object({
+        school: z.string().min(1),
+        degree: z.string().min(1),
+        field: z.string().nullable().optional(),
+        location: z.string().nullable().optional(),
+        fromDate: z.string().nullable().optional(),
+        toDate: z.string().nullable().optional(),
+        isPresent: z.boolean().optional(),
+        description: z.string().nullable().optional(),
+        gpa: z.string().nullable().optional(),
+        clientId: z.string().min(1),
+        selected: z.boolean()
+      })
+    ),
+    certifications: z.array(
+      z.object({
+        name: z.string().min(1),
+        issuer: z.string().min(1),
+        issuedAt: z.string().nullable().optional(),
+        expiresAt: z.string().nullable().optional(),
+        credentialUrl: z.string().nullable().optional(),
+        description: z.string().nullable().optional(),
+        clientId: z.string().min(1),
+        selected: z.boolean()
+      })
+    ),
     meta: z
       .object({
         warnings: z.array(z.string()).optional(),
@@ -193,6 +227,53 @@ export const normalize = createStep({
       .filter((p): p is NonNullable<typeof p> => p != null);
 
     const projects = assignClientIds(projectInputs);
+
+    const educationInputs = (raw.educations ?? [])
+      .map((edu) => {
+        const school = coerceText(edu.school);
+        const degree = coerceText(edu.degree);
+        if (!school || !degree) {
+          return null;
+        }
+        return {
+          school,
+          degree,
+          field: textOrNull(edu.field),
+          location: textOrNull(edu.location),
+          fromDate: textOrNull(edu.fromDate),
+          toDate: textOrNull(edu.toDate),
+          isPresent: edu.isPresent ?? false,
+          description: textOrNull(edu.description),
+          gpa: textOrNull(edu.gpa),
+          clientId: edu.clientId?.trim() ? edu.clientId.trim() : undefined,
+          selected: true
+        };
+      })
+      .filter((edu): edu is NonNullable<typeof edu> => edu != null);
+
+    const educations = assignClientIds(educationInputs);
+
+    const certificationInputs = (raw.certifications ?? [])
+      .map((cert) => {
+        const name = coerceText(cert.name);
+        const issuer = coerceText(cert.issuer);
+        if (!name || !issuer) {
+          return null;
+        }
+        return {
+          name,
+          issuer,
+          issuedAt: textOrNull(cert.issuedAt),
+          expiresAt: textOrNull(cert.expiresAt),
+          credentialUrl: textOrNull(cert.credentialUrl),
+          description: textOrNull(cert.description),
+          clientId: cert.clientId?.trim() ? cert.clientId.trim() : undefined,
+          selected: true
+        };
+      })
+      .filter((cert): cert is NonNullable<typeof cert> => cert != null);
+
+    const certifications = assignClientIds(certificationInputs);
 
     // Prefer existing stack display names when case-insensitive match.
     const existingNameByKey = new Map<string, string>();
@@ -277,6 +358,8 @@ export const normalize = createStep({
       experiences,
       projects,
       stacks,
+      educations,
+      certifications,
       meta: {
         warnings: warnings.length > 0 ? warnings : undefined,
         sourceFilename

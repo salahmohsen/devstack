@@ -71,6 +71,39 @@ export const ResumeExtractProfileSchema = z.object({
   contacts: z.array(ResumeExtractContactSchema).optional().describe("Other contact lines")
 });
 
+export const ResumeExtractEducationSchema = z.object({
+  clientId: z.string().optional().nullable().describe("Temp id for this education row"),
+  school: z.string().describe("Institution name"),
+  degree: z
+    .string()
+    .describe(
+      "Full degree name, e.g. Bachelor of Science — spell out, abbreviation may be added in parentheses"
+    ),
+  field: z.string().nullable().optional().describe("Field / major, e.g. Computer Science"),
+  location: z.string().nullable().optional().describe("Campus / city, country if stated"),
+  fromDate: z.string().nullable().optional().describe("Start, ISO or year-month text"),
+  toDate: z.string().nullable().optional().describe("End, or null if still enrolled"),
+  isPresent: z.boolean().default(false).describe("true if still enrolled"),
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Honors, relevant coursework, thesis — keep verbatim"),
+  gpa: z.string().nullable().optional().describe("GPA only if stated, verbatim format e.g. 3.8/4.0")
+});
+
+export const ResumeExtractCertificationSchema = z.object({
+  clientId: z.string().optional().nullable().describe("Temp id for this certification"),
+  name: z
+    .string()
+    .describe("Full official credential name verbatim, acronym may follow in parentheses"),
+  issuer: z.string().describe("Issuing organization full name"),
+  issuedAt: z.string().nullable().optional().describe("Issue date ISO or year-month"),
+  expiresAt: z.string().nullable().default(null).describe("Expiry date, or null if none"),
+  credentialUrl: z.string().nullable().optional().describe("Verification / credential URL"),
+  description: z.string().nullable().optional().describe("Extra detail verbatim if present")
+});
+
 export const ResumeExtractOutputSchema = z.object({
   profile: ResumeExtractProfileSchema.describe("Header / about section"),
   experiences: z.array(ResumeExtractExperienceSchema).default([]).describe("Work history roles"),
@@ -79,6 +112,14 @@ export const ResumeExtractOutputSchema = z.object({
     .array(ResumeExtractStackSchema)
     .default([])
     .describe("Skills as objects with name (string entries are coerced)"),
+  educations: z
+    .array(ResumeExtractEducationSchema)
+    .default([])
+    .describe("Education history — degrees with school, field, dates, honors, GPA"),
+  certifications: z
+    .array(ResumeExtractCertificationSchema)
+    .default([])
+    .describe("Certifications / licenses with issuer and dates"),
   warnings: z.array(z.string()).optional().describe("Extraction caveats, if any")
 });
 
