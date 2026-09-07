@@ -2,9 +2,9 @@ import { z } from "zod";
 
 import { type EducationSchemaInsert, type EducationSchemaSelect } from "@tsu-stack/db/types";
 
-/** ISO year-month or year; blank coerces to null. */
+/** Freeform date text (year, year-month, or display text); blank coerces to null. */
 const optionalDate = z
-  .union([z.string(), z.literal("")])
+  .string()
   .nullable()
   .optional()
   .transform((value) => {
@@ -24,14 +24,9 @@ export const EducationOutputSchema = z.object({
   description: z.string().nullable(),
   gpa: z.string().nullable(),
   sortOrder: z.number().int(),
-  createdAt: z.string(),
-  updatedAt: z.string()
-}) satisfies z.ZodType<
-  Omit<EducationSchemaSelect, "userId" | "createdAt" | "updatedAt"> & {
-    createdAt: string;
-    updatedAt: string;
-  }
->;
+  createdAt: z.date(),
+  updatedAt: z.date()
+}) satisfies z.ZodType<Omit<EducationSchemaSelect, "userId">>;
 
 export const CreateEducationInputSchema = z.object({
   school: z.string().min(1).max(200),
@@ -47,13 +42,11 @@ export const CreateEducationInputSchema = z.object({
   Omit<EducationSchemaInsert, "id" | "userId" | "createdAt" | "updatedAt" | "sortOrder">
 >;
 
-export const UpdateEducationInputSchema = CreateEducationInputSchema.partial().extend({
-  school: z.string().min(1).max(200).optional(),
-  degree: z.string().min(1).max(200).optional()
-});
+export const UpdateEducationInputSchema = CreateEducationInputSchema.partial();
 
 export const EducationListOutputSchema = z.array(EducationOutputSchema);
 
 export type EducationOutput = z.infer<typeof EducationOutputSchema>;
 export type CreateEducationInput = z.infer<typeof CreateEducationInputSchema>;
 export type UpdateEducationInput = z.infer<typeof UpdateEducationInputSchema>;
+export type EducationListOutput = z.infer<typeof EducationListOutputSchema>;

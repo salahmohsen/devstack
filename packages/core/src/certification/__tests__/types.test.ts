@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  CreateCertificationInputSchema,
   CertificationOutputSchema,
+  CreateCertificationInputSchema,
   UpdateCertificationInputSchema
 } from "#@/certification/types";
 
@@ -45,9 +45,32 @@ describe("certification contracts", () => {
     ).toBe(false);
   });
 
+  it("rejects credentialUrl schemes other than http(s)", () => {
+    for (const credentialUrl of [
+      "javascript:alert(1)",
+      "ftp://example.com/cert",
+      "data:text/html,x"
+    ]) {
+      expect(
+        CreateCertificationInputSchema.safeParse({ name: "X", issuer: "Y", credentialUrl }).success
+      ).toBe(false);
+    }
+  });
+
   it("update schema is partial", () => {
     expect(UpdateCertificationInputSchema.safeParse({ issuer: "Y" }).success).toBe(true);
     expect(UpdateCertificationInputSchema.safeParse({}).success).toBe(true);
+  });
+
+  it("coerces blank and whitespace dates to null", () => {
+    const parsed = CreateCertificationInputSchema.parse({
+      name: "X",
+      issuer: "Y",
+      issuedAt: "",
+      expiresAt: "  "
+    });
+    expect(parsed.issuedAt).toBeNull();
+    expect(parsed.expiresAt).toBeNull();
   });
 
   it("output schema validates a row shape", () => {
@@ -60,8 +83,8 @@ describe("certification contracts", () => {
       credentialUrl: null,
       description: null,
       sortOrder: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
     expect(parsed.success).toBe(true);
   });

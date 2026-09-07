@@ -5,9 +5,9 @@ import {
   type CertificationSchemaSelect
 } from "@tsu-stack/db/types";
 
-/** ISO year-month or year; blank coerces to null. */
+/** Freeform date text (year, year-month, or display text); blank coerces to null. */
 const optionalDate = z
-  .union([z.string(), z.literal("")])
+  .string()
   .nullable()
   .optional()
   .transform((value) => {
@@ -17,7 +17,17 @@ const optionalDate = z
 
 /** http(s) URL up to 500 chars; empty coerces to null. */
 const optionalCredentialUrl = z
-  .union([z.string().url().max(500), z.literal(""), z.null()])
+  .union([
+    z
+      .string()
+      .url()
+      .max(500)
+      .refine((url) => /^https?:\/\//i.test(url), {
+        message: "credentialUrl must use http or https"
+      }),
+    z.literal(""),
+    z.null()
+  ])
   .optional()
   .transform((value) => (value === "" || value === undefined ? null : value));
 
@@ -30,14 +40,9 @@ export const CertificationOutputSchema = z.object({
   credentialUrl: z.string().nullable(),
   description: z.string().nullable(),
   sortOrder: z.number().int(),
-  createdAt: z.string(),
-  updatedAt: z.string()
-}) satisfies z.ZodType<
-  Omit<CertificationSchemaSelect, "userId" | "createdAt" | "updatedAt"> & {
-    createdAt: string;
-    updatedAt: string;
-  }
->;
+  createdAt: z.date(),
+  updatedAt: z.date()
+}) satisfies z.ZodType<Omit<CertificationSchemaSelect, "userId">>;
 
 export const CreateCertificationInputSchema = z.object({
   name: z.string().min(1).max(200),
@@ -50,13 +55,11 @@ export const CreateCertificationInputSchema = z.object({
   Omit<CertificationSchemaInsert, "id" | "userId" | "createdAt" | "updatedAt" | "sortOrder">
 >;
 
-export const UpdateCertificationInputSchema = CreateCertificationInputSchema.partial().extend({
-  name: z.string().min(1).max(200).optional(),
-  issuer: z.string().min(1).max(200).optional()
-});
+export const UpdateCertificationInputSchema = CreateCertificationInputSchema.partial();
 
 export const CertificationListOutputSchema = z.array(CertificationOutputSchema);
 
 export type CertificationOutput = z.infer<typeof CertificationOutputSchema>;
 export type CreateCertificationInput = z.infer<typeof CreateCertificationInputSchema>;
 export type UpdateCertificationInput = z.infer<typeof UpdateCertificationInputSchema>;
+export type CertificationListOutput = z.infer<typeof CertificationListOutputSchema>;

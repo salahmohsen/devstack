@@ -34,6 +34,17 @@ describe("education contracts", () => {
     expect(UpdateEducationInputSchema.safeParse({}).success).toBe(true);
   });
 
+  it("coerces blank and whitespace dates to null", () => {
+    const parsed = CreateEducationInputSchema.parse({
+      school: "X",
+      degree: "BSc",
+      fromDate: "",
+      toDate: "  "
+    });
+    expect(parsed.fromDate).toBeNull();
+    expect(parsed.toDate).toBeNull();
+  });
+
   it("output schema validates a row shape", () => {
     const parsed = EducationOutputSchema.safeParse({
       id: "e1",
@@ -47,8 +58,8 @@ describe("education contracts", () => {
       description: null,
       gpa: null,
       sortOrder: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
     expect(parsed.success).toBe(true);
   });
