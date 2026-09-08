@@ -95,7 +95,7 @@ export function EditablePaperField({
         ref={inputRef as React.Ref<HTMLTextAreaElement>}
         rows={1}
         className={cn(
-          "-mx-0.5 block w-full resize-none overflow-hidden rounded-sm bg-background px-0.5 py-0 outline-none",
+          "-mx-0.5 block w-full resize-none overflow-hidden rounded-sm bg-transparent px-0.5 py-0 outline-none",
           "border-b border-dashed border-brand/60 focus-visible:ring-2 focus-visible:ring-brand/40",
           "font-[inherit] leading-[inherit] text-inherit",
           className
@@ -119,7 +119,7 @@ export function EditablePaperField({
         type="text"
         style={{ width: `${Math.max(draft.length + 2, 8)}ch` }}
         className={cn(
-          "-mx-0.5 inline-block rounded-sm bg-background px-0.5 py-0 align-baseline outline-none",
+          "-mx-0.5 inline-block rounded-sm bg-transparent px-0.5 py-0 align-baseline outline-none",
           "border-b border-dashed border-brand/60 focus-visible:ring-2 focus-visible:ring-brand/40",
           "font-[inherit] leading-[inherit] text-inherit",
           className

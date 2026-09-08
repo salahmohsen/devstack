@@ -96,6 +96,8 @@ Return structured data for profile, experiences, projects, education, certificat
 Link projects to experiences when nested under a job (experienceIndex or matching experienceClientId).
 Dates ISO when possible. Prefer empty arrays over invention.
 Copy credential names and honors verbatim — never abbreviate an official name that is spelled out.
+Experience and project descriptions: keep each resume bullet as its own line
+(newline-separated, bullet glyphs stripped) — never merge a bullet list into one paragraph.
 
 Education: one entry per school with its degree/credential; include field of study, location,
 start/end dates (ISO, year or year-month), and GPA only when printed. Currently-enrolled

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { assignClientIds, contactTypeSchema, normalizeResumeYear } from "@tsu-stack/core";
 
+import { descriptionToBulletsHtml } from "#@/mastra/workflows/resume-import-workflow/description-bullets";
 import { extract } from "#@/mastra/workflows/resume-import-workflow/extract.step";
 
 const CONTACT_TYPES = new Set(contactTypeSchema.options);
@@ -167,7 +168,9 @@ export const normalize = createStep({
         return {
           title,
           organization,
-          description: coerceText(exp.description),
+          // Re-split flattened prose into `<p>`-per-bullet HTML so the paper
+          // preview and the PDF render the resume's original bullets.
+          description: descriptionToBulletsHtml(exp.description),
           fromDate: exp.fromDate ?? null,
           toDate: exp.toDate ?? null,
           isPresent: exp.isPresent ?? false,
@@ -221,7 +224,7 @@ export const normalize = createStep({
           title,
           year,
           summary: coerceText(project.summary),
-          description: coerceText(project.description),
+          description: descriptionToBulletsHtml(project.description),
           experienceClientId,
           stackNames: dedupeStackNames(project.stackNames ?? []),
           clientId: project.clientId?.trim() ? project.clientId.trim() : undefined,

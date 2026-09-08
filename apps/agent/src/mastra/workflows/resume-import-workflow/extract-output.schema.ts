@@ -16,7 +16,13 @@ export const ResumeExtractExperienceSchema = z.object({
   clientId: z.string().optional().nullable().describe("Temp id so projects can link to this role"),
   title: z.string().describe("Role title, e.g. Senior Frontend Engineer"),
   organization: z.string().describe("Employer / org name"),
-  description: z.string().optional().nullable().describe("Role bullets/body as prose"),
+  description: z
+    .string()
+    .optional()
+    .nullable()
+    .describe(
+      "This role's bullet lines from the resume, one bullet per newline — preserve the resume's original bullets verbatim, never join them into prose"
+    ),
   fromDate: z.string().nullable().optional().describe("Start date ISO or year-month text"),
   toDate: z.string().nullable().optional().describe("End date, or null if current"),
   isPresent: z.boolean().optional().describe("true if this is the current role")
@@ -32,7 +38,13 @@ export const ResumeExtractProjectSchema = z.object({
     .nullable()
     .describe("Primary year, e.g. 2024"),
   summary: z.string().optional().nullable().describe("One-paragraph project summary"),
-  description: z.string().optional().nullable().describe("Longer project write-up if present"),
+  description: z
+    .string()
+    .optional()
+    .nullable()
+    .describe(
+      "Project bullet lines from the resume, one bullet per newline — preserve bullets verbatim, never join them into prose"
+    ),
   /** Reference to an experience clientId when linked. */
   experienceClientId: z
     .string()
