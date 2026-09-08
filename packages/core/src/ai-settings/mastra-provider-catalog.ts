@@ -982,6 +982,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-3.5-flash-lite",
       "gemini-3.6-flash",
       "gemini-3.7-flash",
+      "gemini-3.8-flash",
       "gemma-3-27b-it",
       "gemma-4-26b-a4b-it",
       "gemma-4-31b-it",
@@ -1590,6 +1591,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai-gpt-5.6-luna",
       "openai-gpt-5.6-sol",
       "openai-gpt-5.6-terra",
+      "openai-gpt-6-astra",
       "openai-gpt-image-1",
       "openai-gpt-image-1.5",
       "openai-gpt-image-2",
@@ -2917,7 +2919,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "ibm-granite/granite-4.0-h-micro",
       "ibm-granite/granite-4.2-8b",
       "inception/mercury-2",
-      "inception/mercury-2.5-preview",
+      "inception/mercury-2.5",
       "inclusionai/ling-3.0-flash",
       "inclusionai/ling-3.0-flash-fin",
       "inclusionai/ling-3.0-flash-fin:free",
@@ -5832,7 +5834,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "ibm-granite/granite-4.0-h-micro",
       "ibm-granite/granite-4.2-8b",
       "inception/mercury-2",
-      "inception/mercury-2.5-preview",
+      "inception/mercury-2.5",
       "inclusionai/ling-3.0-flash",
       "inclusionai/ling-3.0-flash-fin",
       "inclusionai/ling-3.0-flash-fin:free",
@@ -6835,6 +6837,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-terra",
       "gpt-5.6-terra@eu",
       "gpt-5@eu",
+      "gpt-6-astra",
       "grok-4.2-beta",
       "grok-4.3",
       "grok-4.5",
@@ -7635,6 +7638,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash-beta",
       "fish-audio/s1",
       "fish-audio/s1-free",
       "fish-audio/s2-pro",
@@ -7674,6 +7678,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/veo-3.1-generate-001",
       "google/veo-3.1-lite-generate-001",
       "inception/mercury-2",
+      "inception/mercury-2.5",
       "inception/mercury-coder-small",
       "inclusionai/ling-3.0-flash",
       "inclusionai/ling-3.0-flash-fin",
@@ -7883,7 +7888,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "voyage/voyage-law-2",
       "xiaomi/mimo-v2.5",
       "xiaomi/mimo-v2.5-pro",
-      "xiaomi/mimo-v2.5-pro-ultraspeed",
       "zai/glm-4.5",
       "zai/glm-4.5-air",
       "zai/glm-4.5v",
@@ -11325,6 +11329,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "cortecs/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "cortecs/gemma-3-27b-it": {
     toolCall: false,
     structuredOutput: true
@@ -13506,6 +13514,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "digitalocean/openai-gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-6-astra": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18013,9 +18025,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/inception/mercury-2.5-preview": {
-    toolCall: null,
-    structuredOutput: null
+  "kilo/inception/mercury-2.5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "kilo/inclusionai/ling-3.0-flash": {
     toolCall: true,
@@ -28501,9 +28513,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/inception/mercury-2.5-preview": {
-    toolCall: null,
-    structuredOutput: null
+  "openrouter/inception/mercury-2.5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "openrouter/inclusionai/ling-3.0-flash": {
     toolCall: true,
@@ -32157,6 +32169,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "requesty/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/grok-4.2-beta": {
     toolCall: true,
     structuredOutput: true
@@ -34497,6 +34513,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "vercel/deepseek/deepseek-v4.1-flash-beta": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "vercel/fish-audio/s1": {
     toolCall: false,
     structuredOutput: null
@@ -34650,6 +34670,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "vercel/inception/mercury-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inception/mercury-2.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -35486,10 +35510,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "vercel/xiaomi/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/xiaomi/mimo-v2.5-pro-ultraspeed": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36841,4 +36861,4 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
 
-// Catalog content hash: 3356719e9694da7f — compared by sync script --check; do not edit.
+// Catalog content hash: f77e0d9febb6c38f — compared by sync script --check; do not edit.
