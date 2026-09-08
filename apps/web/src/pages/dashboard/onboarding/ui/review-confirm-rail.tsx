@@ -100,8 +100,12 @@ function RailRow({
         selected ? "border-border/80 bg-card" : "border-border/40 bg-muted/10 opacity-70"
       )}
     >
-      <div className="flex items-center gap-1.5">
-        <AccordionTrigger className="min-w-0 flex-1 py-2 hover:no-underline">
+      {/* Row controls cluster at the trailing edge. The AccordionTrigger
+          wraps its own <h3> header, which is content-sized by default — flex
+          the first child so the title takes the space and the chevron lands
+          beside the controls. */}
+      <div className="flex items-center gap-2 [&>*:first-child]:min-w-0 [&>*:first-child]:flex-1">
+        <AccordionTrigger className="min-w-0 py-2 hover:no-underline">
           <span className="min-w-0 flex-1 text-start">
             <span className="block truncate text-xs font-medium text-foreground">{title}</span>
             {meta ? (
@@ -154,7 +158,8 @@ function RailDateField({
 
   return (
     <Field>
-      <FieldLabel className="text-[10px]">{label}</FieldLabel>
+      {/* `!` required: FieldLabel's sm:text-sm variant beats a plain override. */}
+      <FieldLabel className="text-[11px]! font-normal! text-muted-foreground!">{label}</FieldLabel>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           render={
@@ -207,7 +212,8 @@ function RailTextField({
 }) {
   return (
     <Field>
-      <FieldLabel className="text-[10px]">{label}</FieldLabel>
+      {/* `!` required: FieldLabel's sm:text-sm variant beats a plain override. */}
+      <FieldLabel className="text-[11px]! font-normal! text-muted-foreground!">{label}</FieldLabel>
       <input
         type="text"
         value={value}
@@ -280,7 +286,9 @@ export function ReviewConfirmRail({
                 size="sm"
                 aria-label={`Contact type: ${contact.type}`}
                 title={contact.type}
-                className="w-9 shrink-0 justify-center rounded-lg px-0 [&_[data-slot=select-icon]]:hidden"
+                /* min-w-0 beats the trigger variant's min-w-36 — the glyph
+                   already says the type, so the value input gets the width. */
+                className="w-9 min-w-0 shrink-0 justify-center rounded-lg px-0 [&_[data-slot=select-icon]]:hidden"
               >
                 <ContactIcon type={contact.type} className="size-4" />
               </SelectTrigger>
@@ -309,12 +317,14 @@ export function ReviewConfirmRail({
               className="min-w-0 flex-1"
             />
             <GroupSeparator />
+            {/* Outline (not ghost) so the button joins the Group's shared
+                border chain — the row reads as one control strip. */}
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="icon-sm"
               aria-label={`Remove ${contact.type} contact`}
-              className="shrink-0 self-center"
+              className="shrink-0 text-muted-foreground hover:text-foreground"
               onClick={() => onProfileChange({ contacts: contacts.filter((_, i) => i !== index) })}
             >
               ×
