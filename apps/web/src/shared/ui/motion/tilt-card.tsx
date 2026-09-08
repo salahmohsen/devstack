@@ -14,13 +14,21 @@ export type TiltCardProps = {
   max?: number;
   glare?: boolean;
   className?: string;
+  /** Skip the tilt entirely (e.g. compact grid cells where the effect reads as noise). */
+  disabled?: boolean;
 };
 
-export function TiltCard({ children, max = 12, glare = true, className }: TiltCardProps) {
+export function TiltCard({
+  children,
+  max = 12,
+  glare = true,
+  className,
+  disabled = false
+}: TiltCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const canHover = useHoverCapable();
-  const enabled = !reduce && canHover;
+  const enabled = !reduce && canHover && !disabled;
   const rx = useMotionValue(0);
   const ry = useMotionValue(0);
   const gx = useMotionValue(50);
