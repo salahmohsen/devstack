@@ -313,6 +313,23 @@ function buildCv(input: ResumePdfInput): Record<string, unknown> {
   return cv;
 }
 
+/**
+ * RenderCV 2.8 emits typst strings without escaping embedded double quotes, so
+ * any `"` in user content breaks the typst compile (`name: "Salah "Mohsen""`).
+ * Swap straight quotes for single quotes at the YAML boundary — the one place
+ * all user content passes before rendercv sees it.
+ */
+function stripDoubleQuotes(value: unknown): unknown {
+  if (typeof value === "string") return value.replace(/"/g, "'");
+  if (Array.isArray(value)) return value.map(stripDoubleQuotes);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, stripDoubleQuotes(entry)])
+    );
+  }
+  return value;
+}
+
 export function toRenderCvYaml(input: ResumePdfInput): string {
   const doc = {
     cv: buildCv(input),
@@ -322,5 +339,8 @@ export function toRenderCvYaml(input: ResumePdfInput): string {
     },
     locale: { language: "english" }
   };
-  return stringify(doc, { lineWidth: 0, aliasDuplicateObjects: false });
+  return stringify(stripDoubleQuotes(doc), {
+    lineWidth: 0,
+    aliasDuplicateObjects: false
+  });
 }

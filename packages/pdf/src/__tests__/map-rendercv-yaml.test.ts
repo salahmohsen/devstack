@@ -649,6 +649,18 @@ describe("certifications", () => {
     ]);
   });
 
+  it("swaps double quotes for single quotes so rendercv emits compilable typst", () => {
+    const { yaml, doc } = parseYaml(
+      baseInput({
+        profile: { name: 'Salah "Mohsen"', email: "salah@example.com" }
+      })
+    );
+    // RenderCV 2.8 emits typst strings without escaping embedded quotes, so any
+    // `"` in user content breaks the compile (`name: "Salah "Mohsen""`).
+    expect(yaml).not.toContain('"');
+    expect(doc.cv.name).toBe("Salah 'Mohsen'");
+  });
+
   it("labels Expires even when issuedAt is null", () => {
     const { doc } = parseYaml(
       baseInput({
