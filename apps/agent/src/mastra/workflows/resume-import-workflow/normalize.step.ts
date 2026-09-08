@@ -137,7 +137,7 @@ export const normalize = createStep({
     certifications: z.array(
       z.object({
         name: z.string().min(1),
-        issuer: z.string().min(1),
+        issuer: z.string(),
         issuedAt: z.string().nullable().optional(),
         expiresAt: z.string().nullable().optional(),
         credentialUrl: z.string().nullable().optional(),
@@ -206,8 +206,13 @@ export const normalize = createStep({
             ? experiences.find((e) => e.clientId === experienceClientId)
             : undefined;
 
+        // Models emit "2024" or "2023-24" — pull the leading integer year.
+        const rawYear = project.year;
+        const coercedYear =
+          typeof rawYear === "number" ? rawYear : Number.parseInt(rawYear?.slice(0, 4) ?? "", 10);
+
         const year = normalizeResumeYear({
-          year: project.year,
+          year: Number.isFinite(coercedYear) ? coercedYear : null,
           fromDate: project.fromDate ?? linkedExperience?.fromDate,
           toDate: project.toDate ?? linkedExperience?.toDate
         });
@@ -256,8 +261,10 @@ export const normalize = createStep({
     const certificationInputs = (raw.certifications ?? [])
       .map((cert) => {
         const name = coerceText(cert.name);
+        // Issuer is optional end-to-end (extract may omit it; PDF renders the
+        // bare name) — only the credential name is required.
         const issuer = coerceText(cert.issuer);
-        if (!name || !issuer) {
+        if (!name) {
           return null;
         }
         return {

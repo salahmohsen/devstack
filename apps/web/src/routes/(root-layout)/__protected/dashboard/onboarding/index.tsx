@@ -10,7 +10,7 @@ import { getJobPreferenceQueryOptions } from "@/features/job-preference";
 import { OnboardingPage } from "@/pages/dashboard/onboarding";
 
 const onboardingSearchSchema = z.object({
-  step: z.enum(["upload", "review", "jobs", "connect", "done"]).optional().catch(undefined),
+  step: z.enum(["ai", "upload", "review", "jobs", "connect", "done"]).optional().catch(undefined),
   error: z.string().optional().catch(undefined),
   error_description: z.string().optional().catch(undefined)
 });

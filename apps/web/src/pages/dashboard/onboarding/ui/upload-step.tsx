@@ -24,6 +24,9 @@ import {
 export type UploadStepProps = {
   objectKey: string | null;
   filename: string | null;
+  /** Gated on step 1: no provider key yet → inactive state pointing back. */
+  aiConfigured: boolean;
+  onConnectAi: () => void;
   onUploaded: (payload: { objectKey: string; filename: string }) => void;
   onCleared: () => void;
   onAnalyze: () => void;
@@ -43,6 +46,8 @@ function formatBytes(bytes: number): string {
 export function UploadStep({
   objectKey,
   filename,
+  aiConfigured,
+  onConnectAi,
   onUploaded,
   onCleared,
   onAnalyze,
@@ -166,6 +171,43 @@ export function UploadStep({
   const errorMessage = localError ?? files.error?.message ?? null;
   const hasFile = Boolean(objectKey && filename);
   const showReady = hasFile && uploadUi?.status !== "uploading";
+  /** Gated first step: without a provider key the dropzone would enable a doomed Analyze. */
+  const gated = !aiConfigured;
+
+  if (gated && !hasFile) {
+    return (
+      <div className="flex w-full max-w-xl flex-col gap-5">
+        <Frame>
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 bg-muted/10 px-5 py-10 text-center">
+            <div className="flex size-11 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border/70">
+              <UploadCloudIcon className="size-5" aria-hidden />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Resume import needs your AI</p>
+              <p className="mx-auto max-w-sm text-xs text-muted-foreground">
+                Connect a provider first — then upload a resume and we’ll draft your profile from
+                it.
+              </p>
+            </div>
+            <Button type="button" size="sm" onClick={onConnectAi}>
+              Connect your AI
+            </Button>
+          </div>
+        </Frame>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => void handleSkip()}
+          >
+            Skip resume
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-5">
@@ -173,7 +215,7 @@ export function UploadStep({
         <Frame>
           <div
             className={cn(
-              "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-5 py-10 text-center transition-[border-color,background-color] duration-150 motion-reduce:transition-none",
+              "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-5 py-10 text-center transition-[border-color,background-color,transform] duration-150 active:motion-safe:scale-[0.99] motion-reduce:transition-none",
               "has-[:focus-visible]:border-ring has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
               isDragging
                 ? "border-primary bg-primary/5"
@@ -232,7 +274,10 @@ export function UploadStep({
           id={readyStatusId}
           className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/20 px-3.5 py-3"
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-foreground ring-1 ring-border/70">
+          <div
+            className="doc-icon-in flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-foreground ring-1 ring-border/70"
+            aria-hidden
+          >
             <FileTextIcon className="size-4" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 text-start">

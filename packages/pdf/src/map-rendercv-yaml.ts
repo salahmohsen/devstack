@@ -230,7 +230,8 @@ function certificationEntries(certifications: ResumePdfPortfolio["certifications
     const expires = toCertDisplayDate(cert.expiresAt);
     const parts = [issued, expires && `Expires ${expires}`].filter((part) => part !== undefined);
     const tail = parts.length > 0 ? `, ${parts.join(" · ")}` : "";
-    return `${name} — ${cert.issuer}${tail}`;
+    const issuer = cert.issuer?.trim();
+    return issuer ? `${name} — ${issuer}${tail}` : `${name}${tail}`;
   });
 }
 
@@ -328,6 +329,15 @@ function stripDoubleQuotes(value: unknown): unknown {
     );
   }
   return value;
+}
+
+/**
+ * Pure RenderCV document mapping — shared by the YAML pipeline and the web
+ * resume-doc preview (`@tsu-stack/pdf/doc`). The preview must not lie about
+ * the artifact: section presence here is exactly what `toRenderCvYaml` emits.
+ */
+export function buildRenderCvDoc(input: ResumePdfInput): Record<string, unknown> {
+  return buildCv(input);
 }
 
 export function toRenderCvYaml(input: ResumePdfInput): string {

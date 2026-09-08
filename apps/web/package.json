@@ -46,6 +46,7 @@
     "@tsu-stack/env": "workspace:*",
     "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
+    "@tsu-stack/pdf": "workspace:*",
     "@tsu-stack/seo": "workspace:*",
     "@tsu-stack/ui": "workspace:*",
     "ai": "catalog:",

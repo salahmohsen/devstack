@@ -277,3 +277,169 @@
     opacity: 0;
   }
 }
+
+/* Onboarding doc-first polish (spec 2026-09-07): ready-row icon cross-fade —
+   opacity + scale 0.25→1 + blur 4→0, one-shot on mount, motion-safe gated. */
+@keyframes doc-icon-in {
+  from {
+    opacity: 0;
+    scale: 0.25;
+    filter: blur(4px);
+  }
+}
+
+.doc-icon-in {
+  animation: doc-icon-in 200ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-icon-in {
+    animation: none;
+  }
+}
+
+/* ——— RenderCV engineeringresumes paper mirror (WYSIWYG) ———
+   The preview must match the generated PDF exactly: XCharter 10pt body,
+   25pt regular name, 1.2em bold section titles over a full hairline rule,
+   4.15cm date column, justified text with 0.6em leading, • bullets at 13pt.
+   Values come from RenderCV 2.8 `engineeringresumes` theme defaults. */
+@font-face {
+  font-family: "XCharter";
+  src: url("/fonts/XCharter-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "XCharter";
+  src: url("/fonts/XCharter-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "XCharter";
+  src: url("/fonts/XCharter-Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "XCharter";
+  src: url("/fonts/XCharter-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+.rendercv-paper {
+  background: white;
+  color: black;
+  font-family: "XCharter", "Charter", "Bitstream Charter", Georgia, serif;
+  font-size: 10pt;
+  line-height: 1.6; /* 0.6em leading */
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+.rendercv-paper .cv-name {
+  font-size: 25pt;
+  font-weight: 400;
+  line-height: 1.15;
+  text-align: center;
+  text-align: -webkit-center;
+}
+
+.rendercv-paper .cv-headline {
+  margin-top: 0.7cm; /* header.space_below_name */
+  text-align: center;
+}
+
+.rendercv-paper .cv-connections {
+  margin-top: 0.7cm; /* header.space_below_headline */
+  text-align: center;
+}
+
+.rendercv-paper .cv-connections a,
+.rendercv-paper .cv-connections .cv-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rendercv-paper .cv-section {
+  margin-top: 0.7cm; /* header.space_below_connections / first section */
+}
+
+.rendercv-paper .cv-section + .cv-section {
+  margin-top: 0.5cm; /* section_titles.space_above */
+}
+
+.rendercv-paper .cv-section-title {
+  font-size: 12pt; /* 1.2em */
+  font-weight: 700;
+  line-height: 1.2;
+  padding-bottom: 0.1cm;
+  border-bottom: 1px solid black; /* 0.5pt hairline */
+  text-align: start;
+}
+
+.rendercv-paper .cv-section-body {
+  margin-top: 0.3cm; /* section_titles.space_below */
+  display: flex;
+  flex-direction: column;
+}
+
+.rendercv-paper .cv-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.15cm; /* entries.date_and_location_width */
+  column-gap: 0.1cm;
+  align-items: baseline;
+}
+
+.rendercv-paper .cv-entry + .cv-entry {
+  margin-top: 0.42cm; /* sections.space_between_regular_entries */
+}
+
+.rendercv-paper .cv-entry-dates {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.rendercv-paper .cv-bullets {
+  margin: 0.08cm 0 0; /* entries.highlights.space_above */
+  padding: 0 0 0 1em;
+  text-align: justify;
+}
+
+.rendercv-paper .cv-bullets li + li {
+  margin-top: 0.08cm; /* entries.highlights.space_between_items */
+}
+
+.rendercv-paper .cv-bullets li::marker {
+  font-size: 13pt;
+}
+
+.rendercv-paper .cv-text-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.36cm; /* 0.15cm + 0.6em par spacing */
+}
+
+.rendercv-paper .cv-text-entries strong {
+  font-weight: 700;
+}
+
+.rendercv-paper .cv-text-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rendercv-paper .cv-section-body > * {
+    transition: opacity 150ms cubic-bezier(0.2, 0, 0, 1);
+  }
+}

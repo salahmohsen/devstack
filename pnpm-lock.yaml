@@ -822,6 +822,9 @@ importers:
       '@tsu-stack/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@tsu-stack/pdf':
+        specifier: workspace:*
+        version: link:../../packages/pdf
       '@tsu-stack/seo':
         specifier: workspace:*
         version: link:../../packages/seo

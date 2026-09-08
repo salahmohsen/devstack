@@ -24,3 +24,4 @@ export type {
 } from "@/features/ai-settings/api/list-provider-models.mutation";
 
 export { AiProvidersSection } from "@/features/ai-settings/ui/ai-providers";
+export { ConnectAiCard } from "@/features/ai-settings/ui/connect-ai-card";

@@ -68,7 +68,8 @@ export const ResumeImportCertificationDraftSchema = z.object({
   clientId: z.string().min(1),
   selected: z.boolean().default(true),
   name: z.string(),
-  issuer: z.string(),
+  /** Extractors may omit the issuer; render as "—" downstream. */
+  issuer: z.string().nullable().optional(),
   issuedAt: z.string().nullable().optional(),
   expiresAt: z.string().nullable().optional(),
   credentialUrl: z.string().nullable().optional(),

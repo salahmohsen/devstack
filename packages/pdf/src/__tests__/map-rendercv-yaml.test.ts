@@ -3,7 +3,7 @@ import { parse } from "yaml";
 
 import { contactHref } from "#@/contacts";
 import { extractBullets } from "#@/html";
-import { toRenderCvYaml } from "#@/map-rendercv-yaml";
+import { buildRenderCvDoc, toRenderCvYaml } from "#@/map-rendercv-yaml";
 import { type ResumePdfInput } from "#@/types";
 
 type RenderCvDoc = {
@@ -765,5 +765,95 @@ describe("contacts", () => {
   it("allows tel: hrefs for phone on the contact line", () => {
     expect(contactHref("phone", "+14155551234")).toBe("tel:+14155551234");
     expect(contactHref("email", "me@example.com")).toBe("mailto:me@example.com");
+  });
+
+  describe("buildRenderCvDoc — preview honesty (doc preview shares the renderer)", () => {
+    const denseInput = () =>
+      baseInput({
+        portfolio: {
+          experiences: [
+            {
+              organization: "Acme",
+              title: "Engineer",
+              fromDate: "2020-01-01",
+              toDate: null,
+              isPresent: true,
+              description: "<p>Did things</p>",
+              includedInPortfolio: true
+            }
+          ],
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "BSc",
+              field: "CS",
+              location: null,
+              fromDate: "2012-09-01",
+              toDate: "2016-06-30",
+              isPresent: false,
+              description: null,
+              gpa: null
+            }
+          ],
+          certifications: [
+            {
+              name: "CKA",
+              issuer: "CNCF",
+              issuedAt: "2025-01-01",
+              expiresAt: null,
+              credentialUrl: null,
+              description: null
+            }
+          ],
+          projects: [
+            {
+              title: "Parser",
+              summary: "Parses things",
+              demoUrl: null,
+              description: "<p>Details</p>",
+              stacks: [],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [
+            { name: "TypeScript", type: "language", includedInPortfolio: true, sortOrder: 0 }
+          ],
+          contacts: [{ type: "email", value: "salah@example.com", sortOrder: 0 }]
+        }
+      });
+
+    it("emits sections in renderer order when present", () => {
+      const cv = buildRenderCvDoc(denseInput());
+      const sections = cv.sections as Record<string, unknown>;
+      expect(Object.keys(sections)).toEqual([
+        "summary",
+        "experience",
+        "education",
+        "projects",
+        "skills",
+        "certifications"
+      ]);
+    });
+
+    it("omits sections the renderer would not emit (sparse draft)", () => {
+      const sparse = denseInput();
+      sparse.portfolio.projects = [];
+      sparse.portfolio.stacks = [];
+      sparse.portfolio.educations = [];
+      sparse.portfolio.certifications = [];
+      const cv = buildRenderCvDoc(sparse);
+      const sections = cv.sections as Record<string, unknown>;
+      expect(Object.keys(sections)).toEqual(["summary", "experience"]);
+    });
+
+    it("matches the YAML pipeline section-for-section", () => {
+      const input = denseInput();
+      const cv = buildRenderCvDoc(input);
+      const { doc: parsed } = parseYaml(input);
+      expect(Object.keys((cv.sections ?? {}) as Record<string, unknown>)).toEqual(
+        Object.keys((parsed.cv.sections ?? {}) as Record<string, unknown>)
+      );
+    });
   });
 });

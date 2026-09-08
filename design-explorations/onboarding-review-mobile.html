@@ -1,0 +1,1057 @@
+<!--
+  EXPLORATION — Onboarding Review below-lg: paper-edit placement on small screens (M1 / M2 / M3).
+  Locked: A3 hybrid rail (desktop) · click-to-edit paper · confirmed-only paper · A paper-first layout at lg+.
+  Open decision (Q5): below-lg behavior.
+  Real record: same live draft (Salah Mohsen). Previews drawn at ~440px touch width.
+  Date: 2026-09-08
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Review below-lg — small-screen directions (M1 / M2 / M3)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+      :root {
+        --brand-50: #e9f7ed;
+        --brand-100: #d2f0da;
+        --brand-300: #8fd8a4;
+        --brand-500: #2f9e57;
+        --brand-700: #1e6e3e;
+        --accent-50: #f4f4f5;
+        --accent-500: #262626;
+        --ink: #262626;
+        --ink-soft: #454545;
+        --ink-mute: #707070;
+        --line: #ececec;
+        --line-soft: #f4f4f4;
+        --paper: #ffffff;
+        --bg: #fafafa;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
+        --shadow-md: 0 4px 24px -8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Geist Variable",
+          Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        line-height: 1.5;
+      }
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 72px 48px 160px;
+      }
+      .doc-header {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 40px;
+        margin-bottom: 80px;
+      }
+      .doc-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--brand-500);
+        font-weight: 600;
+      }
+      .doc-header h1 {
+        margin: 14px 0 8px;
+        font-size: 40px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .doc-header p {
+        margin: 0;
+        font-size: 16px;
+        color: var(--ink-soft);
+        max-width: 760px;
+      }
+      .doc-meta {
+        margin-top: 24px;
+        display: flex;
+        gap: 24px;
+        font-size: 12px;
+        color: var(--ink-mute);
+      }
+
+      .variant {
+        margin-bottom: 130px;
+      }
+      .variant-meta {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .variant-letter {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--brand-50);
+        color: var(--brand-700);
+        font-weight: 700;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.02em;
+        flex-shrink: 0;
+      }
+      .variant-meta h2 {
+        margin: 4px 0 6px;
+        font-size: 25px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+      }
+      .variant-tradeoff {
+        font-size: 15px;
+        color: var(--ink-soft);
+        margin: 0;
+        max-width: 780px;
+      }
+      .variant-tradeoff b {
+        color: var(--brand-500);
+        font-weight: 600;
+      }
+      .preview-frame {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-left: 84px;
+        position: relative;
+      }
+      .preview-frame::before {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #f0e9e0;
+        box-shadow:
+          18px 0 0 #f0e9e0,
+          36px 0 0 #f0e9e0;
+        z-index: 2;
+      }
+      .preview-frame-bar {
+        background: #faf9f5;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 14px 16px 14px 76px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        font-weight: 600;
+      }
+      .preview {
+        padding: 26px 0;
+        display: flex;
+        justify-content: center;
+        background: var(--line-soft);
+      }
+      .variant-analysis {
+        margin: 24px 0 0 84px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 24px;
+      }
+      .analysis-block {
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+      }
+      .analysis-block h4 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-500);
+      }
+      .analysis-block.is-risk h4 {
+        color: #b8341f;
+      }
+      .analysis-block.is-pick h4 {
+        color: var(--accent-700);
+      }
+      .analysis-block p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+      .decision {
+        margin-top: 120px;
+        padding: 40px 48px;
+        background: var(--ink);
+        color: white;
+        border-radius: 20px;
+      }
+      .decision h3 {
+        font-size: 28px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        margin: 0 0 8px;
+      }
+      .decision-sub {
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 14px;
+        margin: 0 0 24px;
+      }
+      .decision-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px 40px;
+      }
+      .decision-grid p {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .decision-grid b {
+        color: #8fd8a4;
+        font-weight: 600;
+      }
+
+      /* shared touch-frame + primitives */
+      .phone {
+        width: 440px;
+        max-width: 94%;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .phone .head {
+        padding: 14px 16px 6px;
+      }
+      .phone .head h5 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+      .phone .head p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--ink-mute);
+      }
+      .tick {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .tick i {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        display: inline-block;
+      }
+      .tick.on i {
+        background: var(--brand-500);
+      }
+      .tick.off i {
+        background: transparent;
+        border: 1.5px dashed #c9c9c9;
+      }
+      .tick.on {
+        color: var(--brand-700);
+      }
+      .tick.off {
+        color: var(--ink-mute);
+        font-weight: 500;
+      }
+      .cb {
+        width: 15px;
+        height: 15px;
+        border-radius: 4px;
+        border: 1.5px solid #cfcfcf;
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .cb.on {
+        background: var(--accent-500);
+        border-color: var(--accent-500);
+      }
+      .cb.on::after {
+        content: "";
+        width: 8px;
+        height: 4.5px;
+        border-left: 1.8px solid #fff;
+        border-bottom: 1.8px solid #fff;
+        transform: rotate(-45deg) translate(0.5px, -0.5px);
+      }
+      .sw {
+        width: 26px;
+        height: 15px;
+        border-radius: 999px;
+        background: #d6d6d6;
+        position: relative;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+      .sw::after {
+        content: "";
+        position: absolute;
+        top: 1.5px;
+        left: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+      }
+      .sw.on {
+        background: var(--brand-500);
+      }
+      .sw.on::after {
+        left: auto;
+        right: 2px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border-radius: 8px;
+        padding: 7px 13px;
+        font-size: 12.5px;
+        font-weight: 600;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+      }
+      .btn.primary {
+        background: var(--accent-500);
+        border-color: var(--accent-500);
+        color: #fff;
+      }
+      .btn.ghost {
+        border-color: transparent;
+        color: var(--ink-mute);
+        font-weight: 500;
+      }
+      .f-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        display: block;
+        margin: 0 0 4px;
+      }
+      .f-input {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 9px;
+        font-size: 12.5px;
+        color: var(--ink);
+        background: #fff;
+        display: block;
+      }
+      .f-area {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 8px 9px;
+        font-size: 12px;
+        color: var(--ink-soft);
+        background: #fff;
+        line-height: 1.5;
+      }
+      .f-area .tb {
+        display: inline-flex;
+        gap: 5px;
+        margin-bottom: 6px;
+      }
+      .f-area .tb i {
+        font-style: normal;
+        font-size: 9.5px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 6px;
+        color: var(--ink-mute);
+      }
+
+      /* strip (shared by M1/M2) */
+      .strip {
+        margin: 10px 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--bg);
+        overflow: hidden;
+      }
+      .strip .s-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+      .strip .s-head b {
+        font-size: 11px;
+        font-weight: 650;
+        color: var(--ink);
+      }
+      .strip .s-head .toggle {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--brand-700);
+        font-weight: 600;
+      }
+      .strip .s-ticks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px 14px;
+        padding: 0 12px 10px;
+      }
+      .strip .s-ticks .t {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10.5px;
+        color: var(--ink-soft);
+      }
+      .strip .s-ticks .t .n {
+        color: var(--ink-mute);
+        font-variant-numeric: tabular-nums;
+      }
+      .strip .paper-peek {
+        margin: 0 12px 12px;
+        background: #fffdf8;
+        border: 1px solid #ebe7df;
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-size: 10.5px;
+        color: #4a4a4a;
+        line-height: 1.5;
+      }
+      .strip .paper-peek b {
+        color: #1c1c1c;
+      }
+      .strip .paper-peek .who {
+        font-weight: 600;
+        color: #1c1c1c;
+      }
+      .strip .paper-peek .who span {
+        font-weight: 400;
+        color: #777;
+      }
+      .strip .paper-peek .dt {
+        float: right;
+        font-size: 9px;
+        color: #9a9a9a;
+      }
+
+      /* M1 rows */
+      .m1-rows {
+        padding: 0 16px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .m1-row {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+      }
+      .m1-row .r-head {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 12px;
+      }
+      .m1-row .r-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .m1-row .r-main b {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .m1-row .r-main span {
+        font-size: 10.5px;
+        color: var(--ink-mute);
+      }
+      .m1-row.open {
+        border-color: var(--brand-300);
+        box-shadow: 0 0 0 2px rgba(47, 158, 87, 0.1);
+      }
+      .m1-row .r-exp {
+        border-top: 1px solid var(--line-soft);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: var(--bg);
+      }
+      .m1-foot {
+        position: sticky;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.94);
+        border-top: 1px solid var(--line);
+        padding: 10px 16px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .m1-foot .meta {
+        font-size: 10.5px;
+        color: var(--ink-mute);
+        margin-right: auto;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* M2 tap-to-edit paper */
+      .m2-paper {
+        margin: 10px 16px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        padding: 18px 18px 20px;
+        font-size: 11px;
+        line-height: 1.5;
+        color: #2b2b2b;
+      }
+      .m2-paper .ph {
+        text-align: center;
+        padding-bottom: 10px;
+        border-bottom: 1.5px solid #333;
+        margin-bottom: 12px;
+      }
+      .m2-paper .ph h6 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 650;
+        color: #1c1c1c;
+      }
+      .m2-paper h6 {
+        margin: 12px 0 6px;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: #1c1c1c;
+        border-bottom: 1px solid #e4e4e4;
+        padding-bottom: 4px;
+      }
+      .m2-line {
+        position: relative;
+        border: 1px solid var(--brand-300);
+        border-radius: 6px;
+        background: var(--brand-50);
+        padding: 5px 26px 5px 8px;
+        margin: 0 -3px 3px;
+      }
+      .m2-line::after {
+        content: "✎";
+        position: absolute;
+        right: 8px;
+        top: 4px;
+        font-size: 10px;
+        color: var(--brand-700);
+      }
+      .m2-line.editing {
+        border: 1.5px solid var(--brand-500);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(47, 158, 87, 0.14);
+      }
+      .m2-note {
+        font-size: 10px;
+        color: var(--ink-mute);
+        padding: 0 16px 12px;
+      }
+      .m2-rows {
+        padding: 0 16px 14px;
+      }
+      .m2-rows .r-exp {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .m2-rows .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      /* M3 */
+      .m3-paper {
+        margin: 10px 16px 12px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        padding: 16px 16px 18px;
+        font-size: 10.5px;
+        line-height: 1.5;
+        color: #2b2b2b;
+        max-height: 260px;
+        overflow: hidden;
+        position: relative;
+      }
+      .m3-paper .ph {
+        text-align: center;
+        padding-bottom: 9px;
+        border-bottom: 1.5px solid #333;
+        margin-bottom: 10px;
+      }
+      .m3-paper .ph h6 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 650;
+        color: #1c1c1c;
+      }
+      .m3-paper .ph p {
+        margin: 2px 0 0;
+        font-size: 9px;
+        color: #6b6b6b;
+      }
+      .m3-paper h6 {
+        margin: 10px 0 5px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: #1c1c1c;
+        border-bottom: 1px solid #e4e4e4;
+        padding-bottom: 3px;
+      }
+      .m3-fade {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 44px;
+        background: linear-gradient(transparent, #fff);
+      }
+      .m3-rows {
+        padding: 0 16px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .m3-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #fff;
+      }
+      .m3-row .r-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .m3-row .r-main b {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .m3-row .r-main span {
+        font-size: 10.5px;
+        color: var(--ink-mute);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="doc-header">
+        <span class="doc-eyebrow">explore-design · onboarding review · below-lg grill</span>
+        <h1>Small screens — where does the paper go?</h1>
+        <p>
+          Desktop is locked: paper-first, click-to-edit text, A3 hybrid rail. Below
+          <strong>lg</strong> there is no side-by-side, no hover, and thumbs edit awkwardly. Three
+          placements for the paper and its editing, drawn at touch width with the real record.
+        </p>
+        <div class="doc-meta">
+          <span>Record: live draft (Mostaql / KHOSHT / One Solution)</span>
+          <span>Decision: Q5 — below-lg model</span>
+          <span>2026-09-08</span>
+        </div>
+      </header>
+
+      <!-- ================= M1 ================= -->
+      <section class="variant">
+        <div class="variant-meta">
+          <div class="variant-letter">M1</div>
+          <div>
+            <h2>Strip + row editors</h2>
+            <p class="variant-tradeoff">
+              Collapsible tick strip with a <b>read-only</b> paper peek; rows keep today's full
+              editor — including the rich description field. Paper editing stays desktop-only.
+              Recommended.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">M1 — strip (peek) + full row editors · sticky footer</div>
+          <div class="preview">
+            <div class="phone">
+              <div class="head">
+                <h5>Review the draft</h5>
+                <p>Uncheck anything you don't want.</p>
+              </div>
+              <div class="strip">
+                <div class="s-head">
+                  <b>Your resume</b>
+                  <span class="toggle">Hide preview ▴</span>
+                </div>
+                <div class="s-ticks">
+                  <span class="t"
+                    ><span class="tick on"><i></i></span> Summary <span class="n">1</span></span
+                  >
+                  <span class="t"
+                    ><span class="tick on"><i></i></span> Experience
+                    <span class="n">3/3</span></span
+                  >
+                  <span class="t"
+                    ><span class="tick off"><i></i></span> Education
+                    <span class="n">0/0</span></span
+                  >
+                  <span class="t"
+                    ><span class="tick on"><i></i></span> Projects <span class="n">4/4</span></span
+                  >
+                  <span class="t"
+                    ><span class="tick on"><i></i></span> Skills <span class="n">19/19</span></span
+                  >
+                </div>
+                <div class="paper-peek">
+                  <span class="who">Senior Frontend Engineer <span>· Mostaql</span></span>
+                  <span class="dt">2022-11 — present</span>
+                  <br />Architected reusable React + headless platforms for operational dashboards
+                  and upvote/reputation applications…
+                </div>
+              </div>
+              <div class="m1-rows">
+                <div class="m1-row open">
+                  <div class="r-head">
+                    <span class="cb on"></span>
+                    <span class="r-main"><b>Senior Frontend Engineer</b><span>Mostaql</span></span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="r-exp">
+                    <div>
+                      <span class="f-label">Description</span>
+                      <div class="f-area">
+                        <span class="tb"><i>B</i><i>i</i><i>• list</i></span>
+                        Architected reusable React + headless platforms for operational dashboards
+                        and upvote/reputation applications…
+                      </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+                      <div>
+                        <span class="f-label">From</span><span class="f-input">Nov 2022</span>
+                      </div>
+                      <div><span class="f-label">To</span><span class="f-input">Present</span></div>
+                    </div>
+                    <span style="font-size: 10px; color: var(--ink-mute)"
+                      >Text editing on the paper is available on larger screens.</span
+                    >
+                  </div>
+                </div>
+                <div class="m1-row">
+                  <div class="r-head">
+                    <span class="cb on"></span>
+                    <span class="r-main"
+                      ><b>Frontend Engineer</b><span>KHOSHT · 2021-12 — 2022-05</span></span
+                    >
+                    <span class="sw on"></span>
+                  </div>
+                </div>
+                <div class="m1-row">
+                  <div class="r-head">
+                    <span class="cb on"></span>
+                    <span class="r-main"
+                      ><b>Frontend Engineer</b><span>One Solution · 2022-02 — 2024-04</span></span
+                    >
+                    <span class="sw on"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="m1-foot">
+                <span class="meta">26 of 26 · Mostaql_CV.pdf</span>
+                <button class="btn ghost sm">Back</button>
+                <button class="btn sm">Discard</button>
+                <button class="btn primary sm">Save and continue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Touch users keep the proven rich-text editor for long text — no thumb-typing into a
+              narrow paper. The strip still proves section presence; the paper peek keeps the
+              metaphor without pretending it's editable.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>Risk</h4>
+            <p>
+              Row editors differ by breakpoint (description field only below lg) — one conditional,
+              but the two experiences must be tested as distinct surfaces.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick when</h4>
+            <p>
+              You want mobile to stay simple and honest, and you accept paper editing as a desktop
+              affordance.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= M2 ================= -->
+      <section class="variant">
+        <div class="variant-meta">
+          <div class="variant-letter">M2</div>
+          <div>
+            <h2>Paper editing on touch</h2>
+            <p class="variant-tradeoff">
+              The expanded strip becomes the <b>editable paper</b> — every editable line shows a
+              visible pencil (no hover on touch); the description field is removed from row editors
+              everywhere.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">M2 — tap-to-edit paper · pencils always visible</div>
+          <div class="preview">
+            <div class="phone">
+              <div class="head">
+                <h5>Review the draft</h5>
+                <p>Tap any text on your resume to edit it.</p>
+              </div>
+              <div class="m2-paper">
+                <div class="ph">
+                  <h6>Salah Mohsen</h6>
+                  <p>Frontend Engineer · salahmohsen@dev.com · Giza, Egypt</p>
+                </div>
+                <h6>Experience</h6>
+                <div class="m2-line editing">
+                  Architected reusable React + headless platforms for operational dashboards and
+                  upvote/reputation applications.<span style="caret-color: var(--brand-700)"></span>
+                </div>
+                <div class="m2-line">
+                  Implemented typed REST data layers with TanStack Query, including SSR prefetch.
+                </div>
+                <div class="m2-line">
+                  Delivered responsive, multilingual interfaces with RTL support using next-intl.
+                </div>
+              </div>
+              <p class="m2-note">
+                Dates, skills, and toggles stay in the rows below — same rules as desktop.
+              </p>
+              <div class="m2-rows">
+                <div class="r-exp">
+                  <div class="pair">
+                    <div>
+                      <span class="f-label">From</span><span class="f-input">Nov 2022</span>
+                    </div>
+                    <div><span class="f-label">To</span><span class="f-input">Present</span></div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px">
+                    <span class="sw on"></span>
+                    <span style="font-size: 11px; color: var(--ink-soft)">Currently present</span>
+                  </div>
+                </div>
+              </div>
+              <div class="m1-foot">
+                <span class="meta">26 of 26 · Mostaql_CV.pdf</span>
+                <button class="btn ghost sm">Back</button>
+                <button class="btn primary sm">Save and continue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              One editing model on every screen size — learn it once. The pencils make the
+              affordance touch-honest (no hover needed), and long text gets the paper's full width
+              rather than a form field.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>Risk</h4>
+            <p>
+              Editing dense resume text in a ~440px textarea is thumb-hostile; IME keyboards cover
+              the paper. Rich formatting is unavailable on touch with no fallback surface.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick when</h4>
+            <p>
+              Consistency outranks comfort, and most mobile sessions are reviewing/unticking rather
+              than rewriting.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= M3 ================= -->
+      <section class="variant">
+        <div class="variant-meta">
+          <div class="variant-letter">M3</div>
+          <div>
+            <h2>Full-width paper + accordion</h2>
+            <p class="variant-tradeoff">
+              The paper sits full-width on top (tap-to-edit, scrollable, edge-faded) with the rows
+              as an accordion below — a miniature of the desktop A layout, no rail, no strip.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">M3 — mini paper + accordion rows</div>
+          <div class="preview">
+            <div class="phone">
+              <div class="head">
+                <h5>Review the draft</h5>
+                <p>Tap the resume to edit · expand a row for details.</p>
+              </div>
+              <div class="m3-paper">
+                <div class="ph">
+                  <h6>Salah Mohsen</h6>
+                  <p>Frontend Engineer · salahmohsen@dev.com · Giza, Egypt</p>
+                </div>
+                <h6>Summary</h6>
+                <p>
+                  Seasoned frontend engineer with extensive experience in React, TypeScript, and
+                  Next.js.
+                </p>
+                <h6>Experience</h6>
+                <p>
+                  <span style="font-weight: 600; color: #1c1c1c"
+                    >Senior Frontend Engineer · Mostaql</span
+                  ><br />Architected reusable React + headless platforms for operational dashboards…
+                </p>
+                <h6>Projects</h6>
+                <p>
+                  <span style="font-weight: 600; color: #1c1c1c">DEVSTOCK</span><br />Multi-tenant,
+                  custom-domain portfolio…
+                </p>
+                <div class="m3-fade"></div>
+              </div>
+              <div class="m3-rows">
+                <div class="m3-row">
+                  <span class="cb on"></span>
+                  <span class="r-main"
+                    ><b>Senior Frontend Engineer</b><span>Mostaql · 2022-11 — present</span></span
+                  >
+                  <span class="sw on"></span>
+                </div>
+                <div class="m3-row">
+                  <span class="cb on"></span>
+                  <span class="r-main"
+                    ><b>Frontend Engineer</b><span>KHOSHT · 2021-12 — 2022-05</span></span
+                  >
+                  <span class="sw on"></span>
+                </div>
+                <div class="m3-row">
+                  <span class="cb on"></span>
+                  <span class="r-main"
+                    ><b>Frontend Engineer</b><span>One Solution · 2022-02 — 2024-04</span></span
+                  >
+                  <span class="sw on"></span>
+                </div>
+              </div>
+              <div class="m1-foot">
+                <span class="meta">26 of 26 · Mostaql_CV.pdf</span>
+                <button class="btn ghost sm">Back</button>
+                <button class="btn primary sm">Save and continue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Truest to the desktop metaphor: the paper is the first thing you see, whole and
+              tappable, and the footer stays put. No separate strip state to design.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>Risk</h4>
+            <p>
+              The paper eats the viewport before any row is reachable — 260px+ of scroll before the
+              first checkbox. Tap-to-edit in a scrolled paper has the same thumb problems as M2.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick when</h4>
+            <p>
+              The proof moment matters more on mobile than edit speed, and sessions are mostly
+              verification.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="decision">
+        <h3>Which small-screen model?</h3>
+        <p class="decision-sub">
+          All three share: section ticks, confirmed-only content, sticky footer with counts +
+          source, and the same draft state as desktop.
+        </p>
+        <div class="decision-grid">
+          <p>
+            <b>M1 — Strip + row editors</b> if mobile keeps the full form editor and the paper stays
+            a read-only proof.
+          </p>
+          <p><b>M2 — Tap-to-edit paper</b> if one editing model should rule every screen size.</p>
+          <p>
+            <b>M3 — Full-width paper + accordion</b> if the mobile moment should be
+            verification-first, paper-forward.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

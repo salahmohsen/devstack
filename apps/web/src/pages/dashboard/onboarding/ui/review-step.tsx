@@ -59,6 +59,16 @@ import { Textarea } from "@tsu-stack/ui/components/textarea";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { ContactIcon } from "@/shared/lib/contact-icon";
+import {
+  buildDocPreviewModel,
+  bulletsToDescription,
+  type DocPreviewModel
+} from "@/shared/resume-doc-preview/doc-preview-model";
+import { ResumeDocCompactStrip } from "@/shared/resume-doc-preview/resume-doc-compact-strip";
+import {
+  ResumeDocPreview,
+  type ResumeDocEditHandlers
+} from "@/shared/resume-doc-preview/resume-doc-preview";
 import { AiErrorBanner } from "@/shared/ui/ai-error-banner";
 
 import {
@@ -71,6 +81,8 @@ import { DraftCertificationFields } from "@/pages/dashboard/onboarding/ui/draft-
 import { DraftEducationFields } from "@/pages/dashboard/onboarding/ui/draft-education-fields";
 import { DraftExperienceFields } from "@/pages/dashboard/onboarding/ui/draft-experience-fields";
 import { DraftProjectFields } from "@/pages/dashboard/onboarding/ui/draft-project-fields";
+import { ReviewConfirmRail } from "@/pages/dashboard/onboarding/ui/review-confirm-rail";
+import { ReviewSkillsDrawer } from "@/pages/dashboard/onboarding/ui/review-skills-drawer";
 
 const CONTACT_TYPES = contactTypeSchema.options;
 
@@ -215,6 +227,8 @@ function ReviewAccordionItem({
       value={value}
       className={cn(
         "min-w-0 rounded-xl border px-3 transition-[border-color,opacity,background-color] duration-150",
+        // Enter: subtle rise + fade (8px); exits are plain unmounts — restraint.
+        "motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2",
         // Open editor uses full row so rich fields have room.
         "data-open:w-full! data-open:max-w-none! data-open:basis-full!",
         selected ? "border-border/80 bg-card" : "border-border/40 bg-muted/10 opacity-70"
@@ -271,6 +285,7 @@ export function ReviewStep({
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("profile");
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [skillsOpen, setSkillsOpen] = useState(false);
 
   // Drafts extracted before education/certification support lack these keys,
   // while the inferred draft type requires them — normalize before any
@@ -511,8 +526,88 @@ export function ReviewStep({
 
   const warnings = draft.meta?.warnings ?? [];
 
+  // Doc pane mirrors the confirmed draft — every checkbox flip re-renders the
+  // corresponding section instantly (no refetch).
+  const docModel: DocPreviewModel = useMemo(() => buildDocPreviewModel(draft), [draft]);
+
+  /**
+   * Paper click-to-edit (grill Q1/Q2/Q6 lock): text commits straight into the
+   * draft; a committed bullet line rewrites the row description flat — one
+   * `<p>` per line, matching what the PDF pipeline extracts back out.
+   */
+  const paperEdit: ResumeDocEditHandlers = {
+    onProfileChange: (patch) => {
+      if (patch.name !== undefined) updateProfile("name", patch.name);
+    },
+    onSummaryChange: (text) => updateProfile("summary", text || null),
+    onExperienceChange: (clientId, patch) => updateExperience(clientId, patch),
+    onEducationChange: (clientId, patch) => updateEducation(clientId, patch),
+    onProjectChange: (clientId, patch) => updateProject(clientId, patch),
+    onBulletsChange: (clientId, lines) => {
+      const description = bulletsToDescription(lines);
+      if (draft.experiences.some((exp) => exp.clientId === clientId)) {
+        updateExperience(clientId, { description });
+        return;
+      }
+      if (draft.projects.some((project) => project.clientId === clientId)) {
+        updateProject(clientId, { description });
+        return;
+      }
+      if (draft.educations.some((edu) => edu.clientId === clientId)) {
+        updateEducation(clientId, { description });
+      }
+    }
+  };
+
+  // Shared action buttons — rail footer (lg+) and sticky footer (below-lg).
+  const actionButtons = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onBack}
+        disabled={applyMutation.isPending || discardMutation.isPending}
+      >
+        Back
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        loading={discardMutation.isPending}
+        disabled={applyMutation.isPending}
+        onClick={() => setDiscardOpen(true)}
+      >
+        Discard
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        loading={applyMutation.isPending}
+        disabled={discardMutation.isPending || !canApply}
+        title={
+          !canApply ? "Select at least one item or fill in profile fields to import" : undefined
+        }
+        onClick={() => void handleApply()}
+      >
+        Save and continue
+      </Button>
+    </div>
+  );
+
+  const countsLine = (
+    <p className="min-w-0 text-xs text-muted-foreground tabular-nums sm:text-sm">
+      <span className="font-medium text-foreground">{totalSelected}</span>
+      {" selected · "}
+      {counts.experiences}/{totals.experiences} exp · {counts.educations}/{totals.educations} edu ·{" "}
+      {counts.certifications}/{totals.certifications} certs · {counts.projects}/{totals.projects}{" "}
+      projects · {counts.stacks}/{totals.stacks} stacks
+    </p>
+  );
+
   return (
-    <div className="flex w-full flex-col gap-4 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
+    <div className="flex w-full flex-col gap-4">
       {warnings.length > 0 ? (
         <AiErrorBanner notes={warnings} feature="resume" severity="partial" density="compact" />
       ) : null}
@@ -528,495 +623,511 @@ export function ReviewStep({
         </Alert>
       ) : null}
 
-      {/* coss CardFrame shell — one surface, no nested “edit” card chrome */}
-      <CardFrame className="w-full">
-        {draft.meta?.sourceFilename ? (
-          <CardFrameHeader className="py-3">
-            <CardFrameTitle className="sr-only">Review extracted data</CardFrameTitle>
-            <CardFrameDescription className="truncate text-xs">
-              Source · {draft.meta.sourceFilename}
-            </CardFrameDescription>
-          </CardFrameHeader>
-        ) : null}
-
-        <Card>
-          <CardPanel className="flex flex-col gap-4 p-4 sm:p-5">
-            <Tabs value={tab} onValueChange={setTab}>
-              {/* p-tabs-10: underline tabs + count badges */}
-              <TabsList variant="underline" className="w-full justify-start overflow-x-auto">
-                <TabsTab value="profile">Profile</TabsTab>
-                <TabsTab value="experiences">
-                  Experiences
-                  <TabCount selected={counts.experiences} total={totals.experiences} />
-                </TabsTab>
-                <TabsTab value="educations">
-                  Education
-                  <TabCount selected={counts.educations} total={totals.educations} />
-                </TabsTab>
-                <TabsTab value="certifications">
-                  Certifications
-                  <TabCount selected={counts.certifications} total={totals.certifications} />
-                </TabsTab>
-                <TabsTab value="projects">
-                  Projects
-                  <TabCount selected={counts.projects} total={totals.projects} />
-                </TabsTab>
-                <TabsTab value="stacks">
-                  Skills
-                  <TabCount selected={counts.stacks} total={totals.stacks} />
-                </TabsTab>
-              </TabsList>
-
-              {/* —— Profile —— */}
-              <TabsPanel value="profile" className="mt-5 flex max-w-3xl flex-col gap-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field>
-                    <FieldLabel>Name</FieldLabel>
-                    <Input
-                      value={draft.profile.name}
-                      onChange={(e) => updateProfile("name", e.target.value)}
-                      placeholder="Full name"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Email (optional)</FieldLabel>
-                    <Input
-                      type="email"
-                      value={draft.profile.email ?? ""}
-                      onChange={(e) => updateProfile("email", e.target.value || null)}
-                      placeholder="Keep current if empty"
-                    />
-                  </Field>
-                </div>
-                <Field>
-                  <FieldLabel>Summary</FieldLabel>
-                  <Textarea
-                    value={draft.profile.summary ?? ""}
-                    onChange={(e) => updateProfile("summary", e.target.value || null)}
-                    rows={4}
-                    placeholder="Professional summary"
-                  />
-                </Field>
-
-                <Separator />
-
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-medium">Contacts</h3>
-                  <Button type="button" size="xs" variant="outline" onClick={addContact}>
-                    Add
-                  </Button>
-                </div>
-
-                {(draft.profile.contacts ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    None extracted. Existing contacts stay as-is.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {(draft.profile.contacts ?? []).map((contact, index) => (
-                      <div
-                        key={`${contact.type}-${index}`}
-                        className="grid gap-2 sm:grid-cols-[auto_8.5rem_1fr_auto] sm:items-center"
-                      >
-                        <span
-                          className="flex size-8 shrink-0 items-center justify-center rounded-md border border-input text-muted-foreground"
-                          aria-hidden
-                          title={contact.type}
-                        >
-                          <ContactIcon type={contact.type} className="size-3.5" />
-                        </span>
-                        <Select
-                          value={contact.type}
-                          onValueChange={(val) => {
-                            if (val) updateContact(index, { type: val as typeof contact.type });
-                          }}
-                        >
-                          <SelectTrigger size="sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectPopup>
-                            <SelectList>
-                              {CONTACT_TYPES.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectList>
-                          </SelectPopup>
-                        </Select>
-                        <Input
-                          size="sm"
-                          value={contact.value}
-                          onChange={(e) => updateContact(index, { value: e.target.value })}
-                          placeholder="Value"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => removeContact(index)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </TabsPanel>
-
-              {/* —— Experiences: accordion (p-accordion-3 multiple) —— */}
-              <TabsPanel value="experiences" className="mt-5 flex flex-col gap-3">
-                <BulkSelectGroup
-                  label="experiences"
-                  total={draft.experiences.length}
-                  selected={counts.experiences}
-                  onSelectAll={() => setAllSelected("experiences", true)}
-                  onSelectNone={() => setAllSelected("experiences", false)}
-                />
-                {draft.experiences.length === 0 ? (
-                  <Empty className="rounded-xl border border-dashed py-8">
-                    <EmptyHeader>
-                      <EmptyTitle>No experiences extracted</EmptyTitle>
-                      <EmptyDescription>
-                        Add them later from Experiences, or continue with projects and stacks.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                ) : (
-                  <Accordion multiple className={ITEM_FLEX}>
-                    {draft.experiences.map((exp) => (
-                      <ReviewAccordionItem
-                        key={exp.clientId}
-                        value={exp.clientId}
-                        selected={exp.selected}
-                        onSelectedChange={(selected) =>
-                          updateExperience(exp.clientId, { selected })
-                        }
-                        includedInPortfolio={exp.includedInPortfolio}
-                        onPortfolioChange={(includedInPortfolio) =>
-                          updateExperience(exp.clientId, { includedInPortfolio })
-                        }
-                        title={exp.title || "Untitled role"}
-                        subtitle={exp.organization}
-                      >
-                        <DraftExperienceFields
-                          value={exp}
-                          onChange={(patch) => updateExperience(exp.clientId, patch)}
-                        />
-                      </ReviewAccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </TabsPanel>
-
-              {/* —— Education —— */}
-              <TabsPanel value="educations" className="mt-5 flex flex-col gap-3">
-                <BulkSelectGroup
-                  label="education entries"
-                  total={draft.educations.length}
-                  selected={counts.educations}
-                  onSelectAll={() => setAllSelected("educations", true)}
-                  onSelectNone={() => setAllSelected("educations", false)}
-                />
-                {draft.educations.length === 0 ? (
-                  <Empty className="rounded-xl border border-dashed py-8">
-                    <EmptyHeader>
-                      <EmptyTitle>No education extracted</EmptyTitle>
-                      <EmptyDescription>
-                        Add it later from Settings → Profile, or continue with the other sections.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                ) : (
-                  <Accordion multiple className={ITEM_FLEX}>
-                    {draft.educations.map((edu) => (
-                      <ReviewAccordionItem
-                        key={edu.clientId}
-                        value={edu.clientId}
-                        selected={edu.selected}
-                        onSelectedChange={(selected) => updateEducation(edu.clientId, { selected })}
-                        title={edu.school || "Untitled school"}
-                        subtitle={edu.degree || undefined}
-                      >
-                        <DraftEducationFields
-                          value={edu}
-                          onChange={(patch) => updateEducation(edu.clientId, patch)}
-                        />
-                      </ReviewAccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </TabsPanel>
-
-              {/* —— Certifications —— */}
-              <TabsPanel value="certifications" className="mt-5 flex flex-col gap-3">
-                <BulkSelectGroup
-                  label="certifications"
-                  total={draft.certifications.length}
-                  selected={counts.certifications}
-                  onSelectAll={() => setAllSelected("certifications", true)}
-                  onSelectNone={() => setAllSelected("certifications", false)}
-                />
-                {draft.certifications.length === 0 ? (
-                  <Empty className="rounded-xl border border-dashed py-8">
-                    <EmptyHeader>
-                      <EmptyTitle>No certifications extracted</EmptyTitle>
-                      <EmptyDescription>
-                        Add them later from Settings → Profile, or continue with the other sections.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                ) : (
-                  <Accordion multiple className={ITEM_FLEX}>
-                    {draft.certifications.map((cert) => (
-                      <ReviewAccordionItem
-                        key={cert.clientId}
-                        value={cert.clientId}
-                        selected={cert.selected}
-                        onSelectedChange={(selected) =>
-                          updateCertification(cert.clientId, { selected })
-                        }
-                        title={cert.name || "Untitled certification"}
-                        subtitle={cert.issuer || undefined}
-                      >
-                        <DraftCertificationFields
-                          value={cert}
-                          onChange={(patch) => updateCertification(cert.clientId, patch)}
-                        />
-                      </ReviewAccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </TabsPanel>
-
-              {/* —— Projects —— */}
-              <TabsPanel value="projects" className="mt-5 flex flex-col gap-3">
-                <BulkSelectGroup
-                  label="projects"
-                  total={draft.projects.length}
-                  selected={counts.projects}
-                  onSelectAll={() => setAllSelected("projects", true)}
-                  onSelectNone={() => setAllSelected("projects", false)}
-                />
-                {draft.projects.length === 0 ? (
-                  <Empty className="rounded-xl border border-dashed py-8">
-                    <EmptyHeader>
-                      <EmptyTitle>No projects extracted</EmptyTitle>
-                      <EmptyDescription>
-                        You can add projects later from the Projects page.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                ) : (
-                  <Accordion multiple className={ITEM_FLEX}>
-                    {draft.projects.map((project) => (
-                      <ReviewAccordionItem
-                        key={project.clientId}
-                        value={project.clientId}
-                        selected={project.selected}
-                        onSelectedChange={(selected) =>
-                          updateProject(project.clientId, { selected })
-                        }
-                        includedInPortfolio={project.includedInPortfolio}
-                        onPortfolioChange={(includedInPortfolio) =>
-                          updateProject(project.clientId, { includedInPortfolio })
-                        }
-                        title={project.title || "Untitled project"}
-                        subtitle={String(project.year)}
-                      >
-                        <DraftProjectFields
-                          value={project}
-                          experienceOptions={experienceOptions}
-                          stackNameOptions={draft.stacks.map((s) => s.name).filter(Boolean)}
-                          onChange={(patch) => updateProject(project.clientId, patch)}
-                        />
-                      </ReviewAccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </TabsPanel>
-
-              {/* —— Stacks: dense table (p-table card style), not 44 full forms —— */}
-              <TabsPanel value="stacks" className="mt-5 flex flex-col gap-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <BulkSelectGroup
-                    label="skills"
-                    total={draft.stacks.length}
-                    selected={counts.stacks}
-                    onSelectAll={() => setAllSelected("stacks", true)}
-                    onSelectNone={() => setAllSelected("stacks", false)}
-                  />
-                  {counts.stacks > 0 ? (
-                    <Group aria-label="Portfolio for selected skills">
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        onClick={() => setAllStacksPortfolio(true)}
-                      >
-                        Show on portfolio
-                      </Button>
-                      <GroupSeparator />
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        onClick={() => setAllStacksPortfolio(false)}
-                      >
-                        Hide from portfolio
-                      </Button>
-                    </Group>
-                  ) : null}
-                </div>
-
-                {draft.stacks.length === 0 ? (
-                  <Empty className="rounded-xl border border-dashed py-8">
-                    <EmptyHeader>
-                      <EmptyTitle>No stacks extracted</EmptyTitle>
-                      <EmptyDescription>
-                        Skills can be added or detected from GitHub later.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                ) : (
-                  <div
-                    className={cn(
-                      "grid w-full gap-2",
-                      "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
-                    )}
-                  >
-                    {draft.stacks.map((stack, index) => (
-                      <div
-                        key={`${stack.name}-${index}`}
-                        className={cn(
-                          "flex min-w-0 flex-col gap-2 rounded-xl border p-3 transition-[border-color,opacity,background-color] duration-150",
-                          stack.selected
-                            ? "border-border/80 bg-card"
-                            : "border-border/40 bg-muted/10 opacity-70"
-                        )}
-                      >
-                        <div className="flex items-start gap-2">
-                          <Checkbox
-                            aria-label={`Import ${stack.name || "stack"}`}
-                            checked={stack.selected}
-                            className="mt-1"
-                            onCheckedChange={(v) => updateStack(index, { selected: !!v })}
-                          />
-                          <Input
-                            size="sm"
-                            value={stack.name}
-                            disabled={!stack.selected}
-                            onChange={(e) => updateStack(index, { name: e.target.value })}
-                            aria-label="Skill name"
-                            className="min-w-0 flex-1 font-medium"
-                          />
-                          <Switch
-                            key={`stack-pf-${index}-${stack.selected ? "s" : "u"}-${stack.includedInPortfolio ? "1" : "0"}`}
-                            checked={stack.selected && stack.includedInPortfolio}
-                            disabled={!stack.selected}
-                            onCheckedChange={(v) => updateStack(index, { includedInPortfolio: v })}
-                            aria-label={`${stack.name} on portfolio`}
-                            className="mt-0.5 shrink-0 [--thumb-size:--spacing(3.5)]"
-                          />
-                        </div>
-                        <Select
-                          value={stack.type ?? ""}
-                          disabled={!stack.selected}
-                          onValueChange={(val) => {
-                            updateStack(index, {
-                              type: typeof val === "string" && val.length > 0 ? val : null
-                            });
-                          }}
-                          items={[
-                            { value: "", label: "Type…" },
-                            ...STACK_TYPE_ITEMS.map((t) => {
-                              return {
-                                value: t.value,
-                                label: t.label
-                              };
-                            })
-                          ]}
-                        >
-                          <SelectTrigger size="sm" className="w-full min-w-0">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectPopup>
-                            <SelectList>
-                              <SelectItem value="">Type…</SelectItem>
-                              {STACK_TYPE_ITEMS.map((t) => (
-                                <SelectItem key={t.value} value={t.value}>
-                                  {t.label}
-                                </SelectItem>
-                              ))}
-                            </SelectList>
-                          </SelectPopup>
-                        </Select>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Descriptions can be added later from Skills. Import is name + type.
-                </p>
-              </TabsPanel>
-            </Tabs>
-          </CardPanel>
-        </Card>
-      </CardFrame>
-
-      {/* Sticky within main scroll — not viewport-fixed (avoids covering app chrome) */}
-      <div className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border/70 bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-backdrop-filter:bg-background/90 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="flex w-full flex-wrap items-center justify-between gap-3">
-          <p className="min-w-0 text-xs text-muted-foreground tabular-nums sm:text-sm">
-            <span className="font-medium text-foreground">{totalSelected}</span>
-            {" selected · "}
-            {counts.experiences}/{totals.experiences} exp · {counts.educations}/{totals.educations}{" "}
-            edu · {counts.certifications}/{totals.certifications} certs · {counts.projects}/
-            {totals.projects} projects · {counts.stacks}/{totals.stacks} stacks
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              disabled={applyMutation.isPending || discardMutation.isPending}
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              loading={discardMutation.isPending}
-              disabled={applyMutation.isPending}
-              onClick={() => setDiscardOpen(true)}
-            >
-              Discard
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              loading={applyMutation.isPending}
-              disabled={discardMutation.isPending || !canApply}
-              title={
-                !canApply
-                  ? "Select at least one item or fill in profile fields to import"
-                  : undefined
+      {/* lg+ — paper-first (grill A3 lock): editable document + confirm rail. */}
+      <div className="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+        <div className="lg:sticky lg:top-6">
+          <ResumeDocPreview
+            model={docModel}
+            edit={paperEdit}
+            className="motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto"
+          />
+        </div>
+        <div className="flex max-h-[calc(100vh-3rem)] flex-col lg:sticky lg:top-6">
+          <div className="min-h-0 flex-1 overflow-y-auto pe-1">
+            <ReviewConfirmRail
+              draft={draft}
+              onProfileChange={(patch) =>
+                onDraftChange({ ...draft, profile: { ...draft.profile, ...patch } })
               }
-              onClick={() => void handleApply()}
-            >
-              Save and continue
-            </Button>
+              onExperienceChange={updateExperience}
+              onEducationChange={updateEducation}
+              onCertificationChange={updateCertification}
+              onProjectChange={updateProject}
+              onManageSkills={() => setSkillsOpen(true)}
+              skillsSelected={counts.stacks}
+              skillsTotal={totals.stacks}
+            />
+          </div>
+          <div className="mt-3 flex flex-col gap-2 border-t border-border/70 bg-background pt-3">
+            {actionButtons}
+            {!canApply ? (
+              <p className="text-xs text-muted-foreground">
+                Select experiences, education, certifications, projects, or stacks — or edit the
+                profile — before applying.
+              </p>
+            ) : null}
           </div>
         </div>
-        {!canApply ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Select experiences, education, certifications, projects, or stacks — or edit the profile
-            — before applying.
-          </p>
-        ) : null}
       </div>
+
+      {/* below-lg — tick strip + full row editors (grill M1 lock). */}
+      <div className="flex w-full flex-col gap-4 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5.5rem))] lg:hidden">
+        <ResumeDocCompactStrip model={docModel} />
+
+        {/* coss CardFrame shell — one surface, no nested “edit” card chrome */}
+        <CardFrame className="w-full">
+          {draft.meta?.sourceFilename ? (
+            <CardFrameHeader className="py-3">
+              <CardFrameTitle className="sr-only">Review extracted data</CardFrameTitle>
+              <CardFrameDescription className="truncate text-xs">
+                Source · {draft.meta.sourceFilename}
+              </CardFrameDescription>
+            </CardFrameHeader>
+          ) : null}
+
+          <Card>
+            <CardPanel className="flex flex-col gap-4 p-4 sm:p-5">
+              <Tabs value={tab} onValueChange={setTab}>
+                {/* p-tabs-10: underline tabs + count badges */}
+                <TabsList variant="underline" className="w-full justify-start overflow-x-auto">
+                  <TabsTab value="profile">Profile</TabsTab>
+                  <TabsTab value="experiences">
+                    Experiences
+                    <TabCount selected={counts.experiences} total={totals.experiences} />
+                  </TabsTab>
+                  <TabsTab value="educations">
+                    Education
+                    <TabCount selected={counts.educations} total={totals.educations} />
+                  </TabsTab>
+                  <TabsTab value="certifications">
+                    Certifications
+                    <TabCount selected={counts.certifications} total={totals.certifications} />
+                  </TabsTab>
+                  <TabsTab value="projects">
+                    Projects
+                    <TabCount selected={counts.projects} total={totals.projects} />
+                  </TabsTab>
+                  <TabsTab value="stacks">
+                    Skills
+                    <TabCount selected={counts.stacks} total={totals.stacks} />
+                  </TabsTab>
+                </TabsList>
+
+                {/* —— Profile —— */}
+                <TabsPanel value="profile" className="mt-5 flex max-w-3xl flex-col gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field>
+                      <FieldLabel>Name</FieldLabel>
+                      <Input
+                        value={draft.profile.name}
+                        onChange={(e) => updateProfile("name", e.target.value)}
+                        placeholder="Full name"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Email (optional)</FieldLabel>
+                      <Input
+                        type="email"
+                        value={draft.profile.email ?? ""}
+                        onChange={(e) => updateProfile("email", e.target.value || null)}
+                        placeholder="Keep current if empty"
+                      />
+                    </Field>
+                  </div>
+                  <Field>
+                    <FieldLabel>Summary</FieldLabel>
+                    <Textarea
+                      value={draft.profile.summary ?? ""}
+                      onChange={(e) => updateProfile("summary", e.target.value || null)}
+                      rows={4}
+                      placeholder="Professional summary"
+                    />
+                  </Field>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-medium">Contacts</h3>
+                    <Button type="button" size="xs" variant="outline" onClick={addContact}>
+                      Add
+                    </Button>
+                  </div>
+
+                  {(draft.profile.contacts ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      None extracted. Existing contacts stay as-is.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {(draft.profile.contacts ?? []).map((contact, index) => (
+                        <div
+                          key={`${contact.type}-${index}`}
+                          className="grid gap-2 sm:grid-cols-[auto_8.5rem_1fr_auto] sm:items-center"
+                        >
+                          <span
+                            className="flex size-8 shrink-0 items-center justify-center rounded-md border border-input text-muted-foreground"
+                            aria-hidden
+                            title={contact.type}
+                          >
+                            <ContactIcon type={contact.type} className="size-3.5" />
+                          </span>
+                          <Select
+                            value={contact.type}
+                            onValueChange={(val) => {
+                              if (val) updateContact(index, { type: val as typeof contact.type });
+                            }}
+                          >
+                            <SelectTrigger size="sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectPopup>
+                              <SelectList>
+                                {CONTACT_TYPES.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectList>
+                            </SelectPopup>
+                          </Select>
+                          <Input
+                            size="sm"
+                            value={contact.value}
+                            onChange={(e) => updateContact(index, { value: e.target.value })}
+                            placeholder="Value"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            onClick={() => removeContact(index)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsPanel>
+
+                {/* —— Experiences: accordion (p-accordion-3 multiple) —— */}
+                <TabsPanel value="experiences" className="mt-5 flex flex-col gap-3">
+                  <BulkSelectGroup
+                    label="experiences"
+                    total={draft.experiences.length}
+                    selected={counts.experiences}
+                    onSelectAll={() => setAllSelected("experiences", true)}
+                    onSelectNone={() => setAllSelected("experiences", false)}
+                  />
+                  {draft.experiences.length === 0 ? (
+                    <Empty className="rounded-xl border border-dashed py-8">
+                      <EmptyHeader>
+                        <EmptyTitle>No experiences extracted</EmptyTitle>
+                        <EmptyDescription>
+                          Add them later from Experiences, or continue with projects and stacks.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (
+                    <Accordion multiple className={ITEM_FLEX}>
+                      {draft.experiences.map((exp) => (
+                        <ReviewAccordionItem
+                          key={exp.clientId}
+                          value={exp.clientId}
+                          selected={exp.selected}
+                          onSelectedChange={(selected) =>
+                            updateExperience(exp.clientId, { selected })
+                          }
+                          includedInPortfolio={exp.includedInPortfolio}
+                          onPortfolioChange={(includedInPortfolio) =>
+                            updateExperience(exp.clientId, { includedInPortfolio })
+                          }
+                          title={exp.title || "Untitled role"}
+                          subtitle={exp.organization}
+                        >
+                          <DraftExperienceFields
+                            value={exp}
+                            onChange={(patch) => updateExperience(exp.clientId, patch)}
+                          />
+                        </ReviewAccordionItem>
+                      ))}
+                    </Accordion>
+                  )}
+                </TabsPanel>
+
+                {/* —— Education —— */}
+                <TabsPanel value="educations" className="mt-5 flex flex-col gap-3">
+                  <BulkSelectGroup
+                    label="education entries"
+                    total={draft.educations.length}
+                    selected={counts.educations}
+                    onSelectAll={() => setAllSelected("educations", true)}
+                    onSelectNone={() => setAllSelected("educations", false)}
+                  />
+                  {draft.educations.length === 0 ? (
+                    <Empty className="rounded-xl border border-dashed py-8">
+                      <EmptyHeader>
+                        <EmptyTitle>No education extracted</EmptyTitle>
+                        <EmptyDescription>
+                          Add it later from Settings → Profile, or continue with the other sections.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (
+                    <Accordion multiple className={ITEM_FLEX}>
+                      {draft.educations.map((edu) => (
+                        <ReviewAccordionItem
+                          key={edu.clientId}
+                          value={edu.clientId}
+                          selected={edu.selected}
+                          onSelectedChange={(selected) =>
+                            updateEducation(edu.clientId, { selected })
+                          }
+                          title={edu.school || "Untitled school"}
+                          subtitle={edu.degree || undefined}
+                        >
+                          <DraftEducationFields
+                            value={edu}
+                            onChange={(patch) => updateEducation(edu.clientId, patch)}
+                          />
+                        </ReviewAccordionItem>
+                      ))}
+                    </Accordion>
+                  )}
+                </TabsPanel>
+
+                {/* —— Certifications —— */}
+                <TabsPanel value="certifications" className="mt-5 flex flex-col gap-3">
+                  <BulkSelectGroup
+                    label="certifications"
+                    total={draft.certifications.length}
+                    selected={counts.certifications}
+                    onSelectAll={() => setAllSelected("certifications", true)}
+                    onSelectNone={() => setAllSelected("certifications", false)}
+                  />
+                  {draft.certifications.length === 0 ? (
+                    <Empty className="rounded-xl border border-dashed py-8">
+                      <EmptyHeader>
+                        <EmptyTitle>No certifications extracted</EmptyTitle>
+                        <EmptyDescription>
+                          Add them later from Settings → Profile, or continue with the other
+                          sections.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (
+                    <Accordion multiple className={ITEM_FLEX}>
+                      {draft.certifications.map((cert) => (
+                        <ReviewAccordionItem
+                          key={cert.clientId}
+                          value={cert.clientId}
+                          selected={cert.selected}
+                          onSelectedChange={(selected) =>
+                            updateCertification(cert.clientId, { selected })
+                          }
+                          title={cert.name || "Untitled certification"}
+                          subtitle={cert.issuer ?? undefined}
+                        >
+                          <DraftCertificationFields
+                            value={cert}
+                            onChange={(patch) => updateCertification(cert.clientId, patch)}
+                          />
+                        </ReviewAccordionItem>
+                      ))}
+                    </Accordion>
+                  )}
+                </TabsPanel>
+
+                {/* —— Projects —— */}
+                <TabsPanel value="projects" className="mt-5 flex flex-col gap-3">
+                  <BulkSelectGroup
+                    label="projects"
+                    total={draft.projects.length}
+                    selected={counts.projects}
+                    onSelectAll={() => setAllSelected("projects", true)}
+                    onSelectNone={() => setAllSelected("projects", false)}
+                  />
+                  {draft.projects.length === 0 ? (
+                    <Empty className="rounded-xl border border-dashed py-8">
+                      <EmptyHeader>
+                        <EmptyTitle>No projects extracted</EmptyTitle>
+                        <EmptyDescription>
+                          You can add projects later from the Projects page.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (
+                    <Accordion multiple className={ITEM_FLEX}>
+                      {draft.projects.map((project) => (
+                        <ReviewAccordionItem
+                          key={project.clientId}
+                          value={project.clientId}
+                          selected={project.selected}
+                          onSelectedChange={(selected) =>
+                            updateProject(project.clientId, { selected })
+                          }
+                          includedInPortfolio={project.includedInPortfolio}
+                          onPortfolioChange={(includedInPortfolio) =>
+                            updateProject(project.clientId, { includedInPortfolio })
+                          }
+                          title={project.title || "Untitled project"}
+                          subtitle={String(project.year)}
+                        >
+                          <DraftProjectFields
+                            value={project}
+                            experienceOptions={experienceOptions}
+                            stackNameOptions={draft.stacks.map((s) => s.name).filter(Boolean)}
+                            onChange={(patch) => updateProject(project.clientId, patch)}
+                          />
+                        </ReviewAccordionItem>
+                      ))}
+                    </Accordion>
+                  )}
+                </TabsPanel>
+
+                {/* —— Stacks: dense table (p-table card style), not 44 full forms —— */}
+                <TabsPanel value="stacks" className="mt-5 flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <BulkSelectGroup
+                      label="skills"
+                      total={draft.stacks.length}
+                      selected={counts.stacks}
+                      onSelectAll={() => setAllSelected("stacks", true)}
+                      onSelectNone={() => setAllSelected("stacks", false)}
+                    />
+                    {counts.stacks > 0 ? (
+                      <Group aria-label="Portfolio for selected skills">
+                        <Button
+                          type="button"
+                          size="xs"
+                          variant="outline"
+                          onClick={() => setAllStacksPortfolio(true)}
+                        >
+                          Show on portfolio
+                        </Button>
+                        <GroupSeparator />
+                        <Button
+                          type="button"
+                          size="xs"
+                          variant="outline"
+                          onClick={() => setAllStacksPortfolio(false)}
+                        >
+                          Hide from portfolio
+                        </Button>
+                      </Group>
+                    ) : null}
+                  </div>
+
+                  {draft.stacks.length === 0 ? (
+                    <Empty className="rounded-xl border border-dashed py-8">
+                      <EmptyHeader>
+                        <EmptyTitle>No stacks extracted</EmptyTitle>
+                        <EmptyDescription>
+                          Skills can be added or detected from GitHub later.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (
+                    <div
+                      className={cn(
+                        "grid w-full gap-2",
+                        "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+                      )}
+                    >
+                      {draft.stacks.map((stack, index) => (
+                        <div
+                          key={`${stack.name}-${index}`}
+                          className={cn(
+                            "flex min-w-0 flex-col gap-2 rounded-xl border p-3 transition-[border-color,opacity,background-color] duration-150",
+                            stack.selected
+                              ? "border-border/80 bg-card"
+                              : "border-border/40 bg-muted/10 opacity-70"
+                          )}
+                        >
+                          <div className="flex items-start gap-2">
+                            <Checkbox
+                              aria-label={`Import ${stack.name || "stack"}`}
+                              checked={stack.selected}
+                              className="mt-1"
+                              onCheckedChange={(v) => updateStack(index, { selected: !!v })}
+                            />
+                            <Input
+                              size="sm"
+                              value={stack.name}
+                              disabled={!stack.selected}
+                              onChange={(e) => updateStack(index, { name: e.target.value })}
+                              aria-label="Skill name"
+                              className="min-w-0 flex-1 font-medium"
+                            />
+                            <Switch
+                              key={`stack-pf-${index}-${stack.selected ? "s" : "u"}-${stack.includedInPortfolio ? "1" : "0"}`}
+                              checked={stack.selected && stack.includedInPortfolio}
+                              disabled={!stack.selected}
+                              onCheckedChange={(v) =>
+                                updateStack(index, { includedInPortfolio: v })
+                              }
+                              aria-label={`${stack.name} on portfolio`}
+                              className="mt-0.5 shrink-0 [--thumb-size:--spacing(3.5)]"
+                            />
+                          </div>
+                          <Select
+                            value={stack.type ?? ""}
+                            disabled={!stack.selected}
+                            onValueChange={(val) => {
+                              updateStack(index, {
+                                type: typeof val === "string" && val.length > 0 ? val : null
+                              });
+                            }}
+                            items={[
+                              { value: "", label: "Type…" },
+                              ...STACK_TYPE_ITEMS.map((t) => {
+                                return {
+                                  value: t.value,
+                                  label: t.label
+                                };
+                              })
+                            ]}
+                          >
+                            <SelectTrigger size="sm" className="w-full min-w-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectPopup>
+                              <SelectList>
+                                <SelectItem value="">Type…</SelectItem>
+                                {STACK_TYPE_ITEMS.map((t) => (
+                                  <SelectItem key={t.value} value={t.value}>
+                                    {t.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectList>
+                            </SelectPopup>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Descriptions can be added later from Skills. Import is name + type.
+                  </p>
+                </TabsPanel>
+              </Tabs>
+            </CardPanel>
+          </Card>
+        </CardFrame>
+
+        {/* Sticky within main scroll — not viewport-fixed (avoids covering app chrome) */}
+        <div className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border/70 bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-backdrop-filter:bg-background/90 sm:-mx-6 sm:px-6">
+          <div className="flex w-full flex-wrap items-center justify-between gap-3">
+            {countsLine}
+            {actionButtons}
+          </div>
+          {!canApply ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Select experiences, education, certifications, projects, or stacks — or edit the
+              profile — before applying.
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <ReviewSkillsDrawer
+        open={skillsOpen}
+        onOpenChange={setSkillsOpen}
+        draft={draft}
+        onStackChange={updateStack}
+        onSetAllSelected={(selected) => setAllSelected("stacks", selected)}
+        onSetAllPortfolio={setAllStacksPortfolio}
+      />
 
       <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
         <AlertDialogPopup>

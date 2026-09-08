@@ -83,11 +83,11 @@ export function AnalyzingProgress({
                 aria-hidden
               >
                 {done ? (
-                  <CheckIcon className="size-3.5" />
+                  <CheckIcon className="size-4" />
                 ) : active ? (
                   <AiLoader size="sm" variant="inline" />
                 ) : (
-                  <span className="size-1.5 rounded-full bg-muted-foreground/50" />
+                  <span className="size-2 rounded-full border border-muted-foreground/40" />
                 )}
               </span>
 

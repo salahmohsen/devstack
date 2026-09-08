@@ -25,7 +25,12 @@ export const ResumeExtractExperienceSchema = z.object({
 export const ResumeExtractProjectSchema = z.object({
   clientId: z.string().optional().nullable().describe("Temp id for this project"),
   title: z.string().describe("Project name"),
-  year: z.number().int().optional().nullable().describe("Primary year, e.g. 2024"),
+  /** Models emit "2024" or "2023-24" as often as 2024 — normalize coerces. */
+  year: z
+    .union([z.number().int(), z.string()])
+    .optional()
+    .nullable()
+    .describe("Primary year, e.g. 2024"),
   summary: z.string().optional().nullable().describe("One-paragraph project summary"),
   description: z.string().optional().nullable().describe("Longer project write-up if present"),
   /** Reference to an experience clientId when linked. */
@@ -97,7 +102,11 @@ export const ResumeExtractCertificationSchema = z.object({
   name: z
     .string()
     .describe("Full official credential name verbatim, acronym may follow in parentheses"),
-  issuer: z.string().describe("Issuing organization full name"),
+  issuer: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Issuing organization full name, or null when the resume does not say"),
   issuedAt: z.string().nullable().optional().describe("Issue date ISO or year-month"),
   expiresAt: z.string().nullable().default(null).describe("Expiry date, or null if none"),
   credentialUrl: z.string().nullable().optional().describe("Verification / credential URL"),

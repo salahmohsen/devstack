@@ -71,7 +71,8 @@ export type ResumePdfPortfolio = {
    */
   certifications?: Array<{
     name: string;
-    issuer: string;
+    /** Extractors may omit the issuer; the mapper renders the bare name. */
+    issuer?: string | null;
     issuedAt: string | null;
     expiresAt: string | null;
     credentialUrl: string | null;
