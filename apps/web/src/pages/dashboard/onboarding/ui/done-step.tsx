@@ -4,10 +4,10 @@ import { Link } from "@tanstack/react-router";
 import {
   BriefcaseIcon,
   CheckCircle2Icon,
+  FileUpIcon,
   FolderKanbanIcon,
   LayersIcon,
   LayoutDashboardIcon,
-  FileUpIcon,
   SparklesIcon
 } from "lucide-react";
 import { useEffect, useRef } from "react";
