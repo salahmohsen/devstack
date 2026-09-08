@@ -2,9 +2,17 @@ import { type ResumeImportDraft } from "@tsu-stack/core";
 
 import { createExternalStore, type AiJobStatus } from "@/shared/lib/ai-job";
 
-export type OnboardingFlowStep = "upload" | "analyzing" | "review" | "jobs" | "connect" | "done";
+export type OnboardingFlowStep =
+  | "ai"
+  | "upload"
+  | "analyzing"
+  | "review"
+  | "jobs"
+  | "connect"
+  | "done";
 
 export const ONBOARDING_DESTINATION_STEPS = [
+  { id: "ai", label: "AI", matches: ["ai"] as const },
   { id: "upload", label: "Resume", matches: ["upload", "analyzing"] as const },
   { id: "review", label: "Review", matches: ["review"] as const },
   { id: "jobs", label: "Jobs", matches: ["jobs"] as const },
@@ -14,6 +22,8 @@ export const ONBOARDING_DESTINATION_STEPS = [
 
 export type OnboardingApplySummary = {
   experiences: number;
+  educations: number;
+  certifications: number;
   projects: number;
   stacks: number;
 };
@@ -24,6 +34,8 @@ export type OnboardingApplySummary = {
  */
 export type OnboardingSessionState = {
   step: OnboardingFlowStep;
+  /** A provider was probed ok and saved during this onboarding (gates upload + done cross-sell). */
+  aiConfigured: boolean;
   objectKey: string | null;
   filename: string | null;
   draft: ResumeImportDraft | null;
@@ -39,6 +51,7 @@ export type OnboardingSessionState = {
 const STEP_STORAGE_KEY = "tsu.onboarding.step";
 
 const FLOW_STEPS: readonly OnboardingFlowStep[] = [
+  "ai",
   "upload",
   "analyzing",
   "review",
@@ -78,7 +91,8 @@ export function clearPersistedOnboardingStep() {
 }
 
 const initialState: OnboardingSessionState = {
-  step: "upload",
+  step: "ai",
+  aiConfigured: false,
   objectKey: null,
   filename: null,
   draft: null,

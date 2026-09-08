@@ -15,6 +15,8 @@ export const format = createStep({
       experiences: inputData.experiences,
       projects: inputData.projects,
       stacks: inputData.stacks,
+      educations: inputData.educations,
+      certifications: inputData.certifications,
       meta: inputData.meta
     })
 });

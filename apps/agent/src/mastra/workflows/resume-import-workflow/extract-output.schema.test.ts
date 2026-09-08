@@ -59,4 +59,24 @@ describe("ResumeExtractOutputSchema", () => {
       { name: "Docker" }
     ]);
   });
+
+  it("parses education and certification arrays with defaults", () => {
+    const parsed = ResumeExtractOutputSchema.parse({
+      profile: { name: "S" },
+      educations: [{ school: "Cairo University", degree: "BSc" }],
+      certifications: [
+        {
+          name: "AWS Certified Solutions Architect - Associate",
+          issuer: "Amazon Web Services",
+          issuedAt: "2025-03"
+        }
+      ]
+    });
+
+    expect(parsed.educations).toHaveLength(1);
+    expect(parsed.educations[0]!.isPresent).toBe(false); // default
+    expect(parsed.certifications).toHaveLength(1);
+    expect(parsed.certifications[0]!.expiresAt).toBeNull(); // default null
+    expect(parsed.projects).toEqual([]);
+  });
 });

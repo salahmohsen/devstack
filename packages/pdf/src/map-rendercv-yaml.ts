@@ -23,6 +23,32 @@ function toRenderCvDate(raw: string | null): string | undefined {
   return undefined;
 }
 
+const CERT_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
+
+/** "2025-03-01" → "Mar 2025" for certification one-liners. */
+function toCertDisplayDate(raw: string | null): string | undefined {
+  if (!raw?.trim()) return undefined;
+  const trimmed = raw.trim();
+  const ymd = trimmed.match(/^(\d{4})-(\d{2})/);
+  if (!ymd) return trimmed; // already display text (year etc.) — pass through
+  const month = Number(ymd[2]);
+  if (month < 1 || month > 12) return ymd[1]!;
+  return `${CERT_MONTHS[month - 1]} ${ymd[1]}`;
+}
+
 function collectEmails(contacts: PdfContact[], profileEmail: string): string[] {
   const emails: string[] = [];
   const seen = new Set<string>();
@@ -117,6 +143,25 @@ function experienceEntries(experiences: ResumePdfPortfolio["experiences"]) {
     });
 }
 
+function educationEntries(educations: ResumePdfPortfolio["educations"] = []) {
+  return educations.map((edu) => {
+    const entry: Record<string, unknown> = {
+      institution: edu.school,
+      studyType: edu.degree
+    };
+    if (edu.field?.trim()) entry.area = edu.field.trim();
+    if (edu.location?.trim()) entry.location = edu.location.trim();
+    const start = toRenderCvDate(edu.fromDate);
+    const end = edu.isPresent ? "present" : toRenderCvDate(edu.toDate);
+    if (start) entry.start_date = start;
+    if (end) entry.end_date = end;
+    const highlights = extractBullets(edu.description ?? "");
+    if (edu.gpa?.trim()) highlights.push(`GPA: ${edu.gpa.trim()}`);
+    if (highlights.length > 0) entry.highlights = highlights;
+    return entry;
+  });
+}
+
 function projectDemoHttpUrl(proj: ResumePdfPortfolio["projects"][number]): string | null {
   return proj.demoUrl?.trim() ? toRenderCvHttpUrl(proj.demoUrl) : null;
 }
@@ -172,6 +217,21 @@ function skillEntries(stacks: ResumePdfPortfolio["stacks"]) {
       label: group.label,
       details: group.names.join(", ")
     };
+  });
+}
+
+/** One-liner per certification: `Name — Issuer, Issued Mon YYYY · Expires Mon YYYY`. */
+function certificationEntries(certifications: ResumePdfPortfolio["certifications"] = []) {
+  return certifications.map((cert) => {
+    const credentialUrl = cert.credentialUrl?.trim() ? toRenderCvHttpUrl(cert.credentialUrl) : null;
+    const name =
+      credentialUrl && !/[[\]]/.test(cert.name) ? `[${cert.name}](${credentialUrl})` : cert.name;
+    const issued = toCertDisplayDate(cert.issuedAt);
+    const expires = toCertDisplayDate(cert.expiresAt);
+    const parts = [issued, expires && `Expires ${expires}`].filter((part) => part !== undefined);
+    const tail = parts.length > 0 ? `, ${parts.join(" · ")}` : "";
+    const issuer = cert.issuer?.trim();
+    return issuer ? `${name} — ${issuer}${tail}` : `${name}${tail}`;
   });
 }
 
@@ -238,14 +298,46 @@ function buildCv(input: ResumePdfInput): Record<string, unknown> {
   const experience = experienceEntries(input.portfolio.experiences);
   if (experience.length > 0) sections.experience = experience;
 
+  const education = educationEntries(input.portfolio.educations);
+  if (education.length > 0) sections.education = education;
+
   const projects = projectEntries(input.portfolio.projects, input.portfolio.stacks);
   if (projects.length > 0) sections.projects = projects;
 
   const skills = skillEntries(input.portfolio.stacks);
   if (skills.length > 0) sections.skills = skills;
 
+  const certifications = certificationEntries(input.portfolio.certifications);
+  if (certifications.length > 0) sections.certifications = certifications;
+
   if (Object.keys(sections).length > 0) cv.sections = sections;
   return cv;
+}
+
+/**
+ * RenderCV 2.8 emits typst strings without escaping embedded double quotes, so
+ * any `"` in user content breaks the typst compile (`name: "Salah "Mohsen""`).
+ * Swap straight quotes for single quotes at the YAML boundary — the one place
+ * all user content passes before rendercv sees it.
+ */
+function stripDoubleQuotes(value: unknown): unknown {
+  if (typeof value === "string") return value.replace(/"/g, "'");
+  if (Array.isArray(value)) return value.map(stripDoubleQuotes);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, stripDoubleQuotes(entry)])
+    );
+  }
+  return value;
+}
+
+/**
+ * Pure RenderCV document mapping — shared by the YAML pipeline and the web
+ * resume-doc preview (`@tsu-stack/pdf/doc`). The preview must not lie about
+ * the artifact: section presence here is exactly what `toRenderCvYaml` emits.
+ */
+export function buildRenderCvDoc(input: ResumePdfInput): Record<string, unknown> {
+  return buildCv(input);
 }
 
 export function toRenderCvYaml(input: ResumePdfInput): string {
@@ -257,5 +349,8 @@ export function toRenderCvYaml(input: ResumePdfInput): string {
     },
     locale: { language: "english" }
   };
-  return stringify(doc, { lineWidth: 0, aliasDuplicateObjects: false });
+  return stringify(stripDoubleQuotes(doc), {
+    lineWidth: 0,
+    aliasDuplicateObjects: false
+  });
 }

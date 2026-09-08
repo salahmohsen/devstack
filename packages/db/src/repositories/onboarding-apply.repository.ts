@@ -2,7 +2,9 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { user } from "../schema/auth.schema.ts";
+import { certification } from "../schema/certification.schema.ts";
 import { contact } from "../schema/contact.schema.ts";
+import { education } from "../schema/education.schema.ts";
 import { experience } from "../schema/experience.schema.ts";
 import { portfolioEntry } from "../schema/portfolio-entry.schema.ts";
 import { project, projectStack } from "../schema/project.schema.ts";
@@ -80,6 +82,29 @@ export type OnboardingApplyInput = {
     selected?: boolean;
     includedInPortfolio?: boolean;
   }>;
+  educations?: Array<{
+    school: string;
+    degree: string;
+    field?: string | null;
+    location?: string | null;
+    fromDate?: string | null;
+    toDate?: string | null;
+    isPresent?: boolean;
+    description?: string | null;
+    gpa?: string | null;
+    clientId: string;
+    selected?: boolean;
+  }>;
+  certifications?: Array<{
+    name: string;
+    issuer: string;
+    issuedAt?: string | null;
+    expiresAt?: string | null;
+    credentialUrl?: string | null;
+    description?: string | null;
+    clientId: string;
+    selected?: boolean;
+  }>;
   meta?: {
     warnings?: string[];
     sourceFilename?: string;
@@ -92,6 +117,8 @@ export type OnboardingApplyResult = {
   experiencesCreated: number;
   projectsCreated: number;
   stacksUpserted: number;
+  educationsCreated: number;
+  certificationsCreated: number;
 };
 
 function normalizeEmail(email: string | null | undefined): string | null {
@@ -127,6 +154,8 @@ export async function applyOnboardingDraft(
   const selectedExperiences = (draft.experiences ?? []).filter(isSelected);
   const selectedProjects = (draft.projects ?? []).filter(isSelected);
   const selectedStacks = (draft.stacks ?? []).filter(isSelected);
+  const selectedEducations = (draft.educations ?? []).filter(isSelected);
+  const selectedCertifications = (draft.certifications ?? []).filter(isSelected);
   const contacts = draft.profile.contacts ?? [];
 
   const [currentUser] = await getDb().select().from(user).where(eq(user.id, userId)).limit(1);
@@ -143,7 +172,9 @@ export async function applyOnboardingDraft(
   const noSelectedRows =
     selectedExperiences.length === 0 &&
     selectedProjects.length === 0 &&
-    selectedStacks.length === 0;
+    selectedStacks.length === 0 &&
+    selectedEducations.length === 0 &&
+    selectedCertifications.length === 0;
 
   if (noSelectedRows && nameSame && emailNoOp && summaryNoOp && contactsNoOp) {
     throw new OnboardingApplyError(
@@ -167,6 +198,8 @@ export async function applyOnboardingDraft(
   let experiencesCreated = 0;
   let projectsCreated = 0;
   let stacksUpserted = 0;
+  let educationsCreated = 0;
+  let certificationsCreated = 0;
 
   await getDb().transaction(async (tx) => {
     // 1. Profile user fields + onboardingCompletedAt is set at the end
@@ -373,6 +406,63 @@ export async function applyOnboardingDraft(
       experiencesCreated += 1;
     }
 
+    // 5b. Education (selected only; no portfolio opt-in).
+    if (selectedEducations.length > 0) {
+      const [eduMaxRow] = await tx
+        .select({
+          max: sql<number>`coalesce(max(${education.sortOrder}), -1)`.mapWith(Number)
+        })
+        .from(education)
+        .where(eq(education.userId, userId));
+      let nextEduSort = (eduMaxRow?.max ?? -1) + 1;
+
+      for (const edu of selectedEducations) {
+        await tx.insert(education).values({
+          id: crypto.randomUUID(),
+          userId,
+          school: edu.school,
+          degree: edu.degree,
+          field: edu.field ?? null,
+          location: edu.location ?? null,
+          fromDate: edu.fromDate ?? null,
+          toDate: edu.toDate ?? null,
+          isPresent: edu.isPresent ?? false,
+          description: edu.description ?? null,
+          gpa: edu.gpa ?? null,
+          sortOrder: nextEduSort
+        });
+        nextEduSort += 1;
+      }
+      educationsCreated = selectedEducations.length;
+    }
+
+    // 5c. Certifications (selected only; no portfolio opt-in).
+    if (selectedCertifications.length > 0) {
+      const [certMaxRow] = await tx
+        .select({
+          max: sql<number>`coalesce(max(${certification.sortOrder}), -1)`.mapWith(Number)
+        })
+        .from(certification)
+        .where(eq(certification.userId, userId));
+      let nextCertSort = (certMaxRow?.max ?? -1) + 1;
+
+      for (const cert of selectedCertifications) {
+        await tx.insert(certification).values({
+          id: crypto.randomUUID(),
+          userId,
+          name: cert.name,
+          issuer: cert.issuer,
+          issuedAt: cert.issuedAt ?? null,
+          expiresAt: cert.expiresAt ?? null,
+          credentialUrl: cert.credentialUrl ?? null,
+          description: cert.description ?? null,
+          sortOrder: nextCertSort
+        });
+        nextCertSort += 1;
+      }
+      certificationsCreated = selectedCertifications.length;
+    }
+
     // 6. Selected projects — resolve experienceClientId + stackNames; sequential sortOrder
     const [projMaxRow] = await tx
       .select({
@@ -446,5 +536,11 @@ export async function applyOnboardingDraft(
     await tx.update(user).set({ onboardingCompletedAt: new Date() }).where(eq(user.id, userId));
   });
 
-  return { experiencesCreated, projectsCreated, stacksUpserted };
+  return {
+    experiencesCreated,
+    projectsCreated,
+    stacksUpserted,
+    educationsCreated,
+    certificationsCreated
+  };
 }

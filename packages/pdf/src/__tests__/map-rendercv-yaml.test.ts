@@ -3,7 +3,7 @@ import { parse } from "yaml";
 
 import { contactHref } from "#@/contacts";
 import { extractBullets } from "#@/html";
-import { toRenderCvYaml } from "#@/map-rendercv-yaml";
+import { buildRenderCvDoc, toRenderCvYaml } from "#@/map-rendercv-yaml";
 import { type ResumePdfInput } from "#@/types";
 
 type RenderCvDoc = {
@@ -25,9 +25,18 @@ type RenderCvDoc = {
         end_date?: string;
         highlights?: string[];
       }>;
-      education?: unknown;
+      education?: Array<{
+        institution: string;
+        studyType: string;
+        area?: string;
+        location?: string;
+        start_date?: string;
+        end_date?: string;
+        highlights?: string[];
+      }>;
       projects?: Array<{ name: string; location?: string; highlights?: string[] }>;
       skills?: Array<{ label: string; details: string }>;
+      certifications?: string[];
     };
   };
   design: { theme: string; page: { size: string } };
@@ -64,8 +73,6 @@ describe("toRenderCvYaml design and locale", () => {
     expect(doc.cv.name).toBe("Salah Mohsen");
     expect(yaml).not.toMatch(/^\s*photo:/m);
     expect(doc.cv.photo).toBeUndefined();
-    expect(doc.cv.sections?.education).toBeUndefined();
-    expect(Object.keys(doc.cv.sections ?? {})).not.toContain("education");
   });
 
   it("skips empty sections", () => {
@@ -318,6 +325,152 @@ describe("experience dates", () => {
   });
 });
 
+describe("education", () => {
+  it("omits education section when no rows", () => {
+    const { doc } = parseYaml(baseInput({}));
+    expect(doc.cv.sections?.education).toBeUndefined();
+    expect(Object.keys(doc.cv.sections ?? {})).not.toContain("education");
+  });
+
+  it("renders education entries when present (order: experience → education → projects)", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          experiences: [
+            {
+              organization: "Acme",
+              title: "Engineer",
+              fromDate: "2024-01-01",
+              toDate: null,
+              isPresent: true,
+              description: "",
+              includedInPortfolio: true
+            }
+          ],
+          projects: [
+            {
+              title: "Dev-Hub",
+              summary: null,
+              stacks: [],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "Bachelor of Science in Computer Science",
+              field: "Computer Science",
+              location: "Cairo, Egypt",
+              fromDate: "2015-09-01",
+              toDate: "2019-06-30",
+              isPresent: false,
+              description:
+                "<ul><li>Graduated Magna Cum Laude</li><li>Relevant coursework: Algorithms</li></ul>",
+              gpa: "3.8/4.0"
+            }
+          ]
+        }
+      })
+    );
+    const education = doc.cv.sections?.education;
+    expect(education).toBeDefined();
+    expect(education?.[0]).toMatchObject({
+      institution: "Cairo University",
+      studyType: "Bachelor of Science in Computer Science",
+      area: "Computer Science",
+      location: "Cairo, Egypt",
+      start_date: "2015-09",
+      end_date: "2019-06"
+    });
+    expect(education?.[0]?.highlights).toEqual([
+      "Graduated Magna Cum Laude",
+      "Relevant coursework: Algorithms",
+      "GPA: 3.8/4.0"
+    ]);
+    const keys = Object.keys(doc.cv.sections ?? {});
+    expect(keys.indexOf("education")).toBeGreaterThan(keys.indexOf("experience"));
+    expect(keys.indexOf("education")).toBeLessThan(keys.indexOf("projects"));
+  });
+
+  it("education isPresent renders open-ended end date (RenderCV 'present', same as experience)", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "BSc",
+              field: null,
+              location: null,
+              fromDate: "2024-09-01",
+              toDate: null,
+              isPresent: true,
+              description: null,
+              gpa: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.education?.[0]?.end_date).toBe("present");
+  });
+
+  it("education isPresent wins over a set toDate", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "BSc",
+              field: null,
+              location: null,
+              fromDate: "2024-09-01",
+              toDate: "2026-06-30",
+              isPresent: true,
+              description: null,
+              gpa: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.education?.[0]?.end_date).toBe("present");
+  });
+
+  it("education omits highlights when description is empty and gpa is null", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "BSc",
+              field: null,
+              location: null,
+              fromDate: "2020-09-01",
+              toDate: "2024-06-30",
+              isPresent: false,
+              description: "",
+              gpa: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.education?.[0]).toMatchObject({
+      institution: "Cairo University",
+      studyType: "BSc"
+    });
+    expect(doc.cv.sections?.education?.[0]?.highlights).toBeUndefined();
+  });
+});
+
 describe("projects and skills", () => {
   it("appends Stack: a · b as the last project highlight", () => {
     const { doc } = parseYaml(
@@ -440,6 +593,103 @@ describe("projects and skills", () => {
   });
 });
 
+describe("certifications", () => {
+  it("renders certifications as one-liners with link and dates", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          certifications: [
+            {
+              name: "AWS Certified Solutions Architect - Associate",
+              issuer: "Amazon Web Services",
+              issuedAt: "2025-03-01",
+              expiresAt: "2028-03-01",
+              credentialUrl: "https://credverify.example.com/abc",
+              description: null
+            },
+            {
+              name: "Project Management Professional (PMP)",
+              issuer: "Project Management Institute",
+              issuedAt: "2024-06-01",
+              expiresAt: null,
+              credentialUrl: null,
+              description: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.certifications).toEqual([
+      "[AWS Certified Solutions Architect - Associate](https://credverify.example.com/abc) — Amazon Web Services, Mar 2025 · Expires Mar 2028",
+      "Project Management Professional (PMP) — Project Management Institute, Jun 2024"
+    ]);
+  });
+
+  it("keeps a bracketed cert name plain instead of emitting broken markdown", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          certifications: [
+            {
+              name: "Kubernetes [CKA]",
+              issuer: "Cloud Native Computing Foundation",
+              issuedAt: "2025-01-01",
+              expiresAt: null,
+              credentialUrl: "https://training.example.com/cka",
+              description: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.certifications).toEqual([
+      "Kubernetes [CKA] — Cloud Native Computing Foundation, Jan 2025"
+    ]);
+  });
+
+  it("swaps double quotes for single quotes so rendercv emits compilable typst", () => {
+    const { yaml, doc } = parseYaml(
+      baseInput({
+        profile: { name: 'Salah "Mohsen"', email: "salah@example.com" }
+      })
+    );
+    // RenderCV 2.8 emits typst strings without escaping embedded quotes, so any
+    // `"` in user content breaks the compile (`name: "Salah "Mohsen""`).
+    expect(yaml).not.toContain('"');
+    expect(doc.cv.name).toBe("Salah 'Mohsen'");
+  });
+
+  it("labels Expires even when issuedAt is null", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          ...baseInput().portfolio,
+          certifications: [
+            {
+              name: "Google Cloud Digital Leader",
+              issuer: "Google Cloud",
+              issuedAt: null,
+              expiresAt: "2027-08-01",
+              credentialUrl: null,
+              description: null
+            }
+          ]
+        }
+      })
+    );
+    expect(doc.cv.sections?.certifications).toEqual([
+      "Google Cloud Digital Leader — Google Cloud, Expires Aug 2027"
+    ]);
+  });
+
+  it("omits certifications section when no rows", () => {
+    const { doc } = parseYaml(baseInput({}));
+    expect(doc.cv.sections?.certifications).toBeUndefined();
+  });
+});
+
 describe("contacts", () => {
   it("omits Discord and unknown networks, and maps YouTube @foo to foo", () => {
     const { doc } = parseYaml(
@@ -515,5 +765,95 @@ describe("contacts", () => {
   it("allows tel: hrefs for phone on the contact line", () => {
     expect(contactHref("phone", "+14155551234")).toBe("tel:+14155551234");
     expect(contactHref("email", "me@example.com")).toBe("mailto:me@example.com");
+  });
+
+  describe("buildRenderCvDoc — preview honesty (doc preview shares the renderer)", () => {
+    const denseInput = () =>
+      baseInput({
+        portfolio: {
+          experiences: [
+            {
+              organization: "Acme",
+              title: "Engineer",
+              fromDate: "2020-01-01",
+              toDate: null,
+              isPresent: true,
+              description: "<p>Did things</p>",
+              includedInPortfolio: true
+            }
+          ],
+          educations: [
+            {
+              school: "Cairo University",
+              degree: "BSc",
+              field: "CS",
+              location: null,
+              fromDate: "2012-09-01",
+              toDate: "2016-06-30",
+              isPresent: false,
+              description: null,
+              gpa: null
+            }
+          ],
+          certifications: [
+            {
+              name: "CKA",
+              issuer: "CNCF",
+              issuedAt: "2025-01-01",
+              expiresAt: null,
+              credentialUrl: null,
+              description: null
+            }
+          ],
+          projects: [
+            {
+              title: "Parser",
+              summary: "Parses things",
+              demoUrl: null,
+              description: "<p>Details</p>",
+              stacks: [],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [
+            { name: "TypeScript", type: "language", includedInPortfolio: true, sortOrder: 0 }
+          ],
+          contacts: [{ type: "email", value: "salah@example.com", sortOrder: 0 }]
+        }
+      });
+
+    it("emits sections in renderer order when present", () => {
+      const cv = buildRenderCvDoc(denseInput());
+      const sections = cv.sections as Record<string, unknown>;
+      expect(Object.keys(sections)).toEqual([
+        "summary",
+        "experience",
+        "education",
+        "projects",
+        "skills",
+        "certifications"
+      ]);
+    });
+
+    it("omits sections the renderer would not emit (sparse draft)", () => {
+      const sparse = denseInput();
+      sparse.portfolio.projects = [];
+      sparse.portfolio.stacks = [];
+      sparse.portfolio.educations = [];
+      sparse.portfolio.certifications = [];
+      const cv = buildRenderCvDoc(sparse);
+      const sections = cv.sections as Record<string, unknown>;
+      expect(Object.keys(sections)).toEqual(["summary", "experience"]);
+    });
+
+    it("matches the YAML pipeline section-for-section", () => {
+      const input = denseInput();
+      const cv = buildRenderCvDoc(input);
+      const { doc: parsed } = parseYaml(input);
+      expect(Object.keys((cv.sections ?? {}) as Record<string, unknown>)).toEqual(
+        Object.keys((parsed.cv.sections ?? {}) as Record<string, unknown>)
+      );
+    });
   });
 });

@@ -43,6 +43,8 @@ import {
   type ProfileUpdateInput
 } from "@/features/profile";
 
+import { CertificationSection } from "./certification-section";
+import { EducationSection } from "./education-section";
 import { useSettingsDirtyGuard } from "./settings-dirty-guard";
 import { SettingsFrame } from "./settings-frame";
 
@@ -626,6 +628,9 @@ export function ProfileSettings() {
                 </FieldSet>
               </form>
             )}
+
+            <EducationSection />
+            <CertificationSection />
           </SettingsFrame>
         )}
       </form.Subscribe>

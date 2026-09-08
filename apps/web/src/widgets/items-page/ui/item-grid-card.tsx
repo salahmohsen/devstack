@@ -1,10 +1,11 @@
 import { GripVertical } from "lucide-react";
-import { type ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { useElementMinWidth } from "@/shared/lib/use-media-query";
 import { TiltCard } from "@/shared/ui/motion/tilt-card";
 
 export type ItemGridDragHandleProps = {
@@ -51,6 +52,10 @@ export function ItemGridCard({
   compactActions,
   wideActions
 }: ItemGridCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  // The cell is the @container and the card fills it, so card width tracks the
+  // `@[12rem]` poster breakpoint. Tilt only reads well on the poster card.
+  const isPosterCell = useElementMinWidth(cardRef, 192);
   const showLeadingOverlay =
     Boolean(isSort && dragHandleProps) || (!isSort && (isChecked || batchSelectActive));
   const compactActionsForced = isOpen || batchSelectActive;
@@ -98,6 +103,7 @@ export function ItemGridCard({
 
   const cardSurface = (
     <Card
+      ref={cardRef}
       data-item-id={id}
       data-selected={isOpen}
       aria-label={isSort ? `Reorder ${name}` : undefined}
@@ -203,7 +209,7 @@ export function ItemGridCard({
   if (isSort) return cardSurface;
 
   return (
-    <TiltCard className="h-full w-full" max={10}>
+    <TiltCard className="h-full w-full" max={10} disabled={!isPosterCell}>
       {cardSurface}
     </TiltCard>
   );

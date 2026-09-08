@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { RequestContext } from "@mastra/core/di";
 
 import {
@@ -14,7 +16,28 @@ import {
 export type GenerateModelOverride = {
   id: `${string}/${string}`;
   apiKey: string;
+  headers?: Record<string, string>;
 };
+
+/**
+ * OpenCode gateways require a stable `x-opencode-session` per conversation and a
+ * self-identifying User-Agent (generic SDK/curl UAs are flagged as abuse traffic).
+ * See https://opencode.ai/docs/go/#where-can-i-use-it.
+ */
+const OPENCODE_SESSION_KINDS = new Set(["opencode-go", "opencode"]);
+
+function opencodeSessionHeaders(llm: RuntimeLlmConfig | undefined): Record<string, string> | null {
+  const kind = llm?.providerKind ?? providerKindFromModelId(llm?.modelId ?? "") ?? null;
+  if (!kind || !OPENCODE_SESSION_KINDS.has(kind)) return null;
+  const apiKey = llm?.apiKey?.trim();
+  const session = apiKey
+    ? createHash("sha256").update(apiKey).digest("hex").slice(0, 32)
+    : "tsu-stack-agent";
+  return {
+    "x-opencode-session": session,
+    "user-agent": "tsu-stack-agent/1.0"
+  };
+}
 
 /**
  * Agents use `model: byoModelFromRequestContext`. Per-call `generate({ model })`
@@ -73,7 +96,11 @@ export function resolveGenerateModel(llm: RuntimeLlmConfig | undefined): Resolve
 
   return {
     ok: true,
-    model: { id: modelId as `${string}/${string}`, apiKey },
+    model: {
+      id: modelId as `${string}/${string}`,
+      apiKey,
+      headers: opencodeSessionHeaders(llm) ?? undefined
+    },
     source: "byo"
   };
 }

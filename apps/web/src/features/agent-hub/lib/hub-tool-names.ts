@@ -10,10 +10,14 @@ import {
   ProposeBatchGeneratePackagesOutputSchema,
   ProposeBatchTrackingChangeInputSchema,
   ProposeBatchTrackingChangeOutputSchema,
+  ProposeCertificationChangeInputSchema,
+  ProposeCertificationChangeOutputSchema,
   ProposeDeleteApplicationInputSchema,
   ProposeDeleteApplicationOutputSchema,
   ProposeDeleteNoteInputSchema,
   ProposeDeleteNoteOutputSchema,
+  ProposeEducationChangeInputSchema,
+  ProposeEducationChangeOutputSchema,
   ProposeEvidenceChangeInputSchema,
   ProposeEvidenceChangeOutputSchema,
   ProposeHardPreferenceChangeInputSchema,
@@ -35,22 +39,26 @@ import {
   type ProposeBatchGeneratePackagesOutput,
   type ProposeBatchTrackingChangeInput,
   type ProposeBatchTrackingChangeOutput,
+  type ProposeCertificationChangeInput,
+  type ProposeCertificationChangeOutput,
   type ProposeDeleteApplicationInput,
   type ProposeDeleteApplicationOutput,
   type ProposeDeleteNoteInput,
   type ProposeDeleteNoteOutput,
+  type ProposeEducationChangeInput,
+  type ProposeEducationChangeOutput,
   type ProposeEvidenceChangeInput,
   type ProposeEvidenceChangeOutput,
   type ProposeHardPreferenceChangeInput,
   type ProposeHardPreferenceChangeOutput,
   type ProposeMailCrmChangeInput,
   type ProposeMailCrmChangeOutput,
+  type ProposeNewJobsTriageOutput,
+  type ProposeNewJobsTriageRow,
   type ProposeRefreshFromUrlInput,
   type ProposeRefreshFromUrlOutput,
   type ProposeSetOutcomeInput,
   type ProposeSetOutcomeOutput,
-  type ProposeNewJobsTriageOutput,
-  type ProposeNewJobsTriageRow,
   type WorkMode
 } from "@tsu-stack/core";
 
@@ -207,6 +215,16 @@ export function isClassifyMailToolName(name: string): boolean {
 export const HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES = new Set([
   "propose-evidence-change",
   "proposeEvidenceChange"
+]);
+
+export const HUB_PROPOSE_EDUCATION_CHANGE_TOOL_NAMES = new Set([
+  "propose-education-change",
+  "proposeEducationChange"
+]);
+
+export const HUB_PROPOSE_CERTIFICATION_CHANGE_TOOL_NAMES = new Set([
+  "propose-certification-change",
+  "proposeCertificationChange"
 ]);
 
 export const HUB_PROPOSE_APPLICATION_FIELD_CHANGE_TOOL_NAMES = new Set([
@@ -404,6 +422,14 @@ export function isGetSearchBriefToolName(name: string): boolean {
 
 export function isProposeEvidenceChangeToolName(name: string): boolean {
   return HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name);
+}
+
+export function isProposeEducationChangeToolName(name: string): boolean {
+  return HUB_PROPOSE_EDUCATION_CHANGE_TOOL_NAMES.has(name);
+}
+
+export function isProposeCertificationChangeToolName(name: string): boolean {
+  return HUB_PROPOSE_CERTIFICATION_CHANGE_TOOL_NAMES.has(name);
 }
 
 export function isProposeApplicationFieldChangeToolName(name: string): boolean {
@@ -1084,6 +1110,34 @@ export function parseProposeEvidenceChangeOutput(
   return parsed.success ? parsed.data : null;
 }
 
+export function parseProposeEducationChangeInput(
+  input: unknown
+): ProposeEducationChangeInput | null {
+  const parsed = ProposeEducationChangeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeEducationChangeOutput(
+  output: unknown
+): ProposeEducationChangeOutput | null {
+  const parsed = ProposeEducationChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeCertificationChangeInput(
+  input: unknown
+): ProposeCertificationChangeInput | null {
+  const parsed = ProposeCertificationChangeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeCertificationChangeOutput(
+  output: unknown
+): ProposeCertificationChangeOutput | null {
+  const parsed = ProposeCertificationChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
 export function parseProposeApplicationFieldChangeInput(
   input: unknown
 ): ProposeApplicationFieldChangeInput | null {
@@ -1270,6 +1324,14 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
       if (isLaterEvidenceAfterSameEntityConfirm(messages, id)) continue;
       // Parallel extras this turn — first waiting card owns the composer.
       if (isExtraWaitingEvidenceCard(messages, id)) continue;
+      return "client";
+    }
+    if (isProposeEducationChangeToolName(name)) {
+      if (parseProposeEducationChangeOutput(part.output)) continue;
+      return "client";
+    }
+    if (isProposeCertificationChangeToolName(name)) {
+      if (parseProposeCertificationChangeOutput(part.output)) continue;
       return "client";
     }
     if (isOpenEntityFormToolName(name)) {

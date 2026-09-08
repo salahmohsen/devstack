@@ -1,9 +1,11 @@
 export * from "#@/admin/index";
 export * from "#@/ai-settings/index";
 export * from "#@/application/index";
+export * from "#@/certification/index";
 export * from "#@/common/index";
 export * from "#@/connections/index";
 export * from "#@/domain/index";
+export * from "#@/education/index";
 export * from "#@/evidence/index";
 export * from "#@/experience/index";
 export * from "#@/github-config/index";
@@ -13,10 +15,10 @@ export * from "#@/invite/index";
 export * from "#@/job-discovery/index";
 export * from "#@/job-preference/index";
 export * from "#@/list-query/index";
-export * from "#@/mail/index";
 export * from "#@/mail-settings/index";
-export * from "#@/notification/index";
+export * from "#@/mail/index";
 export * from "#@/notification-settings/index";
+export * from "#@/notification/index";
 export * from "#@/onboarding/index";
 
 export * from "#@/orpc-context/index";

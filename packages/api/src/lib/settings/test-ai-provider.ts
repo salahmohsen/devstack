@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import {
   pickProbeModelId,
   type TestAiProviderInput,
@@ -39,6 +41,11 @@ function summarizeProviderError(raw: string, apiKey: string, modelId?: string | 
     /402\b/.test(lower)
   ) {
     return "Key is accepted but the account has no balance or quota. Check billing with the provider.";
+  }
+  // Client-allowlist relays (e.g. AgentRouter) reject generic API access before
+  // the key is even evaluated — "unauthorized client detected" is not a key error.
+  if (/unauthorized[_\s-]?client/i.test(lower)) {
+    return "Provider only accepts its official coding-agent clients (e.g. Claude Code, Roo Code) and blocks generic API access. This key cannot be used as a BYO provider here.";
   }
   if (
     /invalid[_\s-]?api[_\s-]?key|incorrect api key|unauthorized|authentication|forbidden|401|403/i.test(
@@ -103,7 +110,8 @@ async function directOpenCodeChatProbe(args: {
         Authorization: `Bearer ${args.apiKey}`,
         "Content-Type": "application/json",
         Accept: "application/json",
-        "User-Agent": "curl/8.7.1"
+        "User-Agent": "tsu-stack-agent/1.0",
+        "x-opencode-session": createHash("sha256").update(args.apiKey).digest("hex").slice(0, 32)
       },
       signal: args.signal,
       body: JSON.stringify({

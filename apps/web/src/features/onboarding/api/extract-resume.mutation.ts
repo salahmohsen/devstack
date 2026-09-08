@@ -20,7 +20,7 @@ export const RESUME_EXTRACT_STEP_LABELS: Record<string, string> = {
   download: "Downloading resume",
   "pdf-text": "Preparing resume text",
   prepare: "Preparing resume text",
-  extract: "Extracting experience",
+  extract: "Extracting experience, education, and certifications",
   normalize: "Normalizing fields",
   format: "Building review draft"
 };

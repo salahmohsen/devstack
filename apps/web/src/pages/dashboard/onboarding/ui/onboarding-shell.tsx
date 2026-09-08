@@ -127,7 +127,9 @@ export function OnboardingShell({
   className?: string;
   contentClassName?: string;
 }) {
-  const isFullBleed = step === "review" || step === "connect";
+  // Review, connect, and analyzing use the full content width — they render
+  // the document-first two-column layout (paper + side column).
+  const isFullBleed = step === "review" || step === "connect" || step === "analyzing";
   const contentMax = isFullBleed
     ? "max-w-none"
     : step === "upload" || step === "jobs"

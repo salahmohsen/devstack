@@ -165,12 +165,16 @@ export function ResumesPage() {
 
   const generateMutation = useMutation(
     orpcQueryClient.resume.generate.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (resume) => {
         await invalidateQueries();
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.resume.getDefault.key()
         });
         toast.success("Default resume updated");
+        // Surface the fresh resume immediately instead of leaving the user to find it.
+        expandDashboardSidePanel();
+        setOpenedItem(resume);
+        setIsItemOpen({ [resume.id]: true });
       },
       onError: (error) => {
         if (isDefinedError(error)) {
@@ -302,7 +306,7 @@ export function ResumesPage() {
       description="Generate your first resume to get started."
       action={
         <Button onClick={handleGenerate} loading={isGenerating}>
-          Generate New Resume
+          Generate resume
         </Button>
       }
     />
@@ -318,7 +322,11 @@ export function ResumesPage() {
             <HeaderActions
               add={{
                 onAdd: handleGenerate,
-                label: "Generate New Resume",
+                // While loading, assume the common case: a default resume exists.
+                label:
+                  resumesQuery.isLoading || visibleResumes.some((r) => r.default)
+                    ? "Update resume"
+                    : "Generate resume",
                 isLoading: isGenerating
               }}
             />

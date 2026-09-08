@@ -30,6 +30,8 @@ export type AiIslandRun = {
   resultAction?: AiIslandResultAction;
   errorMessage?: string;
   updatedAt: number;
+  /** Creation order — stack keeps entrance order (sonner-like); activity patches must not reorder. */
+  enteredAt?: number;
 };
 
 type IslandState = {
@@ -42,6 +44,16 @@ const store = createExternalStore<IslandState>({ runs: {}, stealId: null });
 
 const dismissTimers = new Map<string, number>();
 
+/**
+ * Host registers an animated dismissal (exit animation, then removal). Store
+ * falls back to instant removal when no host is mounted (tests, headless use).
+ */
+let autoDismissHandler: ((id: string) => void) | null = null;
+
+export function setAiIslandAutoDismissHandler(handler: ((id: string) => void) | null): void {
+  autoDismissHandler = handler;
+}
+
 function clearDismissTimer(id: string) {
   const t = dismissTimers.get(id);
   if (t !== undefined) {
@@ -50,8 +62,13 @@ function clearDismissTimer(id: string) {
   }
 }
 
+/** Newest entered first; id breaks ties so ordering is stable. */
+export function islandRunRecency(a: AiIslandRun, b: AiIslandRun): number {
+  return (b.enteredAt ?? b.updatedAt) - (a.enteredAt ?? a.updatedAt) || a.id.localeCompare(b.id);
+}
+
 export function listIslandRuns(): AiIslandRun[] {
-  return Object.values(store.getState().runs).toSorted((a, b) => b.updatedAt - a.updatedAt);
+  return Object.values(store.getState().runs).toSorted(islandRunRecency);
 }
 
 export function getIslandRun(id: string): AiIslandRun | undefined {
@@ -100,7 +117,8 @@ export function upsertAiJobIsland(
           requiresAction: input.requiresAction ?? existing?.requiresAction ?? false,
           steps: input.steps ?? existing?.steps ?? [],
           status: input.status ?? "running",
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          enteredAt: existing?.enteredAt ?? Date.now()
         };
   store.setState((prev) => {
     return {
@@ -191,7 +209,7 @@ export function completeAiJobIsland(
     dismissTimers.set(
       id,
       window.setTimeout(() => {
-        dismissAiJobIsland(id);
+        (autoDismissHandler ?? dismissAiJobIsland)(id);
       }, 2500)
     );
   }

@@ -14,6 +14,9 @@ export const AiFeatureSchema = z.enum([
 ]);
 export type AiFeature = z.infer<typeof AiFeatureSchema>;
 
+/** Capability a feature needs from its bound model. */
+export type AiFeatureRequirement = "tools" | "structuredOutput";
+
 /**
  * Mastra model-router provider id (from @mastra/core provider-registry) or `custom`.
  * Full catalog: `MASTRA_PROVIDER_CATALOG` / {@link isMastraProviderId}.

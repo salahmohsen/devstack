@@ -148,6 +148,17 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
           setHasMoreHistory(page.hasMore);
           nextHistoryPageRef.current = 1;
           setHistoryReady(true);
+          // Heal the assistant-ui tap hydration race: when the initial
+          // setMessages lands while the runtime's reactive subscriptions are
+          // still mounting (fresh tab load, SPA remount), the runtime thread
+          // commits but the reactive emit to React is lost — the thread scope
+          // then never re-emits (later notifies compare equal) and the
+          // conversation renders empty forever. One identity-only bump after
+          // mount forces the reactive chain to flush; a no-op when the thread
+          // is genuinely empty.
+          window.setTimeout(() => {
+            setMessagesRef.current((prev) => (prev.length > 0 ? [...prev] : prev));
+          }, 50);
           return;
         } catch {
           // Keep historyReady false so HubWelcome does not paint over a real

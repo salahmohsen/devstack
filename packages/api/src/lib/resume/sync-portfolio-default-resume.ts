@@ -1,6 +1,8 @@
 import { formatGeneralResumeFilename } from "@tsu-stack/core";
 import { contactRepository, userRepository } from "@tsu-stack/db";
 import {
+  certificationRepository,
+  educationRepository,
   experienceRepository,
   projectRepository,
   resumeRepository,
@@ -31,16 +33,44 @@ type MediaBucket = {
 };
 
 async function fetchPortfolioData(userId: string) {
-  const experiences = await experienceRepository.findOptedInByUserId(userId);
-  const projects = await projectRepository.findOptedInByUserId(userId);
-  const stacks = await stackRepository.findOptedInByUserId(userId);
-  const contacts = await contactRepository.findOptedInByUserId(userId);
+  const [experiences, projects, stacks, contacts, educations, certifications] = await Promise.all([
+    experienceRepository.findOptedInByUserId(userId),
+    projectRepository.findOptedInByUserId(userId),
+    stackRepository.findOptedInByUserId(userId),
+    contactRepository.findOptedInByUserId(userId),
+    // Include-when-present (spec): no portfolio opt-in gate for education/certifications.
+    educationRepository.findAllByUserId(userId),
+    certificationRepository.findAllByUserId(userId)
+  ]);
 
   return {
     experiences: experiences.map((exp) => toExperienceOutput(exp!)),
     projects: projects.map((proj) => toProjectOutput(proj!)),
     stacks: stacks.map((stackRow) => toStackOutput(stackRow!)),
-    contacts: contacts.map(toContactOutput)
+    contacts: contacts.map(toContactOutput),
+    educations: educations.map((edu) => {
+      return {
+        school: edu.school,
+        degree: edu.degree,
+        field: edu.field ?? null,
+        location: edu.location ?? null,
+        fromDate: edu.fromDate ?? null,
+        toDate: edu.toDate ?? null,
+        isPresent: edu.isPresent ?? false,
+        description: edu.description ?? null,
+        gpa: edu.gpa ?? null
+      };
+    }),
+    certifications: certifications.map((cert) => {
+      return {
+        name: cert.name,
+        issuer: cert.issuer,
+        issuedAt: cert.issuedAt ?? null,
+        expiresAt: cert.expiresAt ?? null,
+        credentialUrl: cert.credentialUrl ?? null,
+        description: cert.description ?? null
+      };
+    })
   };
 }
 

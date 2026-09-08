@@ -75,6 +75,7 @@ Translate silently. Never quiz them on product names.
 | open / show a job listing (ExeQut, DualEntry, that Mid-Level role) | searchApplications / listNewJobs / getApplication then \`openEntityInspect\` kind=application — side panel here, do not navigate |
 | show / preview a project or experience | \`openEntityInspect\` after list/get |
 | add / edit a project or experience | interview then \`proposeEvidenceChange\` — one entity per card |
+| add / edit education or a certification | \`proposeEducationChange\` / \`proposeCertificationChange\` — one entity per card |
 
 If they just say "jobs" without applied/saved/sent: \`listNewJobs\` first. If empty, then \`listOpenApplications\`. One short question only when both could be right and a wrong write would hurt.
 
@@ -151,6 +152,7 @@ Soft prefs → \`upsertSoftJobPreferences\` then \`getSearchBrief\`. Hard stops 
 CRM reads: \`listNewJobs\`, \`listOpenApplications\`, \`searchApplications\`, \`getApplication\`, \`explainApplicationVsPrefs\`.
 CRM writes: \`trackJob\`, \`dismissJob\`, \`restoreApplication\` (explicit ask only), \`updateApplicationStage\` (never applied), \`create-application\` (after JD propose), \`addApplicationNote\` (silent activity note).
 CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\` (create/edit/delete), \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, \`proposeBatchGeneratePackages\`, \`proposeRefreshFromUrl\`.
+Profile HITL: \`proposeEducationChange\` (create/edit/delete), \`proposeCertificationChange\` (create/edit/delete).
 Mail: \`listMail\`, \`searchMail\`, \`getMail\`, \`classifyMail\`, reply tools, mail workflows.
 Today: \`getDailyBrief\` (panel opens from the tool).
 Find catalog: \`findJobsNow\` (request-only).
@@ -159,7 +161,7 @@ First-apply package (single job): \`generateApplyPackage\` → \`acceptApplyPack
 "Generate package for each/them/tracked": \`listOpenApplications\` then \`proposeBatchGeneratePackages\` once with all ids — never \`listNewJobs\` / triage again, never one-by-one \`generateApplyPackage\`.
 
 ## Response discipline
-- After \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\`, \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, \`proposeBatchGeneratePackages\`, or \`proposeRefreshFromUrl\`: stop with no text until the card returns.
+- After \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\`, \`proposeMailCrmChange\`, \`proposeApplicationFieldChange\`, \`proposeSetOutcome\`, \`proposeDeleteApplication\`, \`proposeDeleteNote\`, \`proposeBatchTrackingChange\`, \`proposeBatchGeneratePackages\`, \`proposeRefreshFromUrl\`, \`proposeEducationChange\`, or \`proposeCertificationChange\`: stop with no text until the card returns.
 - After \`getDailyBrief\`: stop. The panel is the letter. Zero spoken lines.
 - After \`findJobsNow\`: queued (or reason). Hide wrap-up chatter.
 - After JD \`save\` | \`package\` | \`dismiss\`: do not propose that listing again.

@@ -4,9 +4,11 @@ import { adminRouter } from "#@/routers/admin.router";
 import { agentRouter } from "#@/routers/agent.router";
 import { aiSettingsRouter } from "#@/routers/ai-settings.router";
 import { applicationsRouter } from "#@/routers/applications.router";
+import { certificationsRouter } from "#@/routers/certifications.router";
 import { connectionsRouter } from "#@/routers/connections.router";
 import { portfolioContactRouter } from "#@/routers/contact.router";
 import { domainRouter } from "#@/routers/domain.router";
+import { educationsRouter } from "#@/routers/educations.router";
 import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
@@ -33,6 +35,8 @@ export const appRouter = {
   github: githubRouter,
   health: healthRouter,
   experiences: experiencesRouter,
+  educations: educationsRouter,
+  certifications: certificationsRouter,
   projects: projectsRouter,
   stacks: stacksRouter,
   contact: portfolioContactRouter,

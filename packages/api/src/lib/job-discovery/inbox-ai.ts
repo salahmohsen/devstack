@@ -14,7 +14,7 @@ import {
   isThinJobDescription,
   MAX_OPEN_INBOX,
   mergeExperienceYears,
-  resolveJobSkillTags,
+  resolveFreehireSkillTags,
   scoreCatalogAgainstPreference,
   WorkModeSchema,
   type ApplicationSource,
@@ -206,33 +206,32 @@ function persistHiringRegion(
   return workMode === "remote" ? "worldwide" : null;
 }
 
-async function resolveSkillsForUser(
+/**
+ * Freehire skill slugs → persisted tags + domain chips.
+ * Freehire `skills` are the single source of truth on the board path —
+ * structured, free, already fetched. Tech slugs become skill tags (known
+ * slugs canonicalize onto the allowlist, unknown survive humanized with
+ * `stackId: null`); topic slugs (`fintech`, `event-driven-architecture`)
+ * become domain chips and never reach Have/Missing or matching. The AI
+ * skill-link stays reserved for surfaces without structured skills:
+ * mail harvest, manual create, refresh-from-URL.
+ */
+async function resolveFreehireSkillsForUser(
   userId: string,
-  required: readonly string[],
-  preferred: readonly string[] = []
+  slugs: readonly string[]
 ): Promise<{
   requiredSkills: JobSkillTag[];
-  preferredSkills: JobSkillTag[];
+  domains: string[];
   held: { id: string; name: string; aliases: string[] }[];
 }> {
   const stacks = await stackRepository.findAllByUserId(userId);
   const held = stacks.map((stack) => {
     return { id: stack.id, name: stack.name, aliases: stack.aliases ?? [] };
   });
-  const tags = resolveJobSkillTags(
-    [
-      ...required.map((name) => {
-        return { name, band: "required" as const };
-      }),
-      ...preferred.map((name) => {
-        return { name, band: "preferred" as const };
-      })
-    ],
-    held
-  );
+  const resolved = resolveFreehireSkillTags(slugs, held);
   return {
-    requiredSkills: tags.filter((tag) => tag.band === "required"),
-    preferredSkills: tags.filter((tag) => tag.band === "preferred"),
+    requiredSkills: resolved.requiredSkills,
+    domains: resolved.domains,
     held
   };
 }
@@ -315,6 +314,7 @@ async function insertDiscoveryApplication(input: {
   employmentType: EmploymentType;
   requiredSkills: JobSkillTag[];
   preferredSkills: JobSkillTag[];
+  domains: string[];
   matchScore: number | null;
   cheapScore: number;
   cheapReasons: string[];
@@ -350,6 +350,7 @@ async function insertDiscoveryApplication(input: {
     hiringRegion: input.hiringRegion,
     requiredSkills: input.requiredSkills,
     preferredSkills: input.preferredSkills,
+    domains: input.domains ?? [],
     salaryRange,
     employmentType: input.employmentType,
     description: input.description,
@@ -584,16 +585,13 @@ async function runInboxAiForJob(input: {
 
   const willCallAgent = hasAiKey && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
   const employmentType = asEmploymentType(leftover.employmentType);
-  const requiredNames = leftover.skills;
-  const preferredNames: string[] = [];
 
-  const { requiredSkills, preferredSkills, held } = await resolveSkillsForUser(
+  const { requiredSkills, held, domains } = await resolveFreehireSkillsForUser(
     input.userId,
-    requiredNames,
-    preferredNames
+    leftover.skills
   );
   const classified = classifyJobSkills({
-    jobSkills: [...requiredSkills, ...preferredSkills].map((skill) => skill.name),
+    jobSkills: requiredSkills.map((skill) => skill.name),
     held
   });
   const skillsMatch = {
@@ -614,7 +612,8 @@ async function runInboxAiForJob(input: {
     hiringRegion,
     employmentType,
     requiredSkills,
-    preferredSkills,
+    preferredSkills: [],
+    domains,
     cheapScore: cheap.score,
     cheapReasons: cheap.reasons
   };

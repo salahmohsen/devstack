@@ -17,6 +17,29 @@
 
 ---
 
+## 2026-09-08 — Onboarding review redesign harness: rail deselect UX + coss cascade traps
+
+- **Trigger:** A3 paper-first review redesign (editable RenderCV preview + confirm rail + skills drawer, below-lg tabs)
+- **Finding:** A rail that renders only selected rows makes deselection irreversible — the user can never re-include a misclick. Keep all rows mounted in any confirm/selection surface (dim deselected, disable dependents, count `selected/total` in the header); only the consuming artifact (the paper) drops them. Symptom that exposed it: header count silently equaled the filtered array length
+- **Finding:** coss/Base UI class cascade traps: (1) trigger variants carry `min-w-36` — a `w-9` without `min-w-0` still renders 144px (min-width beats width); (2) `sm:text-sm` on `FieldLabel` beats a plain `text-[10px]` override at ≥sm (responsive variant outranks base) — use `text-[11px]!` important syntax; (3) AccordionTrigger wraps its own content-sized header element — `flex-1` on the trigger does nothing, flex the header via `[&>*:first-child]:flex-1` on the row. Verify with `getBoundingClientRect`, not class names
+- **Finding:** Reload wipes the onboarding draft session and re-runs analysis (upload → Mastra workflow → review). For browser verification loops, do all rail/paper mutations in one session; if a reload is unavoidable, budget for the ~2min re-analysis and re-upload the fixture PDF via the file chooser
+
+- **Finding:** An extractor schema whose `description` says "as prose" trains the model to flatten a resume's bullet list into one wall-of-text paragraph — and every downstream bullet-splitter is moot. Prompt/schema shapes are extraction behavior: demand "one bullet per newline" in the schema `describe()` AND the prompt, then re-split defensively at normalize (newlines + bullet glyphs → `<p>`-per-bullet HTML). Exclude `·` from bullet glyphs — stack lines use "A · B". Verify with per-entry bullet counts on the paper (5/4/3 exp bullets), not "extraction completed"
+- **Finding:** A preview surface with its own fixed paper theme (white bg, black ink even in dark mode) breaks `bg-background` edit fields — dark mode paints them near-black for black-on-black ink. Editors inside a themed surface must use a transparent background and inherit the surface's ink color
+- **Evidence class:** UI layout measurements + unauth 401 probes (`/rpc/onboarding/{status,extract,apply}`, `/rpc/aiSettings/{get,update}`, `:4111/chat/hub-assistant` all 401) + fresh workflow loop (upload → analyze → review)
+
+---
+
+## 2026-09-08 — Education/certifications harness: form reset wipe, flash-model extraction, drag truth
+
+- **Trigger:** Education + certifications plan (Task 9): settings CRUD, resume PDF sections, onboarding import, hub propose-card round-trip
+- **Finding:** TanStack Form + `useAppForm`: a constant `defaultValues` object silently wipes `form.reset(values)` seeded edit-prefill. `formApi.update(opts)` runs on every render and reapplies `defaultValues` while the form is untouched, so the reset-on-open values get clobbered back to the constant. Fix: derive `defaultValues` from the editing row (the `experience-form` pattern) whenever an always-mounted section owns the form. Symptom: edit sheet opens empty while `form.store.state.values` (logged) is correct
+- **Finding:** Extraction quality is model-tier dependent: a flash-tier resumeImport model returned `educations: []` on a PDF with an obvious education section (3 runs, even after explicit prompt guidance) while extracting certifications 2/2 through the identical path. Verify extraction per-collection with counts (e.g. "2/2 certs · 0/0 edu"), never "extraction completed". Prompt guidance is worth adding, but treat a consistent per-collection zero as a model-quality finding, not a pipeline bug — prove the pipeline with a collection that does extract
+- **Finding:** Synthetic dnd-kit drags in Playwright can report the pre-reorder list in `innerText` for ~1s after `mouse.up` (optimistic cache lag); the DB `sort_order` is the truth. Cross-check persisted state before calling a reorder failed
+- **Finding:** Dev-stack takeover for log monitoring: kill the per-app terminals (web/server/agent + dotenvx wrappers), then run `vp run dev:tunnel` in the agent session — one stream shows `[server]`/`[web]` evlog lines, and infra (postgres/redis/minio) comes up with schema push. Restarting infra invalidates Better Auth sessions (sign-in required again); `document.cookie = "better-auth.session_token=..."` (encoded header form) restores auth in the automation browser since CDP `Storage.setCookies` is unavailable
+- **User preference:** delete confirms must reuse the shared `ConfirmDialog`; resume header button says "Update resume" when a default exists ("Generate resume" when none) and success opens the resume side panel
+- **Evidence class:** UI dialog + DB state + rendered-PDF text extraction + unauth 401 probes (`/rpc/agent/chatStream`, `/rpc/certifications/list`, `/rpc/educations/list`, `:4111/api/agents` all 401)
+
 ## 2026-09-06 — Freehire-only discovery harness: signed-cookie traps + client-rendered SSR walls
 
 - **Trigger:** Freehire-only job discovery hardening (Task 13): settings facets, findNow, land queue, unauth probes

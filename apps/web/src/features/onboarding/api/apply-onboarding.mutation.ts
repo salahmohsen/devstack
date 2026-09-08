@@ -30,6 +30,12 @@ export function useApplyOnboardingMutation() {
           invalidateProjectsListQueries(queryClient),
           invalidateStacksListQueries(queryClient),
           queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.educations.list.key()
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.certifications.list.key()
+          }),
+          queryClient.invalidateQueries({
             queryKey: orpcQueryClient.portfolio.list.key()
           }),
           queryClient.invalidateQueries({

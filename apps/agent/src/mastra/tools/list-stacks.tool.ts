@@ -18,10 +18,10 @@ export const listStacksTool = createTool({
       .number()
       .int()
       .min(1)
-      .max(20)
+      .max(200)
       .optional()
-      .default(20)
-      .describe("Max stacks to return (1–20, default 20)")
+      .default(100)
+      .describe("Max stacks to return (1–200, default 100 — the full catalog fits)")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
@@ -48,7 +48,7 @@ export const listStacksTool = createTool({
     const db = createDb();
     const rows = await runWithDb(db, () => stackRepository.findAllByUserId(userId));
     return {
-      stacks: rows.slice(0, limit ?? 20).map((r) => {
+      stacks: rows.slice(0, limit ?? 100).map((r) => {
         return {
           id: r.id,
           name: r.name,

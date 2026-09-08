@@ -1,10 +1,28 @@
 #!/usr/bin/env node
 /**
- * Sync packages/core AI provider catalog from the installed @mastra/core registry.
+ * Sync packages/core AI provider catalog from the installed @mastra/core registry
+ * plus models.dev per-model capability data (tool_call / structured_output).
  *
  * Run from repo root or apps/agent:
+ *   pnpm mastra:sync-catalog
  *   node apps/agent/scripts/sync-mastra-provider-catalog.mjs
+ *
+ * Modes:
+ *   (default)  regenerate the catalog; skips the write when already in sync
+ *   --check    exit 1 when the catalog is stale vs the installed registry
+ *              (no write) — CI drift gate
+ *
+ * Drift detection uses the `Catalog content hash:` comment emitted at the end
+ * of the generated file, not byte comparison: the hash covers data only, so
+ * reflowing the file (the script formats its own output via vp fmt after
+ * writing) never trips a false drift.
+ *
+ * models.dev is the source of truth for capabilities. When it is unreachable
+ * the script fails (exit 1) and keeps the last committed catalog — CI goes
+ * red; dev.sh warns and continues with the stale-but-consistent file.
  */
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +30,31 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const agentRoot = resolve(__dirname, "..");
 const repoRoot = resolve(agentRoot, "../..");
+const checkOnly = process.argv.includes("--check");
+
+const MODELS_DEV_URL = "https://models.dev/api.json";
+const MODELS_DEV_TIMEOUT_MS = 20_000;
+
+async function fetchModelsDev() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MODELS_DEV_TIMEOUT_MS);
+  try {
+    const response = await fetch(MODELS_DEV_URL, {
+      signal: controller.signal,
+      headers: { accept: "application/json" }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const parsed = await response.json();
+    if (!parsed || typeof parsed !== "object") {
+      throw new Error("unexpected payload shape");
+    }
+    return parsed;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function findRegistry() {
   const candidates = [
@@ -27,8 +70,16 @@ function findRegistry() {
   );
 }
 
+/** Strict flag read: only real booleans count; anything else is unknown (null). */
+function flagOr(value) {
+  if (value === true) return true;
+  if (value === false) return false;
+  return null;
+}
+
 const regPath = findRegistry();
 const reg = JSON.parse(readFileSync(regPath, "utf8"));
+const modelsDev = await fetchModelsDev();
 
 const providers = Object.entries(reg.providers)
   .map(([id, p]) => {
@@ -43,12 +94,41 @@ const providers = Object.entries(reg.providers)
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
+/** `provider/model` → capability flags joined from models.dev. Unknown → null. */
+const capabilities = {};
+let covered = 0;
+let total = 0;
+for (const provider of providers) {
+  const devEntry = modelsDev[provider.id];
+  const devModels = devEntry && typeof devEntry === "object" ? devEntry.models : undefined;
+  for (const model of provider.models) {
+    total += 1;
+    const devModel =
+      devModels && typeof devModels === "object" && typeof devModels[model] === "object"
+        ? devModels[model]
+        : undefined;
+    if (devModel) covered += 1;
+    capabilities[`${provider.id}/${model}`] = {
+      toolCall: flagOr(devModel?.tool_call),
+      structuredOutput: flagOr(devModel?.structured_output)
+    };
+  }
+}
+
 const outPath = join(repoRoot, "packages/core/src/ai-settings/mastra-provider-catalog.ts");
 
+/** sha256 of the data (not the file text) — formatter-proof. */
+const catalogHash = createHash("sha256")
+  .update(JSON.stringify({ providers, capabilities }))
+  .digest("hex")
+  .slice(0, 16);
+
 const body = `/**
- * Generated from @mastra/core provider-registry.json (installed agent version).
+ * Generated from @mastra/core provider-registry.json (installed agent version)
+ * plus models.dev per-model capability data.
  * Do not hand-edit model lists — re-run:
- *   node apps/agent/scripts/sync-mastra-provider-catalog.mjs
+ *   pnpm mastra:sync-catalog
+ * CI runs this script with --check and fails when this file is stale.
  *
  * Model router format: "provider/model-name"
  */
@@ -77,6 +157,24 @@ export function isMastraProviderId(id: string): id is MastraProviderId {
   return byId.has(id as MastraProviderId);
 }
 
+/** Capability flags for a model. null = unknown (not in models.dev, custom, free-typed). */
+export type MastraModelCapability = {
+  toolCall: boolean | null;
+  structuredOutput: boolean | null;
+};
+
+export const MASTRA_MODEL_CAPABILITIES = ${JSON.stringify(capabilities, null, 2)} as const satisfies Record<string, MastraModelCapability>;
+
+const UNKNOWN_MODEL_CAPABILITY: MastraModelCapability = {
+  toolCall: null,
+  structuredOutput: null
+};
+
+export function modelCapabilityFor(modelId: string): MastraModelCapability {
+  const map = MASTRA_MODEL_CAPABILITIES as Record<string, MastraModelCapability>;
+  return map[modelId] ?? UNKNOWN_MODEL_CAPABILITY;
+}
+
 /** Mastra model router id: provider/model */
 export function toMastraModelId(providerId: string, modelName: string): string {
   if (modelName.includes("/")) return modelName;
@@ -88,9 +186,51 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   if (idx <= 0) return { provider: null, model: modelId };
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
+
+// Catalog content hash: ${catalogHash} — compared by sync script --check; do not edit.
 `;
 
+function existingHash(text) {
+  const m = text.match(/Catalog content hash: ([0-9a-f]{16})/);
+  return m ? m[1] : null;
+}
+
+/**
+ * The generated body embeds raw JSON.stringify output (quoted keys, exploded
+ * arrays). Reflow it to repo style right after writing so the worktree file
+ * matches the committed file without relying on the commit hook — the dev.sh
+ * self-heal path never runs a formatter.
+ */
+function formatGeneratedFile(path) {
+  const res = spawnSync("pnpm", ["exec", "vp", "fmt", "--write", path], {
+    cwd: repoRoot,
+    stdio: "ignore"
+  });
+  if (res.status !== 0) {
+    console.warn(
+      "vp fmt unavailable — catalog written unformatted; run `vp fmt` before committing."
+    );
+  }
+}
+
+const existing = existsSync(outPath) ? readFileSync(outPath, "utf8") : null;
+if (existing && existingHash(existing) === catalogHash) {
+  console.log(
+    `Mastra provider catalog already in sync (${providers.length} providers, ${total} models).`
+  );
+  process.exit(0);
+}
+
+if (checkOnly) {
+  console.error(
+    `Mastra provider catalog is stale (${providers.length} providers / ${total} models in installed @mastra/core).\n` +
+      "Run `pnpm mastra:sync-catalog` and commit the regenerated file."
+  );
+  process.exit(1);
+}
+
 writeFileSync(outPath, body);
+formatGeneratedFile(outPath);
 console.log(
-  `Synced ${providers.length} providers from ${regPath}\n→ ${outPath} (${body.length} bytes)`
+  `Synced ${providers.length} providers / ${total} models (capabilities: ${covered}/${total} from models.dev) from ${regPath}\n→ ${outPath} (${body.length} bytes)`
 );

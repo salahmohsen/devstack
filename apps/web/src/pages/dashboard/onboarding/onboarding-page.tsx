@@ -5,16 +5,20 @@ import { useCallback, useEffect } from "react";
 
 import { type ResumeImportDraft } from "@tsu-stack/core";
 
+import { useGetAiSettingsQuery } from "@/features/ai-settings";
 import {
   cancelExtractResumeJob,
+  getOnboardingSessionState,
   readPersistedOnboardingStep,
   resetOnboardingSessionState,
   setOnboardingSessionState,
   startExtractResumeJob,
   useOnboardingSession,
+  type OnboardingApplySummary,
   type OnboardingFlowStep
 } from "@/features/onboarding";
 
+import { AiStep } from "@/pages/dashboard/onboarding/ui/ai-step";
 import { AnalyzingStep } from "@/pages/dashboard/onboarding/ui/analyzing-step";
 import { ConnectStep } from "@/pages/dashboard/onboarding/ui/connect-step";
 import { DoneStep } from "@/pages/dashboard/onboarding/ui/done-step";
@@ -26,6 +30,11 @@ import { UploadStep } from "@/pages/dashboard/onboarding/ui/upload-step";
 const onboardingRoute = getRouteApi("/(root-layout)/__protected/dashboard/onboarding/");
 
 const COPY: Record<OnboardingFlowStep, { title: string; description: React.ReactNode }> = {
+  ai: {
+    title: "Connect your AI",
+    description:
+      "One provider unlocks resume import, the hub assistant, and job matching. Your key stays sealed."
+  },
   upload: {
     title: "Start from your resume",
     description: "About three minutes. We’ll draft your profile — you decide what to keep."
@@ -53,7 +62,7 @@ const COPY: Record<OnboardingFlowStep, { title: string; description: React.React
   }
 };
 
-const RESTORE_STEPS: OnboardingFlowStep[] = ["jobs", "connect", "done"];
+const RESTORE_STEPS: OnboardingFlowStep[] = ["ai", "jobs", "connect", "done"];
 
 export function OnboardingPage() {
   const search = onboardingRoute.useSearch();
@@ -69,6 +78,9 @@ export function OnboardingPage() {
     extractError
   } = session;
 
+  const settingsQuery = useGetAiSettingsQuery();
+  const { aiConfigured } = session;
+
   useEffect(() => {
     const fromUrl = search.step;
     if (fromUrl && RESTORE_STEPS.includes(fromUrl) && fromUrl !== step) {
@@ -82,6 +94,18 @@ export function OnboardingPage() {
     // Only on mount / OAuth return — don't fight in-flow step changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.step]);
+
+  // A saved provider key (Settings → AI) satisfies the gated first step:
+  // mark configured and skip past Connect AI on fresh entries.
+  useEffect(() => {
+    const hasKey = (settingsQuery.data?.providers ?? []).some((provider) => provider.hasApiKey);
+    if (!hasKey || aiConfigured) return;
+    const current = getOnboardingSessionState();
+    setOnboardingSessionState(
+      current.step === "ai" ? { aiConfigured: true, step: "upload" } : { aiConfigured: true }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reconcile once per settings load
+  }, [settingsQuery.data, aiConfigured]);
 
   const handleUploaded = useCallback((payload: { objectKey: string; filename: string }) => {
     setOnboardingSessionState({
@@ -116,22 +140,19 @@ export function OnboardingPage() {
     setOnboardingSessionState({ draft: next });
   }, []);
 
-  const handleApplySuccess = useCallback(
-    (summary: { experiences: number; projects: number; stacks: number }) => {
-      setOnboardingSessionState({
-        applySummary: summary,
-        step: "jobs",
-        draft: null,
-        objectKey: null,
-        filename: null,
-        extractStatus: "idle",
-        extractError: null,
-        extractStepLabel: null,
-        extractRunId: null
-      });
-    },
-    []
-  );
+  const handleApplySuccess = useCallback((summary: OnboardingApplySummary) => {
+    setOnboardingSessionState({
+      applySummary: summary,
+      step: "jobs",
+      draft: null,
+      objectKey: null,
+      filename: null,
+      extractStatus: "idle",
+      extractError: null,
+      extractStepLabel: null,
+      extractRunId: null
+    });
+  }, []);
 
   const handleSkippedResume = useCallback(() => {
     setOnboardingSessionState({
@@ -164,8 +185,16 @@ export function OnboardingPage() {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-auto p-4 sm:p-6 lg:p-8">
       <OnboardingShell step={step} title={copy.title} description={copy.description}>
+        {step === "ai" ? (
+          <AiStep
+            onContinue={() => setOnboardingSessionState({ aiConfigured: true, step: "upload" })}
+          />
+        ) : null}
+
         {step === "upload" ? (
           <UploadStep
+            aiConfigured={aiConfigured}
+            onConnectAi={() => setOnboardingSessionState({ step: "ai" })}
             objectKey={objectKey}
             filename={filename}
             onUploaded={handleUploaded}
@@ -216,6 +245,8 @@ export function OnboardingPage() {
           <DoneStep
             summary={applySummary}
             skipped={!applySummary}
+            aiConfigured={aiConfigured}
+            onAiConfigured={() => setOnboardingSessionState({ aiConfigured: true })}
             onImportAnother={handleDiscardAndRestart}
           />
         ) : null}

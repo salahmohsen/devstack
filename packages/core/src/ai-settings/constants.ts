@@ -1,5 +1,5 @@
 import { getMastraProvider, MASTRA_PROVIDER_CATALOG } from "./mastra-provider-catalog";
-import { type AiFeature, type AiProviderKind } from "./types";
+import { type AiFeature, type AiFeatureRequirement, type AiProviderKind } from "./types";
 
 /** Product AI features that may bind a model id. */
 export const AI_FEATURES = [
@@ -20,6 +20,20 @@ export const AI_FEATURE_LABELS: Record<AiFeature, string> = {
   hubChat: "Hub chat",
   scorer: "Scorers",
   applyPackage: "Apply package"
+};
+
+/**
+ * Capability each AI feature requires from its bound model (null = none).
+ * Drives feature-aware "may not work" markers in Settings → Models.
+ */
+export const AI_FEATURE_REQUIREMENTS: Record<AiFeature, AiFeatureRequirement | null> = {
+  classify: "structuredOutput",
+  reply: null,
+  resumeImport: "structuredOutput",
+  stacks: "structuredOutput",
+  hubChat: "tools",
+  scorer: "structuredOutput",
+  applyPackage: "structuredOutput"
 };
 
 /**

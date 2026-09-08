@@ -1,0 +1,1537 @@
+<!--
+  EXPLORATION — Onboarding Review: Paper-first (A) + click-to-edit paper. Rail-editor directions.
+  Locked so far: Q1 narrow paper-edit scope (name/headline/summary/titles/orgs/bullets) ·
+  Q2 click-to-edit per field · Q3 confirmed-only paper, no toast.
+  Open decision (Q4): where non-paper fields edit — inline rail vs drawer vs hybrid.
+  Real record: same live draft as onboarding-review-proof.html (Salah Mohsen).
+  Date: 2026-09-08
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paper-first review — rail editor directions (A1 / A2 / A3)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+      :root {
+        --brand-50: #e9f7ed;
+        --brand-100: #d2f0da;
+        --brand-300: #8fd8a4;
+        --brand-500: #2f9e57;
+        --brand-700: #1e6e3e;
+        --accent-50: #f4f4f5;
+        --accent-500: #262626;
+        --ink: #262626;
+        --ink-soft: #454545;
+        --ink-mute: #707070;
+        --line: #ececec;
+        --line-soft: #f4f4f4;
+        --paper: #ffffff;
+        --bg: #fafafa;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
+        --shadow-md: 0 4px 24px -8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Geist Variable",
+          Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        line-height: 1.5;
+      }
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 72px 48px 160px;
+      }
+      .doc-header {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 40px;
+        margin-bottom: 36px;
+      }
+      .doc-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--brand-500);
+        font-weight: 600;
+      }
+      .doc-header h1 {
+        margin: 14px 0 8px;
+        font-size: 40px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .doc-header p {
+        margin: 0;
+        font-size: 16px;
+        color: var(--ink-soft);
+        max-width: 760px;
+      }
+      .doc-meta {
+        margin-top: 24px;
+        display: flex;
+        gap: 24px;
+        font-size: 12px;
+        color: var(--ink-mute);
+      }
+
+      /* locked decisions strip */
+      .locked {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 90px;
+      }
+      .locked .cell {
+        border: 1px solid var(--brand-100);
+        background: var(--brand-50);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+      .locked .cell h4 {
+        margin: 0 0 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--brand-700);
+      }
+      .locked .cell p {
+        margin: 0;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        line-height: 1.55;
+      }
+      .locked .cell q {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* affordance states */
+      .afford {
+        border: 1px solid var(--line);
+        background: var(--paper);
+        border-radius: 14px;
+        box-shadow: var(--shadow-sm);
+        padding: 22px 26px;
+        margin-bottom: 110px;
+      }
+      .afford h3 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+      .afford > p {
+        margin: 0 0 18px;
+        font-size: 13px;
+        color: var(--ink-mute);
+      }
+      .afford .states {
+        display: flex;
+        gap: 28px;
+        flex-wrap: wrap;
+        align-items: baseline;
+      }
+      .afford .state {
+        min-width: 200px;
+      }
+      .afford .state .cap {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        display: block;
+        margin-bottom: 8px;
+      }
+      .docline {
+        font-size: 13px;
+        color: #2b2b2b;
+        line-height: 1.55;
+        max-width: 380px;
+      }
+      .docline.rest {
+        cursor: text;
+        border-bottom: 1px dashed transparent;
+        padding: 1px 2px;
+        border-radius: 3px;
+      }
+      .docline.hover {
+        background: var(--brand-50);
+        border-bottom-color: var(--brand-300);
+        padding: 1px 2px;
+        border-radius: 3px;
+        position: relative;
+      }
+      .docline.hover::after {
+        content: "✎";
+        position: absolute;
+        right: -18px;
+        top: 0;
+        font-size: 11px;
+        color: var(--brand-500);
+      }
+      .docline.editing {
+        display: block;
+        border: 1.5px solid var(--brand-500);
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-size: 13px;
+        box-shadow: 0 0 0 3px rgba(47, 158, 87, 0.14);
+        background: #fff;
+        color: var(--ink);
+      }
+      .afford .hint {
+        font-size: 12px;
+        color: var(--ink-mute);
+        margin-top: 14px;
+      }
+      .afford .hint kbd {
+        font-family: "Geist Mono Variable", ui-monospace, Menlo, monospace;
+        font-size: 10.5px;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        padding: 1px 5px;
+        background: var(--bg);
+      }
+
+      .variant {
+        margin-bottom: 130px;
+      }
+      .variant-meta {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .variant-letter {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--brand-50);
+        color: var(--brand-700);
+        font-weight: 700;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.02em;
+        flex-shrink: 0;
+      }
+      .variant-meta h2 {
+        margin: 4px 0 6px;
+        font-size: 25px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+      }
+      .variant-tradeoff {
+        font-size: 15px;
+        color: var(--ink-soft);
+        margin: 0;
+        max-width: 780px;
+      }
+      .variant-tradeoff b {
+        color: var(--brand-500);
+        font-weight: 600;
+      }
+      .preview-frame {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-left: 84px;
+        position: relative;
+      }
+      .preview-frame::before {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #f0e9e0;
+        box-shadow:
+          18px 0 0 #f0e9e0,
+          36px 0 0 #f0e9e0;
+        z-index: 2;
+      }
+      .preview-frame-bar {
+        background: #faf9f5;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 14px 16px 14px 76px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        font-weight: 600;
+      }
+      .preview {
+        padding: 0;
+        min-height: 200px;
+      }
+      .variant-analysis {
+        margin: 24px 0 0 84px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 24px;
+      }
+      .analysis-block {
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+      }
+      .analysis-block h4 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-500);
+      }
+      .analysis-block.is-risk h4 {
+        color: #b8341f;
+      }
+      .analysis-block.is-pick h4 {
+        color: var(--accent-700);
+      }
+      .analysis-block p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+      .decision {
+        margin-top: 120px;
+        padding: 40px 48px;
+        background: var(--ink);
+        color: white;
+        border-radius: 20px;
+      }
+      .decision h3 {
+        font-size: 28px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        margin: 0 0 8px;
+      }
+      .decision-sub {
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 14px;
+        margin: 0 0 24px;
+      }
+      .decision-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px 40px;
+      }
+      .decision-grid p {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .decision-grid b {
+        color: #8fd8a4;
+        font-weight: 600;
+      }
+
+      /* ============ shared: paper-first review with click-to-edit ============ */
+      .rv {
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .rv-hint {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 20px;
+        background: var(--brand-50);
+        border-bottom: 1px solid var(--brand-100);
+        font-size: 11.5px;
+        color: var(--brand-700);
+      }
+      .rv-stage {
+        display: flex;
+        align-items: stretch;
+        background: var(--bg);
+        position: relative;
+      }
+      .rv-doc-wrap {
+        flex: 1;
+        padding: 18px 26px 26px;
+        display: flex;
+        justify-content: center;
+        min-width: 0;
+      }
+      .rv-paper {
+        width: 540px;
+        max-width: 100%;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.05),
+          0 16px 40px -20px rgba(0, 0, 0, 0.18);
+        padding: 28px 38px 32px;
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: #2b2b2b;
+        align-self: flex-start;
+      }
+      .rv-paper .ph {
+        text-align: center;
+        padding-bottom: 13px;
+        border-bottom: 1.5px solid #333;
+        margin-bottom: 15px;
+      }
+      .rv-paper .ph h5 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 650;
+        color: #1c1c1c;
+      }
+      .rv-paper .ph p {
+        margin: 3px 0 0;
+        font-size: 10.5px;
+        color: #6b6b6b;
+      }
+      .rv-paper h6 {
+        margin: 16px 0 8px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #1c1c1c;
+        border-bottom: 1px solid #e4e4e4;
+        padding-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .rv-paper h6 .cnt {
+        margin-left: auto;
+        font-size: 9px;
+        color: #9a9a9a;
+        font-weight: 500;
+      }
+      .rv-paper .entry + .entry {
+        margin-top: 10px;
+      }
+      .rv-paper .ehead {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .rv-paper .ehead .who {
+        font-weight: 600;
+        color: #1c1c1c;
+        font-size: 12.5px;
+      }
+      .rv-paper .ehead .who span {
+        font-weight: 400;
+        color: #6b6b6b;
+      }
+      .rv-paper .ehead time {
+        font-size: 10px;
+        color: #9a9a9a;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      .rv-paper ul {
+        margin: 4px 0 0;
+        padding-left: 15px;
+        color: #4a4a4a;
+      }
+      .rv-paper li {
+        margin-top: 2px;
+      }
+      /* editable affordances */
+      .ed {
+        border-bottom: 1px dashed transparent;
+        border-radius: 3px;
+        padding: 1px 2px;
+        cursor: text;
+      }
+      .ed.hover {
+        background: var(--brand-50);
+        border-bottom-color: var(--brand-300);
+      }
+      .ed.open {
+        display: block;
+        border: 1.5px solid var(--brand-500);
+        border-radius: 6px;
+        padding: 4px 8px;
+        box-shadow: 0 0 0 3px rgba(47, 158, 87, 0.14);
+        background: #fff;
+        color: var(--ink);
+        outline: none;
+        margin: -1px -4px;
+      }
+      .caret {
+        display: inline-block;
+        width: 1.5px;
+        height: 13px;
+        background: var(--brand-700);
+        vertical-align: text-bottom;
+        margin-left: 1px;
+        animation: blink 1.1s steps(2) infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      /* rail (shared) */
+      .rail {
+        width: 232px;
+        flex-shrink: 0;
+        border-left: 1px solid var(--line);
+        background: #fff;
+        padding: 15px 13px 13px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .rail.wide {
+        width: 300px;
+      }
+      .rail .rail-cap {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        margin: 0 4px 8px;
+      }
+      .rail-sec {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--ink-soft);
+        border: 1px solid transparent;
+      }
+      .rail-sec.active {
+        background: var(--accent-50);
+        border-color: var(--line);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .rail-sec .n {
+        margin-left: auto;
+        font-size: 10.5px;
+        color: var(--ink-mute);
+        font-variant-numeric: tabular-nums;
+      }
+      .tick {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10.5px;
+        font-weight: 600;
+      }
+      .tick i {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        display: inline-block;
+      }
+      .tick.on i {
+        background: var(--brand-500);
+      }
+      .tick.off i {
+        background: transparent;
+        border: 1.5px dashed #c9c9c9;
+      }
+      .tick.on {
+        color: var(--brand-700);
+      }
+      .tick.off {
+        color: var(--ink-mute);
+        font-weight: 500;
+      }
+      .cb {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid #cfcfcf;
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .cb.on {
+        background: var(--accent-500);
+        border-color: var(--accent-500);
+      }
+      .cb.on::after {
+        content: "";
+        width: 7px;
+        height: 4px;
+        border-left: 1.7px solid #fff;
+        border-bottom: 1.7px solid #fff;
+        transform: rotate(-45deg) translate(0.5px, -0.5px);
+      }
+      .sw {
+        width: 25px;
+        height: 14px;
+        border-radius: 999px;
+        background: #d6d6d6;
+        position: relative;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+      .sw::after {
+        content: "";
+        position: absolute;
+        top: 1.5px;
+        left: 2px;
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+      }
+      .sw.on {
+        background: var(--brand-500);
+      }
+      .sw.on::after {
+        left: auto;
+        right: 2px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+      }
+      .btn.primary {
+        background: var(--accent-500);
+        border-color: var(--accent-500);
+        color: #fff;
+      }
+      .btn.ghost {
+        border-color: transparent;
+        color: var(--ink-mute);
+        font-weight: 500;
+      }
+      .btn.sm {
+        padding: 4px 9px;
+        font-size: 11px;
+      }
+      .f-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        display: block;
+        margin: 0 0 4px;
+      }
+      .f-input {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 6px 9px;
+        font-size: 12px;
+        color: var(--ink);
+        background: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+      }
+      .f-input .cal {
+        color: var(--brand-500);
+        font-size: 11px;
+      }
+
+      /* A1 rows + expansion */
+      .v1-row {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        margin-bottom: 7px;
+        overflow: hidden;
+      }
+      .v1-row .head {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 9px 10px;
+      }
+      .v1-row .r-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .v1-row .r-main b {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .v1-row .r-main span {
+        display: block;
+        font-size: 10px;
+        color: var(--ink-mute);
+        margin-top: 1px;
+      }
+      .v1-row.open {
+        border-color: var(--brand-300);
+        box-shadow: 0 0 0 2px rgba(47, 158, 87, 0.1);
+      }
+      .v1-exp {
+        border-top: 1px solid var(--line-soft);
+        background: var(--bg);
+        padding: 11px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .v1-exp .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .v1-note {
+        font-size: 10px;
+        color: var(--ink-mute);
+        line-height: 1.5;
+        padding: 0 2px;
+      }
+      .v1-cta {
+        margin-top: auto;
+        padding-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .v1-cta .btn {
+        justify-content: center;
+      }
+      .v1-cta .meta {
+        font-size: 10px;
+        color: var(--ink-mute);
+        text-align: center;
+      }
+
+      /* A2 drawer */
+      .v2-drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 348px;
+        background: #fff;
+        border-left: 1px solid var(--line);
+        box-shadow: -18px 0 40px -24px rgba(0, 0, 0, 0.28);
+        padding: 15px 16px 13px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 3;
+      }
+      .v2-drawer .d-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .v2-drawer .d-head b {
+        font-size: 12.5px;
+        color: var(--ink);
+      }
+      .v2-drawer .d-head .x {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--ink-mute);
+      }
+      .v2-drawer .fields {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .v2-drawer .rich {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 9px;
+        font-size: 11px;
+        color: var(--ink-soft);
+        background: var(--bg);
+        line-height: 1.55;
+        min-height: 58px;
+      }
+      .v2-drawer .rich .toolbar {
+        display: inline-flex;
+        gap: 5px;
+        margin-bottom: 6px;
+      }
+      .v2-drawer .rich .toolbar i {
+        font-style: normal;
+        font-size: 9.5px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 5px;
+        color: var(--ink-mute);
+        background: #fff;
+      }
+      .v2-drawer .d-foot {
+        margin-top: auto;
+        display: flex;
+        gap: 7px;
+      }
+      .v2-drawer .d-foot .btn {
+        flex: 1;
+        justify-content: center;
+      }
+      .v2-paper-veil {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 348px;
+        background: rgba(38, 38, 38, 0.16);
+        z-index: 2;
+        border-radius: 0;
+      }
+      .v2-cta {
+        padding: 12px 13px 13px;
+        border-top: 1px solid var(--line-soft);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .v2-cta .btn {
+        justify-content: center;
+      }
+
+      /* A3 hybrid */
+      .v3-row {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        margin-bottom: 7px;
+      }
+      .v3-row .head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+      .v3-row .r-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .v3-row .r-main b {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .v3-row .r-main span {
+        display: block;
+        font-size: 10px;
+        color: var(--ink-mute);
+        margin-top: 1px;
+      }
+      .v3-exp {
+        border-top: 1px solid var(--line-soft);
+        background: var(--bg);
+        padding: 10px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .v3-skills {
+        margin-top: 8px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        padding: 10px;
+      }
+      .v3-skills .s-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        margin-bottom: 8px;
+      }
+      .v3-skills .s-head .open-btn {
+        margin-left: auto;
+        font-size: 10px;
+        color: var(--brand-700);
+        font-weight: 600;
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+      .v3-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .v3-chips i {
+        font-style: normal;
+        font-size: 9.5px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 1.5px 7px;
+        color: var(--ink-soft);
+      }
+      .v3-chips i.on {
+        background: var(--accent-500);
+        border-color: var(--accent-500);
+        color: #fff;
+      }
+      .v3-drawer-hint {
+        font-size: 10px;
+        color: var(--ink-mute);
+        padding: 8px 10px;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        line-height: 1.5;
+      }
+      .v3-cta {
+        margin-top: auto;
+        padding-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .v3-cta .btn {
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="doc-header">
+        <span class="doc-eyebrow">explore-design · onboarding review · paper-edit grill</span>
+        <h1>Paper-first + click-to-edit — where do the rest of the fields go?</h1>
+        <p>
+          Direction A is locked, with click-to-edit directly on the paper (name, headline, summary,
+          titles, orgs, bullets). What's still open: the <strong>non-paper fields</strong> — dates,
+          the <em>currently present</em> switch, skills (19 of them), certification fields,
+          contacts. Three homes for them, drawn below with the paper mid-edit so you can judge the
+          whole surface together.
+        </p>
+        <div class="doc-meta">
+          <span>Record: live draft (Mostaql / KHOSHT / One Solution · 19 skills)</span>
+          <span>Decision: Q4 — rail editor model</span>
+          <span>2026-09-08</span>
+        </div>
+      </header>
+
+      <div class="locked">
+        <div class="cell">
+          <h4>Locked · Q1 — what edits on the paper</h4>
+          <p>
+            <q>Name, headline, summary, titles, orgs, bullet lines.</q> Dates, skills, cert fields,
+            contacts, toggles stay off-paper — no ambiguous inverse mapping.
+          </p>
+        </div>
+        <div class="cell">
+          <h4>Locked · Q2 — engagement model</h4>
+          <p>
+            <q>Click-to-edit per field.</q> Real input/textarea, identical typography, commit on
+            blur or <b>⌘Enter</b>, <b>Esc</b> cancels. The paper always renders the true RenderCV
+            mapping at rest.
+          </p>
+        </div>
+        <div class="cell">
+          <h4>Locked · Q3 — deselection</h4>
+          <p>
+            <q>Confirmed rows only.</q> Uncheck → row vanishes from the paper instantly, no toast;
+            an open editor closes; committed edits survive in the draft.
+          </p>
+        </div>
+      </div>
+
+      <div class="afford">
+        <h3>The paper affordance (locked, shown once so we agree on the feel)</h3>
+        <p>
+          Static cue at rest is a text cursor + the pane hint; hover and editing states use the
+          brand green — the paper never changes shape or size when a field opens.
+        </p>
+        <div class="states">
+          <div class="state">
+            <span class="cap">Rest</span>
+            <span class="docline rest"
+              >Architected reusable React + headless platforms for operational dashboards and
+              upvote/reputation applications.</span
+            >
+          </div>
+          <div class="state">
+            <span class="cap">Hover</span>
+            <span class="docline hover"
+              >Architected reusable React + headless platforms for operational dashboards and
+              upvote/reputation applications.</span
+            >
+          </div>
+          <div class="state">
+            <span class="cap">Editing</span>
+            <span class="docline editing"
+              >Architected reusable React + headless platforms for operational dashboards and
+              upvote/reputation applications.<span class="caret"></span
+            ></span>
+          </div>
+        </div>
+        <p class="hint">
+          Commit: click away or <kbd>⌘ Enter</kbd> · Cancel: <kbd>Esc</kbd> · Next field:
+          <kbd>Tab</kbd> · Hint line sits above the paper, outside it.
+        </p>
+      </div>
+
+      <!-- ================= A1 ================= -->
+      <section class="variant">
+        <div class="variant-meta">
+          <div class="variant-letter">A1</div>
+          <div>
+            <h2>Inline rail (~300px)</h2>
+            <p class="variant-tradeoff">
+              Every non-paper field expands <b>inside the rail</b> — dates, switches, skills as
+              compact rows. The paper is never covered; recommended.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">
+            A1 — rail 300px · row expansion · paper mid-edit on a bullet
+          </div>
+          <div class="preview">
+            <div class="rv">
+              <div class="rv-hint">
+                ✎ Click any text on the paper to edit it — changes appear on the resume instantly.
+              </div>
+              <div class="rv-stage">
+                <div class="rv-doc-wrap">
+                  <div class="rv-paper">
+                    <div class="ph">
+                      <h5><span class="ed">Salah Mohsen</span></h5>
+                      <p>
+                        <span class="ed">Frontend Engineer</span> · salahmohsen@dev.com ·
+                        github.com/salahmohsen · Giza, Egypt
+                      </p>
+                    </div>
+                    <h6>Summary <span class="cnt">1</span></h6>
+                    <p>
+                      <span class="ed"
+                        >Seasoned frontend engineer with extensive experience in React, TypeScript,
+                        and Next.js.</span
+                      >
+                    </p>
+                    <h6>Experience <span class="cnt">3</span></h6>
+                    <div class="entry">
+                      <div class="ehead">
+                        <span class="who"
+                          ><span class="ed">Senior Frontend Engineer</span>
+                          <span>· <span class="ed">Mostaql</span></span></span
+                        ><time>2022-11 — present</time>
+                      </div>
+                      <ul>
+                        <li>
+                          <span class="ed open"
+                            >Implemented typed REST data layers with TanStack Query, including SSR
+                            prefetch and mutation-driven cache invalidation.<span
+                              class="caret"
+                            ></span
+                          ></span>
+                        </li>
+                        <li>
+                          <span class="ed"
+                            >Delivered responsive, multilingual interfaces with RTL support using
+                            next-intl.</span
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="entry">
+                      <div class="ehead">
+                        <span class="who"
+                          ><span class="ed">Frontend Engineer</span> <span>· KHOSHT</span></span
+                        ><time>2021-12 — 2022-05</time>
+                      </div>
+                      <ul>
+                        <li>
+                          <span class="ed"
+                            >Rebuilt the application UI directly from Figma designs.</span
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                    <h6>Education <span class="cnt">—</span></h6>
+                    <p style="color: #a3a3a3; font-style: italic; font-size: 11.5px">
+                      Not on this resume — add anytime from the dashboard
+                    </p>
+                  </div>
+                </div>
+                <aside class="rail wide">
+                  <p class="rail-cap">Confirm</p>
+                  <div class="rail-sec active">
+                    <span class="tick on"><i></i></span> Experiences <span class="n">3/3</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick off"><i></i></span> Education <span class="n">0/0</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick off"><i></i></span> Certifications <span class="n">0/0</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick on"><i></i></span> Projects <span class="n">4/4</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick on"><i></i></span> Skills <span class="n">19/19</span>
+                  </div>
+                  <div style="margin-top: 9px"></div>
+                  <div class="v1-row open">
+                    <div class="head">
+                      <span class="cb on"></span>
+                      <span class="r-main"
+                        ><b>Senior Frontend Engineer</b><span>Mostaql</span></span
+                      >
+                      <span class="sw on"></span>
+                    </div>
+                    <div class="v1-exp">
+                      <div class="pair">
+                        <div>
+                          <span class="f-label">From</span
+                          ><span class="f-input">Nov 2022 <span class="cal">📅</span></span>
+                        </div>
+                        <div>
+                          <span class="f-label">To</span
+                          ><span class="f-input">Present <span class="cal">📅</span></span>
+                        </div>
+                      </div>
+                      <span class="v1-note"
+                        >Bullets are edited on the paper — click any line. Dates, presence, and
+                        portfolio live here.</span
+                      >
+                    </div>
+                  </div>
+                  <div class="v1-row">
+                    <div class="head">
+                      <span class="cb on"></span>
+                      <span class="r-main"
+                        ><b>Frontend Engineer</b><span>KHOSHT · 2021-12 — 2022-05</span></span
+                      >
+                      <span class="sw on"></span>
+                    </div>
+                  </div>
+                  <div class="v1-row">
+                    <div class="head">
+                      <span class="cb on"></span>
+                      <span class="r-main"
+                        ><b>Frontend Engineer</b><span>One Solution · 2022-02 — 2024-04</span></span
+                      >
+                      <span class="sw on"></span>
+                    </div>
+                  </div>
+                  <div class="v1-cta">
+                    <button class="btn primary">Save and continue</button>
+                    <button class="btn ghost">Back · Discard</button>
+                    <span class="meta">5 sections on the resume · Mostaql_CV.pdf</span>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              One surface, zero overlays: the paper stays fully visible while you fix dates in the
+              rail. Skills and certs expand as plain stacked rows — same list you have today, just
+              with room.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>Risk</h4>
+            <p>
+              300px rail with 19 skill rows means scrolling inside the panel; the paper shrinks
+              ~70px versus the 232px rail. Calendar popovers must anchor left, not right.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick when</h4>
+            <p>
+              You value an always-visible paper above everything else — the document is never
+              occluded, even mid-edit.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= A2 ================= -->
+      <section class="variant">
+        <div class="variant-meta">
+          <div class="variant-letter">A2</div>
+          <div>
+            <h2>Slim rail + drawer</h2>
+            <p class="variant-tradeoff">
+              Rail stays 232px (section list + rows only). Editing a row opens a
+              <b>348px drawer</b> with the full field set — including the rich description editor
+              the paper replaced. Paper dims while open.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">
+            A2 — drawer over the confirm side · paper veiled while editing
+          </div>
+          <div class="preview">
+            <div class="rv">
+              <div class="rv-hint">
+                ✎ Click any text on the paper to edit it — changes appear on the resume instantly.
+              </div>
+              <div class="rv-stage">
+                <div class="rv-doc-wrap">
+                  <div class="rv-paper">
+                    <div class="ph">
+                      <h5>Salah Mohsen</h5>
+                      <p>
+                        Frontend Engineer · salahmohsen@dev.com · github.com/salahmohsen · Giza,
+                        Egypt
+                      </p>
+                    </div>
+                    <h6>Summary <span class="cnt">1</span></h6>
+                    <p>
+                      Seasoned frontend engineer with extensive experience in React, TypeScript, and
+                      Next.js.
+                    </p>
+                    <h6>Experience <span class="cnt">3</span></h6>
+                    <div class="entry">
+                      <div class="ehead">
+                        <span class="who">Senior Frontend Engineer <span>· Mostaql</span></span
+                        ><time>2022-11 — present</time>
+                      </div>
+                      <ul>
+                        <li>
+                          Architected reusable React + headless platforms for operational
+                          dashboards.
+                        </li>
+                        <li>Implemented typed REST data layers with TanStack Query.</li>
+                      </ul>
+                    </div>
+                    <h6>Education <span class="cnt">—</span></h6>
+                    <p style="color: #a3a3a3; font-style: italic; font-size: 11.5px">
+                      Not on this resume — add anytime from the dashboard
+                    </p>
+                  </div>
+                  <div class="v2-paper-veil"></div>
+                </div>
+                <aside class="rail">
+                  <p class="rail-cap">Confirm</p>
+                  <div class="rail-sec active">
+                    <span class="tick on"><i></i></span> Experiences <span class="n">3/3</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick off"><i></i></span> Education <span class="n">0/0</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick off"><i></i></span> Certifications <span class="n">0/0</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick on"><i></i></span> Projects <span class="n">4/4</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick on"><i></i></span> Skills <span class="n">19/19</span>
+                  </div>
+                  <div style="margin-top: 9px"></div>
+                  <div class="v1-row">
+                    <div class="head">
+                      <span class="cb on"></span>
+                      <span class="r-main"
+                        ><b>Senior Frontend Engineer</b><span>Mostaql · editing…</span></span
+                      >
+                      <span class="sw on"></span>
+                    </div>
+                  </div>
+                  <div class="v1-row">
+                    <div class="head">
+                      <span class="cb on"></span>
+                      <span class="r-main"><b>Frontend Engineer</b><span>KHOSHT</span></span>
+                      <span class="sw on"></span>
+                    </div>
+                  </div>
+                </aside>
+                <div class="v2-drawer">
+                  <div class="d-head">
+                    <b>Senior Frontend Engineer · Mostaql</b><span class="x">✕</span>
+                  </div>
+                  <div class="fields">
+                    <div>
+                      <span class="f-label">Title</span
+                      ><span class="f-input">Senior Frontend Engineer</span>
+                    </div>
+                    <div>
+                      <span class="f-label">Organization</span><span class="f-input">Mostaql</span>
+                    </div>
+                    <div
+                      class="pair"
+                      style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px"
+                    >
+                      <div>
+                        <span class="f-label">From</span
+                        ><span class="f-input">Nov 2022 <span class="cal">📅</span></span>
+                      </div>
+                      <div>
+                        <span class="f-label">To</span
+                        ><span class="f-input">Present <span class="cal">📅</span></span>
+                      </div>
+                    </div>
+                    <div>
+                      <span class="f-label">Description (rich)</span>
+                      <div class="rich">
+                        <div class="toolbar"><i>B</i><i>i</i><i>U</i><i>• list</i></div>
+                        Architected reusable React + headless platforms for operational dashboards…
+                      </div>
+                      <span class="v1-note"
+                        >Paper bullets rewrite this field as flat lines — the rich editor stays as
+                        the fallback for structure.</span
+                      >
+                    </div>
+                  </div>
+                  <div class="d-foot">
+                    <button class="btn">Cancel</button>
+                    <button class="btn primary">Done</button>
+                  </div>
+                  <div class="v2-cta" style="border: 0; padding: 0; margin: 0"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Most comfortable field editor: full width for the calendar, the rich-text fallback,
+              and long cert/skill forms. The rail stays minimal and the model scales to any future
+              field.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>Risk</h4>
+            <p>
+              The drawer veils the paper exactly while you're editing what the paper proves — the
+              metaphor inverts during every edit session. Extra chrome (open/close, focus trap) for
+              something inline could do.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick when</h4>
+            <p>
+              You expect heavy non-paper editing (many cert fields, long descriptions) and want the
+              roomiest editor over the stable paper.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= A3 ================= -->
+      <section class="variant">
+        <div class="variant-meta">
+          <div class="variant-letter">A3</div>
+          <div>
+            <h2>Hybrid</h2>
+            <p class="variant-tradeoff">
+              Simple fields (dates, presence switch) expand inline in the 300px rail;
+              <b>bulk surfaces — the 19 skills — open in the drawer</b>, where batch moves
+              (all/none, type changes) need room.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">A3 — inline dates + skills drawer entry point</div>
+          <div class="preview">
+            <div class="rv">
+              <div class="rv-hint">
+                ✎ Click any text on the paper to edit it — changes appear on the resume instantly.
+              </div>
+              <div class="rv-stage">
+                <div class="rv-doc-wrap">
+                  <div class="rv-paper">
+                    <div class="ph">
+                      <h5>Salah Mohsen</h5>
+                      <p>
+                        Frontend Engineer · salahmohsen@dev.com · github.com/salahmohsen · Giza,
+                        Egypt
+                      </p>
+                    </div>
+                    <h6>Experience <span class="cnt">3</span></h6>
+                    <div class="entry">
+                      <div class="ehead">
+                        <span class="who"
+                          ><span class="ed hover">Senior Frontend Engineer</span>
+                          <span>· Mostaql</span></span
+                        ><time>2022-11 — present</time>
+                      </div>
+                      <ul>
+                        <li>
+                          <span class="ed"
+                            >Architected reusable React + headless platforms for operational
+                            dashboards.</span
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                    <h6>Skills <span class="cnt">19</span></h6>
+                    <p>
+                      <b>Languages:</b> TypeScript, JavaScript, HTML, CSS, Sass/SCSS<br /><b
+                        >Frameworks:</b
+                      >
+                      React, Next.js, Redux Toolkit, Tailwind CSS, Node.js
+                    </p>
+                  </div>
+                </div>
+                <aside class="rail wide">
+                  <p class="rail-cap">Confirm</p>
+                  <div class="rail-sec active">
+                    <span class="tick on"><i></i></span> Experiences <span class="n">3/3</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick off"><i></i></span> Education <span class="n">0/0</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick off"><i></i></span> Certifications <span class="n">0/0</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick on"><i></i></span> Projects <span class="n">4/4</span>
+                  </div>
+                  <div class="rail-sec">
+                    <span class="tick on"><i></i></span> Skills <span class="n">19/19</span>
+                  </div>
+                  <div style="margin-top: 9px"></div>
+                  <div class="v3-row">
+                    <div class="head">
+                      <span class="cb on"></span>
+                      <span class="r-main"
+                        ><b>Senior Frontend Engineer</b><span>Mostaql</span></span
+                      >
+                      <span class="sw on"></span>
+                    </div>
+                    <div class="v3-exp">
+                      <div>
+                        <span class="f-label">From</span
+                        ><span class="f-input">Nov 2022 <span class="cal">📅</span></span>
+                      </div>
+                      <div>
+                        <span class="f-label">To</span
+                        ><span class="f-input">Present <span class="cal">📅</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="v3-skills">
+                    <div class="s-head">
+                      Skills · 19/19 <button class="open-btn">Open batch editor →</button>
+                    </div>
+                    <div class="v3-chips">
+                      <i class="on">TypeScript</i><i class="on">JavaScript</i><i class="on">React</i
+                      ><i class="on">Next.js</i> <i class="on">Redux Toolkit</i
+                      ><i class="on">Tailwind</i><i class="on">Node.js</i><i>+12</i>
+                    </div>
+                  </div>
+                  <div class="v3-drawer-hint">
+                    The batch editor (drawer) handles per-skill type, portfolio toggles, and
+                    all/none — everything that doesn't fit a slim rail. Single fields never leave
+                    the rail.
+                  </div>
+                  <div class="v3-cta">
+                    <button class="btn primary">Save and continue</button>
+                    <button class="btn ghost">Back · Discard</button>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Each surface does the job it's shaped for: quick fields stay inline and instant; the
+              skills drawer gets real room for 19 rows without stretching the rail or veiling the
+              paper for small edits.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>Risk</h4>
+            <p>
+              Two editing models to learn (inline expansion vs drawer), and the drawer still veils
+              the paper for skills work. Slightly more code than A1.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick when</h4>
+            <p>
+              You want A1's always-visible paper but accept one drawer for the one surface that
+              genuinely needs width — bulk skill management.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="decision">
+        <h3>Which rail model?</h3>
+        <p class="decision-sub">
+          All three share the locked surface: paper-first hero, click-to-edit (green affordance),
+          confirmed-only paper, rail sections with ticks + counts.
+        </p>
+        <div class="decision-grid">
+          <p>
+            <b>A1 — Inline rail</b> if the paper must never be covered and a little in-panel
+            scrolling is fine.
+          </p>
+          <p>
+            <b>A2 — Drawer</b> if you expect heavy non-paper editing and want the roomiest fields
+            with a rich-text fallback.
+          </p>
+          <p>
+            <b>A3 — Hybrid</b> if skills batch-editing is the only thing you'd ever want a drawer
+            for.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

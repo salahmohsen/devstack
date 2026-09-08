@@ -36,8 +36,12 @@ import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai"
 
 const AGENT_ID = "job-agent-take";
 const TIMEOUT_MS = 45_000;
-/** Thinking models (MiniMax, DeepSeek-R1) spend this budget on reasoning first. */
-const TAKE_MAX_OUTPUT_TOKENS = 1_200;
+/**
+ * Thinking models (MiniMax, DeepSeek-R1, omen-alpha) spend reasoning budget
+ * first — the 2026-09-07 live run burned 1200/1200 tokens on reasoning and
+ * returned text=0. Budget must cover reasoning plus the <800 char take.
+ */
+const TAKE_MAX_OUTPUT_TOKENS = 6_000;
 
 export type GenerateAgentTakeErrorCode =
   | "NOT_FOUND"

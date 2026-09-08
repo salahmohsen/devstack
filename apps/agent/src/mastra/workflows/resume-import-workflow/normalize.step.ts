@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { assignClientIds, contactTypeSchema, normalizeResumeYear } from "@tsu-stack/core";
 
+import { descriptionToBulletsHtml } from "#@/mastra/workflows/resume-import-workflow/description-bullets";
 import { extract } from "#@/mastra/workflows/resume-import-workflow/extract.step";
 
 const CONTACT_TYPES = new Set(contactTypeSchema.options);
@@ -10,6 +11,13 @@ const CONTACT_TYPES = new Set(contactTypeSchema.options);
 function coerceText(value: string | null | undefined): string {
   if (value == null) return "";
   return value.trim();
+}
+
+/** Trimmed text, or null when empty — for optional metadata columns. */
+function textOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed;
 }
 
 function fallbackDisplayName(existingName: string, extractedName?: string | null): string {
@@ -112,6 +120,33 @@ export const normalize = createStep({
         includedInPortfolio: z.boolean()
       })
     ),
+    educations: z.array(
+      z.object({
+        school: z.string().min(1),
+        degree: z.string().min(1),
+        field: z.string().nullable().optional(),
+        location: z.string().nullable().optional(),
+        fromDate: z.string().nullable().optional(),
+        toDate: z.string().nullable().optional(),
+        isPresent: z.boolean().optional(),
+        description: z.string().nullable().optional(),
+        gpa: z.string().nullable().optional(),
+        clientId: z.string().min(1),
+        selected: z.boolean()
+      })
+    ),
+    certifications: z.array(
+      z.object({
+        name: z.string().min(1),
+        issuer: z.string(),
+        issuedAt: z.string().nullable().optional(),
+        expiresAt: z.string().nullable().optional(),
+        credentialUrl: z.string().nullable().optional(),
+        description: z.string().nullable().optional(),
+        clientId: z.string().min(1),
+        selected: z.boolean()
+      })
+    ),
     meta: z
       .object({
         warnings: z.array(z.string()).optional(),
@@ -133,7 +168,9 @@ export const normalize = createStep({
         return {
           title,
           organization,
-          description: coerceText(exp.description),
+          // Re-split flattened prose into `<p>`-per-bullet HTML so the paper
+          // preview and the PDF render the resume's original bullets.
+          description: descriptionToBulletsHtml(exp.description),
           fromDate: exp.fromDate ?? null,
           toDate: exp.toDate ?? null,
           isPresent: exp.isPresent ?? false,
@@ -172,8 +209,13 @@ export const normalize = createStep({
             ? experiences.find((e) => e.clientId === experienceClientId)
             : undefined;
 
+        // Models emit "2024" or "2023-24" — pull the leading integer year.
+        const rawYear = project.year;
+        const coercedYear =
+          typeof rawYear === "number" ? rawYear : Number.parseInt(rawYear?.slice(0, 4) ?? "", 10);
+
         const year = normalizeResumeYear({
-          year: project.year,
+          year: Number.isFinite(coercedYear) ? coercedYear : null,
           fromDate: project.fromDate ?? linkedExperience?.fromDate,
           toDate: project.toDate ?? linkedExperience?.toDate
         });
@@ -182,7 +224,7 @@ export const normalize = createStep({
           title,
           year,
           summary: coerceText(project.summary),
-          description: coerceText(project.description),
+          description: descriptionToBulletsHtml(project.description),
           experienceClientId,
           stackNames: dedupeStackNames(project.stackNames ?? []),
           clientId: project.clientId?.trim() ? project.clientId.trim() : undefined,
@@ -193,6 +235,55 @@ export const normalize = createStep({
       .filter((p): p is NonNullable<typeof p> => p != null);
 
     const projects = assignClientIds(projectInputs);
+
+    const educationInputs = (raw.educations ?? [])
+      .map((edu) => {
+        const school = coerceText(edu.school);
+        const degree = coerceText(edu.degree);
+        if (!school || !degree) {
+          return null;
+        }
+        return {
+          school,
+          degree,
+          field: textOrNull(edu.field),
+          location: textOrNull(edu.location),
+          fromDate: textOrNull(edu.fromDate),
+          toDate: textOrNull(edu.toDate),
+          isPresent: edu.isPresent ?? false,
+          description: textOrNull(edu.description),
+          gpa: textOrNull(edu.gpa),
+          clientId: edu.clientId?.trim() ? edu.clientId.trim() : undefined,
+          selected: true
+        };
+      })
+      .filter((edu): edu is NonNullable<typeof edu> => edu != null);
+
+    const educations = assignClientIds(educationInputs);
+
+    const certificationInputs = (raw.certifications ?? [])
+      .map((cert) => {
+        const name = coerceText(cert.name);
+        // Issuer is optional end-to-end (extract may omit it; PDF renders the
+        // bare name) — only the credential name is required.
+        const issuer = coerceText(cert.issuer);
+        if (!name) {
+          return null;
+        }
+        return {
+          name,
+          issuer,
+          issuedAt: textOrNull(cert.issuedAt),
+          expiresAt: textOrNull(cert.expiresAt),
+          credentialUrl: textOrNull(cert.credentialUrl),
+          description: textOrNull(cert.description),
+          clientId: cert.clientId?.trim() ? cert.clientId.trim() : undefined,
+          selected: true
+        };
+      })
+      .filter((cert): cert is NonNullable<typeof cert> => cert != null);
+
+    const certifications = assignClientIds(certificationInputs);
 
     // Prefer existing stack display names when case-insensitive match.
     const existingNameByKey = new Map<string, string>();
@@ -277,6 +368,8 @@ export const normalize = createStep({
       experiences,
       projects,
       stacks,
+      educations,
+      certifications,
       meta: {
         warnings: warnings.length > 0 ? warnings : undefined,
         sourceFilename

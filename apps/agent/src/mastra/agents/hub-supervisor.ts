@@ -30,7 +30,9 @@ import { findJobsNowTool } from "#@/mastra/tools/find-jobs-now.tool";
 import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
 import { generateMailReplyTool } from "#@/mastra/tools/generate-mail-reply.tool";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
+import { getCertificationTool } from "#@/mastra/tools/get-certification.tool";
 import { getDailyBriefTool, openDailyBriefTool } from "#@/mastra/tools/get-daily-brief.tool";
+import { getEducationTool } from "#@/mastra/tools/get-education.tool";
 import { getExperienceTool } from "#@/mastra/tools/get-experience.tool";
 import { getJobPreferencesTool } from "#@/mastra/tools/get-job-preferences.tool";
 import { classifyMailTool, getMailTool } from "#@/mastra/tools/get-mail.tool";
@@ -46,6 +48,8 @@ import {
   organizeStacksWorkflowTool,
   resumeImportWorkflowTool
 } from "#@/mastra/tools/hub-background-workflow.tools";
+import { listCertificationsTool } from "#@/mastra/tools/list-certifications.tool";
+import { listEducationsTool } from "#@/mastra/tools/list-educations.tool";
 import { listExperiencesTool } from "#@/mastra/tools/list-experiences.tool";
 import { listMailTool, searchMailTool } from "#@/mastra/tools/list-mail.tool";
 import { listNewJobsTool } from "#@/mastra/tools/list-new-jobs.tool";
@@ -58,6 +62,8 @@ import { markNotificationReadTool } from "#@/mastra/tools/mark-notification-read
 import { openEntityInspectTool } from "#@/mastra/tools/open-entity-inspect.tool";
 import { openSurfaceTool } from "#@/mastra/tools/open-surface.tool";
 import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-application-from-jd.tool";
+import { proposeCertificationChangeTool } from "#@/mastra/tools/propose-certification-change.tool";
+import { proposeEducationChangeTool } from "#@/mastra/tools/propose-education-change.tool";
 import { proposeEvidenceChangeTool } from "#@/mastra/tools/propose-evidence-change.tool";
 import { proposeHardPreferenceChangeTool } from "#@/mastra/tools/propose-hard-preference-change.tool";
 import {
@@ -147,6 +153,12 @@ export function createHubSupervisor() {
       proposeRefreshFromUrl: proposeRefreshFromUrlTool,
       listExperiences: listExperiencesTool,
       getExperience: getExperienceTool,
+      listEducations: listEducationsTool,
+      getEducation: getEducationTool,
+      proposeEducationChange: proposeEducationChangeTool,
+      listCertifications: listCertificationsTool,
+      getCertification: getCertificationTool,
+      proposeCertificationChange: proposeCertificationChangeTool,
       listProjects: listProjectsTool,
       getProject: getProjectTool,
       listStacks: listStacksTool,
