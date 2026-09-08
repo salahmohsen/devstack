@@ -17,6 +17,16 @@
 
 ---
 
+## 2026-09-08 — Education/certifications harness: form reset wipe, flash-model extraction, drag truth
+
+- **Trigger:** Education + certifications plan (Task 9): settings CRUD, resume PDF sections, onboarding import, hub propose-card round-trip
+- **Finding:** TanStack Form + `useAppForm`: a constant `defaultValues` object silently wipes `form.reset(values)` seeded edit-prefill. `formApi.update(opts)` runs on every render and reapplies `defaultValues` while the form is untouched, so the reset-on-open values get clobbered back to the constant. Fix: derive `defaultValues` from the editing row (the `experience-form` pattern) whenever an always-mounted section owns the form. Symptom: edit sheet opens empty while `form.store.state.values` (logged) is correct
+- **Finding:** Extraction quality is model-tier dependent: a flash-tier resumeImport model returned `educations: []` on a PDF with an obvious education section (3 runs, even after explicit prompt guidance) while extracting certifications 2/2 through the identical path. Verify extraction per-collection with counts (e.g. "2/2 certs · 0/0 edu"), never "extraction completed". Prompt guidance is worth adding, but treat a consistent per-collection zero as a model-quality finding, not a pipeline bug — prove the pipeline with a collection that does extract
+- **Finding:** Synthetic dnd-kit drags in Playwright can report the pre-reorder list in `innerText` for ~1s after `mouse.up` (optimistic cache lag); the DB `sort_order` is the truth. Cross-check persisted state before calling a reorder failed
+- **Finding:** Dev-stack takeover for log monitoring: kill the per-app terminals (web/server/agent + dotenvx wrappers), then run `vp run dev:tunnel` in the agent session — one stream shows `[server]`/`[web]` evlog lines, and infra (postgres/redis/minio) comes up with schema push. Restarting infra invalidates Better Auth sessions (sign-in required again); `document.cookie = "better-auth.session_token=..."` (encoded header form) restores auth in the automation browser since CDP `Storage.setCookies` is unavailable
+- **User preference:** delete confirms must reuse the shared `ConfirmDialog`; resume header button says "Update resume" when a default exists ("Generate resume" when none) and success opens the resume side panel
+- **Evidence class:** UI dialog + DB state + rendered-PDF text extraction + unauth 401 probes (`/rpc/agent/chatStream`, `/rpc/certifications/list`, `/rpc/educations/list`, `:4111/api/agents` all 401)
+
 ## 2026-09-06 — Freehire-only discovery harness: signed-cookie traps + client-rendered SSR walls
 
 - **Trigger:** Freehire-only job discovery hardening (Task 13): settings facets, findNow, land queue, unauth probes
