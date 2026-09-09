@@ -75,22 +75,51 @@ function contactHref(type: string, v: string): string | null {
     }
     return `https://x.com/${v.replace(/^@/, "")}`;
   }
+  if (type === "youtube") {
+    if (v.includes("youtube.com") || v.includes("youtu.be")) {
+      return v.startsWith("http") ? v : `https://${v.replace(/^\/\//, "")}`;
+    }
+    return `https://www.youtube.com/@${v.replace(/^@/, "")}`;
+  }
+  if (type === "instagram") {
+    if (v.includes("instagram.com")) {
+      return v.startsWith("http") ? v : `https://${v.replace(/^\/\//, "")}`;
+    }
+    return `https://www.instagram.com/${v.replace(/^@/, "")}`;
+  }
+  if (type === "telegram") {
+    if (v.includes("t.me") || v.includes("telegram.")) {
+      return v.startsWith("http") ? v : `https://${v.replace(/^\/\//, "")}`;
+    }
+    return `https://t.me/${v.replace(/^@/, "")}`;
+  }
+  if (type === "bluesky") {
+    if (v.includes("bsky.app")) {
+      return v.startsWith("http") ? v : `https://${v.replace(/^\/\//, "")}`;
+    }
+    return `https://bsky.app/profile/${v.replace(/^@/, "")}`;
+  }
+  if (type === "mastodon") {
+    if (v.startsWith("http")) return v;
+    const m = v.match(/^@?([^@]+)@([^@]+)$/);
+    if (m) return `https://${m[2]}/@${m[1]}`;
+    return v.includes(".") ? `https://${v.replace(/^\/\//, "")}` : null;
+  }
   if (v.includes(".") || v.includes("/")) return `https://${v.replace(/^\/\//, "")}`;
   return null;
 }
 
 /**
  * Build the mail model from stored/send-time values. Contact text/href
- * semantics mirror the PDF contact line (`displayContact`/`contactHref`
- * re-implemented here to keep core dependency-free): emails/phones verbatim,
- * social handles normalized to host labels, other values stripped via
- * `stripUrl`.
+ * semantics are in full parity with the PDF contact line (`displayContact`/
+ * `contactHref` re-implemented here to keep core dependency-free): emails/
+ * phones verbatim, dedicated youtube/instagram/telegram/bluesky/mastodon
+ * branches, social handles normalized to host labels, other values stripped
+ * via `stripUrl`.
  *
  * Intentional deviation: contact type comparison is case-insensitive (the
  * PDF compares case-sensitively); the contact type pgEnum only stores
- * lowercase values. Contact types without a dedicated branch above (e.g.
- * youtube, instagram, telegram, bluesky, mastodon, discord, or unknown
- * types) use the generic strip/fallback treatment.
+ * lowercase values.
  */
 export function buildOutreachMailModel(input: {
   subject: string;

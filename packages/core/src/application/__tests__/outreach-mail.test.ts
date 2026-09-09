@@ -146,6 +146,99 @@ describe("buildOutreachMailModel", () => {
     expect(model.senderName).toBe("");
   });
 
+  it("links youtube, instagram, and telegram handles per pdf semantics", () => {
+    const model = buildOutreachMailModel({
+      subject: "S",
+      bodyText: "Body",
+      senderName: "M",
+      contacts: [
+        { type: "youtube", value: "@mayoka" },
+        { type: "instagram", value: "@mayoka" },
+        { type: "telegram", value: "@mayoka" }
+      ]
+    });
+    expect(model.contactLines).toEqual([
+      { text: "@mayoka", href: "https://www.youtube.com/@mayoka" },
+      { text: "@mayoka", href: "https://www.instagram.com/mayoka" },
+      { text: "@mayoka", href: "https://t.me/mayoka" }
+    ]);
+  });
+
+  it("links bluesky handles through bsky.app/profile", () => {
+    const model = buildOutreachMailModel({
+      subject: "S",
+      bodyText: "Body",
+      senderName: "M",
+      contacts: [{ type: "bluesky", value: "mayoka.bsky.social" }]
+    });
+    expect(model.contactLines).toEqual([
+      { text: "mayoka.bsky.social", href: "https://bsky.app/profile/mayoka.bsky.social" }
+    ]);
+  });
+
+  it("maps mastodon user@host to https://host/@user and keeps bare handles unlinked", () => {
+    const model = buildOutreachMailModel({
+      subject: "S",
+      bodyText: "Body",
+      senderName: "M",
+      contacts: [
+        { type: "mastodon", value: "@user@host.com" },
+        { type: "mastodon", value: "user@host.com" },
+        { type: "mastodon", value: "mastodon.social" },
+        { type: "mastodon", value: "handle" }
+      ]
+    });
+    expect(model.contactLines).toEqual([
+      { text: "@user@host.com", href: "https://host.com/@user" },
+      { text: "user@host.com", href: "https://host.com/@user" },
+      { text: "mastodon.social", href: "https://mastodon.social" },
+      { text: "handle", href: null }
+    ]);
+  });
+
+  it("keeps dedicated-domain social URLs on their hosts", () => {
+    const model = buildOutreachMailModel({
+      subject: "S",
+      bodyText: "Body",
+      senderName: "M",
+      contacts: [
+        { type: "youtube", value: "youtube.com/@mayoka" },
+        { type: "youtube", value: "youtu.be/abc123" },
+        { type: "instagram", value: "instagram.com/mayoka" },
+        { type: "telegram", value: "t.me/mayoka" },
+        { type: "bluesky", value: "bsky.app/profile/mayoka.bsky.social" }
+      ]
+    });
+    expect(model.contactLines).toEqual([
+      { text: "youtube.com/@mayoka", href: "https://youtube.com/@mayoka" },
+      { text: "youtu.be/abc123", href: "https://youtu.be/abc123" },
+      { text: "instagram.com/mayoka", href: "https://instagram.com/mayoka" },
+      { text: "t.me/mayoka", href: "https://t.me/mayoka" },
+      {
+        text: "bsky.app/profile/mayoka.bsky.social",
+        href: "https://bsky.app/profile/mayoka.bsky.social"
+      }
+    ]);
+  });
+
+  it("returns null href for location and prefixes protocol-relative URLs", () => {
+    const model = buildOutreachMailModel({
+      subject: "S",
+      bodyText: "Body",
+      senderName: "M",
+      contacts: [
+        { type: "location", value: "Berlin, DE" },
+        { type: "website", value: "//mayokafor.dev" },
+        { type: "x", value: "//x.com/mayoka" }
+      ]
+    });
+    expect(model.contactLines).toEqual([
+      { text: "Berlin, DE", href: null },
+      { text: "//mayokafor.dev", href: "https://mayokafor.dev" },
+      { text: "//x.com/mayoka", href: "https://x.com/mayoka" }
+    ]);
+  });
+
   it("prefixes https for scheme-less websites and falls back to stripUrl for unknown types", () => {
     const model = buildOutreachMailModel({
       subject: "S",
