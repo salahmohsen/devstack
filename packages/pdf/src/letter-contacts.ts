@@ -1,3 +1,8 @@
+/**
+ * Pure cover-letter contact-line builder — safe for browser bundles (see
+ * `doc.ts`). Extracted from `cover-letter.ts` so web previews mirror the
+ * PDF's contact line without importing the node-only render entry.
+ */
 import { contactHref, displayContact, parseRenderCvSocial, sortContacts } from "#@/contacts";
 import { type PdfContact } from "#@/types";
 
