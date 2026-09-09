@@ -18,8 +18,26 @@ type CalendarFieldProps = Omit<CalendarProps, "mode"> & {
   };
 };
 
+/** Parse a stored value into a local Date (handles YYYY-MM-DD as local midnight, not UTC). */
+function toDateOrNull(value: string | undefined | null): Date | null {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (match) {
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function toYMD(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export const CalendarField = (props: CalendarFieldProps) => {
-  const field = useFieldContext<Date | undefined>();
+  const field = useFieldContext<string | undefined>();
 
   const { label, description, classNames, ...calendarProps } = props;
 
@@ -46,7 +64,7 @@ export const CalendarField = (props: CalendarFieldProps) => {
             />
           }
         >
-          {field.state.value ? new Date(field.state.value).toDateString() : "Select Date"}
+          {toDateOrNull(field.state.value)?.toDateString() ?? "Select Date"}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
           <CalendarDropdown
@@ -54,8 +72,8 @@ export const CalendarField = (props: CalendarFieldProps) => {
             onDayBlur={field.handleBlur}
             endMonth={new Date(2030, 11)}
             startMonth={new Date(1995, 0)}
-            onSelect={(value) => field.handleChange(value)}
-            selected={field.state.value}
+            onSelect={(value) => field.handleChange(value ? toYMD(value) : undefined)}
+            selected={toDateOrNull(field.state.value) ?? undefined}
             mode={"single"}
             {...calendarProps}
           />
