@@ -21,6 +21,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 import { agentFailureUserMessage } from "#@/lib/agent/agent-call-result";
 import { callApplyPackageAgent } from "#@/lib/application/call-apply-package-agent";
 import { fetchListingPageText, pickHttpListingUrl } from "#@/lib/application/fetch-listing-page";
+import { generateAgentTake } from "#@/lib/application/generate-agent-take";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type GenerateApplyPackageErrorCode =
@@ -221,6 +222,30 @@ export async function generateApplyPackage(input: {
   });
 
   if (!updated) return { ok: false, code: "NOT_FOUND" };
+
+  // Ensure an agent take exists for the dialog + hub; never fail the package generation.
+  let takeError: string | null = null;
+  try {
+    const takeResult = await generateAgentTake({
+      applicationId: app.id,
+      userId: input.userId
+    });
+    if (!takeResult.ok) {
+      takeError = `${takeResult.code}${takeResult.message ? `: ${takeResult.message}` : ""}`;
+    }
+  } catch (error) {
+    takeError = error instanceof Error ? error.message : String(error);
+  }
+  if (takeError) {
+    const takeLog = createLogger({ operation: "api__apply_package_take_failed" });
+    takeLog.set({
+      event: "apply_package_take_failed",
+      applicationId: app.id,
+      userId: input.userId,
+      takeError
+    });
+    takeLog.emit({ _forceKeep: true });
+  }
 
   return { ok: true, application: updated };
 }
