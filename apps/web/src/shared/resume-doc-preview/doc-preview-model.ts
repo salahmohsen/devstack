@@ -124,7 +124,7 @@ export type SkillEntry = {
   details?: string;
 };
 
-function asRecord(value: unknown): Record<string, unknown> {
+export function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
@@ -185,41 +185,65 @@ export type DocPreviewModel = {
 };
 
 /**
- * Build the doc-preview model from the confirmed draft. Section presence and
- * order come from `buildRenderCvDoc` — the exact mapping the PDF pipeline
- * uses — so the preview never lies about the artifact. Rendered entries are
- * zipped with their source draft rows (same filter, same order) so the paper
- * can bind click-to-edit fields back to `clientId`.
+ * Build the doc-preview model from the confirmed draft. The draft→pdf-input
+ * mapping stays here; the cv→model conversion is shared via
+ * `docPreviewModelFromRenderCvDoc`. Section presence and order come from
+ * `buildRenderCvDoc` — the exact mapping the PDF pipeline uses — so the
+ * preview never lies about the artifact. Rendered entries are zipped with
+ * their source draft rows (same filter, same order) so the paper can bind
+ * click-to-edit fields back to `clientId`.
  */
 export function buildDocPreviewModel(draft: ResumeImportDraft): DocPreviewModel {
   const input = draftToResumePdfInput(draft);
   const cv = asRecord(buildRenderCvDoc(input));
-  const sectionsDoc = asRecord(cv.sections);
-
   // Mirror the exact filters draftToResumePdfInput applied — index-aligned
   // with the rendered section entries.
-  const experienceRows = draft.experiences.filter((exp) => exp.selected && exp.includedInPortfolio);
-  const educationRows = draft.educations.filter((edu) => edu.selected);
-  const certificationRows = draft.certifications.filter((cert) => cert.selected);
-  const projectRows = draft.projects.filter(
-    (project) => project.selected && project.includedInPortfolio
-  );
+  return docPreviewModelFromRenderCvDoc(cv, {
+    experienceRows: draft.experiences.filter((exp) => exp.selected && exp.includedInPortfolio),
+    educationRows: draft.educations.filter((edu) => edu.selected),
+    certificationRows: draft.certifications.filter((cert) => cert.selected),
+    projectRows: draft.projects.filter((project) => project.selected && project.includedInPortfolio)
+  });
+}
+
+export type SectionRowMaps = {
+  experienceRows: Array<{ clientId: string }>;
+  educationRows: Array<{ clientId: string }>;
+  certificationRows: Array<{ clientId: string }>;
+  projectRows: Array<{ clientId: string }>;
+};
+
+/**
+ * cv→model conversion for the doc preview, shared by the onboarding preview
+ * and the apply-package paper. Consumes `buildRenderCvDoc` output directly, so
+ * it must stay in lockstep with the PDF mapper. `rows` must apply the same
+ * filters as the pdf input did, index-aligned with the rendered section
+ * entries.
+ */
+export function docPreviewModelFromRenderCvDoc(
+  cv: Record<string, unknown>,
+  rows: SectionRowMaps
+): DocPreviewModel {
+  const sectionsDoc = asRecord(cv.sections);
 
   const summaryList = asStringArray(sectionsDoc.summary);
   const experience = withClientIds(
     asRecordList<ExperienceEntry>(sectionsDoc.experience),
-    experienceRows
+    rows.experienceRows
   );
   const education = withClientIds(
     asRecordList<EducationEntry>(sectionsDoc.education),
-    educationRows
+    rows.educationRows
   );
-  const projects = withClientIds(asRecordList<ProjectEntry>(sectionsDoc.projects), projectRows);
+  const projects = withClientIds(
+    asRecordList<ProjectEntry>(sectionsDoc.projects),
+    rows.projectRows
+  );
   const skills = asRecordList<SkillEntry>(sectionsDoc.skills);
   const certifications = asStringArray(sectionsDoc.certifications).map((line, index) => {
     // Pipeline emits markdown links for credentialed certs: `[Name](url) — Issuer, date`.
     const match = /^\[([^\]]+)\]\(([^)\s]+)\)\s*([\s\S]*)$/.exec(line);
-    const row = certificationRows[index];
+    const row = rows.certificationRows[index];
     return {
       clientId: row?.clientId,
       text: match ? match[1] : line,
