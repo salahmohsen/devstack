@@ -112,7 +112,8 @@ function resolveDraft(
 /**
  * Materialize resume + cover PDFs from an apply package draft and write accepted fields.
  * Keeps the package draft as the dialog's editable source (spec: draft survives accept);
- * accepted fields + PDFs are projections of it.
+ * accepted fields + PDFs are projections of it. The stored draft always mirrors the draft
+ * the current accepted kit was built from.
  */
 export async function acceptApplyPackage(input: {
   applicationId: string;
@@ -387,6 +388,7 @@ export async function acceptApplyPackage(input: {
       createdResumeId = createdResume.id;
       const row = await applicationRepository.update(app.id, input.userId, {
         resumeId: createdResume.id,
+        applyPackageDraft: draft,
         coverLetterBody: draft.coverLetterBody,
         coverLetterR2Key: coverR2Key,
         coverLetterFilename: coverFilename,

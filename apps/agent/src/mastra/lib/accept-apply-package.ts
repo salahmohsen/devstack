@@ -101,6 +101,7 @@ function resolveDraft(
 
 /**
  * Materialize resume + cover PDFs from apply package draft (agent-local parity).
+ * The stored draft always mirrors the draft the current accepted kit was built from.
  */
 export async function acceptApplyPackage(input: {
   applicationId: string;
@@ -354,6 +355,7 @@ export async function acceptApplyPackage(input: {
         createdResumeId = createdResume.id;
         const row = await applicationRepository.update(app.id, input.userId, {
           resumeId: createdResume.id,
+          applyPackageDraft: draft,
           coverLetterBody: draft.coverLetterBody,
           coverLetterR2Key: coverR2Key,
           coverLetterFilename: coverFilename,
