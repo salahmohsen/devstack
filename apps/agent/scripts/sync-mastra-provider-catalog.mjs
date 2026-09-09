@@ -23,7 +23,7 @@
  */
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -78,6 +78,34 @@ function flagOr(value) {
 }
 
 const regPath = findRegistry();
+
+/**
+ * Mastra's gateway auto-refresh (MASTRA_AUTO_REFRESH_PROVIDERS, default on in
+ * dev) rewrites dist/provider-registry.json in place at runtime, so a dev
+ * machine's registry drifts from the shipped tarball that a clean install —
+ * CI and prod — sees. A catalog generated from the drifted file references
+ * providers clean installs lack. Detect it by mtime: the registry should be
+ * as old as the package install; anything materially newer was rewritten.
+ */
+function assertRegistryNotDrifted() {
+  const registryStat = statSync(regPath);
+  const packageStat = statSync(join(dirname(regPath), "..", "package.json"));
+  if (registryStat.mtimeMs - packageStat.mtimeMs <= 60_000) return;
+  const message =
+    `provider registry was rewritten after install (registry ${registryStat.mtime.toISOString()} ` +
+    `> package ${packageStat.mtime.toISOString()}).\n` +
+    "The live gateway sync drifts node_modules from the shipped registry; a catalog " +
+    "generated now will fail CI's clean-install check.\n" +
+    "Fix: keep MASTRA_AUTO_REFRESH_PROVIDERS=false (packages/env/.env), reinstall " +
+    "@mastra/core (or restore dist/provider-registry.json from the version tarball), then re-run.";
+  if (checkOnly) {
+    console.error(`Mastra provider registry drift detected: ${message}`);
+    process.exit(1);
+  }
+  console.warn(`WARNING: Mastra ${message}`);
+}
+
+assertRegistryNotDrifted();
 const reg = JSON.parse(readFileSync(regPath, "utf8"));
 const modelsDev = await fetchModelsDev();
 
@@ -120,6 +148,18 @@ const outPath = join(repoRoot, "packages/core/src/ai-settings/mastra-provider-ca
 /** sha256 of the data (not the file text) — formatter-proof. */
 const catalogHash = createHash("sha256")
   .update(JSON.stringify({ providers, capabilities }))
+  .digest("hex")
+  .slice(0, 16);
+
+/**
+ * Registry-only hash — what --check gates on. models.dev capability data is
+ * fetched live and drifts day to day; gating on it would fail CI on churn
+ * unrelated to the dependency. Provider/model lists come from the installed
+ * @mastra/core and only change on a dependency bump, which is exactly what
+ * the gate must catch.
+ */
+const registryHash = createHash("sha256")
+  .update(JSON.stringify({ providers }))
   .digest("hex")
   .slice(0, 16);
 
@@ -187,11 +227,12 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
 
-// Catalog content hash: ${catalogHash} — compared by sync script --check; do not edit.
+// Catalog content hash: ${catalogHash} — informational (includes live models.dev capabilities).
+// Catalog registry hash: ${registryHash} — compared by sync script --check; do not edit.
 `;
 
 function existingHash(text) {
-  const m = text.match(/Catalog content hash: ([0-9a-f]{16})/);
+  const m = text.match(/Catalog registry hash: ([0-9a-f]{16})/);
   return m ? m[1] : null;
 }
 
@@ -214,7 +255,7 @@ function formatGeneratedFile(path) {
 }
 
 const existing = existsSync(outPath) ? readFileSync(outPath, "utf8") : null;
-if (existing && existingHash(existing) === catalogHash) {
+if (existing && existingHash(existing) === registryHash) {
   console.log(
     `Mastra provider catalog already in sync (${providers.length} providers, ${total} models).`
   );
