@@ -26,7 +26,7 @@ The engine is `scripts/screenshot.mjs`, which drives the user's installed Google
 
 ## CRITICAL
 
-- **Interpret intent first** — the user describes *what* in plain language; you pick the right flag (see the map below). Don't ask which flag; infer it.
+- **Interpret intent first** — the user describes _what_ in plain language; you pick the right flag (see the map below). Don't ask which flag; infer it.
 - **Last stdout line is the PNG path** (everything else is stderr). Capture it and Read the image to show the user.
 - **Always report the FULL absolute path verbatim** in your reply — never abbreviate, truncate, or collapse the temp dir with `…/`. Put it on its own line so it stays copyable/clickable. Also surface the `file://…` line the script prints, since it's cmd/ctrl-clickable in most terminals.
 - First run only: if it fails with `Cannot find package 'playwright-core'`, do the one-time install in Step 1.
@@ -34,22 +34,22 @@ The engine is `scripts/screenshot.mjs`, which drives the user's installed Google
 
 ## Intent → flags (the core of this skill)
 
-| What the user said | Flags |
-|--------------------|-------|
-| "the page", "the whole page", "full page" | `--full-page` |
-| "this page" / no target / "what's on screen" | *(omit target → viewport)* |
-| "the pricing section", "the FAQ", "the hero" (named area) | `--section "pricing"` (heading match → enclosing `<section>`) |
-| "the CTA button", "the nav", "`.hero`", "#footer" (one element) | `--selector ".hero"` |
-| "the third section", "section 2" | `--section 3` |
-| "the X inside the Y" (element within a container) | `--section "X" --container ".Y"` |
-| "mobile view" / "on a phone" | `--device mobile` |
-| "tablet" / "desktop" | `--device tablet` / `--device desktop` |
-| "at 2x" / "retina" | `--scale 2` (already the default) |
-| custom size | `--width 1440 --height 900` |
-| "it loads slowly" / "wait for X" | `--wait 1500` or `--wait "<selector>"` |
-| logged-in page / "I need to be signed in" | `--cdp <wsUrl>` (see Example 4) |
+| What the user said                                              | Flags                                                         |
+| --------------------------------------------------------------- | ------------------------------------------------------------- |
+| "the page", "the whole page", "full page"                       | `--full-page`                                                 |
+| "this page" / no target / "what's on screen"                    | _(omit target → viewport)_                                    |
+| "the pricing section", "the FAQ", "the hero" (named area)       | `--section "pricing"` (heading match → enclosing `<section>`) |
+| "the CTA button", "the nav", "`.hero`", "#footer" (one element) | `--selector ".hero"`                                          |
+| "the third section", "section 2"                                | `--section 3`                                                 |
+| "the X inside the Y" (element within a container)               | `--section "X" --container ".Y"`                              |
+| "mobile view" / "on a phone"                                    | `--device mobile`                                             |
+| "tablet" / "desktop"                                            | `--device tablet` / `--device desktop`                        |
+| "at 2x" / "retina"                                              | `--scale 2` (already the default)                             |
+| custom size                                                     | `--width 1440 --height 900`                                   |
+| "it loads slowly" / "wait for X"                                | `--wait 1500` or `--wait "<selector>"`                        |
+| logged-in page / "I need to be signed in"                       | `--cdp <wsUrl>` (see Example 4)                               |
 
-When in doubt between a *named area* and an *exact element*: try `--section "<text>"` first (it falls back through heading → text → block). Use `--selector` when the user names a CSS selector or a single small control.
+When in doubt between a _named area_ and an _exact element_: try `--section "<text>"` first (it falls back through heading → text → block). Use `--selector` when the user names a CSS selector or a single small control.
 
 ## Workflow
 
@@ -81,22 +81,22 @@ node ~/.claude/skills/screenshot/scripts/screenshot.mjs --url "<url>" [target fl
 
 Full option list is in the header of `scripts/screenshot.mjs`. Quick reference:
 
-| Flag | Purpose | Default |
-|------|---------|---------|
-| `--url <url>` | Page to load (required) | — |
-| `--full-page` | Whole scrollable page | off |
-| `--selector <css>` | One exact element | — |
-| `--section <value>` | Heading text, CSS, or Nth `<section>` | — |
-| `--container <css>` | Ancestor to capture when matching by heading | nearest `<section>` |
-| `--device <name>` | `mobile` \| `tablet` \| `desktop` preset | — |
-| `--width / --height` | Viewport size | 1280 × 800 |
-| `--scale <n>` | Device scale (retina) | 2 |
-| `--wait <ms\|selector>` | Extra wait before capture | none |
-| `--pad <px>` | Padding around a section/element clip | 0 |
-| `--out <path>` | Output PNG path | timestamped temp file |
-| `--cdp <wsUrl>` | Attach to a running Chrome (reuses login) | launches fresh |
-| `--headed` | Show the browser window | headless |
-| `--channel <name>` | `chrome` \| `msedge` \| `chromium` | chrome |
+| Flag                    | Purpose                                      | Default               |
+| ----------------------- | -------------------------------------------- | --------------------- |
+| `--url <url>`           | Page to load (required)                      | —                     |
+| `--full-page`           | Whole scrollable page                        | off                   |
+| `--selector <css>`      | One exact element                            | —                     |
+| `--section <value>`     | Heading text, CSS, or Nth `<section>`        | —                     |
+| `--container <css>`     | Ancestor to capture when matching by heading | nearest `<section>`   |
+| `--device <name>`       | `mobile` \| `tablet` \| `desktop` preset     | —                     |
+| `--width / --height`    | Viewport size                                | 1280 × 800            |
+| `--scale <n>`           | Device scale (retina)                        | 2                     |
+| `--wait <ms\|selector>` | Extra wait before capture                    | none                  |
+| `--pad <px>`            | Padding around a section/element clip        | 0                     |
+| `--out <path>`          | Output PNG path                              | timestamped temp file |
+| `--cdp <wsUrl>`         | Attach to a running Chrome (reuses login)    | launches fresh        |
+| `--headed`              | Show the browser window                      | headless              |
+| `--channel <name>`      | `chrome` \| `msedge` \| `chromium`           | chrome                |
 
 ### Step 4: View and report
 
@@ -105,19 +105,24 @@ The script prints the PNG path as its last stdout line, plus `Saved:` and `Open:
 ## Examples
 
 ### Example 1: Whole page
+
 **User:** "Screenshot headshotpro.com"
 `node .../screenshot.mjs --url "https://headshotpro.com" --full-page` → Read + show.
 
 ### Example 2: A named section on the local app
+
 **User:** "Screenshot the pricing section of /pricing"
 `node .../screenshot.mjs --url "http://localhost:3000/pricing" --section "pricing"` → Read + show.
 
 ### Example 3: One element, mobile rendering
+
 **User:** "Show me the nav on mobile"
 `node .../screenshot.mjs --url "http://localhost:3000" --selector "nav" --device mobile` → Read + show.
 
 ### Example 4: A logged-in page (reuse a running Chrome)
+
 **User:** "Screenshot the dashboard sidebar — it needs me logged in"
+
 1. Tell the user to launch Chrome with remote debugging and log in:
    `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222`
    then get the endpoint from `http://localhost:9222/json/version` (the `webSocketDebuggerUrl`).
@@ -126,17 +131,21 @@ The script prints the PNG path as its last stdout line, plus `Saved:` and `Open:
 ## Troubleshooting
 
 ### Symptom: `Cannot find package 'playwright-core'`
+
 **Cause:** First run; deps not installed.
 **Fix:** `cd ~/.claude/skills/screenshot/scripts && npm install`
 
 ### Symptom: `Failed to launch Chrome (channel "chrome")`
+
 **Cause:** Google Chrome isn't installed at the standard location.
 **Fix:** Install Chrome, OR `cd ~/.claude/skills/screenshot/scripts && npx playwright install chromium`, then add `--channel chromium`.
 
 ### Symptom: `Could not find anything matching "X"`
+
 **Cause:** No heading/text matched X.
 **Fix:** Pass an exact `--selector "<css>"`, or `--section <N>` for the Nth `<section>`. Run `--full-page` first to eyeball the layout and pick a selector.
 
 ### Symptom: Capture is blank or missing late-loading content
+
 **Cause:** Content rendered after `networkidle`, or lazy-loaded on scroll.
 **Fix:** Add `--wait 1500` (ms) or `--wait "<selector>"`. Sections are auto-scrolled into view, which usually triggers lazy loads.

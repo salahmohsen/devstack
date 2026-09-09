@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-09-07-education-certifications-resume-design.md` (grill-locked — do not re-litigate decisions).
 
 **Read before starting:**
+
 - `.agents/workflow.md` — validation timing, migration safety
 - `.agents/core.md` — shared contract propagation
 - `.agents/orpc.md` — procedure conventions
@@ -18,6 +19,7 @@
 - `apps/agent/AGENTS.md` — **critical: after any new `@tsu-stack/core` / `@tsu-stack/db` export, run `pnpm --filter @tsu-stack/agent rebuild:core-cache` / `rebuild:db-cache` or the agent crashes with missing-export errors**
 
 **Conventions used throughout:**
+
 - New DB exports → `packages/db/src/schema/index.ts` + `packages/db/src/types/index.ts` + `packages/db/src/repositories/index.ts`
 - New core exports → `packages/core/src/index.ts`
 - Run `pnpm --filter <pkg> check` (format/lint/typecheck) after each task; `vp check --fix` if formatting fails
@@ -29,6 +31,7 @@
 ## Task 1: DB schema, relations, types, repositories
 
 **Files:**
+
 - Create: `packages/db/src/schema/education.schema.ts`
 - Create: `packages/db/src/schema/certification.schema.ts`
 - Modify: `packages/db/src/schema/index.ts` (add 2 exports)
@@ -155,7 +158,10 @@ import { education } from "../schema/education.schema.ts";
 
 export type EducationEntity = InferSelectModel<typeof education>;
 
-export type CreateEducationData = Omit<InferInsertModel<typeof education>, "id" | "createdAt" | "updatedAt">;
+export type CreateEducationData = Omit<
+  InferInsertModel<typeof education>,
+  "id" | "createdAt" | "updatedAt"
+>;
 export type UpdateEducationData = Partial<Omit<CreateEducationData, "userId">>;
 export type ReorderEducationItem = { id: string; sortOrder: number };
 
@@ -246,7 +252,7 @@ export {
 ```
 
 - [ ] **Step 7: Generate migration.** Run: `pnpm --filter @tsu-stack/db db:generate`
-  Expected: new `packages/db/migrations/<timestamp>_*/migration.sql` with `CREATE TABLE "education"`, `CREATE TABLE "certification"`, 2 indexes, 2 FKs. Review the SQL — verify `ON DELETE cascade` on both FKs and no drop statements.
+      Expected: new `packages/db/migrations/<timestamp>_*/migration.sql` with `CREATE TABLE "education"`, `CREATE TABLE "certification"`, 2 indexes, 2 FKs. Review the SQL — verify `ON DELETE cascade` on both FKs and no drop statements.
 
 - [ ] **Step 8: Check.** Run: `pnpm --filter @tsu-stack/db check`. Expected: pass.
 
@@ -262,6 +268,7 @@ git commit -m "feat(db): education + certification tables and repositories"
 ## Task 2: Core contracts (`@tsu-stack/core`)
 
 **Files:**
+
 - Create: `packages/core/src/education/types.ts`
 - Create: `packages/core/src/education/index.ts`
 - Create: `packages/core/src/certification/types.ts`
@@ -377,7 +384,9 @@ export const CreateEducationInputSchema = z.object({
   isPresent: z.boolean().optional(),
   description: z.string().max(2000).nullable().optional(),
   gpa: z.string().max(40).nullable().optional()
-}) satisfies z.ZodType<Omit<EducationSchemaInsert, "id" | "userId" | "createdAt" | "updatedAt" | "sortOrder">>;
+}) satisfies z.ZodType<
+  Omit<EducationSchemaInsert, "id" | "userId" | "createdAt" | "updatedAt" | "sortOrder">
+>;
 
 export const UpdateEducationInputSchema = CreateEducationInputSchema.partial().extend({
   school: z.string().min(1).max(200).optional(),
@@ -455,6 +464,7 @@ git commit -m "feat(core): education + certification shared contracts"
 ## Task 3: oRPC routers + mount + resume-sync hook
 
 **Files:**
+
 - Create: `packages/api/src/routers/educations.router.ts`
 - Create: `packages/api/src/routers/certifications.router.ts`
 - Modify: `packages/api/src/routers/index.ts` (mount both)
@@ -547,6 +557,7 @@ export const educationsRouter = {
 ```
 
 Notes:
+
 - Copy the **exact** input shapes and error conventions (`typed .errors(...)`) from `experiences.router.ts` — do not invent (`NOT_FOUND` shape, get/reorder/delete input objects must match the sibling router verbatim).
 - Add a thin `packages/api/src/routers/education.mappers.ts` with `toEducationOutput(row)` (dates → ISO strings, booleans defaulted) following `portfolio.mappers.ts` `toExperienceOutput`. Mirror for certification.
 - Mount in `packages/api/src/routers/index.ts`: `educations: educationsRouter,` + `certifications: certificationsRouter,` (import + one object key each, like `experiences`).
@@ -568,6 +579,7 @@ git commit -m "feat(api): education + certification routers wired into app route
 ## Task 4: Resume PDF pipeline (TDD)
 
 **Files:**
+
 - Modify: `packages/pdf/src/types.ts` (portfolio gains optional arrays)
 - Modify: `packages/pdf/src/map-rendercv-yaml.ts` (education + certifications sections)
 - Test: `packages/pdf/src/__tests__/map-rendercv-yaml.test.ts`
@@ -576,24 +588,27 @@ git commit -m "feat(api): education + certification routers wired into app route
 
 ```ts
 it("renders education entries when present (order: experience → education → projects)", () => {
-  const doc = parseYaml(baseInput({
-    portfolio: {
-      ...baseInput().portfolio,
-      educations: [
-        {
-          school: "Cairo University",
-          degree: "Bachelor of Science in Computer Science",
-          field: "Computer Science",
-          location: "Cairo, Egypt",
-          fromDate: "2015-09-01",
-          toDate: "2019-06-30",
-          isPresent: false,
-          description: "<ul><li>Graduated Magna Cum Laude</li><li>Relevant coursework: Algorithms</li></ul>",
-          gpa: "3.8/4.0"
-        }
-      ]
-    }
-  })).doc;
+  const doc = parseYaml(
+    baseInput({
+      portfolio: {
+        ...baseInput().portfolio,
+        educations: [
+          {
+            school: "Cairo University",
+            degree: "Bachelor of Science in Computer Science",
+            field: "Computer Science",
+            location: "Cairo, Egypt",
+            fromDate: "2015-09-01",
+            toDate: "2019-06-30",
+            isPresent: false,
+            description:
+              "<ul><li>Graduated Magna Cum Laude</li><li>Relevant coursework: Algorithms</li></ul>",
+            gpa: "3.8/4.0"
+          }
+        ]
+      }
+    })
+  ).doc;
   const education = doc.cv.sections?.education;
   expect(education).toBeDefined();
   expect(education?.[0]).toMatchObject({
@@ -615,15 +630,26 @@ it("renders education entries when present (order: experience → education → 
 });
 
 it("education isPresent renders open-ended end date (RenderCV 'present', same as experience)", () => {
-  const doc = parseYaml(baseInput({
-    portfolio: {
-      ...baseInput().portfolio,
-      educations: [{
-        school: "Cairo University", degree: "BSc", field: null, location: null,
-        fromDate: "2024-09-01", toDate: null, isPresent: true, description: null, gpa: null
-      }]
-    }
-  })).doc;
+  const doc = parseYaml(
+    baseInput({
+      portfolio: {
+        ...baseInput().portfolio,
+        educations: [
+          {
+            school: "Cairo University",
+            degree: "BSc",
+            field: null,
+            location: null,
+            fromDate: "2024-09-01",
+            toDate: null,
+            isPresent: true,
+            description: null,
+            gpa: null
+          }
+        ]
+      }
+    })
+  ).doc;
   expect(doc.cv.sections?.education?.[0]?.end_date).toBe("present");
 });
 
@@ -633,29 +659,31 @@ it("omits education section when no rows", () => {
 });
 
 it("renders certifications as one-liners with link and dates", () => {
-  const doc = parseYaml(baseInput({
-    portfolio: {
-      ...baseInput().portfolio,
-      certifications: [
-        {
-          name: "AWS Certified Solutions Architect - Associate",
-          issuer: "Amazon Web Services",
-          issuedAt: "2025-03-01",
-          expiresAt: "2028-03-01",
-          credentialUrl: "https://credverify.example.com/abc",
-          description: null
-        },
-        {
-          name: "Project Management Professional (PMP)",
-          issuer: "Project Management Institute",
-          issuedAt: "2024-06-01",
-          expiresAt: null,
-          credentialUrl: null,
-          description: null
-        }
-      ]
-    }
-  })).doc;
+  const doc = parseYaml(
+    baseInput({
+      portfolio: {
+        ...baseInput().portfolio,
+        certifications: [
+          {
+            name: "AWS Certified Solutions Architect - Associate",
+            issuer: "Amazon Web Services",
+            issuedAt: "2025-03-01",
+            expiresAt: "2028-03-01",
+            credentialUrl: "https://credverify.example.com/abc",
+            description: null
+          },
+          {
+            name: "Project Management Professional (PMP)",
+            issuer: "Project Management Institute",
+            issuedAt: "2024-06-01",
+            expiresAt: null,
+            credentialUrl: null,
+            description: null
+          }
+        ]
+      }
+    })
+  ).doc;
   const certs = doc.cv.sections?.certifications;
   expect(certs).toEqual([
     "[AWS Certified Solutions Architect - Associate](https://credverify.example.com/abc) — Amazon Web Services, Mar 2025 · Expires Mar 2028",
@@ -709,7 +737,20 @@ function toCertDisplayDate(raw: string | null): string | undefined {
   if (!raw?.trim()) return undefined;
   const ymd = raw.trim().match(/^(\d{4})-(\d{2})/);
   if (!ymd) return raw.trim(); // already display text (year etc.) — pass through
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ];
   const month = Number(ymd[2]);
   if (month < 1 || month > 12) return ymd[1]!;
   return `${months[month - 1]} ${ymd[1]}`;
@@ -751,15 +792,15 @@ function certificationEntries(certifications: ResumePdfPortfolio["certifications
 In `buildCv`, after the `experience` block and before `projects`:
 
 ```ts
-  const education = educationEntries(input.portfolio.educations);
-  if (education.length > 0) sections.education = education;
+const education = educationEntries(input.portfolio.educations);
+if (education.length > 0) sections.education = education;
 ```
 
 After the `skills` block:
 
 ```ts
-  const certifications = certificationEntries(input.portfolio.certifications);
-  if (certifications.length > 0) sections.certifications = certifications;
+const certifications = certificationEntries(input.portfolio.certifications);
+if (certifications.length > 0) sections.certifications = certifications;
 ```
 
 - [ ] **Step 4: Run tests.** Expected: PASS.
@@ -767,10 +808,12 @@ After the `skills` block:
 - [ ] **Step 5: Populate both render callers.**
 
 `packages/api/src/lib/resume/sync-portfolio-default-resume.ts`:
+
 - Import `educationRepository, certificationRepository` from `@tsu-stack/db/repositories`.
 - In `fetchPortfolioData`, fetch both via `findAllByUserId(userId)` (no portfolio opt-in — include-when-present per spec) and return `educations`/`certifications` mapped to the `ResumePdfPortfolio` shapes (direct field copy; `isPresent: row.isPresent ?? false`).
 
 `packages/api/src/lib/application/accept-apply-package.ts` (line ~265 `const portfolio: ResumePdfPortfolio = {`):
+
 - Fetch all education + certification rows for `userId` near the other live-data fetches (~line 128 area) and add `educations: [...]` / `certifications: [...]` to the portfolio literal with the same direct mapping. Include-when-present applies to tailored resumes too (spec).
 
 - [ ] **Step 6: Check both packages + commit.**
@@ -786,6 +829,7 @@ git commit -m "feat(pdf): education + certifications sections in RenderCV resume
 ## Task 5: Web CRUD in profile settings
 
 **Files:**
+
 - Create: `apps/web/src/pages/dashboard/settings/ui/education-section.tsx`
 - Create: `apps/web/src/pages/dashboard/settings/ui/certification-section.tsx`
 - Create: `apps/web/src/pages/dashboard/settings/ui/education-form-fields.tsx` (if field groups get large — optional split)
@@ -819,6 +863,7 @@ git commit -m "feat(web): education + certifications CRUD in profile settings"
 ## Task 6: Resume-import extraction (core + agent + apply)
 
 **Files:**
+
 - Modify: `packages/core/src/onboarding/types.ts` — draft schemas
 - Modify: `apps/agent/src/mastra/workflows/resume-import-workflow/extract-output.schema.ts`
 - Modify: `apps/agent/src/mastra/workflows/resume-import-workflow/extract.step.ts` (prompt + `emptyExtract`)
@@ -867,7 +912,13 @@ it("parses education and certification arrays with defaults", () => {
   const parsed = ResumeExtractOutputSchema.parse({
     profile: { name: "S" },
     educations: [{ school: "Cairo University", degree: "BSc" }],
-    certifications: [{ name: "AWS Certified Solutions Architect - Associate", issuer: "Amazon Web Services", issuedAt: "2025-03" }]
+    certifications: [
+      {
+        name: "AWS Certified Solutions Architect - Associate",
+        issuer: "Amazon Web Services",
+        issuedAt: "2025-03"
+      }
+    ]
   });
   expect(parsed.educations).toHaveLength(1);
   expect(parsed.educations[0]!.isPresent).toBe(false); // default
@@ -882,19 +933,29 @@ it("parses education and certification arrays with defaults", () => {
 export const ResumeExtractEducationSchema = z.object({
   clientId: z.string().optional().nullable(),
   school: z.string().describe("Institution name"),
-  degree: z.string().describe("Full degree name, e.g. Bachelor of Science — spell out, abbreviation may be added in parentheses"),
+  degree: z
+    .string()
+    .describe(
+      "Full degree name, e.g. Bachelor of Science — spell out, abbreviation may be added in parentheses"
+    ),
   field: z.string().nullable().optional().describe("Field / major, e.g. Computer Science"),
   location: z.string().nullable().optional(),
   fromDate: z.string().nullable().optional().describe("Start, ISO or year-month text"),
   toDate: z.string().nullable().optional().describe("End, or null if still enrolled"),
   isPresent: z.boolean().optional().describe("true if still enrolled"),
-  description: z.string().nullable().optional().describe("Honors, relevant coursework, thesis — keep verbatim"),
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Honors, relevant coursework, thesis — keep verbatim"),
   gpa: z.string().nullable().optional().describe("GPA only if stated, verbatim format e.g. 3.8/4.0")
 });
 
 export const ResumeExtractCertificationSchema = z.object({
   clientId: z.string().optional().nullable(),
-  name: z.string().describe("Full official credential name verbatim, acronym may follow in parentheses"),
+  name: z
+    .string()
+    .describe("Full official credential name verbatim, acronym may follow in parentheses"),
   issuer: z.string().describe("Issuing organization full name"),
   issuedAt: z.string().nullable().optional().describe("Issue date ISO or year-month"),
   expiresAt: z.string().nullable().optional(),
@@ -923,26 +984,33 @@ Add `educations` + `certifications` arrays (`.default([])`) to `ResumeExtractOut
 - New tx step after experiences (`:332-374`) — no portfolioEntry rows (spec: no `portfolioEntryId` on these tables):
 
 ```ts
-    // 5b. Education (selected only; no portfolio opt-in).
-    const selectedEducations = (draft.educations ?? []).filter((row) => row.selected !== false);
-    if (selectedEducations.length > 0) {
-      const [eduMaxRow] = await tx.select({ max: sql<number>`coalesce(max(${education.sortOrder}), -1)`.mapWith(Number) })
-        .from(education).where(eq(education.userId, userId));
-      let nextEduSort = (eduMaxRow?.max ?? -1) + 1;
-      for (const edu of selectedEducations) {
-        await tx.insert(education).values({
-          id: crypto.randomUUID(), userId,
-          school: edu.school, degree: edu.degree,
-          field: edu.field ?? null, location: edu.location ?? null,
-          fromDate: edu.fromDate ?? null, toDate: edu.toDate ?? null,
-          isPresent: edu.isPresent ?? false,
-          description: edu.description ?? null, gpa: edu.gpa ?? null,
-          sortOrder: nextEduSort
-        });
-        nextEduSort += 1;
-      }
-      educationsCreated = selectedEducations.length;
-    }
+// 5b. Education (selected only; no portfolio opt-in).
+const selectedEducations = (draft.educations ?? []).filter((row) => row.selected !== false);
+if (selectedEducations.length > 0) {
+  const [eduMaxRow] = await tx
+    .select({ max: sql<number>`coalesce(max(${education.sortOrder}), -1)`.mapWith(Number) })
+    .from(education)
+    .where(eq(education.userId, userId));
+  let nextEduSort = (eduMaxRow?.max ?? -1) + 1;
+  for (const edu of selectedEducations) {
+    await tx.insert(education).values({
+      id: crypto.randomUUID(),
+      userId,
+      school: edu.school,
+      degree: edu.degree,
+      field: edu.field ?? null,
+      location: edu.location ?? null,
+      fromDate: edu.fromDate ?? null,
+      toDate: edu.toDate ?? null,
+      isPresent: edu.isPresent ?? false,
+      description: edu.description ?? null,
+      gpa: edu.gpa ?? null,
+      sortOrder: nextEduSort
+    });
+    nextEduSort += 1;
+  }
+  educationsCreated = selectedEducations.length;
+}
 ```
 
 Mirror for certifications. Result type (`:91-95`) + return gain `educationsCreated`, `certificationsCreated`. Extend the `OnboardingApplyOutputSchema` in `onboarding.router.ts:31-35` with both counts.
@@ -966,6 +1034,7 @@ git commit -m "feat: extract education + certifications in resume import and onb
 ## Task 7: Web onboarding review UI
 
 **Files:**
+
 - Create: `apps/web/src/pages/dashboard/onboarding/ui/draft-education-fields.tsx`
 - Create: `apps/web/src/pages/dashboard/onboarding/ui/draft-certification-fields.tsx`
 - Modify: `apps/web/src/pages/dashboard/onboarding/ui/review-step.tsx`
@@ -1000,6 +1069,7 @@ git commit -m "feat(web): review education + certifications in onboarding import
 ## Task 8: Hub chat tools (read + HITL propose)
 
 **Files:**
+
 - Create: `packages/core/src/education/propose.ts`, `packages/core/src/certification/propose.ts`
 - Create: `apps/agent/src/mastra/tools/list-educations.tool.ts`, `get-education.tool.ts`, `propose-education-change.tool.ts`
 - Create: `apps/agent/src/mastra/tools/list-certifications.tool.ts`, `get-certification.tool.ts`, `propose-certification-change.tool.ts`

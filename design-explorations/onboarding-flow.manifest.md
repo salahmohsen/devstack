@@ -2,18 +2,18 @@
 
 Data source: `ResumeImportDraft` (`packages/core/src/onboarding/types.ts:84-90`) — draft is session-held client-side; no server dataset to count from, so counts are schema-based bounds, not measured rows.
 
-| Element | Field path | Class | Count |
-|---|---|---|---|
-| Variant A/B/C/C review row (experience) | `draft.experiences[]` → title/organization/fromDate/toDate | ✅ Real (schema-required on extracted rows) | 0–n per resume |
-| Review row (project) | `draft.projects[]` → title, year | ✅ Real | 0–n |
-| Review chip counts (X/Y selected) | `counts` computed over `experiences/projects/stacks` | ✅ Real (computed, never null) | always 3 chips |
-| Sticky footer "N of M rows selected" | `totalSelected` | ✅ Real | always |
-| "Source · <file>" header | `draft.meta.sourceFilename` | ⚠️ Sometimes (nullable) | present after upload |
-| Profile card | `draft.profile.name/summary/email/contacts` | ⚠️ Sometimes (all nullable) | — |
-| Warnings banner | `draft.meta.warnings` | ⚠️ Sometimes (optional) | 0–n |
-| Live resume doc sections (Variant C left pane) | derived from confirmed draft rows | ✅ Real (derived) | — |
-| Live resume doc completion % | no field today — derivable from counts | ⚠️ Sometimes (needs derivation rule) | — |
-| **Education section rows** (Variant C doc tick "Education") | `draft.educations[]` | ❌ Aspirational — lands with the education/certifications plan (spec 2026-09-07); 0 today | 0 |
-| Done-step "12 items imported" | `applySummary { experiences, projects, stacks }` | ✅ Real (after apply) | always post-apply |
-| Done checklist job filters / connect | job-preference query + Gmail/GitHub connect state | ✅ Real | 2 rows |
-| Education/certification tabs in Review | not in draft schema yet | ❌ Aspirational (same plan) | 0 |
+| Element                                                     | Field path                                                 | Class                                                                                     | Count                |
+| ----------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------- |
+| Variant A/B/C/C review row (experience)                     | `draft.experiences[]` → title/organization/fromDate/toDate | ✅ Real (schema-required on extracted rows)                                               | 0–n per resume       |
+| Review row (project)                                        | `draft.projects[]` → title, year                           | ✅ Real                                                                                   | 0–n                  |
+| Review chip counts (X/Y selected)                           | `counts` computed over `experiences/projects/stacks`       | ✅ Real (computed, never null)                                                            | always 3 chips       |
+| Sticky footer "N of M rows selected"                        | `totalSelected`                                            | ✅ Real                                                                                   | always               |
+| "Source · <file>" header                                    | `draft.meta.sourceFilename`                                | ⚠️ Sometimes (nullable)                                                                   | present after upload |
+| Profile card                                                | `draft.profile.name/summary/email/contacts`                | ⚠️ Sometimes (all nullable)                                                               | —                    |
+| Warnings banner                                             | `draft.meta.warnings`                                      | ⚠️ Sometimes (optional)                                                                   | 0–n                  |
+| Live resume doc sections (Variant C left pane)              | derived from confirmed draft rows                          | ✅ Real (derived)                                                                         | —                    |
+| Live resume doc completion %                                | no field today — derivable from counts                     | ⚠️ Sometimes (needs derivation rule)                                                      | —                    |
+| **Education section rows** (Variant C doc tick "Education") | `draft.educations[]`                                       | ❌ Aspirational — lands with the education/certifications plan (spec 2026-09-07); 0 today | 0                    |
+| Done-step "12 items imported"                               | `applySummary { experiences, projects, stacks }`           | ✅ Real (after apply)                                                                     | always post-apply    |
+| Done checklist job filters / connect                        | job-preference query + Gmail/GitHub connect state          | ✅ Real                                                                                   | 2 rows               |
+| Education/certification tabs in Review                      | not in draft schema yet                                    | ❌ Aspirational (same plan)                                                               | 0                    |

@@ -3,535 +3,1293 @@
   Source spec: apps/web/src/pages/dashboard/onboarding/ (live code) + features/onboarding
   Date: 2026-09-07
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Onboarding wizard — four directions</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      /* tsu-stack brand: signal green #60C679 on light paper (packages/ui/styles/shadcn.css) */
-      --brand-50: #e9f7ed;
-      --brand-100: #d2f0da;
-      --brand-300: #8fd8a4;
-      --brand-500: #2f9e57;
-      --brand-700: #1e6e3e;
-      --accent-50: #f4f4f5;
-      --accent-500: #262626;
-      --accent-700: #262626;
-      --ink: #262626;
-      --ink-soft: #454545;
-      --ink-mute: #707070;
-      --line: #ececec;
-      --line-soft: #f4f4f4;
-      --paper: #ffffff;
-      --bg: #fafafa;
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
-      --shadow-md: 0 4px 24px -8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onboarding wizard — four directions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* tsu-stack brand: signal green #60C679 on light paper (packages/ui/styles/shadcn.css) */
+        --brand-50: #e9f7ed;
+        --brand-100: #d2f0da;
+        --brand-300: #8fd8a4;
+        --brand-500: #2f9e57;
+        --brand-700: #1e6e3e;
+        --accent-50: #f4f4f5;
+        --accent-500: #262626;
+        --accent-700: #262626;
+        --ink: #262626;
+        --ink-soft: #454545;
+        --ink-mute: #707070;
+        --line: #ececec;
+        --line-soft: #f4f4f4;
+        --paper: #ffffff;
+        --bg: #fafafa;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
+        --shadow-md: 0 4px 24px -8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+      }
 
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
-    body {
-      font-family: 'Geist Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      line-height: 1.5;
-    }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Geist Variable",
+          Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        line-height: 1.5;
+      }
 
-    .page { max-width: 1320px; margin: 0 auto; padding: 72px 48px 160px; }
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 72px 48px 160px;
+      }
 
-    /* ---------- Page header ---------- */
-    .doc-header { border-bottom: 1px solid var(--line); padding-bottom: 40px; margin-bottom: 80px; }
-    .doc-eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--brand-700); background: var(--brand-50);
-      padding: 6px 12px; border-radius: 999px; margin-bottom: 20px;
-    }
-    .doc-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 999px; background: var(--brand-500); }
-    .doc-title {
-      font-size: 48px; line-height: 1.05; font-weight: 600; letter-spacing: -0.02em;
-      margin: 0 0 16px; color: var(--ink);
-    }
-    .doc-subtitle { font-size: 18px; color: var(--ink-soft); max-width: 760px; margin: 0 0 32px; line-height: 1.45; }
-    .doc-meta { display: flex; flex-wrap: wrap; gap: 24px; font-size: 13px; color: var(--ink-mute); }
-    .doc-meta > div { display: flex; gap: 6px; }
-    .doc-meta b { color: var(--ink-soft); font-weight: 600; }
+      /* ---------- Page header ---------- */
+      .doc-header {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 40px;
+        margin-bottom: 80px;
+      }
+      .doc-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--brand-700);
+        background: var(--brand-50);
+        padding: 6px 12px;
+        border-radius: 999px;
+        margin-bottom: 20px;
+      }
+      .doc-eyebrow::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--brand-500);
+      }
+      .doc-title {
+        font-size: 48px;
+        line-height: 1.05;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0 0 16px;
+        color: var(--ink);
+      }
+      .doc-subtitle {
+        font-size: 18px;
+        color: var(--ink-soft);
+        max-width: 760px;
+        margin: 0 0 32px;
+        line-height: 1.45;
+      }
+      .doc-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        font-size: 13px;
+        color: var(--ink-mute);
+      }
+      .doc-meta > div {
+        display: flex;
+        gap: 6px;
+      }
+      .doc-meta b {
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
 
-    /* ---------- Variant section ---------- */
-    .variant { margin-bottom: 96px; }
-    .variant:last-child { margin-bottom: 0; }
-    .variant-head { display: grid; grid-template-columns: 64px 1fr; gap: 20px; align-items: start; margin-bottom: 28px; }
-    .variant-letter {
-      width: 48px; height: 48px; border-radius: 999px; background: var(--ink); color: white;
-      font-weight: 600; font-size: 22px; display: flex; align-items: center; justify-content: center;
-      letter-spacing: -0.02em;
-    }
-    .variant-meta h2 { margin: 4px 0 6px; font-size: 24px; font-weight: 700; letter-spacing: -0.015em; color: var(--ink); }
-    .variant-tradeoff { font-size: 15px; color: var(--ink-soft); margin: 0; max-width: 780px; }
-    .variant-tradeoff b { color: var(--brand-700); font-weight: 600; }
+      /* ---------- Variant section ---------- */
+      .variant {
+        margin-bottom: 96px;
+      }
+      .variant:last-child {
+        margin-bottom: 0;
+      }
+      .variant-head {
+        display: grid;
+        grid-template-columns: 64px 1fr;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 28px;
+      }
+      .variant-letter {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: white;
+        font-weight: 600;
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.02em;
+      }
+      .variant-meta h2 {
+        margin: 4px 0 6px;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        color: var(--ink);
+      }
+      .variant-tradeoff {
+        font-size: 15px;
+        color: var(--ink-soft);
+        margin: 0;
+        max-width: 780px;
+      }
+      .variant-tradeoff b {
+        color: var(--brand-700);
+        font-weight: 600;
+      }
 
-    /* ---------- Preview frame ---------- */
-    .preview-frame {
-      background: var(--paper); border: 1px solid var(--line); border-radius: 16px;
-      box-shadow: var(--shadow-md); overflow: hidden; margin-left: 84px; position: relative;
-    }
-    .preview-frame::before {
-      content: ''; position: absolute; top: 14px; left: 16px; width: 10px; height: 10px;
-      border-radius: 999px; background: #e6e6e6;
-      box-shadow: 18px 0 0 #e6e6e6, 36px 0 0 #e6e6e6; z-index: 2;
-    }
-    .preview-frame-bar {
-      background: #fafafa; border-bottom: 1px solid var(--line-soft);
-      padding: 14px 16px 14px 76px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--ink-mute); font-weight: 600;
-    }
-    .preview { padding: 0; min-height: 200px; }
+      /* ---------- Preview frame ---------- */
+      .preview-frame {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-left: 84px;
+        position: relative;
+      }
+      .preview-frame::before {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #e6e6e6;
+        box-shadow:
+          18px 0 0 #e6e6e6,
+          36px 0 0 #e6e6e6;
+        z-index: 2;
+      }
+      .preview-frame-bar {
+        background: #fafafa;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 14px 16px 14px 76px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        font-weight: 600;
+      }
+      .preview {
+        padding: 0;
+        min-height: 200px;
+      }
 
-    /* ---------- Analysis ---------- */
-    .variant-analysis { margin: 24px 0 0 84px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-    .analysis-block { padding: 18px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
-    .analysis-block h4 {
-      margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--brand-700);
-    }
-    .analysis-block.is-risk h4 { color: #b8341f; }
-    .analysis-block.is-pick h4 { color: var(--ink); }
-    .analysis-block p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+      /* ---------- Analysis ---------- */
+      .variant-analysis {
+        margin: 24px 0 0 84px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 24px;
+      }
+      .analysis-block {
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+      }
+      .analysis-block h4 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-700);
+      }
+      .analysis-block.is-risk h4 {
+        color: #b8341f;
+      }
+      .analysis-block.is-pick h4 {
+        color: var(--ink);
+      }
+      .analysis-block p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
 
-    /* ---------- Decision row ---------- */
-    .decision { margin-top: 120px; padding: 40px 48px; background: var(--ink); color: white; border-radius: 20px; }
-    .decision h3 { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 8px; }
-    .decision-sub { color: rgba(255, 255, 255, 0.65); font-size: 14px; margin: 0 0 28px; }
-    .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-    .decision-cell b {
-      display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--brand-300); margin-bottom: 6px; font-weight: 600;
-    }
-    .decision-cell span { font-size: 15px; color: rgba(255, 255, 255, 0.85); line-height: 1.45; }
+      /* ---------- Decision row ---------- */
+      .decision {
+        margin-top: 120px;
+        padding: 40px 48px;
+        background: var(--ink);
+        color: white;
+        border-radius: 20px;
+      }
+      .decision h3 {
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0 0 8px;
+      }
+      .decision-sub {
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 14px;
+        margin: 0 0 28px;
+      }
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+      .decision-cell b {
+        display: block;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-300);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .decision-cell span {
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.45;
+      }
 
-    @media (max-width: 900px) {
-      .page { padding: 40px 20px 80px; }
-      .doc-title { font-size: 34px; }
-      .variant-head { grid-template-columns: 48px 1fr; gap: 12px; }
-      .preview-frame { margin-left: 0; }
-      .variant-analysis { margin-left: 0; grid-template-columns: 1fr; }
-    }
+      @media (max-width: 900px) {
+        .page {
+          padding: 40px 20px 80px;
+        }
+        .doc-title {
+          font-size: 34px;
+        }
+        .variant-head {
+          grid-template-columns: 48px 1fr;
+          gap: 12px;
+        }
+        .preview-frame {
+          margin-left: 0;
+        }
+        .variant-analysis {
+          margin-left: 0;
+          grid-template-columns: 1fr;
+        }
+      }
 
-    /* ================================================================
+      /* ================================================================
        SHARED MOCK PRIMITIVES (scoped: .m-)
     ================================================================ */
-    .m-flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 16px 20px; border-bottom: 1px solid var(--line-soft); background: #fcfcfc; }
-    .m-step {
-      display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600;
-      color: var(--ink-mute); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px;
-      white-space: nowrap;
-    }
-    .m-step i { width: 16px; height: 16px; border-radius: 999px; background: var(--line); color: var(--ink-soft); font-style: normal; font-size: 9.5px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-    .m-step.is-done { color: var(--brand-700); border-color: var(--brand-100); background: var(--brand-50); }
-    .m-step.is-done i { background: var(--brand-500); color: #fff; }
-    .m-step.is-active { color: var(--ink); border-color: var(--ink); background: var(--ink); }
-    .m-step.is-active i { background: #fff; color: var(--ink); }
-    .m-arrow { color: #c9c9c9; font-size: 12px; }
-    .m-main { display: grid; gap: 0; }
-    .m-pad { padding: 22px 24px; }
-    .m-h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 4px; color: var(--ink); }
-    .m-sub { font-size: 13px; color: var(--ink-mute); margin: 0; }
-    .m-btn {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600;
-      border-radius: 8px; padding: 8px 14px; border: 1px solid transparent; cursor: default;
-    }
-    .m-btn-primary { background: var(--ink); color: #fff; }
-    .m-btn-ghost { background: transparent; color: var(--ink-mute); }
-    .m-btn-outline { background: #fff; color: var(--ink-soft); border-color: var(--line); }
-    .m-btn-brand { background: var(--brand-500); color: #fff; }
-    .m-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line-soft); padding: 12px 20px; background: #fcfcfc; }
-    .m-foot-note { font-size: 12px; color: var(--ink-mute); }
-    .m-check { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid #d4d4d4; background: #fff; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
-    .m-check.is-on { background: var(--brand-500); border-color: var(--brand-500); }
-    .m-check.is-on::after { content: ''; width: 8px; height: 5px; border-left: 1.8px solid #fff; border-bottom: 1.8px solid #fff; transform: rotate(-45deg) translate(0.5px, -1px); }
-    .m-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--ink-soft); background: var(--accent-50); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; }
-    .m-chip b { color: var(--brand-700); }
-  </style>
-</head>
-<body>
-  <main class="page">
+      .m-flow {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line-soft);
+        background: #fcfcfc;
+      }
+      .m-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink-mute);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 11px;
+        white-space: nowrap;
+      }
+      .m-step i {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: var(--line);
+        color: var(--ink-soft);
+        font-style: normal;
+        font-size: 9.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      .m-step.is-done {
+        color: var(--brand-700);
+        border-color: var(--brand-100);
+        background: var(--brand-50);
+      }
+      .m-step.is-done i {
+        background: var(--brand-500);
+        color: #fff;
+      }
+      .m-step.is-active {
+        color: var(--ink);
+        border-color: var(--ink);
+        background: var(--ink);
+      }
+      .m-step.is-active i {
+        background: #fff;
+        color: var(--ink);
+      }
+      .m-arrow {
+        color: #c9c9c9;
+        font-size: 12px;
+      }
+      .m-main {
+        display: grid;
+        gap: 0;
+      }
+      .m-pad {
+        padding: 22px 24px;
+      }
+      .m-h1 {
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin: 0 0 4px;
+        color: var(--ink);
+      }
+      .m-sub {
+        font-size: 13px;
+        color: var(--ink-mute);
+        margin: 0;
+      }
+      .m-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 8px 14px;
+        border: 1px solid transparent;
+        cursor: default;
+      }
+      .m-btn-primary {
+        background: var(--ink);
+        color: #fff;
+      }
+      .m-btn-ghost {
+        background: transparent;
+        color: var(--ink-mute);
+      }
+      .m-btn-outline {
+        background: #fff;
+        color: var(--ink-soft);
+        border-color: var(--line);
+      }
+      .m-btn-brand {
+        background: var(--brand-500);
+        color: #fff;
+      }
+      .m-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid var(--line-soft);
+        padding: 12px 20px;
+        background: #fcfcfc;
+      }
+      .m-foot-note {
+        font-size: 12px;
+        color: var(--ink-mute);
+      }
+      .m-check {
+        width: 15px;
+        height: 15px;
+        border-radius: 4px;
+        border: 1.5px solid #d4d4d4;
+        background: #fff;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .m-check.is-on {
+        background: var(--brand-500);
+        border-color: var(--brand-500);
+      }
+      .m-check.is-on::after {
+        content: "";
+        width: 8px;
+        height: 5px;
+        border-left: 1.8px solid #fff;
+        border-bottom: 1.8px solid #fff;
+        transform: rotate(-45deg) translate(0.5px, -1px);
+      }
+      .m-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        background: var(--accent-50);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 3px 9px;
+      }
+      .m-chip b {
+        color: var(--brand-700);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="doc-header">
+        <div class="doc-eyebrow">Design exploration</div>
+        <h1 class="doc-title">Onboarding wizard — four directions</h1>
+        <p class="doc-subtitle">
+          Step composition and navigation for upload → analyze → review → jobs → connect → done. The
+          Review step render is the proof surface — it carries 60%+ of the flow's weight today. Copy
+          is lifted verbatim from the live flow.
+        </p>
+        <div class="doc-meta">
+          <div><b>Spec</b> apps/web/src/pages/dashboard/onboarding/</div>
+          <div><b>Generated</b> 2026-09-07</div>
+          <div><b>Variants</b> 4</div>
+        </div>
+      </header>
 
-    <header class="doc-header">
-      <div class="doc-eyebrow">Design exploration</div>
-      <h1 class="doc-title">Onboarding wizard — four directions</h1>
-      <p class="doc-subtitle">Step composition and navigation for upload → analyze → review → jobs → connect → done. The Review step render is the proof surface — it carries 60%+ of the flow's weight today. Copy is lifted verbatim from the live flow.</p>
-      <div class="doc-meta">
-        <div><b>Spec</b> apps/web/src/pages/dashboard/onboarding/</div>
-        <div><b>Generated</b> 2026-09-07</div>
-        <div><b>Variants</b> 4</div>
-      </div>
-    </header>
-
-    <!-- ===== VARIANT A ===== -->
-    <section class="variant">
-      <div class="variant-head">
-        <div class="variant-letter">A</div>
-        <div class="variant-meta">
-          <h2>Focus rail — sharpen every step in place</h2>
-          <p class="variant-tradeoff">
-            <b>Optimizes for</b> predictability: same six steps, same rail, each screen locally upgraded (step-scoped hints, review gets a sticky selection summary + inline edit). <b>Tradeoff</b> the heavy Review step keeps its tab-and-accordion shape — the 60% problem is improved, not restructured.
-          </p>
-        </div>
-      </div>
-      <div class="preview-frame">
-        <div class="preview-frame-bar">Variant A · flow + review render</div>
-        <div class="preview">
-          <div class="m-flow">
-            <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
-            <span class="m-step is-active"><i>2</i>Review the draft</span><span class="m-arrow">→</span>
-            <span class="m-step"><i>3</i>Job filters</span><span class="m-arrow">→</span>
-            <span class="m-step"><i>4</i>Connect accounts</span><span class="m-arrow">→</span>
-            <span class="m-step"><i>5</i>You're ready</span>
-          </div>
-          <div class="m-main">
-            <div class="m-pad" style="border-bottom: 1px solid var(--line-soft);">
-              <h3 class="m-h1">Review the draft</h3>
-              <p class="m-sub">Uncheck anything you don't want. Expand a row only when you need to edit.</p>
-            </div>
-            <div class="m-pad" style="padding-top: 14px;">
-              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
-                <span class="m-chip">Profile · complete</span>
-                <span class="m-chip">Experiences <b>3/4</b></span>
-                <span class="m-chip">Projects <b>2/3</b></span>
-                <span class="m-chip">Stacks <b>7/9</b></span>
-              </div>
-              <div style="border: 1px solid var(--line); border-radius: 10px; overflow: hidden;">
-                <div style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--line-soft);">
-                  <span class="m-check is-on"></span>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 13px; font-weight: 600;">Senior Frontend Engineer · Vodafone</div>
-                    <div style="font-size: 11.5px; color: var(--ink-mute);">2022-03 – present · 4 bullet lines</div>
-                  </div>
-                  <span style="font-size: 11px; color: var(--ink-mute);">Edit</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--line-soft);">
-                  <span class="m-check is-on"></span>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 13px; font-weight: 600;">Frontend Engineer · Instabug</div>
-                    <div style="font-size: 11.5px; color: var(--ink-mute);">2020-01 – 2022-02 · 3 bullet lines</div>
-                  </div>
-                  <span style="font-size: 11px; color: var(--ink-mute);">Edit</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px; padding: 11px 14px;">
-                  <span class="m-check"></span>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 13px; font-weight: 600; color: var(--ink-mute); text-decoration: line-through;">Freelance · 2019</div>
-                    <div style="font-size: 11.5px; color: var(--ink-mute);">Deselected — excluded from portfolio</div>
-                  </div>
-                  <span style="font-size: 11px; color: var(--ink-mute);">Edit</span>
-                </div>
-              </div>
-            </div>
-            <div class="m-foot">
-              <span class="m-foot-note">12 of 14 rows selected · Source · salah-cv-2026.pdf</span>
-              <div style="display: flex; gap: 8px;">
-                <span class="m-btn m-btn-ghost">Discard</span>
-                <span class="m-btn m-btn-primary">Save and continue</span>
-              </div>
-            </div>
+      <!-- ===== VARIANT A ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">A</div>
+          <div class="variant-meta">
+            <h2>Focus rail — sharpen every step in place</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> predictability: same six steps, same rail, each screen locally
+              upgraded (step-scoped hints, review gets a sticky selection summary + inline edit).
+              <b>Tradeoff</b> the heavy Review step keeps its tab-and-accordion shape — the 60%
+              problem is improved, not restructured.
+            </p>
           </div>
         </div>
-      </div>
-      <div class="variant-analysis">
-        <div class="analysis-block">
-          <h4>What works</h4>
-          <p>Ships as incremental polish — chips summarizing counts, sticky selection footer, per-row inline edit. Zero new mental model; every existing test and interaction survives.</p>
-        </div>
-        <div class="analysis-block is-risk">
-          <h4>What risks</h4>
-          <p>Doesn't change the fundamental cost of Review: long resumes still mean many rows in one scroll, and jobs/connect stay two separate stops after it.</p>
-        </div>
-        <div class="analysis-block is-pick">
-          <h4>Pick this if</h4>
-          <p>You want the highest ratio of UX gain to build cost this quarter, and Review pain is annoyance — not churn.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== VARIANT B ===== -->
-    <section class="variant">
-      <div class="variant-head">
-        <div class="variant-letter">B</div>
-        <div class="variant-meta">
-          <h2>Review cockpit — entity rail + inspector</h2>
-          <p class="variant-tradeoff">
-            <b>Optimizes for</b> control on the heaviest step: a persistent entity rail (counts, select-all, jump) beside a scrollable inspector, and jobs/connect become inline continuations of Review instead of separate pages. <b>Tradeoff</b> biggest build of the four; light resumes get a cockpit that's heavier than their cargo.
-          </p>
-        </div>
-      </div>
-      <div class="preview-frame">
-        <div class="preview-frame-bar">Variant B · review cockpit render</div>
-        <div class="preview">
-          <div class="m-flow">
-            <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
-            <span class="m-step is-active"><i>2</i>Review &amp; wire up</span><span class="m-arrow">→</span>
-            <span class="m-step"><i>3</i>You're ready</span>
-          </div>
-          <div class="m-main" style="grid-template-columns: 236px 1fr; min-height: 420px;">
-            <div style="border-right: 1px solid var(--line-soft); background: #fcfcfc; padding: 16px 14px; display: flex; flex-direction: column; gap: 6px;">
-              <div style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); padding: 0 6px 6px;">Draft</div>
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; border-radius: 8px; background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 600;">
-                Experiences <span style="background: rgba(255,255,255,.18); border-radius: 999px; padding: 1px 8px; font-size: 11px;">3/4</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft);">
-                Projects <span style="background: var(--line); border-radius: 999px; padding: 1px 8px; font-size: 11px; color: var(--ink-soft);">2/3</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft);">
-                Stacks <span style="background: var(--line); border-radius: 999px; padding: 1px 8px; font-size: 11px; color: var(--ink-soft);">7/9</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft);">
-                Profile <span style="color: var(--brand-700); font-size: 11px;">✓ complete</span>
-              </div>
-              <div style="margin-top: auto; padding: 10px 10px 0; border-top: 1px dashed var(--line);">
-                <div style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); padding-bottom: 8px;">Next up</div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-soft); padding: 6px 0;"><span class="m-check"></span> Job filters</div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-soft); padding: 6px 0;"><span class="m-check"></span> Connect Gmail · GitHub</div>
-              </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant A · flow + review render</div>
+          <div class="preview">
+            <div class="m-flow">
+              <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
+              <span class="m-step is-active"><i>2</i>Review the draft</span
+              ><span class="m-arrow">→</span> <span class="m-step"><i>3</i>Job filters</span
+              ><span class="m-arrow">→</span> <span class="m-step"><i>4</i>Connect accounts</span
+              ><span class="m-arrow">→</span>
+              <span class="m-step"><i>5</i>You're ready</span>
             </div>
-            <div>
-              <div class="m-pad" style="padding-bottom: 12px;">
-                <h3 class="m-h1">Experiences</h3>
-                <p class="m-sub">Uncheck anything you don't want. Expand a row only when you need to edit.</p>
+            <div class="m-main">
+              <div class="m-pad" style="border-bottom: 1px solid var(--line-soft)">
+                <h3 class="m-h1">Review the draft</h3>
+                <p class="m-sub">
+                  Uncheck anything you don't want. Expand a row only when you need to edit.
+                </p>
               </div>
-              <div style="padding: 0 24px 16px;">
-                <div style="border: 1px solid var(--line); border-radius: 10px; overflow: hidden;">
-                  <div style="display: grid; grid-template-columns: 1fr 220px; border-bottom: 1px solid var(--line-soft);">
-                    <div style="padding: 12px 14px; border-right: 1px solid var(--line-soft);">
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="m-check is-on"></span>
-                        <div>
-                          <div style="font-size: 13px; font-weight: 600;">Senior Frontend Engineer · Vodafone</div>
-                          <div style="font-size: 11.5px; color: var(--ink-mute);">2022-03 – present</div>
-                        </div>
+              <div class="m-pad" style="padding-top: 14px">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px">
+                  <span class="m-chip">Profile · complete</span>
+                  <span class="m-chip">Experiences <b>3/4</b></span>
+                  <span class="m-chip">Projects <b>2/3</b></span>
+                  <span class="m-chip">Stacks <b>7/9</b></span>
+                </div>
+                <div style="border: 1px solid var(--line); border-radius: 10px; overflow: hidden">
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      padding: 11px 14px;
+                      border-bottom: 1px solid var(--line-soft);
+                    "
+                  >
+                    <span class="m-check is-on"></span>
+                    <div style="flex: 1; min-width: 0">
+                      <div style="font-size: 13px; font-weight: 600">
+                        Senior Frontend Engineer · Vodafone
+                      </div>
+                      <div style="font-size: 11.5px; color: var(--ink-mute)">
+                        2022-03 – present · 4 bullet lines
                       </div>
                     </div>
-                    <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: #fdfdfd;">
-                      <div style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-mute);">Inspector · edit</div>
-                      <div style="font-size: 12px; color: var(--ink-soft);">Title · Organization · Dates · Bullets fields, editable here — no accordion, no context switch.</div>
-                    </div>
+                    <span style="font-size: 11px; color: var(--ink-mute)">Edit</span>
                   </div>
-                  <div style="display: grid; grid-template-columns: 1fr 220px;">
-                    <div style="padding: 12px 14px;">
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="m-check is-on"></span>
-                        <div>
-                          <div style="font-size: 13px; font-weight: 600;">Frontend Engineer · Instabug</div>
-                          <div style="font-size: 11.5px; color: var(--ink-mute);">2020-01 – 2022-02</div>
-                        </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      padding: 11px 14px;
+                      border-bottom: 1px solid var(--line-soft);
+                    "
+                  >
+                    <span class="m-check is-on"></span>
+                    <div style="flex: 1; min-width: 0">
+                      <div style="font-size: 13px; font-weight: 600">
+                        Frontend Engineer · Instabug
+                      </div>
+                      <div style="font-size: 11.5px; color: var(--ink-mute)">
+                        2020-01 – 2022-02 · 3 bullet lines
                       </div>
                     </div>
-                    <div style="padding: 12px 14px; background: #fdfdfd;"></div>
+                    <span style="font-size: 11px; color: var(--ink-mute)">Edit</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 11px 14px">
+                    <span class="m-check"></span>
+                    <div style="flex: 1; min-width: 0">
+                      <div
+                        style="
+                          font-size: 13px;
+                          font-weight: 600;
+                          color: var(--ink-mute);
+                          text-decoration: line-through;
+                        "
+                      >
+                        Freelance · 2019
+                      </div>
+                      <div style="font-size: 11.5px; color: var(--ink-mute)">
+                        Deselected — excluded from portfolio
+                      </div>
+                    </div>
+                    <span style="font-size: 11px; color: var(--ink-mute)">Edit</span>
                   </div>
                 </div>
               </div>
-              <div class="m-foot" style="border-top: 1px solid var(--line-soft);">
-                <span class="m-foot-note">3 steps left — job filters and accounts move into "Next up"</span>
-                <div style="display: flex; gap: 8px;">
-                  <span class="m-btn m-btn-outline">Job filters</span>
+              <div class="m-foot">
+                <span class="m-foot-note">12 of 14 rows selected · Source · salah-cv-2026.pdf</span>
+                <div style="display: flex; gap: 8px">
+                  <span class="m-btn m-btn-ghost">Discard</span>
                   <span class="m-btn m-btn-primary">Save and continue</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="variant-analysis">
-        <div class="analysis-block">
-          <h4>What works</h4>
-          <p>The rail makes draft size legible at a glance (counts, done states); the inspector kills the expand-edit-collapse dance; collapsing jobs/connect into "Next up" removes two page loads.</p>
-        </div>
-        <div class="analysis-block is-risk">
-          <h4>What risks</h4>
-          <p>Heaviest build: two-pane responsive behavior (mobile falls back to A's shape), and a cockpit layout overkill for a 2-experience resume needs a graceful empty-cargo mode.</p>
-        </div>
-        <div class="analysis-block is-pick">
-          <h4>Pick this if</h4>
-          <p>Your target users import dense senior CVs and churn at Review today — control and density are worth the build.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== VARIANT C ===== -->
-    <section class="variant">
-      <div class="variant-head">
-        <div class="variant-letter">C</div>
-        <div class="variant-meta">
-          <h2>Document-first — watch your resume build itself</h2>
-          <p class="variant-tradeoff">
-            <b>Optimizes for</b> motivation: a live resume document (the actual artifact they came for) fills in with green checkmarks as the draft is confirmed, while jobs/connect compress into one "wire up" stop. <b>Tradeoff</b> the preview must stay honest to the real RenderCV output, and merging two steps risks users skimming filters.
-          </p>
-        </div>
-      </div>
-      <div class="preview-frame">
-        <div class="preview-frame-bar">Variant C · document build render</div>
-        <div class="preview">
-          <div class="m-flow">
-            <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
-            <span class="m-step is-done"><i>✓</i>Analyze</span><span class="m-arrow">→</span>
-            <span class="m-step is-active"><i>2</i>Confirm draft</span><span class="m-arrow">→</span>
-            <span class="m-step"><i>3</i>Wire up</span><span class="m-arrow">→</span>
-            <span class="m-step"><i>4</i>You're ready</span>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Ships as incremental polish — chips summarizing counts, sticky selection footer,
+              per-row inline edit. Zero new mental model; every existing test and interaction
+              survives.
+            </p>
           </div>
-          <div class="m-main" style="grid-template-columns: 300px 1fr; min-height: 420px;">
-            <div style="border-right: 1px solid var(--line-soft); background: #fcfcfc; padding: 18px 20px;">
-              <div style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 10px;">Your resume · live</div>
-              <div style="background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px 14px; box-shadow: var(--shadow-sm);">
-                <div style="font-size: 14px; font-weight: 700; letter-spacing: -0.01em;">Salah Hassan</div>
-                <div style="font-size: 10.5px; color: var(--ink-mute); margin-bottom: 10px;">Senior Frontend Engineer</div>
-                <div style="font-size: 11px; color: var(--brand-700); display: flex; align-items: center; gap: 6px; padding: 3px 0;"><span class="m-check is-on" style="width: 12px; height: 12px;"></span> Summary</div>
-                <div style="font-size: 11px; color: var(--brand-700); display: flex; align-items: center; gap: 6px; padding: 3px 0;"><span class="m-check is-on" style="width: 12px; height: 12px;"></span> Experience · 3 roles</div>
-                <div style="font-size: 11px; color: var(--ink-mute); display: flex; align-items: center; gap: 6px; padding: 3px 0;"><span class="m-check" style="width: 12px; height: 12px;"></span> Education</div>
-                <div style="font-size: 11px; color: var(--brand-700); display: flex; align-items: center; gap: 6px; padding: 3px 0;"><span class="m-check is-on" style="width: 12px; height: 12px;"></span> Skills · 7 groups</div>
-                <div style="margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 8px;">
-                  <div style="height: 4px; border-radius: 999px; background: var(--line); overflow: hidden;"><div style="width: 68%; height: 100%; background: var(--brand-500);"></div></div>
-                  <div style="font-size: 10px; color: var(--ink-mute); margin-top: 5px;">68% complete</div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              Doesn't change the fundamental cost of Review: long resumes still mean many rows in
+              one scroll, and jobs/connect stay two separate stops after it.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              You want the highest ratio of UX gain to build cost this quarter, and Review pain is
+              annoyance — not churn.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VARIANT B ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">B</div>
+          <div class="variant-meta">
+            <h2>Review cockpit — entity rail + inspector</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> control on the heaviest step: a persistent entity rail (counts,
+              select-all, jump) beside a scrollable inspector, and jobs/connect become inline
+              continuations of Review instead of separate pages. <b>Tradeoff</b> biggest build of
+              the four; light resumes get a cockpit that's heavier than their cargo.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant B · review cockpit render</div>
+          <div class="preview">
+            <div class="m-flow">
+              <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
+              <span class="m-step is-active"><i>2</i>Review &amp; wire up</span
+              ><span class="m-arrow">→</span>
+              <span class="m-step"><i>3</i>You're ready</span>
+            </div>
+            <div class="m-main" style="grid-template-columns: 236px 1fr; min-height: 420px">
+              <div
+                style="
+                  border-right: 1px solid var(--line-soft);
+                  background: #fcfcfc;
+                  padding: 16px 14px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 10.5px;
+                    font-weight: 700;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: var(--ink-mute);
+                    padding: 0 6px 6px;
+                  "
+                >
+                  Draft
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 9px 10px;
+                    border-radius: 8px;
+                    background: var(--ink);
+                    color: #fff;
+                    font-size: 12.5px;
+                    font-weight: 600;
+                  "
+                >
+                  Experiences
+                  <span
+                    style="
+                      background: rgba(255, 255, 255, 0.18);
+                      border-radius: 999px;
+                      padding: 1px 8px;
+                      font-size: 11px;
+                    "
+                    >3/4</span
+                  >
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 9px 10px;
+                    border-radius: 8px;
+                    font-size: 12.5px;
+                    font-weight: 600;
+                    color: var(--ink-soft);
+                  "
+                >
+                  Projects
+                  <span
+                    style="
+                      background: var(--line);
+                      border-radius: 999px;
+                      padding: 1px 8px;
+                      font-size: 11px;
+                      color: var(--ink-soft);
+                    "
+                    >2/3</span
+                  >
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 9px 10px;
+                    border-radius: 8px;
+                    font-size: 12.5px;
+                    font-weight: 600;
+                    color: var(--ink-soft);
+                  "
+                >
+                  Stacks
+                  <span
+                    style="
+                      background: var(--line);
+                      border-radius: 999px;
+                      padding: 1px 8px;
+                      font-size: 11px;
+                      color: var(--ink-soft);
+                    "
+                    >7/9</span
+                  >
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 9px 10px;
+                    border-radius: 8px;
+                    font-size: 12.5px;
+                    font-weight: 600;
+                    color: var(--ink-soft);
+                  "
+                >
+                  Profile <span style="color: var(--brand-700); font-size: 11px">✓ complete</span>
+                </div>
+                <div
+                  style="margin-top: auto; padding: 10px 10px 0; border-top: 1px dashed var(--line)"
+                >
+                  <div
+                    style="
+                      font-size: 10.5px;
+                      font-weight: 700;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--ink-mute);
+                      padding-bottom: 8px;
+                    "
+                  >
+                    Next up
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      font-size: 12.5px;
+                      color: var(--ink-soft);
+                      padding: 6px 0;
+                    "
+                  >
+                    <span class="m-check"></span> Job filters
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      font-size: 12.5px;
+                      color: var(--ink-soft);
+                      padding: 6px 0;
+                    "
+                  >
+                    <span class="m-check"></span> Connect Gmail · GitHub
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="m-pad" style="padding-bottom: 12px">
+                  <h3 class="m-h1">Experiences</h3>
+                  <p class="m-sub">
+                    Uncheck anything you don't want. Expand a row only when you need to edit.
+                  </p>
+                </div>
+                <div style="padding: 0 24px 16px">
+                  <div style="border: 1px solid var(--line); border-radius: 10px; overflow: hidden">
+                    <div
+                      style="
+                        display: grid;
+                        grid-template-columns: 1fr 220px;
+                        border-bottom: 1px solid var(--line-soft);
+                      "
+                    >
+                      <div style="padding: 12px 14px; border-right: 1px solid var(--line-soft)">
+                        <div style="display: flex; align-items: center; gap: 10px">
+                          <span class="m-check is-on"></span>
+                          <div>
+                            <div style="font-size: 13px; font-weight: 600">
+                              Senior Frontend Engineer · Vodafone
+                            </div>
+                            <div style="font-size: 11.5px; color: var(--ink-mute)">
+                              2022-03 – present
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        style="
+                          padding: 12px 14px;
+                          display: flex;
+                          flex-direction: column;
+                          gap: 8px;
+                          background: #fdfdfd;
+                        "
+                      >
+                        <div
+                          style="
+                            font-size: 10.5px;
+                            font-weight: 700;
+                            letter-spacing: 0.07em;
+                            text-transform: uppercase;
+                            color: var(--ink-mute);
+                          "
+                        >
+                          Inspector · edit
+                        </div>
+                        <div style="font-size: 12px; color: var(--ink-soft)">
+                          Title · Organization · Dates · Bullets fields, editable here — no
+                          accordion, no context switch.
+                        </div>
+                      </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 220px">
+                      <div style="padding: 12px 14px">
+                        <div style="display: flex; align-items: center; gap: 10px">
+                          <span class="m-check is-on"></span>
+                          <div>
+                            <div style="font-size: 13px; font-weight: 600">
+                              Frontend Engineer · Instabug
+                            </div>
+                            <div style="font-size: 11.5px; color: var(--ink-mute)">
+                              2020-01 – 2022-02
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div style="padding: 12px 14px; background: #fdfdfd"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="m-foot" style="border-top: 1px solid var(--line-soft)">
+                  <span class="m-foot-note"
+                    >3 steps left — job filters and accounts move into "Next up"</span
+                  >
+                  <div style="display: flex; gap: 8px">
+                    <span class="m-btn m-btn-outline">Job filters</span>
+                    <span class="m-btn m-btn-primary">Save and continue</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div>
-              <div class="m-pad" style="padding-bottom: 12px;">
-                <h3 class="m-h1">Confirm the draft</h3>
-                <p class="m-sub">Uncheck anything you don't want — the document on the left updates as you go.</p>
-              </div>
-              <div style="padding: 0 24px 16px; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px;">
-                  <span class="m-check is-on"></span>
-                  <div style="flex: 1;">
-                    <div style="font-size: 13px; font-weight: 600;">Senior Frontend Engineer · Vodafone</div>
-                    <div style="font-size: 11.5px; color: var(--ink-mute);">2022-03 – present</div>
-                  </div>
-                  <span class="m-btn m-btn-ghost" style="padding: 5px 10px; font-size: 11.5px;">Edit</span>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              The rail makes draft size legible at a glance (counts, done states); the inspector
+              kills the expand-edit-collapse dance; collapsing jobs/connect into "Next up" removes
+              two page loads.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              Heaviest build: two-pane responsive behavior (mobile falls back to A's shape), and a
+              cockpit layout overkill for a 2-experience resume needs a graceful empty-cargo mode.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              Your target users import dense senior CVs and churn at Review today — control and
+              density are worth the build.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VARIANT C ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">C</div>
+          <div class="variant-meta">
+            <h2>Document-first — watch your resume build itself</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> motivation: a live resume document (the actual artifact they came
+              for) fills in with green checkmarks as the draft is confirmed, while jobs/connect
+              compress into one "wire up" stop. <b>Tradeoff</b> the preview must stay honest to the
+              real RenderCV output, and merging two steps risks users skimming filters.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant C · document build render</div>
+          <div class="preview">
+            <div class="m-flow">
+              <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
+              <span class="m-step is-done"><i>✓</i>Analyze</span><span class="m-arrow">→</span>
+              <span class="m-step is-active"><i>2</i>Confirm draft</span
+              ><span class="m-arrow">→</span> <span class="m-step"><i>3</i>Wire up</span
+              ><span class="m-arrow">→</span>
+              <span class="m-step"><i>4</i>You're ready</span>
+            </div>
+            <div class="m-main" style="grid-template-columns: 300px 1fr; min-height: 420px">
+              <div
+                style="
+                  border-right: 1px solid var(--line-soft);
+                  background: #fcfcfc;
+                  padding: 18px 20px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 10.5px;
+                    font-weight: 700;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: var(--ink-mute);
+                    margin-bottom: 10px;
+                  "
+                >
+                  Your resume · live
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px;">
-                  <span class="m-check is-on"></span>
-                  <div style="flex: 1;">
-                    <div style="font-size: 13px; font-weight: 600;">Frontend Engineer · Instabug</div>
-                    <div style="font-size: 11.5px; color: var(--ink-mute);">2020-01 – 2022-02</div>
+                <div
+                  style="
+                    background: #fff;
+                    border: 1px solid var(--line);
+                    border-radius: 8px;
+                    padding: 16px 14px;
+                    box-shadow: var(--shadow-sm);
+                  "
+                >
+                  <div style="font-size: 14px; font-weight: 700; letter-spacing: -0.01em">
+                    Salah Hassan
                   </div>
-                  <span class="m-btn m-btn-ghost" style="padding: 5px 10px; font-size: 11.5px;">Edit</span>
+                  <div style="font-size: 10.5px; color: var(--ink-mute); margin-bottom: 10px">
+                    Senior Frontend Engineer
+                  </div>
+                  <div
+                    style="
+                      font-size: 11px;
+                      color: var(--brand-700);
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      padding: 3px 0;
+                    "
+                  >
+                    <span class="m-check is-on" style="width: 12px; height: 12px"></span> Summary
+                  </div>
+                  <div
+                    style="
+                      font-size: 11px;
+                      color: var(--brand-700);
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      padding: 3px 0;
+                    "
+                  >
+                    <span class="m-check is-on" style="width: 12px; height: 12px"></span> Experience
+                    · 3 roles
+                  </div>
+                  <div
+                    style="
+                      font-size: 11px;
+                      color: var(--ink-mute);
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      padding: 3px 0;
+                    "
+                  >
+                    <span class="m-check" style="width: 12px; height: 12px"></span> Education
+                  </div>
+                  <div
+                    style="
+                      font-size: 11px;
+                      color: var(--brand-700);
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      padding: 3px 0;
+                    "
+                  >
+                    <span class="m-check is-on" style="width: 12px; height: 12px"></span> Skills · 7
+                    groups
+                  </div>
+                  <div
+                    style="
+                      margin-top: 10px;
+                      border-top: 1px solid var(--line-soft);
+                      padding-top: 8px;
+                    "
+                  >
+                    <div
+                      style="
+                        height: 4px;
+                        border-radius: 999px;
+                        background: var(--line);
+                        overflow: hidden;
+                      "
+                    >
+                      <div style="width: 68%; height: 100%; background: var(--brand-500)"></div>
+                    </div>
+                    <div style="font-size: 10px; color: var(--ink-mute); margin-top: 5px">
+                      68% complete
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="m-pad" style="padding-bottom: 12px">
+                  <h3 class="m-h1">Confirm the draft</h3>
+                  <p class="m-sub">
+                    Uncheck anything you don't want — the document on the left updates as you go.
+                  </p>
+                </div>
+                <div style="padding: 0 24px 16px; display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      border: 1px solid var(--line);
+                      border-radius: 10px;
+                      padding: 11px 14px;
+                    "
+                  >
+                    <span class="m-check is-on"></span>
+                    <div style="flex: 1">
+                      <div style="font-size: 13px; font-weight: 600">
+                        Senior Frontend Engineer · Vodafone
+                      </div>
+                      <div style="font-size: 11.5px; color: var(--ink-mute)">2022-03 – present</div>
+                    </div>
+                    <span class="m-btn m-btn-ghost" style="padding: 5px 10px; font-size: 11.5px"
+                      >Edit</span
+                    >
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      border: 1px solid var(--line);
+                      border-radius: 10px;
+                      padding: 11px 14px;
+                    "
+                  >
+                    <span class="m-check is-on"></span>
+                    <div style="flex: 1">
+                      <div style="font-size: 13px; font-weight: 600">
+                        Frontend Engineer · Instabug
+                      </div>
+                      <div style="font-size: 11.5px; color: var(--ink-mute)">2020-01 – 2022-02</div>
+                    </div>
+                    <span class="m-btn m-btn-ghost" style="padding: 5px 10px; font-size: 11.5px"
+                      >Edit</span
+                    >
+                  </div>
+                </div>
+                <div class="m-foot">
+                  <span class="m-foot-note"
+                    >Next stop: Wire up — job filters + Gmail/GitHub in one place</span
+                  >
+                  <span class="m-btn m-btn-primary">Save and continue</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              The artifact is the reward: every checkbox visibly "writes" their resume, which is
+              exactly the motivation gap between Review-today and finishing. Completion % gives an
+              honest progress signal.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              The preview must track the real RenderCV renderer or it becomes a lie users remember.
+              Education section shown here is aspirational until the education/certifications plan
+              ships. Merged "Wire up" step can bury job-filter nuance.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              Drop-off happens between Analyze and Done — you need the flow itself to sell
+              completion, and you can invest in preview fidelity.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VARIANT D ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">D</div>
+          <div class="variant-meta">
+            <h2>Zero-friction — analyze on upload, one required stop</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> time-to-value: upload fires analysis immediately, Review is the
+              only stop that blocks, and job filters + account wiring become an optional checklist
+              on the Done screen. <b>Tradeoff</b> least guidance — users who need the filter step
+              explained may skip it and get noisy New jobs.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant D · done-with-checklist render</div>
+          <div class="preview">
+            <div class="m-flow">
+              <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
+              <span class="m-step is-done"><i>✓</i>Review</span><span class="m-arrow">→</span>
+              <span class="m-step is-active"><i>3</i>You're ready</span>
+            </div>
+            <div class="m-main">
+              <div class="m-pad" style="border-bottom: 1px solid var(--line-soft)">
+                <h3 class="m-h1">You're ready</h3>
+                <p class="m-sub">
+                  Refine anything later from the dashboard — nothing here is locked in.
+                </p>
+              </div>
+              <div class="m-pad" style="padding-top: 14px">
+                <div
+                  style="
+                    border: 1px solid var(--brand-100);
+                    background: var(--brand-50);
+                    border-radius: 10px;
+                    padding: 12px 16px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 14px;
+                  "
+                >
+                  <span class="m-check is-on"></span>
+                  <div style="font-size: 12.5px; color: var(--brand-700)">
+                    <b>12 items imported</b> — 3 experiences · 2 projects · 7 skills saved to your
+                    dashboard
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-size: 10.5px;
+                    font-weight: 700;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: var(--ink-mute);
+                    margin-bottom: 8px;
+                  "
+                >
+                  Finish wiring · optional
+                </div>
+                <div style="display: grid; gap: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      border: 1px solid var(--line);
+                      border-radius: 10px;
+                      padding: 11px 14px;
+                    "
+                  >
+                    <span class="m-check"></span>
+                    <div style="flex: 1">
+                      <div style="font-size: 13px; font-weight: 600">Set job filters</div>
+                      <div style="font-size: 11.5px; color: var(--ink-mute)">
+                        Decides which email listings become New jobs. Empty filters accept
+                        everything.
+                      </div>
+                    </div>
+                    <span class="m-btn m-btn-outline" style="padding: 5px 10px; font-size: 11.5px"
+                      >Set up · 2 min</span
+                    >
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      border: 1px solid var(--line);
+                      border-radius: 10px;
+                      padding: 11px 14px;
+                    "
+                  >
+                    <span class="m-check"></span>
+                    <div style="flex: 1">
+                      <div style="font-size: 13px; font-weight: 600">Connect Gmail · GitHub</div>
+                      <div style="font-size: 11.5px; color: var(--ink-mute)">
+                        Gmail fills Career Inbox. GitHub detects stacks from your repos.
+                      </div>
+                    </div>
+                    <span class="m-btn m-btn-outline" style="padding: 5px 10px; font-size: 11.5px"
+                      >Connect · 1 min</span
+                    >
+                  </div>
                 </div>
               </div>
               <div class="m-foot">
-                <span class="m-foot-note">Next stop: Wire up — job filters + Gmail/GitHub in one place</span>
-                <span class="m-btn m-btn-primary">Save and continue</span>
+                <span class="m-foot-note">Both can wait — the dashboard works without them</span>
+                <span class="m-btn m-btn-primary">Go to dashboard</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="variant-analysis">
-        <div class="analysis-block">
-          <h4>What works</h4>
-          <p>The artifact is the reward: every checkbox visibly "writes" their resume, which is exactly the motivation gap between Review-today and finishing. Completion % gives an honest progress signal.</p>
-        </div>
-        <div class="analysis-block is-risk">
-          <h4>What risks</h4>
-          <p>The preview must track the real RenderCV renderer or it becomes a lie users remember. Education section shown here is aspirational until the education/certifications plan ships. Merged "Wire up" step can bury job-filter nuance.</p>
-        </div>
-        <div class="analysis-block is-pick">
-          <h4>Pick this if</h4>
-          <p>Drop-off happens between Analyze and Done — you need the flow itself to sell completion, and you can invest in preview fidelity.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== VARIANT D ===== -->
-    <section class="variant">
-      <div class="variant-head">
-        <div class="variant-letter">D</div>
-        <div class="variant-meta">
-          <h2>Zero-friction — analyze on upload, one required stop</h2>
-          <p class="variant-tradeoff">
-            <b>Optimizes for</b> time-to-value: upload fires analysis immediately, Review is the only stop that blocks, and job filters + account wiring become an optional checklist on the Done screen. <b>Tradeoff</b> least guidance — users who need the filter step explained may skip it and get noisy New jobs.
-          </p>
-        </div>
-      </div>
-      <div class="preview-frame">
-        <div class="preview-frame-bar">Variant D · done-with-checklist render</div>
-        <div class="preview">
-          <div class="m-flow">
-            <span class="m-step is-done"><i>✓</i>Resume</span><span class="m-arrow">→</span>
-            <span class="m-step is-done"><i>✓</i>Review</span><span class="m-arrow">→</span>
-            <span class="m-step is-active"><i>3</i>You're ready</span>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Cuts the wizard from 5 stops to 2. The analyze-on-upload behavior already exists
+              (detached job survives leaving the page), so this mostly re-sequences UI, not infra.
+            </p>
           </div>
-          <div class="m-main">
-            <div class="m-pad" style="border-bottom: 1px solid var(--line-soft);">
-              <h3 class="m-h1">You're ready</h3>
-              <p class="m-sub">Refine anything later from the dashboard — nothing here is locked in.</p>
-            </div>
-            <div class="m-pad" style="padding-top: 14px;">
-              <div style="border: 1px solid var(--brand-100); background: var(--brand-50); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                <span class="m-check is-on"></span>
-                <div style="font-size: 12.5px; color: var(--brand-700);"><b>12 items imported</b> — 3 experiences · 2 projects · 7 skills saved to your dashboard</div>
-              </div>
-              <div style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 8px;">Finish wiring · optional</div>
-              <div style="display: grid; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px;">
-                  <span class="m-check"></span>
-                  <div style="flex: 1;">
-                    <div style="font-size: 13px; font-weight: 600;">Set job filters</div>
-                    <div style="font-size: 11.5px; color: var(--ink-mute);">Decides which email listings become New jobs. Empty filters accept everything.</div>
-                  </div>
-                  <span class="m-btn m-btn-outline" style="padding: 5px 10px; font-size: 11.5px;">Set up · 2 min</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px;">
-                  <span class="m-check"></span>
-                  <div style="flex: 1;">
-                    <div style="font-size: 13px; font-weight: 600;">Connect Gmail · GitHub</div>
-                    <div style="font-size: 11.5px; color: var(--ink-mute);">Gmail fills Career Inbox. GitHub detects stacks from your repos.</div>
-                  </div>
-                  <span class="m-btn m-btn-outline" style="padding: 5px 10px; font-size: 11.5px;">Connect · 1 min</span>
-                </div>
-              </div>
-            </div>
-            <div class="m-foot">
-              <span class="m-foot-note">Both can wait — the dashboard works without them</span>
-              <span class="m-btn m-btn-primary">Go to dashboard</span>
-            </div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              Job filters silently drive New jobs quality — making them optional-on-done risks
+              empty-signal inboxes that look broken. Review-as-only-stop inherits all of Review's
+              density with no jobs/connect breathing room.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              Analytics show most drop-off before Review finishes, and you'd rather ship users to a
+              working dashboard than a finished wizard.
+            </p>
           </div>
         </div>
-      </div>
-      <div class="variant-analysis">
-        <div class="analysis-block">
-          <h4>What works</h4>
-          <p>Cuts the wizard from 5 stops to 2. The analyze-on-upload behavior already exists (detached job survives leaving the page), so this mostly re-sequences UI, not infra.</p>
-        </div>
-        <div class="analysis-block is-risk">
-          <h4>What risks</h4>
-          <p>Job filters silently drive New jobs quality — making them optional-on-done risks empty-signal inboxes that look broken. Review-as-only-stop inherits all of Review's density with no jobs/connect breathing room.</p>
-        </div>
-        <div class="analysis-block is-pick">
-          <h4>Pick this if</h4>
-          <p>Analytics show most drop-off before Review finishes, and you'd rather ship users to a working dashboard than a finished wizard.</p>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ===== Decision row ===== -->
-    <section class="decision">
-      <h3>How to pick a direction</h3>
-      <p class="decision-sub">A one-line rubric for choosing one of these to take forward.</p>
-      <div class="decision-grid">
-        <div class="decision-cell"><b>If you want →</b><span>cheapest meaningful upgrade to Review, zero flow change — pick A.</span></div>
-        <div class="decision-cell"><b>If you want →</b><span>the heaviest step to finally feel controllable and fewer page loads — pick B.</span></div>
-        <div class="decision-cell"><b>If you want →</b><span>completion rate moved by motivation, and can invest in preview fidelity — pick C.</span></div>
-        <div class="decision-cell"><b>If you want →</b><span>fewest stops and a working dashboard fast, accepting quieter filters — pick D.</span></div>
-      </div>
-    </section>
-
-  </main>
-</body>
+      <!-- ===== Decision row ===== -->
+      <section class="decision">
+        <h3>How to pick a direction</h3>
+        <p class="decision-sub">A one-line rubric for choosing one of these to take forward.</p>
+        <div class="decision-grid">
+          <div class="decision-cell">
+            <b>If you want →</b
+            ><span>cheapest meaningful upgrade to Review, zero flow change — pick A.</span>
+          </div>
+          <div class="decision-cell">
+            <b>If you want →</b
+            ><span
+              >the heaviest step to finally feel controllable and fewer page loads — pick B.</span
+            >
+          </div>
+          <div class="decision-cell">
+            <b>If you want →</b
+            ><span
+              >completion rate moved by motivation, and can invest in preview fidelity — pick
+              C.</span
+            >
+          </div>
+          <div class="decision-cell">
+            <b>If you want →</b
+            ><span
+              >fewest stops and a working dashboard fast, accepting quieter filters — pick D.</span
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
 </html>

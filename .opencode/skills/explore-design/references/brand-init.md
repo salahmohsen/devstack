@@ -41,7 +41,7 @@ The chrome is a quiet frame; translate the brand onto light paper instead of cop
 - **Fonts:** keep the brand's fonts. A monospace brand stack goes on accents and meta (eyebrow, preview bars, labels) while body text stays readable — the brand's body font, or the neutral default if the brand has none.
 - **Radius, spacing, density:** follow the brand's feel.
 
-The result should be unmistakably *their* brand at a glance, while any variant — light, dark, loud — can sit inside it without the frame competing.
+The result should be unmistakably _their_ brand at a glance, while any variant — light, dark, loud — can sit inside it without the frame competing.
 
 ## 4. Write the two files
 
@@ -49,6 +49,7 @@ The result should be unmistakably *their* brand at a glance, while any variant �
 2. Apply the adapted tokens to its `:root` block, Google Fonts links, and spacing/radius choices.
 
    Apply the light adaptation from step 3 — the brand must be visibly present in the chrome (hues, fonts, ink), on light paper, unless the user explicitly asked for dark chrome.
+
 3. Sanity-check the written template: confirm the chrome reads as a quiet frame that lets any variant — light, dark, loud — sit inside it without competing.
 4. Write `design-explorations/_brand.md`: detected sources (with paths), the adaptation choices made, the design-system doc path if any, and the date. Keep it short and hand-editable — future re-inits diff against it, and the implement phase reads it to find the full design system.
 

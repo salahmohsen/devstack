@@ -97,7 +97,8 @@ export type OnboardingApplyInput = {
   }>;
   certifications?: Array<{
     name: string;
-    issuer: string;
+    /** Extractors may omit the issuer; stored as "" and rendered as bare name. */
+    issuer?: string | null;
     issuedAt?: string | null;
     expiresAt?: string | null;
     credentialUrl?: string | null;
@@ -451,7 +452,7 @@ export async function applyOnboardingDraft(
           id: crypto.randomUUID(),
           userId,
           name: cert.name,
-          issuer: cert.issuer,
+          issuer: cert.issuer ?? "",
           issuedAt: cert.issuedAt ?? null,
           expiresAt: cert.expiresAt ?? null,
           credentialUrl: cert.credentialUrl ?? null,

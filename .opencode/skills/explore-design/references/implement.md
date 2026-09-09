@@ -4,7 +4,7 @@
 
 Turn a chosen design-exploration variant into a production page that actually looks like the mock — on real data, including the record that has almost nothing filled in.
 
-The exploration is the **ideal state of the product**, not just a layout. A field the design shows but the data lacks is a *gap to close*, not an element to hide. The recurring failure this phase prevents: the mock looks great because it was drawn with perfect, often-fabricated data; the implementation looks barebones because missing fields get silently dropped and hand-tuned proportions get shrunk in translation. Here, every gap becomes an explicit decision and every proportion gets diffed against the reference.
+The exploration is the **ideal state of the product**, not just a layout. A field the design shows but the data lacks is a _gap to close_, not an element to hide. The recurring failure this phase prevents: the mock looks great because it was drawn with perfect, often-fabricated data; the implementation looks barebones because missing fields get silently dropped and hand-tuned proportions get shrunk in translation. Here, every gap becomes an explicit decision and every proportion gets diffed against the reference.
 
 ## When to run this phase
 
@@ -15,7 +15,7 @@ The exploration is the **ideal state of the product**, not just a layout. A fiel
 
 ## When NOT to run this phase
 
-- No mock exists yet and the user wants to *explore* directions → run the explore phase (SKILL.md)
+- No mock exists yet and the user wants to _explore_ directions → run the explore phase (SKILL.md)
 - A tiny styling tweak to already-shipped code (padding, one color) → just edit it
 - Pure backend/data work with no visual reference → normal implementation
 
@@ -23,7 +23,7 @@ The exploration is the **ideal state of the product**, not just a layout. A fiel
 
 - **The default for a missing field is NEVER silent-hide.** Every Sometimes/Aspirational element gets resolved with the user first (Step 3). Silently hiding an element behind a null-check is the exact bug this phase exists to kill.
 - **"Done" = visual parity on real data, including the sparse record.** Not "it renders." Not "it's functionally correct." If the empty-state record looks barebones, a gap decision was wrong — go back to Step 3.
-- **Match proportions, not just presence.** Swatch size, number weight, spacing rhythm, radius — the mock feels designed because of these. Reproducing the *elements* at smaller/thinner sizes is how implementations end up looking cheaper than the mock.
+- **Match proportions, not just presence.** Swatch size, number weight, spacing rhythm, radius — the mock feels designed because of these. Reproducing the _elements_ at smaller/thinner sizes is how implementations end up looking cheaper than the mock.
 
 ## Workflow
 
@@ -54,11 +54,11 @@ This is the single source of truth for parity. It must render standalone in a br
 
 Find where the real data comes from — the repo's data models, the API response shape, and any fixtures or seed data. Then walk **every visual element** in the reference and classify it:
 
-| Class | Meaning | How to confirm |
-|-------|---------|----------------|
-| ✅ **Real** | Field exists and is reliably populated | Present in model + non-null across sampled records |
-| ⚠️ **Sometimes** | Field exists but is often null/empty | Quantify: `headline: 70/120 records` |
-| ❌ **Aspirational** | No data behind it today | Quantify: `logo: 0/120 records` |
+| Class               | Meaning                                | How to confirm                                     |
+| ------------------- | -------------------------------------- | -------------------------------------------------- |
+| ✅ **Real**         | Field exists and is reliably populated | Present in model + non-null across sampled records |
+| ⚠️ **Sometimes**    | Field exists but is often null/empty   | Quantify: `headline: 70/120 records`               |
+| ❌ **Aspirational** | No data behind it today                | Quantify: `logo: 0/120 records`                    |
 
 **Quantify from real data** — count populated records against the actual dataset, don't guess. A single query over fixtures/DB turns "the logo might be missing" into "the logo exists on zero records," which changes the decision entirely.
 
@@ -66,7 +66,7 @@ Write the manifest to `<...>-<variant>.manifest.md` next to the reference (or re
 
 ### Step 3: Resolve every gap WITH THE USER
 
-For each ⚠️ Sometimes and ❌ Aspirational element, STOP and ask the user, using `AskUserQuestion`. Give these options per gap, and recommend the one that makes the ideal reachable for **100% of records** (usually *Derive*):
+For each ⚠️ Sometimes and ❌ Aspirational element, STOP and ask the user, using `AskUserQuestion`. Give these options per gap, and recommend the one that makes the ideal reachable for **100% of records** (usually _Derive_):
 
 - **Source it** — add the data (scrape/ingest/backfill). Ask where it lives.
 - **Derive it** — compute it so it always exists (e.g. logo → monogram tile from the title; headline → first line of description). Best when it makes the element universal.
@@ -84,6 +84,7 @@ Apply the Step 3 decisions (derive the monogram, wire the placeholder, etc.). Re
 ### Step 5: Parity diff loop
 
 Pick **two real records** from the actual data:
+
 - **Loaded** — the record with the most fields populated (closest to the mock's fixture).
 - **Sparse** — a real record with the minimum populated (the worst case).
 
@@ -108,38 +109,46 @@ Report: the reference + manifest paths, the gap decisions, the two screenshots, 
 ## Examples
 
 ### Example 1: The barebones page
+
 **User says:** "Implement option C from the product-page exploration."
 **Actions:**
+
 1. Extract Variant C to `product-page-C.reference.html`.
 2. Manifest against 120 real records → `logo: 0/120` (❌), `copy.headline: 70/120` (⚠️), palette/stats/tags ✅.
 3. Ask: logo → **derive a monogram** (works on 100%); headline → **pull description up when null**; palette → bind as-is.
 4. Build with the monogram + fallback; match the mock's fat swatches and stat tiles.
 5. Screenshot a loaded record + a sparse one; diff vs the reference; fix swatch height and number weight.
 6. Sparse record now shows a monogram + description + palette — composed, not empty.
-**Result:** Both records look like the mock; the empty case looks intentional.
+   **Result:** Both records look like the mock; the empty case looks intentional.
 
 ### Example 2: Catching the gap before building
+
 **User says:** "Build this hero mock as the real component."
 **Actions:**
+
 1. Extract the hero to a reference file.
 2. Manifest shows the mock's "customer logo strip" maps to a field that's empty on most records (⚠️ 12/400).
 3. Ask early → user chooses **Source it** (add to ingestion) rather than fake it.
-**Result:** The data gap surfaces before implementation, not after it ships looking empty.
+   **Result:** The data gap surfaces before implementation, not after it ships looking empty.
 
 ## Troubleshooting
 
 ### Symptom: Implementation renders but looks cheaper/thinner than the mock
+
 **Cause:** Elements reproduced at smaller sizes/weights than the reference (proportion drift).
 **Fix:** Run Step 5 properly — an explicit delta list on size/weight/spacing, not a single "looks fine" screenshot.
 
 ### Symptom: The page looks great on one record, barebones on another
+
 **Cause:** Missing fields were silently hidden instead of resolved.
 **Fix:** Step 3 — every Sometimes/Aspirational field needs a decision; prefer Derive so the element is universal.
 
 ### Symptom: Can't tell which record matches the mock
+
 **Cause:** Guessing slugs instead of querying the data.
 **Fix:** Step 5 — count populated fields across the dataset to pick the loaded and sparse records objectively.
 
 ### Symptom: No data manifest came with the exploration
+
 **Cause:** The exploration predates manifest emission.
 **Fix:** Build the manifest yourself in Step 2. Going forward, the explore phase emits one alongside the HTML.

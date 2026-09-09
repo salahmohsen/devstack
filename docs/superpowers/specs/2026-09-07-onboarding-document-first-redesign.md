@@ -42,7 +42,7 @@ Single compact card (not the full settings page):
 3. Model — pre-filled with the provider's probe/default model; editable dropdown from catalog models.
 4. **Test connection** → runs the existing `testAiProviderConnection` probe. Result inline: success (model + latency), or the existing error summarizer copy (billing / rejected key / model unavailable / network).
 5. **Continue is disabled until a probe passes** for the current provider+key+model triple. State-enforced, not honor-system.
-6. Escape hatch: "I'll do this later" → exits to the dashboard with copy: *"Resume import, the hub assistant, and job matching stay off until you connect a provider."* Onboarding stays resumable (persisted-step restore already exists for the tail steps); the Resume step shows a disabled/inactive state pointing back to step 1 while no key exists.
+6. Escape hatch: "I'll do this later" → exits to the dashboard with copy: _"Resume import, the hub assistant, and job matching stay off until you connect a provider."_ Onboarding stays resumable (persisted-step restore already exists for the tail steps); the Resume step shows a disabled/inactive state pointing back to step 1 while no key exists.
 
 This also kills today's raw AI-error-banner failure mode at Analyze for keyless users.
 
@@ -65,7 +65,7 @@ Unchanged logic (detached job, leave-safe). Changes:
 
 Two-pane on ≥`lg`: **doc pane left (sticky), confirm pane right**; single-column below `lg` (doc collapses to a compact top summary strip with section ticks + counts, expandable).
 
-- **Doc pane:** RenderCV-mirroring preview of the *confirmed* draft only. Each section header carries a tick: filled green when the section has confirmed content; missing sections (e.g. no projects in the CV) render "Not on this resume — add anytime from the dashboard" in muted text — designed placeholder, not a hole. Education section does **not** render in this wave (decision 6).
+- **Doc pane:** RenderCV-mirroring preview of the _confirmed_ draft only. Each section header carries a tick: filled green when the section has confirmed content; missing sections (e.g. no projects in the CV) render "Not on this resume — add anytime from the dashboard" in muted text — designed placeholder, not a hole. Education section does **not** render in this wave (decision 6).
 - **Confirm pane:** keeps the current tab model (Profile / Experiences / Projects / Stacks with count badges) — Variant C's confirm list is realized by keeping tabs but making each row's checkbox instantly reflect in the doc pane. No accordion-by-default; row edit inline expands (current behavior preserved).
 - Every checkbox flip re-renders the corresponding doc section immediately (optimistic, no refetch).
 - Warnings banner + apply/discard footer behavior unchanged; sticky footer shows "N of M rows selected · Source · file".

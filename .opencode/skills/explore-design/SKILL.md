@@ -11,6 +11,7 @@ sources:
 Produce ONE standalone `.html` file that lays out several visual directions side-by-side so the user can pick a direction. The output is for visual comparison — it is not production code.
 
 Two phases:
+
 1. **Explore** (this file) — generate the side-by-side comparison.
 2. **Implement** — when the user picks a variant or asks to build a mock, read `references/implement.md` in this skill's directory and follow it.
 
@@ -82,6 +83,7 @@ An exploration drawn with fabricated, fully-populated data sets an expectation r
 The page **chrome** (header, labels, analysis cards) comes from `_template.html` — the user's brand, captured at init. Don't restyle it per exploration. The **inner preview** of each variant is structurally free canvas but wears the captured brand by default (see Variant design rules); if the brand itself is dark, the previews are dark — that's the brand, not a violation. Scope variant CSS with per-variant prefixes (`.va-`, `.vb-`, …) to avoid cross-bleed.
 
 Hard rules:
+
 - One single HTML file. No CSS files, no JS modules, no Tailwind CDN — vanilla CSS scoped to the page.
 - System-font fallbacks on every font stack.
 - No dark "AI artifact" aesthetic for chrome (dark gray + neon + monospace everything).
