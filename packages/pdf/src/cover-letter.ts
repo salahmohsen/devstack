@@ -3,9 +3,9 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { contactHref, displayContact, parseRenderCvSocial, sortContacts } from "#@/contacts";
 import { COVER_LETTER_TYPST_TEMPLATE } from "#@/cover-letter.template";
 import { PdfRenderFailedError } from "#@/errors";
+import { type CoverLetterContactItem, buildCoverLetterContactItems } from "#@/letter-contacts";
 import {
   compileTypstUa1,
   PDF_RENDER_TIMEOUT_MS,
@@ -14,15 +14,7 @@ import {
   typstStringLiteral,
   type RenderPdfOptions
 } from "#@/spawn";
-import { type CoverLetterPdfInput, type PdfContact } from "#@/types";
-
-const CORE_CONTACT_TYPES = new Set(["location", "phone", "email", "website"]);
-
-export type CoverLetterContactItem = {
-  type: string;
-  label: string;
-  href: string | null;
-};
+import { type CoverLetterPdfInput } from "#@/types";
 
 /**
  * Split cover letter body into paragraphs (blank-line separated).
@@ -48,37 +40,6 @@ function formatLetterDate(date: Date): string {
     month: "long",
     day: "numeric"
   });
-}
-
-/** Name + one contact line: same omit rules as the resume (no Discord / unknown / invalid socials). */
-export function buildCoverLetterContactItems(
-  contacts: PdfContact[],
-  profileEmail: string
-): CoverLetterContactItem[] {
-  const list = [...contacts];
-  const hasEmail = list.some((c) => c.type === "email");
-  if (!hasEmail && profileEmail.trim()) {
-    list.unshift({ type: "email", value: profileEmail.trim(), sortOrder: -1 });
-  }
-
-  const items: CoverLetterContactItem[] = [];
-  const seen = new Set<string>();
-  for (const contact of sortContacts(list)) {
-    const social = parseRenderCvSocial(contact.type, contact.value);
-    if (!social && !CORE_CONTACT_TYPES.has(contact.type)) continue;
-
-    const label = displayContact(contact.type, contact.value);
-    if (!label) continue;
-    const key = label.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    items.push({
-      type: contact.type,
-      label,
-      href: contactHref(contact.type, contact.value)
-    });
-  }
-  return items;
 }
 
 function typstContactLine(items: CoverLetterContactItem[]): string {
