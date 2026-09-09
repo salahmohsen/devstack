@@ -1,4 +1,4 @@
-import { type ApplyPackageDraft } from "@tsu-stack/core";
+import { resolveApplyPackagePdfDraft, type ApplyPackageDraft } from "@tsu-stack/core";
 import { buildRenderCvDoc, type ResumePdfInput, type ResumePdfPortfolio } from "@tsu-stack/pdf/doc";
 
 import {
@@ -79,6 +79,8 @@ export type KeptProject = {
   live: ApplyPackageLiveRows["projects"][number];
 };
 
+export type KeptApplyPackageRows = ReturnType<typeof keptApplyPackageRows>;
+
 /**
  * One kept-rows derivation shared by the portfolio build, the section zip,
  * and the evidence map — an unfiltered zip would misalign when a row is
@@ -86,6 +88,9 @@ export type KeptProject = {
  * accept-apply-package: experience/project rows must be `include`d AND carry
  * a live `portfolioEntryId`; archived projects never render. Order follows
  * the draft so the zip stays index-aligned with the rendered paper.
+ *
+ * Must be called with the **resolved** draft (`resolveApplyPackagePdfDraft`
+ * applied) so page-budget hiding filters rows here too, exactly like accept.
  */
 export function keptApplyPackageRows(
   draft: ApplyPackageDraft,
@@ -113,12 +118,18 @@ export function keptApplyPackageRows(
  * include switches; identity (org/title/dates) from live rows; rewritten
  * text from the draft. `headline` is a top-level `ResumePdfInput` field (NOT
  * inside `profile` — `ResumePdfProfile` is `{ name, email }` only).
+ *
+ * Takes the **resolved** draft (page-budget hiding already applied by
+ * `resolveApplyPackagePdfDraft`) plus the single shared `kept` derivation, so
+ * the portfolio, the section zip, and the evidence map all agree on the same
+ * row set — no second derivation.
  */
-export function applyPackageDraftToResumePdfInput(
-  draft: ApplyPackageDraft,
-  live: ApplyPackageLiveRows
-): ResumePdfInput {
-  const kept = keptApplyPackageRows(draft, live);
+export function applyPackageDraftToResumePdfInput(input: {
+  resolvedDraft: ApplyPackageDraft;
+  kept: KeptApplyPackageRows;
+  live: ApplyPackageLiveRows;
+}): ResumePdfInput {
+  const { resolvedDraft, kept, live } = input;
   const stackById = new Map(live.stacks.map((row) => [row.id, row] as const));
 
   const experiences: ResumePdfPortfolio["experiences"] = kept.experiences.map(
@@ -156,7 +167,7 @@ export function applyPackageDraftToResumePdfInput(
     };
   });
 
-  const stacks: ResumePdfPortfolio["stacks"] = draft.stacks
+  const stacks: ResumePdfPortfolio["stacks"] = resolvedDraft.stacks
     .filter((s) => s.include)
     .map((s) => {
       const row = stackById.get(s.stackId);
@@ -209,31 +220,60 @@ export function applyPackageDraftToResumePdfInput(
     },
     // Same chain as accept: pass the raw headline when its trim is non-empty;
     // the PDF mapper trims again and falls back to the latest experience title.
-    headline: draft.headline.trim() ? draft.headline : undefined,
+    headline: resolvedDraft.headline.trim() ? resolvedDraft.headline : undefined,
     summary: live.profile.summary ?? "",
-    professionalSummary: draft.professionalSummary,
+    professionalSummary: resolvedDraft.professionalSummary,
     portfolio
   };
 }
+
+export type ApplyPackageDocPreviewOptions = {
+  /** Review ON: resolver passthrough — human `include` flags win (spec #2). */
+  reviewApplyKit: boolean;
+  /** application.requiredSkills + preferredSkills — same feed accept ranks with. */
+  jobSkills: ReadonlyArray<{ name: string }>;
+};
 
 export type ApplyPackageDocPreview = {
   model: DocPreviewModel;
   /** clientId → original live text; evidence icon renders only when present (spec #4). */
   evidenceByClientId: Record<string, string>;
+  /** Resolver outcome (spec #3 parity) — ready for a "hidden to fit pages" hint. */
+  hiddenExperienceCount: number;
+  hiddenProjectCount: number;
+  pageBudget: 1 | 2 | null;
 };
 
 /**
- * Tailored-paper preview for the review dialog's Resume pane. Builds the exact
- * `ResumePdfInput` accept would render, converts the RenderCV doc with the
- * shared onboarding twin, and zips the rendered entries with KEPT draft rows
- * (same filter, same order) so click-to-edit stays bound to the right source.
+ * Tailored-paper preview for the review dialog's Resume pane. Mirrors accept
+ * exactly: FIRST run `resolveApplyPackagePdfDraft` (review off → page-budget
+ * hiding flips low-ranked `include` to false), THEN derive the paper, section
+ * zip, and evidence map from that single resolved draft so the preview never
+ * shows a row the PDF would drop.
  */
 export function buildApplyPackageDocPreview(
   draft: ApplyPackageDraft,
-  live: ApplyPackageLiveRows
+  live: ApplyPackageLiveRows,
+  options: ApplyPackageDocPreviewOptions
 ): ApplyPackageDocPreview {
-  const kept = keptApplyPackageRows(draft, live);
-  const input = applyPackageDraftToResumePdfInput(draft, live);
+  const resolved = resolveApplyPackagePdfDraft({
+    draft,
+    reviewApplyKit: options.reviewApplyKit,
+    experiences: live.experiences.map((row) => {
+      return {
+        experienceId: row.id,
+        rewrittenBullets: [],
+        fromDate: row.fromDate ?? null,
+        isPresent: row.isPresent ?? false
+      };
+    }),
+    jobSkills: options.jobSkills
+  });
+  const resolvedDraft = resolved.draft;
+  // Single kept-rows derivation on the resolved draft: include gates AND
+  // budget hides both flow through here, then feed the paper and the zip.
+  const kept = keptApplyPackageRows(resolvedDraft, live);
+  const input = applyPackageDraftToResumePdfInput({ resolvedDraft, kept, live });
   const cv = asRecord(buildRenderCvDoc(input));
   const model = docPreviewModelFromRenderCvDoc(cv, {
     experienceRows: kept.experiences.map(({ draftRow }) => {
@@ -255,5 +295,11 @@ export function buildApplyPackageDocPreview(
     if (text) evidenceByClientId[draftRow.projectId] = text;
   }
 
-  return { model, evidenceByClientId };
+  return {
+    model,
+    evidenceByClientId,
+    hiddenExperienceCount: resolved.hiddenExperienceCount,
+    hiddenProjectCount: resolved.hiddenProjectCount,
+    pageBudget: resolved.pageBudget
+  };
 }
