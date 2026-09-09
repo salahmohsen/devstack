@@ -24,7 +24,12 @@ export function resolveOutreachSendValues(input: {
   outreachBody: string | null;
   overrides?: SendOutreachOverrides;
 }): { error: "NO_RECIPIENT" | "NO_ATTACHMENTS" | "NO_MESSAGE" } | OutreachSendValues {
-  const to = emailLike(input.overrides?.to ?? input.recruiterEmail);
+  // An empty/whitespace-only `to` override counts as "not provided" so it
+  // falls back to the stored row (schema already maps "" → null upstream).
+  const overrideTo = input.overrides?.to;
+  const to = emailLike(
+    overrideTo != null && overrideTo.trim().length > 0 ? overrideTo : input.recruiterEmail
+  );
   if (!to) return { error: "NO_RECIPIENT" };
 
   const attachments = input.overrides?.attachments ?? { resume: true, cover: true };

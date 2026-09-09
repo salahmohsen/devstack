@@ -12,6 +12,7 @@ import {
   type ApplicationEntity
 } from "@tsu-stack/db";
 import { renderOutreachApplyEmailHtml } from "@tsu-stack/email";
+import { createLogger } from "@tsu-stack/logger/server";
 
 import { resolveOutreachSendValues } from "#@/lib/application/outreach-send-plan";
 import { recordSentOutreachMail } from "#@/lib/mail/record-sent-outreach-mail";
@@ -87,10 +88,17 @@ export async function sendApplicationOutreach(input: {
         message: "Keep at least one attachment selected"
       };
     }
+    // NO_MESSAGE with a message override means the user was editing in the
+    // email section (e.g. whitespace-only subject); without an override the
+    // stored rows are empty, i.e. the apply package was never accepted.
+    const messageOverridden =
+      input.overrides?.subject !== undefined || input.overrides?.body !== undefined;
     return {
       ok: false,
       code: "SEND_FAILED",
-      message: "Outreach subject and body are required — accept an apply package first"
+      message: messageOverridden
+        ? "Outreach subject and body are required — check the email section"
+        : "Outreach subject and body are required — accept an apply package first"
     };
   }
   const sendValues = resolved;
@@ -192,7 +200,19 @@ export async function sendApplicationOutreach(input: {
       return { type: c.type, value: c.value };
     })
   });
-  const bodyHtml = await renderOutreachApplyEmailHtml(mail, userRow.name);
+  // Template failure must not 500 an otherwise-sendable mail; sendCareerReply
+  // falls back to escaped <p> HTML from bodyText.
+  let bodyHtml: string | null = null;
+  try {
+    bodyHtml = await renderOutreachApplyEmailHtml(mail, userRow.name);
+  } catch (error) {
+    const log = createLogger({ operation: "api__outreach_send" });
+    log.warn("outreach_html_render_failed", {
+      applicationId: app.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    log.emit({ _forceKeep: true });
+  }
 
   const sent = await sendCareerReply({
     userId: input.userId,

@@ -53,6 +53,55 @@ describe("resolveOutreachSendValues", () => {
     });
   });
 
+  it("falls back to stored recipient when override to is empty string", () => {
+    // API schema maps "" → null before the resolver; resolver-level "" takes
+    // the same fallback path.
+    expect(resolveOutreachSendValues({ ...base, overrides: { to: "" } })).toEqual({
+      to: "stored@company.com",
+      subject: "Stored subject",
+      body: "Stored body",
+      attachments: { resume: true, cover: true }
+    });
+  });
+
+  it("falls back to stored recipient when override to is whitespace-only", () => {
+    expect(resolveOutreachSendValues({ ...base, overrides: { to: "   " } })).toEqual({
+      to: "stored@company.com",
+      subject: "Stored subject",
+      body: "Stored body",
+      attachments: { resume: true, cover: true }
+    });
+  });
+
+  it("treats whitespace-only subject override as NO_MESSAGE", () => {
+    expect(resolveOutreachSendValues({ ...base, overrides: { subject: "   " } })).toEqual({
+      error: "NO_MESSAGE"
+    });
+  });
+
+  it("partial override takes subject from override and body from stored row", () => {
+    expect(resolveOutreachSendValues({ ...base, overrides: { subject: "New subject" } })).toEqual({
+      to: "stored@company.com",
+      subject: "New subject",
+      body: "Stored body",
+      attachments: { resume: true, cover: true }
+    });
+  });
+
+  it("keeps partial attachment selection", () => {
+    expect(
+      resolveOutreachSendValues({
+        ...base,
+        overrides: { attachments: { resume: false, cover: true } }
+      })
+    ).toEqual({
+      to: "stored@company.com",
+      subject: "Stored subject",
+      body: "Stored body",
+      attachments: { resume: false, cover: true }
+    });
+  });
+
   it("passes invalid recipient through as NO_RECIPIENT", () => {
     expect(
       resolveOutreachSendValues({ ...base, recruiterEmail: null, overrides: { to: null } })
