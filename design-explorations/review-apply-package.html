@@ -1,0 +1,2701 @@
+<!--
+  EXPLORATION — Review apply package dialog redesign
+  Source: grill session 2026-09-09 (review-apply-package redesign; supersedes apply-package-sheet)
+  Date: 2026-09-09
+  Fixture: application Vercel · Senior Frontend Engineer, draft with 2 experiences, 1 project, 5 stacks
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Review apply package — four directions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+      :root {
+        --brand-50: #e9f7ed;
+        --brand-100: #d2f0da;
+        --brand-300: #8fd8a4;
+        --brand-500: #2f9e57;
+        --brand-700: #1e6e3e;
+        --accent-50: #f4f4f5;
+        --accent-500: #262626;
+        --ink: #262626;
+        --ink-soft: #454545;
+        --ink-mute: #707070;
+        --line: #ececec;
+        --line-soft: #f4f4f4;
+        --paper: #ffffff;
+        --bg: #fafafa;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
+        --shadow-md: 0 4px 24px -8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+        --serif: "XCharter", Georgia, "Times New Roman", serif;
+        --mail-font: Inter, Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Geist Variable",
+          Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+      }
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 72px 48px 160px;
+      }
+
+      .doc-header {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 40px;
+        margin-bottom: 80px;
+      }
+      .doc-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--brand-500);
+        background: var(--brand-50);
+        padding: 6px 12px;
+        border-radius: 999px;
+        margin-bottom: 20px;
+      }
+      .doc-eyebrow::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--brand-500);
+      }
+      .doc-title {
+        font-size: 56px;
+        line-height: 1.05;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin: 0 0 16px;
+      }
+      .doc-subtitle {
+        font-size: 19px;
+        color: var(--ink-soft);
+        max-width: 760px;
+        margin: 0 0 32px;
+        line-height: 1.45;
+      }
+      .doc-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        font-size: 13px;
+        color: var(--ink-mute);
+      }
+      .doc-meta > div {
+        display: flex;
+        gap: 6px;
+      }
+      .doc-meta b {
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
+
+      .variant {
+        margin-bottom: 96px;
+      }
+      .variant:last-child {
+        margin-bottom: 0;
+      }
+      .variant-head {
+        display: grid;
+        grid-template-columns: 64px 1fr;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 28px;
+      }
+      .variant-letter {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: white;
+        font-weight: 500;
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.02em;
+      }
+      .variant-meta h2 {
+        margin: 4px 0 6px;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+      }
+      .variant-tradeoff {
+        font-size: 15px;
+        color: var(--ink-soft);
+        margin: 0;
+        max-width: 760px;
+      }
+      .variant-tradeoff b {
+        color: var(--brand-500);
+        font-weight: 600;
+      }
+
+      .preview-frame {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-left: 84px;
+        position: relative;
+      }
+      .preview-frame::before {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #f0e9e0;
+        box-shadow:
+          18px 0 0 #f0e9e0,
+          36px 0 0 #f0e9e0;
+        z-index: 2;
+      }
+      .preview-frame-bar {
+        background: #faf9f5;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 14px 16px 14px 76px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        font-weight: 600;
+      }
+      .preview {
+        padding: 0;
+        min-height: 200px;
+      }
+
+      .variant-analysis {
+        margin: 24px 0 0 84px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 24px;
+      }
+      .analysis-block {
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+      }
+      .analysis-block h4 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-500);
+      }
+      .analysis-block.is-risk h4 {
+        color: #b8341f;
+      }
+      .analysis-block.is-pick h4 {
+        color: var(--accent-700);
+      }
+      .analysis-block p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+
+      .decision {
+        margin-top: 120px;
+        padding: 40px 48px;
+        background: var(--ink);
+        color: white;
+        border-radius: 20px;
+      }
+      .decision h3 {
+        font-size: 28px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        margin: 0 0 8px;
+      }
+      .decision-sub {
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 14px;
+        margin: 0 0 28px;
+      }
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+      .decision-cell b {
+        display: block;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-100);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .decision-cell span {
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.45;
+      }
+
+      @media (max-width: 900px) {
+        .page {
+          padding: 40px 20px 80px;
+        }
+        .doc-title {
+          font-size: 36px;
+        }
+        .variant-head {
+          grid-template-columns: 48px 1fr;
+          gap: 12px;
+        }
+        .preview-frame {
+          margin-left: 0;
+        }
+        .variant-analysis {
+          margin-left: 0;
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* =============================================================
+         SHARED DIALOG SHELL — locked by grill (near-fullscreen dialog,
+         header with logo/company/title + job context, footer
+         Regenerate · Cancel · Save). Variants differ in pane composition.
+         ============================================================= */
+      .backdrop {
+        background: #f5f5f4;
+        padding: 28px;
+      }
+      .dlg {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+      }
+      .dlg-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px 24px 14px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .dlg-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        background: #000;
+        color: #fff;
+        font-weight: 600;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dlg-head-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .dlg-title-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .dlg-title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .dlg-sub {
+        font-size: 13px;
+        color: var(--ink-mute);
+      }
+      .dlg-context {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+      }
+      .dlg-meta-right {
+        flex-shrink: 0;
+        text-align: right;
+      }
+      .dlg-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--brand-700);
+        background: var(--brand-50);
+        border-radius: 999px;
+        padding: 4px 10px;
+      }
+      .dlg-state::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--brand-500);
+      }
+      .dlg-state.is-accepted {
+        color: var(--ink-soft);
+        background: var(--accent-50);
+      }
+      .dlg-state.is-accepted::before {
+        background: #a3a3a3;
+      }
+      .dlg-body {
+        display: flex;
+        min-height: 560px;
+      }
+      .dlg-footer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 24px;
+        border-top: 1px solid var(--line-soft);
+        background: #fcfcfc;
+      }
+      .dlg-footer-note {
+        font-size: 12px;
+        color: var(--ink-mute);
+        margin-right: auto;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--ink-soft);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 2px 9px;
+        background: #fff;
+      }
+      .badge.is-soft {
+        background: var(--accent-50);
+        border-color: transparent;
+      }
+      .badge.is-green {
+        color: var(--brand-700);
+        background: var(--brand-50);
+        border-color: transparent;
+      }
+      .badge svg {
+        width: 11px;
+        height: 11px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 7px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink-soft);
+        font-family: inherit;
+      }
+      .btn.is-ghost {
+        border-color: transparent;
+        background: transparent;
+      }
+      .btn.is-primary {
+        background: var(--brand-500);
+        border-color: var(--brand-500);
+        color: #fff;
+      }
+      .btn.is-dark {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      .iconbtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink-mute);
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .iconbtn svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      /* Sidebar (shared where variant uses one) */
+      .side {
+        width: 224px;
+        flex-shrink: 0;
+        border-right: 1px solid var(--line-soft);
+        padding: 14px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: #fcfcfc;
+      }
+      .side-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        padding: 6px 10px 8px;
+      }
+      .side-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 9px;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--ink-soft);
+        cursor: pointer;
+      }
+      .side-item svg {
+        width: 15px;
+        height: 15px;
+        color: var(--ink-mute);
+        flex-shrink: 0;
+      }
+      .side-item .side-count {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--ink-mute);
+        font-weight: 500;
+      }
+      .side-item.is-active {
+        background: #fff;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        box-shadow: var(--shadow-sm);
+      }
+      .side-item.is-active svg {
+        color: var(--brand-500);
+      }
+      .side-hint {
+        margin-top: auto;
+        padding: 10px;
+        border-top: 1px solid var(--line-soft);
+        font-size: 11.5px;
+        color: var(--ink-mute);
+        line-height: 1.5;
+      }
+
+      /* Document paper (shared resume/cover look) */
+      .paper-shell {
+        background: #f3f3f1;
+        border-radius: 12px;
+        border: 1px solid var(--line-soft);
+        padding: 22px;
+        overflow: auto;
+      }
+      .paper {
+        background: #fff;
+        border: 1px solid #e7e7e4;
+        box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.05),
+          0 12px 28px -18px rgba(0, 0, 0, 0.14);
+        border-radius: 4px;
+        padding: 40px 44px;
+        max-width: 640px;
+        margin: 0 auto;
+        color: #1a1a1a;
+      }
+      .paper-ser {
+        font-family: var(--serif);
+        font-size: 12.5px;
+        line-height: 1.55;
+      }
+      .paper-name {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .paper-headline {
+        font-size: 12.5px;
+        color: #444;
+        margin-top: 2px;
+      }
+      .paper-contacts {
+        font-size: 10.5px;
+        color: #666;
+        margin-top: 3px;
+      }
+      .sec-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 18px 0 6px;
+        border-bottom: 1px solid #1a1a1a;
+        padding-bottom: 2px;
+      }
+      .sec-head h4 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .tick {
+        margin-left: auto;
+        display: inline-flex;
+      }
+      .tick svg {
+        width: 13px;
+        height: 13px;
+        color: var(--brand-500);
+      }
+      .tick.is-dash svg {
+        color: #c9c9c5;
+      }
+      .exp-row {
+        margin-bottom: 10px;
+        position: relative;
+      }
+      .exp-top {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .exp-top .org {
+        font-weight: 700;
+      }
+      .exp-top .role {
+        font-weight: 600;
+      }
+      .exp-top .dates {
+        margin-left: auto;
+        font-size: 11px;
+        color: #666;
+        font-style: italic;
+        white-space: nowrap;
+      }
+      .paper p.b {
+        margin: 1px 0;
+      }
+      .inc-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family:
+          Inter,
+          -apple-system,
+          sans-serif;
+        font-size: 9.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--brand-700);
+        background: var(--brand-50);
+        border-radius: 999px;
+        padding: 1px 7px;
+        vertical-align: 1px;
+      }
+      .inc-pill.is-off {
+        color: var(--ink-mute);
+        background: var(--accent-50);
+      }
+      .ev-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 17px;
+        height: 17px;
+        border-radius: 5px;
+        border: 1px solid #e2e2de;
+        background: #fff;
+        color: #8a8a85;
+        cursor: pointer;
+        vertical-align: -3px;
+      }
+      .ev-icon svg {
+        width: 10px;
+        height: 10px;
+      }
+      .ev-card {
+        position: absolute;
+        top: 18px;
+        right: -8px;
+        width: 250px;
+        z-index: 5;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.2);
+        padding: 10px 12px;
+        font-family:
+          Inter,
+          -apple-system,
+          sans-serif;
+      }
+      .ev-card h5 {
+        margin: 0 0 4px;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+      }
+      .ev-card p {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+      }
+
+      /* Email render (generic Matte) */
+      .mail-canvas {
+        background: #f6f6f5;
+        border-radius: 12px;
+        border: 1px solid var(--line-soft);
+        padding: 26px;
+        overflow: auto;
+      }
+      .mail-card {
+        max-width: 560px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e4e4e4;
+        border-radius: 10px;
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.04),
+          0 18px 40px -24px rgba(0, 0, 0, 0.16);
+        font-family: var(--mail-font);
+      }
+      .mail-inner {
+        padding: 34px 38px 0;
+      }
+      .mail-title {
+        font-size: 30px;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        color: #1a1a1a;
+        margin: 0;
+        font-weight: 400;
+      }
+      .mail-p {
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: #525252;
+        margin: 16px 0 0;
+      }
+      .mail-sig {
+        font-size: 13.5px;
+        color: #525252;
+        margin: 16px 0 0;
+      }
+      .mail-sig b {
+        color: #1a1a1a;
+        font-weight: 500;
+      }
+      .mail-foot {
+        border-top: 1px solid #e4e4e4;
+        margin-top: 30px;
+        padding: 16px 38px 20px;
+      }
+      .mail-foot p {
+        margin: 0;
+        font-size: 10.5px;
+        color: #8a8a8a;
+        line-height: 1.5;
+      }
+      .editable {
+        border-radius: 4px;
+        outline: 1px dashed transparent;
+        outline-offset: 3px;
+        transition: outline-color 120ms ease;
+        cursor: text;
+      }
+      .editable:hover,
+      .editable.is-active {
+        outline-color: #b8b8b4;
+        background: #fbfbfa;
+      }
+      .edit-hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 3px 10px;
+      }
+      .edit-hint svg {
+        width: 11px;
+        height: 11px;
+        color: var(--brand-500);
+      }
+
+      /* Attachment squares */
+      .att-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .att {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 8px 12px 8px 9px;
+        cursor: pointer;
+      }
+      .att.is-off {
+        opacity: 0.55;
+        background: var(--accent-50);
+      }
+      .att-pdf {
+        width: 30px;
+        height: 38px;
+        border-radius: 5px;
+        background: #fdf0ee;
+        border: 1px solid #f3d9d4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        font-weight: 700;
+        color: #c25b46;
+      }
+      .att-name {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink);
+        line-height: 1.3;
+        max-width: 170px;
+      }
+      .att-sub {
+        font-size: 10.5px;
+        color: var(--ink-mute);
+      }
+      .att-toggle {
+        margin-left: 4px;
+        width: 26px;
+        height: 15px;
+        border-radius: 999px;
+        background: var(--brand-500);
+        position: relative;
+        flex-shrink: 0;
+      }
+      .att-toggle::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        background: #fff;
+      }
+      .att.is-off .att-toggle {
+        background: #d4d4d0;
+      }
+      .att.is-off .att-toggle::after {
+        right: auto;
+        left: 2px;
+      }
+
+      /* Thumbnails */
+      .thumb-row {
+        display: flex;
+        gap: 14px;
+        margin-top: 16px;
+      }
+      .thumb {
+        flex: 1;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fcfcfc;
+        padding: 10px;
+      }
+      .thumb-cap {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+        margin-bottom: 8px;
+      }
+      .thumb-box {
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        background: #fff;
+        overflow: hidden;
+        transform-origin: top left;
+      }
+      .tb-flex {
+        display: flex;
+        min-height: 130px;
+      }
+      .tb-side {
+        width: 64px;
+        border-right: 1px solid var(--line-soft);
+        background: #fcfcfc;
+        padding: 6px 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .tb-side span {
+        height: 8px;
+        border-radius: 4px;
+        background: #ededeb;
+        display: block;
+      }
+      .tb-side span.on {
+        background: var(--brand-100);
+      }
+      .tb-mail {
+        flex: 1;
+        padding: 10px 12px;
+      }
+      .tb-mail .t {
+        width: 55%;
+        height: 7px;
+        border-radius: 4px;
+        background: #e4e4e2;
+        margin-bottom: 6px;
+      }
+      .tb-mail .l {
+        width: 88%;
+        height: 4.5px;
+        border-radius: 3px;
+        background: #f0f0ee;
+        margin-bottom: 4px;
+      }
+      .tb-sq {
+        display: flex;
+        gap: 4px;
+        margin-top: 8px;
+      }
+      .tb-sq i {
+        width: 22px;
+        height: 15px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: #fff;
+        display: block;
+      }
+      .tb-sq i.off {
+        opacity: 0.4;
+      }
+      .scalemail {
+        zoom: 0.72;
+      }
+
+      /* ============ VARIANT A — Paper Studio ============ */
+      .va-pane {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .va-panebar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 22px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .va-panebar .edit-hint {
+        margin-left: auto;
+      }
+      .va-stage {
+        flex: 1;
+        padding: 18px 22px;
+        background: #f7f7f6;
+        overflow: auto;
+      }
+      .va-hdr {
+        font-family: var(--serif);
+        text-align: center;
+      }
+      .va-hdr .paper-name {
+        display: inline;
+      }
+      .va-hdr .headline-tag {
+        display: block;
+        font-family:
+          Inter,
+          -apple-system,
+          sans-serif;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-700);
+        margin-top: 6px;
+      }
+      .va-hdr .headline-tag .editable.is-active {
+        background: var(--brand-50);
+      }
+
+      /* ============ VARIANT B — Workbench split ============ */
+      .vb-pane {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+      }
+      .vb-left {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .vb-stage {
+        flex: 1;
+        padding: 18px 20px;
+        background: #f7f7f6;
+        overflow: auto;
+      }
+      .vb-rail {
+        width: 218px;
+        flex-shrink: 0;
+        border-left: 1px solid var(--line-soft);
+        background: #fcfcfc;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: auto;
+      }
+      .rail-block h5 {
+        margin: 0 0 8px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+      }
+      .rail-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        font-size: 12.5px;
+        color: var(--ink-soft);
+      }
+      .rail-row:hover {
+        background: #fff;
+        border-color: var(--line);
+      }
+      .rail-row.is-ev {
+        cursor: pointer;
+      }
+      .rail-row .inc-pill {
+        margin-left: auto;
+      }
+      .rail-evidence {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 10px 12px;
+      }
+      .rail-evidence h5 {
+        margin: 0 0 4px;
+      }
+      .rail-evidence p {
+        margin: 0;
+        font-size: 11px;
+        color: var(--ink-soft);
+        line-height: 1.5;
+      }
+      .rail-sq {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--ink-soft);
+        padding: 6px 8px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+      }
+      .rail-sq .att-pdf {
+        width: 22px;
+        height: 28px;
+        font-size: 7px;
+      }
+      .rail-sq .att-toggle {
+        margin-left: auto;
+      }
+      .rail-to {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        padding: 7px 10px;
+        font-size: 12.5px;
+        color: var(--ink);
+      }
+      .rail-to svg {
+        width: 13px;
+        height: 13px;
+        color: var(--ink-mute);
+      }
+      .rail-note {
+        font-size: 11px;
+        color: var(--ink-mute);
+        line-height: 1.5;
+      }
+
+      /* ============ VARIANT C — Guided sequence ============ */
+      .vc-top {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--line-soft);
+        background: #fcfcfc;
+      }
+      .vc-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-mute);
+        padding: 6px 4px;
+      }
+      .vc-step .dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1.5px solid #d4d4d0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--ink-mute);
+        background: #fff;
+      }
+      .vc-step.is-done .dot {
+        border-color: var(--brand-500);
+        background: var(--brand-50);
+        color: var(--brand-700);
+      }
+      .vc-step.is-done {
+        color: var(--ink-soft);
+      }
+      .vc-step.is-active {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .vc-step.is-active .dot {
+        border-color: var(--ink);
+        background: var(--ink);
+        color: #fff;
+      }
+      .vc-sep {
+        width: 26px;
+        height: 1px;
+        background: var(--line);
+        margin: 0 10px;
+      }
+      .vc-pane {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+      }
+      .vc-items {
+        width: 208px;
+        flex-shrink: 0;
+        border-right: 1px solid var(--line-soft);
+        background: #fcfcfc;
+        padding: 12px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .vc-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 9px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--ink-soft);
+        cursor: pointer;
+      }
+      .vc-item:hover {
+        background: #fff;
+      }
+      .vc-item.is-active {
+        background: #fff;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow-sm);
+      }
+      .vc-item .cb {
+        width: 13px;
+        height: 13px;
+        border-radius: 4px;
+        border: 1.5px solid #c9c9c5;
+        margin-top: 1px;
+        flex-shrink: 0;
+      }
+      .vc-item .cb.on {
+        background: var(--brand-500);
+        border-color: var(--brand-500);
+        position: relative;
+      }
+      .vc-item .cb.on::after {
+        content: "";
+        position: absolute;
+        left: 3.5px;
+        top: 1px;
+        width: 3.5px;
+        height: 6.5px;
+        border: solid #fff;
+        border-width: 0 1.5px 1.5px 0;
+        transform: rotate(45deg);
+      }
+      .vc-item .nm {
+        min-width: 0;
+      }
+      .vc-item .nm b {
+        display: block;
+        font-weight: 500;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .vc-item .nm span {
+        font-size: 10.5px;
+        color: var(--ink-mute);
+      }
+      .vc-stage {
+        flex: 1;
+        padding: 18px 20px;
+        background: #f7f7f6;
+        overflow: auto;
+      }
+
+      /* ============ VARIANT D — Composer-first ============ */
+      .vd-pane {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .vd-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 22px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .vd-bar .edit-hint {
+        margin-left: auto;
+      }
+      .vd-stage {
+        flex: 1;
+        padding: 18px 22px 22px;
+        background: #f7f7f6;
+        overflow: auto;
+      }
+      .vd-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 18px;
+        align-items: start;
+      }
+      .vd-side-h {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .vd-side-h h5 {
+        margin: 0;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-mute);
+      }
+      .vd-att {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+      .vd-att .att-pdf {
+        width: 34px;
+        height: 44px;
+        font-size: 9px;
+      }
+      .vd-att .nm {
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+      .vd-att .sub {
+        font-size: 11px;
+        color: var(--ink-mute);
+        margin-top: 1px;
+      }
+      .vd-att .jump {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--brand-700);
+        margin-top: 7px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+      .vd-att .jump svg {
+        width: 11px;
+        height: 11px;
+      }
+      .vd-warn {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        border: 1px solid #f3d9d4;
+        background: #fdf5f3;
+        border-radius: 10px;
+        padding: 9px 11px;
+        font-size: 11.5px;
+        color: #8a3d2c;
+        line-height: 1.45;
+      }
+      .vd-warn svg {
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .vd-send {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line-soft);
+      }
+      .vd-send-note {
+        font-size: 11px;
+        color: var(--ink-mute);
+        line-height: 1.45;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="doc-header">
+        <div class="doc-eyebrow">Design exploration</div>
+        <h1 class="doc-title">Review apply package — four directions</h1>
+        <p class="doc-subtitle">
+          The sheet becomes a near-fullscreen dialog with a left sidebar (Resume · Cover letter ·
+          Email), a live document per section, evidence hover cards, a generic Matte outreach mail
+          with attachment squares, and Save/Send semantics. What varies below is how each pane is
+          composed and where the controls live.
+        </p>
+        <div class="doc-meta">
+          <div><b>Source</b> grill session 2026-09-09 (this dialog)</div>
+          <div><b>Generated</b> 2026-09-09</div>
+          <div><b>Variants</b> 4</div>
+        </div>
+      </header>
+
+      <!-- ===== VARIANT A — Paper Studio ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">A</div>
+          <div class="variant-meta">
+            <h2>Paper Studio</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> document fidelity — one paper at a time, everything edits on the
+              paper itself, closest to the onboarding experience. <b>Tradeoff</b> include switches
+              and evidence need hover/inline affordances on the paper; fewer controls visible at
+              once.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant A · Resume section active</div>
+          <div class="preview">
+            <div class="backdrop">
+              <div class="dlg">
+                <div class="dlg-head">
+                  <div class="dlg-logo">V</div>
+                  <div class="dlg-head-main">
+                    <div class="dlg-title-row">
+                      <span class="dlg-title">Senior Frontend Engineer</span>
+                      <span class="dlg-sub">· Vercel</span>
+                    </div>
+                    <div class="dlg-context">
+                      <span class="badge is-green"
+                        ><svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.4"
+                        >
+                          <path d="M20 6 9 17l-5-5" /></svg
+                        >Listing page included</span
+                      >
+                      <span class="badge">jobs.vercel.com/careers/5521 ↗</span>
+                      <span class="badge is-soft">Description used · 3,842 chars</span>
+                    </div>
+                  </div>
+                  <div class="dlg-meta-right">
+                    <span class="dlg-state">Draft · generated 2m ago</span>
+                  </div>
+                </div>
+                <div class="dlg-body">
+                  <aside class="side">
+                    <div class="side-label">Package</div>
+                    <div class="side-item is-active">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                      </svg>
+                      Resume
+                      <span class="side-count">2/2 + 1</span>
+                    </div>
+                    <div class="side-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                      </svg>
+                      Cover letter
+                      <span class="side-count">4 ¶</span>
+                    </div>
+                    <div class="side-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                      </svg>
+                      Email
+                      <span class="side-count">2 PDF</span>
+                    </div>
+                    <div class="side-hint">
+                      Everything edits directly on the paper. Include switches and the original text
+                      live as small affordances next to each entry.
+                    </div>
+                  </aside>
+                  <div class="va-pane">
+                    <div class="va-panebar">
+                      <span class="badge is-soft">Tailored for this role</span>
+                      <span class="badge">Experiences 2/2 · Projects 0/1 · Skills 4/5</span>
+                      <span class="edit-hint"
+                        ><svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.2"
+                        >
+                          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                        >Click any text on the paper to edit</span
+                      >
+                    </div>
+                    <div class="va-stage">
+                      <div class="paper-shell">
+                        <div class="paper paper-ser">
+                          <div class="va-hdr">
+                            <span class="paper-name editable">Maya Okafor</span>
+                            <span class="headline-tag"
+                              ><span class="editable is-active"
+                                >Frontend Engineer — React, TypeScript, Design Systems</span
+                              ></span
+                            >
+                            <div class="paper-contacts">
+                              mayokafor.dev · github.com/mayokafor · in/mayokafor
+                            </div>
+                          </div>
+                          <div class="sec-head">
+                            <h4>Summary</h4>
+                            <span class="tick"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <path d="M20 6 9 17l-5-5" /></svg
+                            ></span>
+                          </div>
+                          <p class="b editable">
+                            Frontend engineer with six years building design systems and data-heavy
+                            interfaces at Stripe and Figma. Shipped the payments dashboard used by
+                            4M merchants; led the token pipeline that cut UI defects 38%.
+                          </p>
+                          <div class="sec-head">
+                            <h4>Experience</h4>
+                            <span class="tick"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <path d="M20 6 9 17l-5-5" /></svg
+                            ></span>
+                          </div>
+                          <div class="exp-row">
+                            <div class="exp-top">
+                              <span class="org">Stripe</span>
+                              <span class="role">Senior Frontend Engineer</span>
+                              <span class="dates">2021 — Present</span>
+                              <span class="ev-icon" title="Original text from your experience"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                >
+                                  <circle cx="11" cy="11" r="8" />
+                                  <path d="m21 21-4.3-4.3" /></svg
+                              ></span>
+                            </div>
+                            <div class="ev-card">
+                              <h5>Original · from your experience</h5>
+                              <p>
+                                Built merchant-facing dashboard features across three squads. Owned
+                                the design-token pipeline. Rewrote chart rendering for 60% faster
+                                loads. Mentored five engineers.
+                              </p>
+                            </div>
+                            <p class="b editable">
+                              Shipped the payments dashboard used by 4M merchants; reconciliations
+                              that took hours now run in minutes.
+                            </p>
+                            <p class="b editable">
+                              Led the design-token pipeline shared by web and mobile, cutting UI
+                              defects 38% across releases.
+                            </p>
+                            <p class="b editable">
+                              Rewrote chart rendering to canvas, making 100k-point dashboards scroll
+                              at 60fps.
+                            </p>
+                          </div>
+                          <div class="exp-row">
+                            <div class="exp-top">
+                              <span class="org">Figma</span>
+                              <span class="role">Product Engineer</span>
+                              <span class="dates">2019 — 2021</span>
+                              <span class="ev-icon" title="Original text from your experience"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                >
+                                  <circle cx="11" cy="11" r="8" />
+                                  <path d="m21 21-4.3-4.3" /></svg
+                              ></span>
+                            </div>
+                            <p class="b editable">
+                              Built multiplayer comments infrastructure with CRDT sync for 10M MAU
+                              product.
+                            </p>
+                            <p class="b editable">
+                              Cut bundle size 41% by auditing and lazy-loading plugin surface area.
+                            </p>
+                          </div>
+                          <div class="sec-head">
+                            <h4>Projects</h4>
+                            <span class="tick is-dash"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <circle cx="12" cy="12" r="9" stroke-dasharray="3 3" /></svg
+                            ></span>
+                            <span class="inc-pill is-off">Excluded</span>
+                          </div>
+                          <p class="b" style="color: #8a8a85; font-style: italic">
+                            Edge Cache Explorer is not on this resume. Flip its include switch to
+                            add it.
+                          </p>
+                          <div class="sec-head">
+                            <h4>Skills</h4>
+                            <span class="tick"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <path d="M20 6 9 17l-5-5" /></svg
+                            ></span>
+                          </div>
+                          <p class="b">React, TypeScript, Next.js, Tailwind CSS, GraphQL</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="dlg-footer">
+                  <span class="dlg-footer-note"
+                    >Edits stay local until Save · last draft is kept even after saving</span
+                  >
+                  <button class="btn">Regenerate</button>
+                  <button class="btn is-ghost">Cancel</button>
+                  <button class="btn is-primary">Save</button>
+                </div>
+              </div>
+            </div>
+            <div class="thumb-row">
+              <div class="thumb">
+                <div class="thumb-cap">Cover letter in A — same paper, serif letter</div>
+                <div class="thumb-box" style="padding: 10px 0; background: #f7f7f6">
+                  <div
+                    class="paper paper-ser"
+                    style="max-width: 330px; padding: 20px 24px; margin: 0 auto"
+                  >
+                    <div style="text-align: center">
+                      <div class="paper-name" style="font-size: 15px">Maya Okafor</div>
+                      <div class="paper-contacts" style="font-size: 9px">
+                        mayokafor.dev · github.com/mayokafor
+                      </div>
+                    </div>
+                    <div style="font-size: 9.5px; color: #666; margin-top: 10px">
+                      September 9, 2026
+                    </div>
+                    <div style="font-size: 10.5px; margin-top: 8px"><b>Vercel</b></div>
+                    <div style="font-size: 10.5px">Re: Senior Frontend Engineer</div>
+                    <p style="font-size: 10px; margin: 8px 0 0; text-align: justify">
+                      Dear hiring team — I build the interfaces merchants live in all day. At Stripe
+                      I owned the payments dashboard…
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="thumb">
+                <div class="thumb-cap">Email in A — rendered Matte mail is the editor</div>
+                <div class="thumb-box tb-flex scalemail">
+                  <div class="tb-side">
+                    <span class="on"></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="tb-mail">
+                    <div class="t"></div>
+                    <div class="l" style="width: 70%; height: 8px; background: #e4e4e2"></div>
+                    <div class="l"></div>
+                    <div class="l" style="width: 80%"></div>
+                    <div class="l" style="width: 60%"></div>
+                    <div class="l" style="width: 75%"></div>
+                    <div class="tb-sq"><i></i><i class="off"></i></div>
+                  </div>
+                </div>
+                <p
+                  style="font-size: 11px; color: var(--ink-mute); margin: 8px 0 0; line-height: 1.5"
+                >
+                  To field + attachment squares sit under the rendered mail; body edits on the mail.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Maximum fidelity to what the PDF will be — resume and cover letter read as real
+              documents, exactly like onboarding. Nothing competes with the paper; hover cards keep
+              originals available without clutter.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              Include switches and evidence are one hover deep — reviewing many items means lots of
+              hovering. Email controls (To, squares, Send) must fit under the mail without crowding
+              it.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              You want the onboarding feel most literally: the document is the product, controls are
+              quiet, and trust comes from seeing exactly what will render.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VARIANT B — Workbench split ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">B</div>
+          <div class="variant-meta">
+            <h2>Workbench split</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> review throughput — paper left, contextual tool rail right
+              (include switches, evidence panel, To + squares + Send always visible per section).
+              <b>Tradeoff</b> less paper width; more chrome than onboarding's quiet two-pane.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant B · Resume section active</div>
+          <div class="preview">
+            <div class="backdrop">
+              <div class="dlg">
+                <div class="dlg-head">
+                  <div class="dlg-logo">V</div>
+                  <div class="dlg-head-main">
+                    <div class="dlg-title-row">
+                      <span class="dlg-title">Senior Frontend Engineer</span>
+                      <span class="dlg-sub">· Vercel</span>
+                    </div>
+                    <div class="dlg-context">
+                      <span class="badge is-green"
+                        ><svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.4"
+                        >
+                          <path d="M20 6 9 17l-5-5" /></svg
+                        >Listing page included</span
+                      >
+                      <span class="badge">jobs.vercel.com/careers/5521 ↗</span>
+                      <span class="badge is-soft">Description used · 3,842 chars</span>
+                    </div>
+                  </div>
+                  <div class="dlg-meta-right">
+                    <span class="dlg-state">Draft · generated 2m ago</span>
+                  </div>
+                </div>
+                <div class="dlg-body">
+                  <aside class="side">
+                    <div class="side-label">Package</div>
+                    <div class="side-item is-active">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                      </svg>
+                      Resume
+                      <span class="side-count">2/2 + 1</span>
+                    </div>
+                    <div class="side-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                      </svg>
+                      Cover letter
+                      <span class="side-count">4 ¶</span>
+                    </div>
+                    <div class="side-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                      </svg>
+                      Email
+                      <span class="side-count">2 PDF</span>
+                    </div>
+                    <div class="side-hint">
+                      The rail swaps with the section: resume tools, letter tools, or mail tools.
+                    </div>
+                  </aside>
+                  <div class="vb-pane">
+                    <div class="vb-left">
+                      <div class="va-panebar">
+                        <span class="badge is-soft">Tailored for this role</span>
+                        <span class="edit-hint"
+                          ><svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                          >
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                          >Click text to edit</span
+                        >
+                      </div>
+                      <div class="vb-stage">
+                        <div class="paper-shell">
+                          <div class="paper paper-ser" style="padding: 30px 34px">
+                            <div style="text-align: center">
+                              <span class="paper-name" style="font-size: 19px">Maya Okafor</span>
+                              <div
+                                style="
+                                  font-family:
+                                    Inter,
+                                    -apple-system,
+                                    sans-serif;
+                                  font-size: 9px;
+                                  font-weight: 600;
+                                  letter-spacing: 0.08em;
+                                  text-transform: uppercase;
+                                  color: var(--brand-700);
+                                  margin-top: 4px;
+                                "
+                              >
+                                Frontend Engineer — React, TypeScript, Design Systems
+                              </div>
+                              <div class="paper-contacts" style="font-size: 9.5px">
+                                mayokafor.dev · github.com/mayokafor · in/mayokafor
+                              </div>
+                            </div>
+                            <div class="sec-head" style="margin-top: 14px">
+                              <h4 style="font-size: 11px">Summary</h4>
+                              <span class="tick"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.4"
+                                >
+                                  <path d="M20 6 9 17l-5-5" /></svg
+                              ></span>
+                            </div>
+                            <p class="b editable" style="font-size: 11px">
+                              Frontend engineer with six years building design systems and
+                              data-heavy interfaces at Stripe and Figma. Shipped the payments
+                              dashboard used by 4M merchants; led the token pipeline that cut UI
+                              defects 38%.
+                            </p>
+                            <div class="sec-head">
+                              <h4 style="font-size: 11px">Experience</h4>
+                              <span class="tick"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.4"
+                                >
+                                  <path d="M20 6 9 17l-5-5" /></svg
+                              ></span>
+                            </div>
+                            <div class="exp-row" style="font-size: 11px">
+                              <div class="exp-top">
+                                <span class="org">Stripe</span
+                                ><span class="role" style="font-weight: 500"
+                                  >Senior Frontend Engineer</span
+                                ><span class="dates">2021 — Present</span>
+                              </div>
+                              <p class="b editable">
+                                Shipped the payments dashboard used by 4M merchants; reconciliations
+                                that took hours now run in minutes.
+                              </p>
+                              <p class="b editable">
+                                Led the design-token pipeline shared by web and mobile, cutting UI
+                                defects 38% across releases.
+                              </p>
+                              <p class="b editable">
+                                Rewrote chart rendering to canvas, making 100k-point dashboards
+                                scroll at 60fps.
+                              </p>
+                            </div>
+                            <div class="exp-row" style="font-size: 11px">
+                              <div class="exp-top">
+                                <span class="org">Figma</span
+                                ><span class="role" style="font-weight: 500">Product Engineer</span
+                                ><span class="dates">2019 — 2021</span>
+                              </div>
+                              <p class="b editable">
+                                Built multiplayer comments infrastructure with CRDT sync for 10M MAU
+                                product.
+                              </p>
+                              <p class="b editable">
+                                Cut bundle size 41% by auditing and lazy-loading plugin surface
+                                area.
+                              </p>
+                            </div>
+                            <div class="sec-head">
+                              <h4 style="font-size: 11px">Projects</h4>
+                              <span class="tick is-dash"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.4"
+                                >
+                                  <circle cx="12" cy="12" r="9" stroke-dasharray="3 3" /></svg
+                              ></span>
+                            </div>
+                            <p
+                              class="b"
+                              style="color: #8a8a85; font-style: italic; font-size: 11px"
+                            >
+                              Edge Cache Explorer is not on this resume — toggle it in the rail to
+                              add it.
+                            </p>
+                            <div class="sec-head">
+                              <h4 style="font-size: 11px">Skills</h4>
+                              <span class="tick"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.4"
+                                >
+                                  <path d="M20 6 9 17l-5-5" /></svg
+                              ></span>
+                            </div>
+                            <p class="b" style="font-size: 11px">
+                              React, TypeScript, Next.js, Tailwind CSS, GraphQL
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <aside class="vb-rail">
+                      <div class="rail-block">
+                        <h5>Resume items</h5>
+                        <div class="rail-row">
+                          <span class="inc-pill">In</span
+                          ><span
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+                            >Stripe · 3 bullets</span
+                          >
+                        </div>
+                        <div class="rail-row">
+                          <span class="inc-pill">In</span
+                          ><span
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+                            >Figma · 2 bullets</span
+                          >
+                        </div>
+                        <div class="rail-row">
+                          <span class="inc-pill is-off">Off</span
+                          ><span
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+                            >Edge Cache Explorer</span
+                          >
+                        </div>
+                        <div class="rail-row">
+                          <span class="inc-pill">In</span
+                          ><span
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+                            >4 of 5 skills</span
+                          >
+                        </div>
+                      </div>
+                      <div class="rail-block">
+                        <h5>Original text</h5>
+                        <div class="rail-evidence">
+                          <p><b style="font-weight: 600">Stripe · from your experience</b></p>
+                          <p>
+                            Built merchant-facing dashboard features across three squads. Owned the
+                            design-token pipeline. Rewrote chart rendering for 60% faster loads.
+                            Mentored five engineers.
+                          </p>
+                        </div>
+                      </div>
+                      <div class="rail-block">
+                        <h5>Headline</h5>
+                        <div class="rail-to" style="font-size: 12px">
+                          Frontend Engineer — React, TypeScript, Design Systems
+                        </div>
+                      </div>
+                    </aside>
+                  </div>
+                </div>
+                <div class="dlg-footer">
+                  <span class="dlg-footer-note"
+                    >Edits stay local until Save · last draft is kept even after saving</span
+                  >
+                  <button class="btn">Regenerate</button>
+                  <button class="btn is-ghost">Cancel</button>
+                  <button class="btn is-primary">Save</button>
+                </div>
+              </div>
+            </div>
+            <div class="thumb-row">
+              <div class="thumb">
+                <div class="thumb-cap">Email in B — mail left, mail tools right</div>
+                <div class="thumb-box tb-flex scalemail">
+                  <div class="tb-side"><span class="on"></span><span></span><span></span></div>
+                  <div class="tb-mail">
+                    <div class="t"></div>
+                    <div class="l"></div>
+                    <div class="l" style="width: 80%"></div>
+                    <div class="l" style="width: 60%"></div>
+                  </div>
+                  <div
+                    style="
+                      width: 74px;
+                      border-left: 1px solid var(--line-soft);
+                      padding: 6px;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 4px;
+                    "
+                  >
+                    <i
+                      style="
+                        height: 12px;
+                        border: 1px solid var(--line);
+                        border-radius: 4px;
+                        display: block;
+                      "
+                    ></i>
+                    <div class="tb-sq" style="margin: 0"><i></i><i class="off"></i></div>
+                    <i
+                      style="
+                        height: 14px;
+                        background: var(--ink);
+                        border-radius: 4px;
+                        display: block;
+                        margin-top: 2px;
+                      "
+                    ></i>
+                  </div>
+                </div>
+                <p
+                  style="font-size: 11px; color: var(--ink-mute); margin: 8px 0 0; line-height: 1.5"
+                >
+                  To, squares, and Send live in the rail — visible while you edit the mail.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Best for systematic review: include switches, originals, and (in Email)
+              To/squares/Send are permanent fixtures you never hunt for. Reads as a review
+              workbench.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              Three columns (sidebar + paper + rail) is dense; paper shrinks to ~55% width, so A4
+              fidelity is the weakest of the four. Duplicates some affordances the paper already
+              has.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              You review packages often and want the fastest checkbox/compare loop over maximum
+              document presence.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VARIANT C — Guided sequence ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">C</div>
+          <div class="variant-meta">
+            <h2>Guided sequence</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> a calm, one-thing-at-a-time pass — sections read as steps with
+              ticks, and the left rail lists the current section's items. <b>Tradeoff</b> feels more
+              like a wizard; jumping back to compare sections is less direct than a flat sidebar.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant C · Resume step active</div>
+          <div class="preview">
+            <div class="backdrop">
+              <div class="dlg">
+                <div class="dlg-head">
+                  <div class="dlg-logo">V</div>
+                  <div class="dlg-head-main">
+                    <div class="dlg-title-row">
+                      <span class="dlg-title">Senior Frontend Engineer</span>
+                      <span class="dlg-sub">· Vercel</span>
+                    </div>
+                    <div class="dlg-context">
+                      <span class="badge is-green"
+                        ><svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.4"
+                        >
+                          <path d="M20 6 9 17l-5-5" /></svg
+                        >Listing page included</span
+                      >
+                      <span class="badge">jobs.vercel.com/careers/5521 ↗</span>
+                      <span class="badge is-soft">Description used · 3,842 chars</span>
+                    </div>
+                  </div>
+                  <div class="dlg-meta-right">
+                    <span class="dlg-state">Draft · generated 2m ago</span>
+                  </div>
+                </div>
+                <div class="vc-top">
+                  <div class="vc-step is-done">
+                    <span class="dot"
+                      ><svg
+                        viewBox="0 0 24 24"
+                        style="width: 11px; height: 11px"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                      >
+                        <path d="M20 6 9 17l-5-5" /></svg></span
+                    >Resume
+                  </div>
+                  <div class="vc-sep"></div>
+                  <div class="vc-step"><span class="dot">2</span>Cover letter</div>
+                  <div class="vc-sep"></div>
+                  <div class="vc-step"><span class="dot">3</span>Email</div>
+                  <span class="edit-hint" style="margin-left: auto"
+                    ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                    >Click text to edit</span
+                  >
+                </div>
+                <div class="dlg-body">
+                  <div class="vc-pane">
+                    <aside class="vc-items">
+                      <div class="side-label" style="padding: 2px 9px 6px">Experiences</div>
+                      <div class="vc-item is-active">
+                        <span class="cb on"></span
+                        ><span class="nm"
+                          ><b>Stripe</b><span>Senior Frontend Engineer · 3 bullets</span></span
+                        >
+                      </div>
+                      <div class="vc-item">
+                        <span class="cb on"></span
+                        ><span class="nm"
+                          ><b>Figma</b><span>Product Engineer · 2 bullets</span></span
+                        >
+                      </div>
+                      <div class="side-label" style="padding: 10px 9px 6px">Projects</div>
+                      <div class="vc-item">
+                        <span class="cb"></span
+                        ><span class="nm"><b>Edge Cache Explorer</b><span>excluded</span></span>
+                      </div>
+                      <div class="side-label" style="padding: 10px 9px 6px">Skills · 4/5</div>
+                      <div class="vc-item">
+                        <span class="cb on"></span><span class="nm"><b>React</b></span>
+                      </div>
+                      <div class="vc-item">
+                        <span class="cb on"></span><span class="nm"><b>TypeScript</b></span>
+                      </div>
+                      <div class="vc-item">
+                        <span class="cb on"></span><span class="nm"><b>Next.js</b></span>
+                      </div>
+                      <div class="vc-item">
+                        <span class="cb on"></span><span class="nm"><b>Tailwind CSS</b></span>
+                      </div>
+                      <div class="vc-item">
+                        <span class="cb"></span
+                        ><span class="nm" style="color: var(--ink-mute)"
+                          ><b>GraphQL</b><span>excluded</span></span
+                        >
+                      </div>
+                    </aside>
+                    <div class="vc-stage">
+                      <div class="paper-shell">
+                        <div class="paper paper-ser" style="padding: 30px 34px">
+                          <div style="text-align: center">
+                            <span class="paper-name" style="font-size: 19px">Maya Okafor</span>
+                            <div
+                              style="
+                                font-family:
+                                  Inter,
+                                  -apple-system,
+                                  sans-serif;
+                                font-size: 9px;
+                                font-weight: 600;
+                                letter-spacing: 0.08em;
+                                text-transform: uppercase;
+                                color: var(--brand-700);
+                                margin-top: 4px;
+                              "
+                            >
+                              Frontend Engineer — React, TypeScript, Design Systems
+                            </div>
+                            <div class="paper-contacts" style="font-size: 9.5px">
+                              mayokafor.dev · github.com/mayokafor
+                            </div>
+                          </div>
+                          <div class="sec-head" style="margin-top: 14px">
+                            <h4 style="font-size: 11px">Summary</h4>
+                            <span class="tick"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <path d="M20 6 9 17l-5-5" /></svg
+                            ></span>
+                          </div>
+                          <p class="b editable" style="font-size: 11px">
+                            Frontend engineer with six years building design systems and data-heavy
+                            interfaces at Stripe and Figma. Shipped the payments dashboard used by
+                            4M merchants; led the token pipeline that cut UI defects 38%.
+                          </p>
+                          <div class="sec-head">
+                            <h4 style="font-size: 11px">Experience</h4>
+                            <span class="tick"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <path d="M20 6 9 17l-5-5" /></svg
+                            ></span>
+                          </div>
+                          <div
+                            class="exp-row"
+                            style="
+                              font-size: 11px;
+                              border-left: 2px solid var(--brand-300);
+                              padding-left: 10px;
+                              margin-left: -12px;
+                            "
+                          >
+                            <div class="exp-top">
+                              <span class="org">Stripe</span
+                              ><span class="role" style="font-weight: 500"
+                                >Senior Frontend Engineer</span
+                              ><span class="dates">2021 — Present</span>
+                            </div>
+                            <div
+                              class="ev-card"
+                              style="
+                                position: static;
+                                width: auto;
+                                margin: 6px 0;
+                                box-shadow: var(--shadow-sm);
+                              "
+                            >
+                              <h5>Original · from your experience</h5>
+                              <p>
+                                Built merchant-facing dashboard features across three squads. Owned
+                                the design-token pipeline. Rewrote chart rendering for 60% faster
+                                loads. Mentored five engineers.
+                              </p>
+                            </div>
+                            <p class="b editable">
+                              Shipped the payments dashboard used by 4M merchants; reconciliations
+                              that took hours now run in minutes.
+                            </p>
+                            <p class="b editable">
+                              Led the design-token pipeline shared by web and mobile, cutting UI
+                              defects 38% across releases.
+                            </p>
+                            <p class="b editable">
+                              Rewrote chart rendering to canvas, making 100k-point dashboards scroll
+                              at 60fps.
+                            </p>
+                          </div>
+                          <div class="exp-row" style="font-size: 11px">
+                            <div class="exp-top">
+                              <span class="org">Figma</span
+                              ><span class="role" style="font-weight: 500">Product Engineer</span
+                              ><span class="dates">2019 — 2021</span>
+                            </div>
+                            <p class="b editable">
+                              Built multiplayer comments infrastructure with CRDT sync for 10M MAU
+                              product.
+                            </p>
+                            <p class="b editable">
+                              Cut bundle size 41% by auditing and lazy-loading plugin surface area.
+                            </p>
+                          </div>
+                          <div class="sec-head">
+                            <h4 style="font-size: 11px">Projects</h4>
+                            <span class="tick is-dash"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <circle cx="12" cy="12" r="9" stroke-dasharray="3 3" /></svg
+                            ></span>
+                          </div>
+                          <p class="b" style="color: #8a8a85; font-style: italic; font-size: 11px">
+                            Edge Cache Explorer is not on this resume — check it in the rail to add
+                            it.
+                          </p>
+                          <div class="sec-head">
+                            <h4 style="font-size: 11px">Skills</h4>
+                            <span class="tick"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                              >
+                                <path d="M20 6 9 17l-5-5" /></svg
+                            ></span>
+                          </div>
+                          <p class="b" style="font-size: 11px">
+                            React, TypeScript, Next.js, Tailwind CSS
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="dlg-footer">
+                  <span class="dlg-footer-note"
+                    >Step 1 of 3 · ticks mirror what the PDF will include</span
+                  >
+                  <button class="btn">Regenerate</button>
+                  <button class="btn is-ghost">Cancel</button>
+                  <button class="btn is-primary">Save</button>
+                </div>
+              </div>
+            </div>
+            <div class="thumb-row">
+              <div class="thumb">
+                <div class="thumb-cap">Email step in C — same stepper, item rail hidden</div>
+                <div class="thumb-box tb-flex scalemail">
+                  <div class="tb-side"><span class="on"></span><span></span><span></span></div>
+                  <div class="tb-mail">
+                    <div class="t"></div>
+                    <div class="l"></div>
+                    <div class="l" style="width: 78%"></div>
+                    <div class="l" style="width: 55%"></div>
+                    <div class="tb-sq"><i></i><i></i></div>
+                    <i
+                      style="
+                        display: block;
+                        height: 14px;
+                        width: 44px;
+                        background: var(--ink);
+                        border-radius: 4px;
+                        margin-top: 6px;
+                      "
+                    ></i>
+                  </div>
+                </div>
+                <p
+                  style="font-size: 11px; color: var(--ink-mute); margin: 8px 0 0; line-height: 1.5"
+                >
+                  Step 3 of 3; To + squares + Send under the mail.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              Strong onboarding echo: sections are steps, the active section's items get their own
+              checkbox rail, and the selected item highlights on the paper. Great for first-time
+              users.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              Item rail + sidebar + paper is the most chrome; "wizard" framing can feel heavy for a
+              quick resend. Steps imply a required order the flow doesn't enforce.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              You want the review to feel like the onboarding flow's sibling — guided, ticked, and
+              calm — and expect mostly first-pass reviews.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VARIANT D — Composer-first ===== -->
+      <section class="variant">
+        <div class="variant-head">
+          <div class="variant-letter">D</div>
+          <div class="variant-meta">
+            <h2>Composer-first</h2>
+            <p class="variant-tradeoff">
+              <b>Optimizes for</b> the actual goal — sending the application. Email lands first with
+              the rendered Matte mail, attachment cards, and Send in one view; resume and cover
+              letter open as papers from attachment cards. <b>Tradeoff</b> documents are one click
+              deeper; tailoring gets less limelight.
+            </p>
+          </div>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-frame-bar">Variant D · Email section active</div>
+          <div class="preview">
+            <div class="backdrop">
+              <div class="dlg">
+                <div class="dlg-head">
+                  <div class="dlg-logo">V</div>
+                  <div class="dlg-head-main">
+                    <div class="dlg-title-row">
+                      <span class="dlg-title">Senior Frontend Engineer</span>
+                      <span class="dlg-sub">· Vercel</span>
+                    </div>
+                    <div class="dlg-context">
+                      <span class="badge is-green"
+                        ><svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.4"
+                        >
+                          <path d="M20 6 9 17l-5-5" /></svg
+                        >Listing page included</span
+                      >
+                      <span class="badge">jobs.vercel.com/careers/5521 ↗</span>
+                      <span class="badge is-soft">Description used · 3,842 chars</span>
+                    </div>
+                  </div>
+                  <div class="dlg-meta-right">
+                    <span class="dlg-state">Draft · generated 2m ago</span>
+                  </div>
+                </div>
+                <div class="dlg-body">
+                  <aside class="side">
+                    <div class="side-label">Package</div>
+                    <div class="side-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                      </svg>
+                      Resume
+                      <span class="side-count">2/2 + 1</span>
+                    </div>
+                    <div class="side-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                      </svg>
+                      Cover letter
+                      <span class="side-count">4 ¶</span>
+                    </div>
+                    <div class="side-item is-active">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                      </svg>
+                      Email
+                      <span class="side-count">2 PDF</span>
+                    </div>
+                    <div class="side-hint">
+                      Sidebar order follows the flow you choose; Email can open first.
+                    </div>
+                  </aside>
+                  <div class="vd-pane">
+                    <div class="vd-bar">
+                      <span class="badge is-soft">Generated outreach</span>
+                      <span class="edit-hint"
+                        ><svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.2"
+                        >
+                          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                        >Edit directly on the mail</span
+                      >
+                    </div>
+                    <div class="vd-stage">
+                      <div class="vd-grid">
+                        <div class="mail-canvas" style="padding: 18px">
+                          <div
+                            style="
+                              display: flex;
+                              align-items: center;
+                              gap: 8px;
+                              max-width: 560px;
+                              margin: 0 auto 10px;
+                            "
+                          >
+                            <span
+                              style="
+                                font-size: 11px;
+                                font-weight: 700;
+                                letter-spacing: 0.08em;
+                                text-transform: uppercase;
+                                color: var(--ink-mute);
+                              "
+                              >To</span
+                            >
+                            <span class="rail-to" style="flex: 1; font-family: var(--mail-font)"
+                              ><svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                              >
+                                <rect x="2" y="4" width="20" height="16" rx="2" />
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg
+                              >nadia.rahman@vercel.com</span
+                            >
+                          </div>
+                          <div class="mail-card">
+                            <div class="mail-inner">
+                              <p class="mail-title editable">
+                                Senior Frontend Engineer — Maya Okafor
+                              </p>
+                              <p class="mail-p editable is-active">
+                                Dear Nadia — I'm applying for the Senior Frontend Engineer role on
+                                the Commerce team. I've spent six years building merchant-facing
+                                dashboards, most recently the payments console at Stripe, and
+                                Vercel's platform is exactly where I want to take that next.
+                              </p>
+                              <p class="mail-p editable">
+                                Two things I'd bring: a design-systems background that keeps large
+                                surfaces consistent, and hard-won performance experience — my last
+                                rewrite took chart-heavy pages from 4s to 600ms.
+                              </p>
+                              <p class="mail-p editable">
+                                My resume and a short cover letter are attached. I'd welcome a
+                                conversation.
+                              </p>
+                              <p class="mail-sig">Warmly,<br /><b>Maya Okafor</b></p>
+                            </div>
+                            <div class="mail-foot">
+                              <p>mayokafor.dev · github.com/mayokafor · in/mayokafor</p>
+                            </div>
+                          </div>
+                        </div>
+                        <aside>
+                          <div class="vd-side-h">
+                            <h5>Attachments</h5>
+                            <span class="badge">2 of 2 on</span>
+                          </div>
+                          <div class="vd-att">
+                            <div class="att-pdf">PDF</div>
+                            <div style="min-width: 0">
+                              <div class="nm">Maya_Okafor_Resume_Vercel.pdf</div>
+                              <div class="sub">Tailored · accepted kit</div>
+                              <span class="jump"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.2"
+                                >
+                                  <path d="M5 12h14M12 5l7 7-7 7" /></svg
+                                >Edit on paper</span
+                              >
+                            </div>
+                            <span class="att-toggle" style="margin-left: auto"></span>
+                          </div>
+                          <div class="vd-att">
+                            <div class="att-pdf">PDF</div>
+                            <div style="min-width: 0">
+                              <div class="nm">Maya_Okafor_Cover_Letter_Vercel.pdf</div>
+                              <div class="sub">Tailored · accepted kit</div>
+                              <span class="jump"
+                                ><svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.2"
+                                >
+                                  <path d="M5 12h14M12 5l7 7-7 7" /></svg
+                                >Edit on paper</span
+                              >
+                            </div>
+                            <span class="att-toggle" style="margin-left: auto"></span>
+                          </div>
+                          <div class="vd-warn">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path d="M12 9v4M12 17h.01" />
+                              <circle cx="12" cy="12" r="9" />
+                            </svg>
+                            Keep at least one attachment — you can't send an empty application.
+                          </div>
+                          <div class="vd-send">
+                            <span class="vd-send-note"
+                              >Sending saves the package first, then delivers to the recruiter's
+                              inbox.</span
+                            >
+                            <button class="btn is-dark" style="margin-left: auto">
+                              <svg
+                                viewBox="0 0 24 24"
+                                style="width: 13px; height: 13px"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                              >
+                                <path d="m22 2-7 20-4-9-9-4Z" />
+                                <path d="M22 2 11 13" />
+                              </svg>
+                              Send
+                            </button>
+                          </div>
+                        </aside>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="dlg-footer">
+                  <span class="dlg-footer-note"
+                    >Edits stay local until Save · Send saves, then sends</span
+                  >
+                  <button class="btn">Regenerate</button>
+                  <button class="btn is-ghost">Cancel</button>
+                  <button class="btn is-primary">Save</button>
+                </div>
+              </div>
+            </div>
+            <div class="thumb-row">
+              <div class="thumb">
+                <div class="thumb-cap">Resume in D — full paper from the attachment card</div>
+                <div class="thumb-box tb-flex scalemail">
+                  <div class="tb-side"><span></span><span></span><span class="on"></span></div>
+                  <div class="tb-mail" style="background: #f7f7f6">
+                    <div
+                      style="
+                        background: #fff;
+                        border: 1px solid #e7e7e4;
+                        border-radius: 3px;
+                        padding: 10px 12px;
+                        margin: 2px 6px;
+                      "
+                    >
+                      <div class="t" style="width: 40%"></div>
+                      <div class="l"></div>
+                      <div class="l" style="width: 85%"></div>
+                      <div class="l" style="width: 70%"></div>
+                    </div>
+                  </div>
+                </div>
+                <p
+                  style="font-size: 11px; color: var(--ink-mute); margin: 8px 0 0; line-height: 1.5"
+                >
+                  Same paper as A/B/C — reached via sidebar or the attachment card's jump.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="variant-analysis">
+          <div class="analysis-block">
+            <h4>What works</h4>
+            <p>
+              The send is the story: to, mail, attachments, and Send resolve in one glance.
+              Attachment cards double as navigation — "Edit on paper" jumps into the full document
+              experience.
+            </p>
+          </div>
+          <div class="analysis-block is-risk">
+            <h4>What risks</h4>
+            <p>
+              Tailoring quality is the other half of the value; burying resume/cover behind a click
+              undersells the edit work. Two-column stage is tightest for the A4 paper.
+            </p>
+          </div>
+          <div class="analysis-block is-pick">
+            <h4>Pick this if</h4>
+            <p>
+              Most sessions end in Send — you want the mail and attachments to be the first thing
+              you see, with documents a deliberate click away.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Decision row ===== -->
+      <section class="decision">
+        <h3>How to pick a direction</h3>
+        <p class="decision-sub">
+          All four honor the grill locks: near-fullscreen dialog, sidebar sections, live papers,
+          evidence hover, generic Matte mail, Save/Send. They differ in where controls live.
+        </p>
+        <div class="decision-grid">
+          <div class="decision-cell">
+            <b>Paper Studio (A)</b
+            ><span
+              >If the document should be the whole show and controls stay quiet — most
+              onboarding-like.</span
+            >
+          </div>
+          <div class="decision-cell">
+            <b>Workbench (B)</b
+            ><span
+              >If you review often and want include switches, originals, and mail tools permanently
+              visible.</span
+            >
+          </div>
+          <div class="decision-cell">
+            <b>Guided (C)</b
+            ><span
+              >If you want onboarding's step-and-tick feel with an item rail driving the
+              paper.</span
+            >
+          </div>
+          <div class="decision-cell">
+            <b>Composer-first (D)</b
+            ><span>If Send is the destination and mail + attachments should land first.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
