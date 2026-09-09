@@ -111,7 +111,8 @@ function resolveDraft(
 
 /**
  * Materialize resume + cover PDFs from an apply package draft and write accepted fields.
- * Clears draft columns so accepted fields are the single source of truth.
+ * Keeps the package draft as the dialog's editable source (spec: draft survives accept);
+ * accepted fields + PDFs are projections of it.
  */
 export async function acceptApplyPackage(input: {
   applicationId: string;
@@ -391,9 +392,7 @@ export async function acceptApplyPackage(input: {
         coverLetterFilename: coverFilename,
         outreachSubject: draft.outreachSubject,
         outreachBody: draft.outreachBody,
-        recruiterEmail,
-        applyPackageDraft: null,
-        applyPackageDraftedAt: null
+        recruiterEmail
       });
       if (!row) throw new Error("application update failed after new kit put");
       updated = row;
