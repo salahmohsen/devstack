@@ -10,10 +10,12 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "email:dev": "email dev --dir src/templates --port 3010"
+    "email:dev": "email dev --dir src/templates --port 3010",
+    "test:unit": "vp test run"
   },
   "dependencies": {
     "@tanstack/react-start": "catalog:",
+    "@tsu-stack/core": "workspace:*",
     "@tsu-stack/env": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
