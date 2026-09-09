@@ -14,7 +14,7 @@ import { useDetectStacksJobSelector } from "@/features/stacks";
 
 import { ApplicationDeleteConfirmHost } from "@/pages/dashboard/_lib/application-delete-confirm-host";
 import { ApplicationMaterialPreviewHost } from "@/pages/dashboard/_lib/application-material-preview-host";
-import { ApplicationPackageSheetHost } from "@/pages/dashboard/_lib/application-package-sheet-host";
+import { ApplicationPackageDialogHost } from "@/pages/dashboard/_lib/application-package-dialog-host";
 import { ApplicationRegenerateConfirmHost } from "@/pages/dashboard/_lib/application-regenerate-confirm-host";
 import { HubApplicationsSync } from "@/pages/dashboard/_lib/hub-applications-sync";
 import { HubAssistantModal } from "@/pages/dashboard/_lib/hub-assistant-modal";
@@ -130,7 +130,7 @@ function DashboardLayout() {
       <DeferredDailyBriefHost />
       <PendingPreparePackageHost />
       <ApplicationMaterialPreviewHost />
-      <ApplicationPackageSheetHost />
+      <ApplicationPackageDialogHost />
       <ApplicationDeleteConfirmHost />
       <ApplicationRegenerateConfirmHost />
       <Outlet />
