@@ -1320,7 +1320,7 @@ export const applicationsRouter = {
   sendOutreach: protectedProcedure
     .route({
       description:
-        "Send outreach email with resume PDF attachment; stamps send metadata and advances saved→applied",
+        "Send outreach email with resume + cover letter PDF attachments; stamps send metadata and advances saved→applied",
       method: "POST"
     })
     .input(SendOutreachInputSchema)
@@ -1334,6 +1334,9 @@ export const applicationsRouter = {
       },
       NO_RESUME: {
         message: "Link a resume before sending outreach"
+      },
+      NO_COVER: {
+        message: "Accept an apply package so the cover letter PDF exists before sending outreach"
       },
       NO_RECIPIENT: {
         message: "Set a valid recruiter email before sending outreach"
@@ -1356,6 +1359,7 @@ export const applicationsRouter = {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
         if (result.code === "CLOSED") throw errors.CLOSED({ message: result.message });
         if (result.code === "NO_RESUME") throw errors.NO_RESUME({ message: result.message });
+        if (result.code === "NO_COVER") throw errors.NO_COVER({ message: result.message });
         if (result.code === "NO_RECIPIENT") throw errors.NO_RECIPIENT({ message: result.message });
         if (result.code === "MAIL_NOT_CONFIGURED") {
           throw errors.MAIL_NOT_CONFIGURED({ message: result.message });

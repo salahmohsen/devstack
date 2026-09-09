@@ -39,6 +39,11 @@ export function useSendOutreachMutation() {
             case "NO_RESUME":
               toast.error(error.message || "Link a resume before sending outreach.");
               return;
+            case "NO_COVER":
+              toast.error(
+                error.message || "Accept an apply package so the cover letter PDF exists first."
+              );
+              return;
             case "NO_RECIPIENT":
               toast.error(error.message || "Set a valid recruiter email before sending outreach.");
               return;

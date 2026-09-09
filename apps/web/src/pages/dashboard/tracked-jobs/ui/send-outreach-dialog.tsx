@@ -24,7 +24,7 @@ export function SendOutreachDialog({ open, application, onOpenChange }: SendOutr
       open={open}
       onOpenChange={onOpenChange}
       title="Send outreach email?"
-      description="Confirm the message before sending. Resume PDF will be attached."
+      description="Confirm the message before sending. Resume and cover letter PDFs will be attached."
       confirmLabel="Send outreach"
       confirmLoading={sendMutation.isPending}
       confirmDisabled={!application}
@@ -54,7 +54,7 @@ export function SendOutreachDialog({ open, application, onOpenChange }: SendOutr
         <span className="shrink-0 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
           Attachment
         </span>
-        <span className="text-foreground">Resume PDF will be attached</span>
+        <span className="text-foreground">Resume and cover letter PDFs will be attached</span>
       </div>
     </ConfirmDialog>
   );

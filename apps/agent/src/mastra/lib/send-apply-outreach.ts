@@ -17,6 +17,7 @@ export type SendApplicationOutreachErrorCode =
   | "NOT_FOUND"
   | "CLOSED"
   | "NO_RESUME"
+  | "NO_COVER"
   | "NO_RECIPIENT"
   | "MAIL_NOT_CONFIGURED"
   | "SEND_FAILED"
@@ -40,7 +41,8 @@ function pdfFilename(name: string | null | undefined, fallback: string): string 
 }
 
 /**
- * Send first-apply outreach with resume PDF; advances saved → applied on success.
+ * Send first-apply outreach with resume + cover letter PDFs; advances saved →
+ * applied on success.
  */
 export async function sendApplyOutreach(input: {
   applicationId: string;
@@ -130,22 +132,38 @@ export async function sendApplyOutreach(input: {
       }
     ];
 
+    // Cover letter PDF is part of the kit — required for outreach, fail-closed
+    // like the resume (accept the apply package to materialize it).
     const coverKey = nonEmpty(app.coverLetterR2Key);
-    if (coverKey) {
-      const coverObject = await mediaBucket.get(coverKey);
-      if (coverObject?.body) {
-        const coverBytes = new Uint8Array(await new Response(coverObject.body).arrayBuffer());
-        sendAttachments.push({
-          filename: pdfFilename(
-            app.coverLetterFilename,
-            `Cover_letter_${app.companyName.replace(/\s+/g, "_")}.pdf`
-          ),
-          content: coverBytes,
-          contentType: "application/pdf",
-          storageKey: coverKey
-        });
-      }
+    if (!coverKey) {
+      return {
+        ok: false,
+        code: "NO_COVER" as const,
+        message: "Cover letter PDF is missing — accept an apply package before sending outreach"
+      };
     }
+
+    const coverObject = await mediaBucket.get(coverKey);
+    if (!coverObject?.body) {
+      return {
+        ok: false,
+        code: "NO_COVER" as const,
+        message: "Cover letter PDF object is missing from storage"
+      };
+    }
+
+    const coverBytes = new Uint8Array(await new Response(coverObject.body).arrayBuffer());
+    const coverFilename = pdfFilename(
+      app.coverLetterFilename,
+      `Cover_letter_${app.companyName.replace(/\s+/g, "_")}.pdf`
+    );
+
+    sendAttachments.push({
+      filename: coverFilename,
+      content: coverBytes,
+      contentType: "application/pdf",
+      storageKey: coverKey
+    });
 
     const sent = await sendCareerReply({
       userId: input.userId,
