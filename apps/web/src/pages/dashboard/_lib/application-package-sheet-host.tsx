@@ -19,16 +19,16 @@ const ApplyPackageSheet = lazy(() =>
  * the sheet must not depend on Tracked jobs page mount.
  */
 export function ApplicationPackageSheetHost() {
-  const { packageSheetAppId, closePackageSheet } = useApplicationStore();
+  const { packageDialogAppId, closePackageDialog } = useApplicationStore();
 
   const applicationQuery = useQuery({
     ...orpcQueryClient.applications.get.queryOptions({
-      input: { id: packageSheetAppId ?? "" }
+      input: { id: packageDialogAppId ?? "" }
     }),
-    enabled: packageSheetAppId != null
+    enabled: packageDialogAppId != null
   });
 
-  if (!packageSheetAppId) return null;
+  if (!packageDialogAppId) return null;
 
   return (
     <Suspense fallback={null}>
@@ -36,7 +36,7 @@ export function ApplicationPackageSheetHost() {
         open
         application={applicationQuery.data ?? null}
         onOpenChange={(open) => {
-          if (!open) closePackageSheet();
+          if (!open) closePackageDialog();
         }}
       />
     </Suspense>

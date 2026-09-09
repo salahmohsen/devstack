@@ -16,6 +16,9 @@ type SheetMode = "create" | "edit";
 /** What Prepare is waiting on when Review-off chains generate → accept. */
 export type ApplyPackageBusyPhase = "drafting" | "building-pdfs";
 
+/** Active section inside the apply package review dialog. */
+export type ApplyPackageSection = "resume" | "cover" | "email";
+
 type ApplicationUIState = {
   sheetOpen: boolean;
   sheetMode: SheetMode;
@@ -29,15 +32,15 @@ type ApplicationUIState = {
   applyPackageInFlightIds: Record<string, true>;
   /** Spinner copy phase while apply-package is in flight. */
   applyPackageBusyPhaseById: Record<string, ApplyPackageBusyPhase>;
-  /** Apply package draft review sheet (application id). */
-  packageSheetAppId: string | null;
+  /** Apply package review dialog (application id). */
+  packageDialogAppId: string | null;
+  /** Active section inside the review dialog. */
+  packageDialogSection: ApplyPackageSection;
   /**
    * New jobs "Track & package" handoff: prepare after Tracked jobs mounts.
    * Kept in module state so navigate does not drop the intent with the page.
    */
   pendingPreparePackageId: string | null;
-  /** Send outreach confirm dialog (application id). */
-  sendOutreachAppId: string | null;
   /**
    * Delete confirm dialog (full row snapshot).
    * Layout host — Menu/ContextMenu unmount on item click and would
@@ -76,13 +79,12 @@ type ApplicationUIActions = {
   markStageInFlight: (id: string, inFlight: boolean) => void;
   markApplyPackageInFlight: (id: string, inFlight: boolean) => void;
   setApplyPackageBusyPhase: (id: string, phase: ApplyPackageBusyPhase | null) => void;
-  openPackageSheet: (applicationId: string) => void;
-  closePackageSheet: () => void;
+  openPackageDialog: (applicationId: string, section?: ApplyPackageSection) => void;
+  setPackageDialogSection: (section: ApplyPackageSection) => void;
+  closePackageDialog: () => void;
   /** Queue Prepare for after Tracked jobs opens (Track & package). */
   requestPreparePackage: (applicationId: string) => void;
   clearPendingPreparePackage: () => void;
-  openSendOutreach: (applicationId: string) => void;
-  closeSendOutreach: () => void;
   openDeleteConfirm: (app: ApplicationOutput) => void;
   closeDeleteConfirm: () => void;
   openRegenerateConfirm: (applicationId: string) => void;
@@ -102,9 +104,9 @@ let state: ApplicationUIState = {
   stageInFlightIds: {},
   applyPackageInFlightIds: {},
   applyPackageBusyPhaseById: {},
-  packageSheetAppId: null,
+  packageDialogAppId: null,
+  packageDialogSection: "resume",
   pendingPreparePackageId: null,
-  sendOutreachAppId: null,
   deleteConfirmApp: null,
   regenerateConfirmAppId: null,
   importJdSheetOpen: false,
@@ -170,10 +172,16 @@ const actions: ApplicationUIActions = {
   },
   // Defer overlay opens past the triggering pointerup so Base UI does not
   // treat that same gesture as an outside dismiss (flash-then-close).
-  openPackageSheet: (applicationId) => {
-    window.setTimeout(() => setState({ packageSheetAppId: applicationId }), 50);
+  openPackageDialog: (applicationId, section) => {
+    window.setTimeout(() => {
+      setState({
+        packageDialogAppId: applicationId,
+        packageDialogSection: section ?? "resume"
+      });
+    }, 50);
   },
-  closePackageSheet: () => setState({ packageSheetAppId: null }),
+  setPackageDialogSection: (section) => setState({ packageDialogSection: section }),
+  closePackageDialog: () => setState({ packageDialogAppId: null }),
   requestPreparePackage: (applicationId) => {
     const nextInFlight = { ...state.applyPackageInFlightIds, [applicationId]: true as const };
     const nextPhase = {
@@ -187,10 +195,6 @@ const actions: ApplicationUIActions = {
     });
   },
   clearPendingPreparePackage: () => setState({ pendingPreparePackageId: null }),
-  openSendOutreach: (applicationId) => {
-    window.setTimeout(() => setState({ sendOutreachAppId: applicationId }), 50);
-  },
-  closeSendOutreach: () => setState({ sendOutreachAppId: null }),
   openDeleteConfirm: (app) => {
     window.setTimeout(() => setState({ deleteConfirmApp: app }), 50);
   },

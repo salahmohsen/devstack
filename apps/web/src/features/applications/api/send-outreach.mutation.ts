@@ -47,6 +47,9 @@ export function useSendOutreachMutation() {
             case "NO_RECIPIENT":
               toast.error(error.message || "Set a valid recruiter email before sending outreach.");
               return;
+            case "NO_ATTACHMENTS":
+              toast.error(error.message || "Keep at least one attachment selected.");
+              return;
             case "MAIL_NOT_CONFIGURED":
               toastAiError(
                 error.message || "Configure Resend under Settings → Integrations before sending.",

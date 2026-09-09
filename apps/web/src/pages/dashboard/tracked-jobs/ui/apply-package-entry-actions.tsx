@@ -260,7 +260,7 @@ export function ApplyPackageMenuItems({
   hidePrimaryKind = null
 }: ApplyPackageMenuItemsProps) {
   const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
-  const { openSendOutreach, openEdit, openMaterialPreview, openRegenerateConfirm } =
+  const { openPackageDialog, openEdit, openMaterialPreview, openRegenerateConfirm } =
     useApplicationStore();
   const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
     useDashboardApplyPackage();
@@ -352,7 +352,7 @@ export function ApplyPackageMenuItems({
             </Item>
           )}
           {canSendOutreach(app) && hidePrimaryKind !== "send" ? (
-            <Item onClick={() => openSendOutreach(app.id)}>
+            <Item onClick={() => openPackageDialog(app.id, "email")}>
               <MailIcon aria-hidden="true" />
               {APPLICATION_PRIMARY_ACTION_LABELS.send}
             </Item>
@@ -373,7 +373,7 @@ type ApplyPackagePanelActionsProps = {
  * Joined coss Group of filled `default` buttons — separators use bg-primary/72 (coss p-group-6).
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
-  const { openSendOutreach, openEdit, openMaterialPreview, openRegenerateConfirm } =
+  const { openPackageDialog, openEdit, openMaterialPreview, openRegenerateConfirm } =
     useApplicationStore();
   const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
     useDashboardApplyPackage();
@@ -475,7 +475,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           size="sm"
           variant="default"
           className="min-w-0 flex-1 active:scale-[0.96]"
-          onClick={() => openSendOutreach(app.id)}
+          onClick={() => openPackageDialog(app.id, "email")}
         >
           <MailIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
           Send outreach
