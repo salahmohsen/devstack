@@ -1,0 +1,89 @@
+/*
+ * Outbound mail preview — web twin of the react-email Matte letter
+ * (packages/email/src/templates/outreach-apply-email.tsx). Token values are
+ * copied from the template's Tailwind config so both render identically;
+ * spacing mirrors the template's px utilities (px-9/py-8 card, mt-4 gaps,
+ * mt-3 footer), including the email's non-collapsing 32px gap between the
+ * subject and the first paragraph (margin + padding instead of collapse).
+ */
+.outbound-mail {
+  --om-canvas: #f6f6f5;
+  --om-card: #ffffff;
+  --om-fg: #1a1a1a;
+  --om-fg-2: #525252;
+  --om-fg-3: #8a8a8a;
+  --om-stroke: #e4e4e4;
+
+  display: block;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 16px;
+  background: var(--om-canvas);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-weight: 400;
+}
+
+.outbound-mail__card {
+  border: 1px solid var(--om-stroke);
+  border-radius: 10px;
+  background: var(--om-card);
+  padding: 32px 36px;
+}
+
+/* Template `.font-30` subject Text (m-0). */
+.outbound-mail__subject {
+  display: block;
+  width: 100%;
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--om-fg);
+}
+
+/* Template Section mt-4 wrapping the paragraph Texts (each mt-4). */
+.outbound-mail__paragraphs {
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+/* Template `.font-13 text-fg-2` paragraph Text (m-0 mt-4, whitespace-pre-wrap). */
+.outbound-mail__paragraph {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--om-fg-2);
+}
+
+/* Single newlines inside a paragraph render as soft breaks, like the email. */
+.outbound-mail__field {
+  white-space: pre-wrap;
+}
+
+/* Template `.font-13 text-fg-2` signature Text (m-0 mt-4). */
+.outbound-mail__signature {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--om-fg-2);
+}
+
+/* Template `<span className="text-fg">` sender name. */
+.outbound-mail__sender {
+  color: var(--om-fg);
+}
+
+/* Read-only fallback when the profile has no name yet. */
+.outbound-mail__sender--muted {
+  color: var(--om-fg-3);
+}
+
+/* Template Section mt-3 px-2 below the card: `.font-11 text-fg-3` contact line. */
+.outbound-mail__contacts {
+  margin: 12px 0 0;
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  font-weight: 300;
+  color: var(--om-fg-3);
+}
