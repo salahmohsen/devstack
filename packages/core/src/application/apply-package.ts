@@ -224,8 +224,25 @@ export const AcceptApplyPackageInputSchema = z.object({
 });
 export type AcceptApplyPackageInput = z.infer<typeof AcceptApplyPackageInputSchema>;
 
+export const SendOutreachOverridesSchema = z.object({
+  /** Optional so overrides may carry only subject/body/attachments. */
+  to: optionalNullableEmail.optional(),
+  subject: z.string().min(1).max(500).optional(),
+  body: z.string().min(1).max(20_000).optional(),
+  /** Attachment selection for THIS send (send-time only, never persisted). */
+  attachments: z
+    .object({
+      resume: z.boolean(),
+      cover: z.boolean()
+    })
+    .optional()
+});
+export type SendOutreachOverrides = z.infer<typeof SendOutreachOverridesSchema>;
+
 export const SendOutreachInputSchema = z.object({
-  applicationId: z.string().min(1).describe("Application id to send first-apply outreach for")
+  applicationId: z.string().min(1).describe("Application id to send first-apply outreach for"),
+  /** Send-time overrides for to/subject/body/attachments (spec #8, #11). */
+  overrides: SendOutreachOverridesSchema.optional()
 });
 export type SendOutreachInput = z.infer<typeof SendOutreachInputSchema>;
 

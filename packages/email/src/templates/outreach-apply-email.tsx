@@ -1,4 +1,15 @@
-import { Body, Container, Head, Html, Link, Preview, Section, Tailwind, Text } from "react-email";
+import {
+  render,
+  Body,
+  Container,
+  Head,
+  Html,
+  Link,
+  Preview,
+  Section,
+  Tailwind,
+  Text
+} from "react-email";
 
 type MailContactLine = { text: string; href: string | null };
 
@@ -109,3 +120,11 @@ OutboundApplyEmail.PreviewProps = {
 } satisfies OutboundApplyEmailProps;
 
 export default OutboundApplyEmail;
+
+/** Node-safe HTML render of the outbound apply mail (API consumes this — never react-email directly). */
+export async function renderOutreachApplyEmailHtml(
+  mail: OutboundApplyEmailProps["mail"],
+  previewName?: string
+): Promise<string> {
+  return render(<OutboundApplyEmail mail={mail} previewName={previewName} />);
+}

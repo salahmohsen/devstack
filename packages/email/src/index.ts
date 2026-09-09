@@ -6,6 +6,7 @@ export { default as AppNotificationEmail } from "./templates/app-notification-em
 export type { AppNotificationEmailProps } from "./templates/app-notification-email";
 export { default as OutboundApplyEmail } from "./templates/outreach-apply-email";
 export type { OutboundApplyEmailProps } from "./templates/outreach-apply-email";
+export { renderOutreachApplyEmailHtml } from "./templates/outreach-apply-email";
 export { default as InviteUserEmail } from "./templates/invite-user-email";
 export type { InviteUserEmailProps } from "./templates/invite-user-email";
 export { default as NotificationDigestEmail } from "./templates/notification-digest-email";
