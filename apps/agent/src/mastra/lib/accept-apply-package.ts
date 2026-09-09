@@ -359,9 +359,7 @@ export async function acceptApplyPackage(input: {
           coverLetterFilename: coverFilename,
           outreachSubject: draft.outreachSubject,
           outreachBody: draft.outreachBody,
-          recruiterEmail,
-          applyPackageDraft: null,
-          applyPackageDraftedAt: null
+          recruiterEmail
         });
         if (!row) throw new Error("application update failed after new kit put");
         updated = row;
