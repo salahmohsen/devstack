@@ -75,7 +75,8 @@ ENV PNPM_FETCH_TIMEOUT=600000 \
     npm_config_fetch_timeout=600000 \
     npm_config_fetch_retries=5
 RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid=1000,gid=1000 \
-    corepack enable \
+    npm install -g corepack@latest \
+  && corepack enable \
   && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate \
   && pnpm config set store-dir /home/vp/.local/share/pnpm/store \
   && pnpm config set fetch-timeout 600000 \
