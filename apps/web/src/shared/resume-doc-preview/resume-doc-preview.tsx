@@ -1,7 +1,10 @@
 "use client";
 
-import { CheckCircle2Icon, CircleDashedIcon, PlusIcon } from "lucide-react";
+import { CheckCircle2Icon, CircleDashedIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { useState } from "react";
 
+import { Popover, PopoverPopup, PopoverTrigger } from "@tsu-stack/ui/components/popover";
+import { Switch } from "@tsu-stack/ui/components/switch";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -16,6 +19,9 @@ const SECTION_APPEAR = "transition-[opacity,color] duration-150 motion-reduce:tr
 
 const ICON_EASE = "duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none";
 
+/** Apply package: entry dimmed while excluded from the resume (include switch). */
+const ENTRY_EXCLUDED = "opacity-60 transition-[opacity] duration-150 motion-reduce:transition-none";
+
 /** Paper edit callbacks (grill Q1/Q2/Q6 lock) — text lives on the paper. */
 export type ResumeDocEditHandlers = {
   onProfileChange: (patch: { name?: string }) => void;
@@ -25,6 +31,10 @@ export type ResumeDocEditHandlers = {
   onProjectChange: (clientId: string, patch: { title?: string }) => void;
   /** Flat rewrite: one line per bullet, empty line removes a bullet. */
   onBulletsChange: (clientId: string, lines: string[]) => void;
+  /** Apply package: project rewritten-summary edit. */
+  onProjectSummaryChange?: (clientId: string, text: string) => void;
+  /** Apply package: headline edit — paper line under the name. */
+  onHeadlineChange?: (text: string) => void;
 };
 
 function SectionTick({ present }: { present: boolean }) {
@@ -55,17 +65,92 @@ function SectionTick({ present }: { present: boolean }) {
 }
 
 /**
+ * Original-text affordance (apply spec #4): a small search icon on the entry
+ * header line that reveals the pre-tailoring text on hover AND click/tap.
+ * Rendered only when evidence exists — never on the onboarding paper.
+ */
+function EntryEvidence({ text, source }: { text: string; source: "experience" | "project" }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        aria-label={`Original text from your ${source}`}
+        className={cn(
+          "mx-1 inline-flex size-4.25 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white align-[-2px] text-stone-400 outline-none",
+          "transition-colors duration-100 hover:border-stone-400 hover:text-stone-600 focus-visible:ring-2 focus-visible:ring-brand/40"
+        )}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <SearchIcon className="size-2.5" aria-hidden />
+      </PopoverTrigger>
+      <PopoverPopup className="w-64">
+        <div className="space-y-1.5">
+          <p className="text-[9.5px] font-semibold tracking-wider text-muted-foreground uppercase">
+            Original · from your {source}
+          </p>
+          <p className="text-[11px] leading-normal whitespace-pre-wrap text-muted-foreground">
+            {text}
+          </p>
+        </div>
+      </PopoverPopup>
+    </Popover>
+  );
+}
+
+/** Apply spec #3: tiny include switch in the entry header (PortfolioSwitch pattern). */
+function EntryIncludeToggle({
+  clientId,
+  include,
+  onChange
+}: {
+  clientId: string;
+  include: boolean;
+  onChange?: (clientId: string, include: boolean) => void;
+}) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 font-sans text-[11px] text-stone-400">
+      <Switch
+        checked={include}
+        onCheckedChange={(next) => onChange?.(clientId, next)}
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+        className="[--thumb-size:--spacing(2.5)]"
+        aria-label="Include on the resume"
+      />
+      <span>{include ? "Included" : "Excluded"}</span>
+    </span>
+  );
+}
+
+/** Per-entry affordances threaded from `ResumeDocPreview` (apply package only). */
+type EntryAffordances = {
+  evidenceByClientId?: Record<string, string>;
+  includeByClientId?: Record<string, boolean>;
+  onIncludeChange?: (clientId: string, include: boolean) => void;
+};
+
+/**
  * One RenderCV section. The title row mirrors the PDF (bold 12pt over a full
  * hairline); the presence tick + count sit at the trailing edge so the title
  * stays exactly where the PDF puts it.
  */
 function SectionBlock({
   section,
-  edit
+  edit,
+  evidenceByClientId,
+  includeByClientId,
+  onIncludeChange
 }: {
   section: DocPreviewSection;
   edit?: ResumeDocEditHandlers;
-}) {
+} & EntryAffordances) {
+  const affordances: EntryAffordances = {
+    evidenceByClientId,
+    includeByClientId,
+    onIncludeChange
+  };
   return (
     <section className="cv-section" data-slot="doc-section" data-present={section.present}>
       <div className="cv-section-title flex items-center justify-between gap-2">
@@ -103,6 +188,7 @@ function SectionBlock({
                   key={entry.clientId ?? `exp-${index}`}
                   entry={entry}
                   edit={edit}
+                  {...affordances}
                 />
               ))
             : null}
@@ -123,6 +209,7 @@ function SectionBlock({
                   key={entry.clientId ?? `proj-${index}`}
                   entry={entry}
                   edit={edit}
+                  {...affordances}
                 />
               ))
             : null}
@@ -159,13 +246,18 @@ function SectionBlock({
 
 function DocExperienceEntry({
   entry,
-  edit
+  edit,
+  evidenceByClientId,
+  includeByClientId,
+  onIncludeChange
 }: {
   entry: DocPreviewSection["experience"] extends (infer T)[] | undefined ? T : never;
   edit?: ResumeDocEditHandlers;
-}) {
+} & EntryAffordances) {
+  const evidence = evidenceByClientId?.[entry.clientId];
+  const include = includeByClientId?.[entry.clientId];
   return (
-    <article className="cv-entry">
+    <article className={cn("cv-entry", include === false && ENTRY_EXCLUDED)}>
       <div className="min-w-0">
         <p className="text-start">
           <strong>
@@ -197,10 +289,25 @@ function DocExperienceEntry({
               )}
             </>
           ) : null}
+          {evidence ? <EntryEvidence text={evidence} source="experience" /> : null}
         </p>
         <DocBullets highlights={entry.highlights ?? []} edit={edit} clientId={entry.clientId} />
       </div>
-      <span className="cv-entry-dates">{entryDateRange(entry.start_date, entry.end_date)}</span>
+      <span
+        className={cn(
+          "cv-entry-dates",
+          include != null && "inline-flex items-center justify-end gap-2"
+        )}
+      >
+        {entryDateRange(entry.start_date, entry.end_date)}
+        {include != null ? (
+          <EntryIncludeToggle
+            clientId={entry.clientId}
+            include={include}
+            onChange={onIncludeChange}
+          />
+        ) : null}
+      </span>
     </article>
   );
 }
@@ -246,13 +353,18 @@ function DocEducationEntry({
 
 function DocProjectEntry({
   entry,
-  edit
+  edit,
+  evidenceByClientId,
+  includeByClientId,
+  onIncludeChange
 }: {
   entry: DocPreviewSection["projects"] extends (infer T)[] | undefined ? T : never;
   edit?: ResumeDocEditHandlers;
-}) {
+} & EntryAffordances) {
+  const evidence = evidenceByClientId?.[entry.clientId];
+  const include = includeByClientId?.[entry.clientId];
   return (
-    <article className="cv-entry">
+    <article className={cn("cv-entry", include === false && ENTRY_EXCLUDED)}>
       <div className="min-w-0">
         <p className="text-start">
           <strong>
@@ -267,10 +379,36 @@ function DocProjectEntry({
               (entry.name ?? "Project")
             )}
           </strong>
+          {evidence ? <EntryEvidence text={evidence} source="project" /> : null}
         </p>
+        {edit?.onProjectSummaryChange && entry.summary ? (
+          <div className="mt-[0.08cm]">
+            <EditablePaperField
+              multiline
+              allowEmpty
+              ariaLabel="Project summary"
+              value={entry.summary}
+              placeholder="Summary"
+              onCommit={(next) => edit.onProjectSummaryChange?.(entry.clientId, next)}
+            />
+          </div>
+        ) : null}
         <DocBullets highlights={entry.highlights ?? []} edit={edit} clientId={entry.clientId} />
       </div>
-      <span className="cv-entry-dates" />
+      <span
+        className={cn(
+          "cv-entry-dates",
+          include != null && "inline-flex items-center justify-end gap-2"
+        )}
+      >
+        {include != null ? (
+          <EntryIncludeToggle
+            clientId={entry.clientId}
+            include={include}
+            onChange={onIncludeChange}
+          />
+        ) : null}
+      </span>
     </article>
   );
 }
@@ -374,6 +512,11 @@ export type ResumeDocPreviewProps = {
   /** Paper editing (review step). Omit for read-only rendering. */
   edit?: ResumeDocEditHandlers;
   className?: string;
+  /** Original text per entry id → renders the evidence icon + hover card (spec #4). */
+  evidenceByClientId?: Record<string, string>;
+  /** Include state per entry id → renders the mini include switch (spec #3). */
+  includeByClientId?: Record<string, boolean>;
+  onIncludeChange?: (clientId: string, include: boolean) => void;
 };
 
 /**
@@ -386,7 +529,10 @@ export function ResumeDocPreview({
   model,
   skeleton = false,
   edit,
-  className
+  className,
+  evidenceByClientId,
+  includeByClientId,
+  onIncludeChange
 }: ResumeDocPreviewProps) {
   if (skeleton || (!model && !draft)) {
     return (
@@ -414,7 +560,14 @@ export function ResumeDocPreview({
         />
         <div>
           {resolved.sections.map((section) => (
-            <SectionBlock key={section.id} section={section} edit={edit} />
+            <SectionBlock
+              key={section.id}
+              section={section}
+              edit={edit}
+              evidenceByClientId={evidenceByClientId}
+              includeByClientId={includeByClientId}
+              onIncludeChange={onIncludeChange}
+            />
           ))}
         </div>
       </ResumeDocPane>
@@ -440,6 +593,7 @@ function DocPaneHeader({
   skeleton?: boolean;
   edit?: ResumeDocEditHandlers;
 }) {
+  const onHeadlineChange = edit?.onHeadlineChange;
   return (
     <header data-slot="doc-header">
       <div className="cv-name">
@@ -453,8 +607,32 @@ function DocPaneHeader({
           name
         )}
       </div>
-      {/* Headline is derived (latest included role) — render-only by design. */}
-      {headline ? <p className="cv-headline">{headline}</p> : null}
+      {/* Headline: derived (latest included role) — editable only via the apply-package paper. */}
+      {onHeadlineChange ? (
+        headline ? (
+          <p className="cv-headline">
+            <EditablePaperField
+              ariaLabel="Headline"
+              value={headline}
+              allowEmpty
+              placeholder="Target role line — optional"
+              onCommit={onHeadlineChange}
+            />
+          </p>
+        ) : (
+          <p className="cv-headline font-sans text-[12.5px] text-stone-400 italic">
+            <EditablePaperField
+              ariaLabel="Headline"
+              value=""
+              allowEmpty
+              placeholder="Add a target role line"
+              onCommit={onHeadlineChange}
+            />
+          </p>
+        )
+      ) : headline ? (
+        <p className="cv-headline">{headline}</p>
+      ) : null}
       {contactLine.length > 0 ? (
         <p className="cv-connections">
           {contactLine.map((contact, index) => (

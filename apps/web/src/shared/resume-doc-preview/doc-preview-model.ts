@@ -116,6 +116,8 @@ export type EducationEntry = {
 
 export type ProjectEntry = {
   name?: string;
+  /** Rewritten summary paragraph — rides the zip from `projectRows`, not the cv record. */
+  summary?: string;
   highlights?: string[];
 };
 
@@ -210,7 +212,8 @@ export type SectionRowMaps = {
   experienceRows: Array<{ clientId: string }>;
   educationRows: Array<{ clientId: string }>;
   certificationRows: Array<{ clientId: string }>;
-  projectRows: Array<{ clientId: string }>;
+  /** Extra row fields (e.g. `summary`) ride along onto the zipped project entry. */
+  projectRows: Array<{ clientId: string; summary?: string | null }>;
 };
 
 /**
@@ -235,10 +238,16 @@ export function docPreviewModelFromRenderCvDoc(
     asRecordList<EducationEntry>(sectionsDoc.education),
     rows.educationRows
   );
+  // The cv record does not carry project summaries (map-rendercv-yaml folds
+  // them into highlights only when no bullets exist) — pull the row summary
+  // through the zip so the paper can bind the rewritten-summary field.
   const projects = withClientIds(
     asRecordList<ProjectEntry>(sectionsDoc.projects),
     rows.projectRows
-  );
+  ).map((entry, index) => {
+    const summary = rows.projectRows[index]?.summary?.trim();
+    return summary ? { ...entry, summary } : entry;
+  });
   const skills = asRecordList<SkillEntry>(sectionsDoc.skills);
   const certifications = asStringArray(sectionsDoc.certifications).map((line, index) => {
     // Pipeline emits markdown links for credentialed certs: `[Name](url) — Issuer, date`.

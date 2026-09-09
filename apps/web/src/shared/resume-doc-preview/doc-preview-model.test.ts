@@ -142,6 +142,40 @@ describe("buildDocPreviewModel — clientIds", () => {
   });
 });
 
+describe("buildDocPreviewModel — project summary", () => {
+  it("carries the draft project summary onto the zipped entry", () => {
+    const draft = makeDraft({
+      projects: [
+        {
+          title: "Omen",
+          year: 2025,
+          summary: "Agent helper paragraph",
+          description: "<p>Built an agent</p>",
+          stackNames: [],
+          clientId: "proj-1",
+          selected: true,
+          includedInPortfolio: true
+        }
+      ]
+    });
+
+    const model = buildDocPreviewModel(draft);
+    const projects = model.sections.find((section) => section.id === "projects");
+    expect(projects?.projects?.[0]).toMatchObject({
+      clientId: "proj-1",
+      summary: "Agent helper paragraph",
+      highlights: ["Built an agent"]
+    });
+  });
+
+  it("blank summary stays absent from the entry", () => {
+    const model = buildDocPreviewModel(makeDraft());
+
+    const projects = model.sections.find((section) => section.id === "projects");
+    expect(projects?.projects?.[0]?.summary).toBeUndefined();
+  });
+});
+
 describe("entryDateRange", () => {
   it("renders RenderCV month names with an en dash", () => {
     expect(entryDateRange("2024-01-01", "2025-02-01")).toBe("Jan 2024 – Feb 2025");
