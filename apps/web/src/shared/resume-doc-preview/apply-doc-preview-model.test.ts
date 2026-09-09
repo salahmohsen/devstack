@@ -362,6 +362,29 @@ describe("buildApplyPackageDocPreview", () => {
     });
   });
 
+  it("project summary rides the zip: rewritten summary wins over live", () => {
+    const { model } = buildApplyPackageDocPreview(makeDraft(), makeLive(), OPTIONS);
+
+    const projects = section(model, "projects");
+    expect(projects?.count).toBe(1);
+    expect(projects?.projects?.[0]).toMatchObject({
+      clientId: "proj-1",
+      summary: "Tailored agent paragraph"
+    });
+  });
+
+  it("project summary falls back to live summary when the rewrite is empty (model zip)", () => {
+    const draft = makeDraft({
+      projects: [{ projectId: "proj-1", include: true, name: "Omen-old", rewrittenSummary: "" }]
+    });
+    const { model } = buildApplyPackageDocPreview(draft, makeLive(), OPTIONS);
+
+    expect(section(model, "projects")?.projects?.[0]).toMatchObject({
+      clientId: "proj-1",
+      summary: "Agent helper"
+    });
+  });
+
   it("dropped first row does not misalign the zip: second included row keeps its own id/evidence", () => {
     const live = makeLive();
     // First INCLUDED draft row (exp-1) loses its portfolio entry — accept would drop it.
@@ -377,6 +400,24 @@ describe("buildApplyPackageDocPreview", () => {
     });
     expect(Object.keys(evidenceByClientId)).not.toContain("exp-1");
     expect(evidenceByClientId["exp-2"]).toBe("<p>Earlier role</p>");
+  });
+
+  it("dropped first project does not misalign the zip: second kept project keeps its own summary", () => {
+    const live = makeLive();
+    // First INCLUDED draft project loses its portfolio entry; the archived
+    // proj-2 becomes renderable so the zip has a second row to pair.
+    live.projects[0] = { ...live.projects[0]!, portfolioEntryId: null };
+    live.projects[1] = { ...live.projects[1]!, isArchived: false };
+    const { model, evidenceByClientId } = buildApplyPackageDocPreview(makeDraft(), live, OPTIONS);
+
+    const projects = section(model, "projects");
+    expect(projects?.count).toBe(1);
+    // Draft pairing, not a live fallback: proj-2's rewrite must land on proj-2.
+    expect(projects?.projects?.[0]).toMatchObject({
+      clientId: "proj-2",
+      summary: "Archived rewrite"
+    });
+    expect(evidenceByClientId["proj-2"]).toBe("Archived");
   });
 
   it("kept row with empty live text gets no evidence entry", () => {

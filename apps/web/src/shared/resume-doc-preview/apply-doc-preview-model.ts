@@ -281,8 +281,13 @@ export function buildApplyPackageDocPreview(
     }),
     educationRows: [],
     certificationRows: [],
-    projectRows: kept.projects.map(({ draftRow }) => {
-      return { clientId: draftRow.projectId };
+    projectRows: kept.projects.map(({ draftRow, live: row }) => {
+      // Same effective-summary rule as the portfolio build: the paper's
+      // editable summary field rides the zip, so rewritten text wins.
+      return {
+        clientId: draftRow.projectId,
+        summary: draftRow.rewrittenSummary || row.summary
+      };
     })
   });
 

@@ -1,9 +1,15 @@
 "use client";
 
 import { CheckCircle2Icon, CircleDashedIcon, PlusIcon, SearchIcon } from "lucide-react";
-import { useState } from "react";
+import { useId } from "react";
 
-import { Popover, PopoverPopup, PopoverTrigger } from "@tsu-stack/ui/components/popover";
+import { stripHtmlToPlainText } from "@tsu-stack/core";
+import {
+  Popover,
+  PopoverPopup,
+  PopoverTitle,
+  PopoverTrigger
+} from "@tsu-stack/ui/components/popover";
 import { Switch } from "@tsu-stack/ui/components/switch";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -65,33 +71,57 @@ function SectionTick({ present }: { present: boolean }) {
 }
 
 /**
+ * Live descriptions/summaries arrive as editor HTML (`<p>…</p>`); the evidence
+ * card renders plain text. Core stripper with block closers pre-mapped to
+ * blank lines, so paragraphs keep their whitespace feel under pre-wrap.
+ */
+function htmlToPlainText(html: string): string {
+  return stripHtmlToPlainText(html.replace(/<\/(div|h[1-6]|p)>/gi, "\n\n"));
+}
+
+/**
  * Original-text affordance (apply spec #4): a small search icon on the entry
  * header line that reveals the pre-tailoring text on hover AND click/tap.
  * Rendered only when evidence exists — never on the onboarding paper.
+ *
+ * Hover is Base UI's native `openOnHover` (built-in safePolygon travel +
+ * `closeDelay`), so the pointer can move into the popup and the click toggle
+ * never fights the hover close. Focus: Base UI disables its focus manager when
+ * a popover opens by hover, so hover-open never moves focus and never blurs an
+ * EditablePaperField mid-edit; click/keyboard opens intentionally move focus
+ * into the popup.
  */
-function EntryEvidence({ text, source }: { text: string; source: "experience" | "project" }) {
-  const [open, setOpen] = useState(false);
+function EntryEvidence({
+  identity,
+  source,
+  text
+}: {
+  identity: string;
+  source: "experience" | "project";
+  text: string;
+}) {
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover>
       <PopoverTrigger
-        aria-label={`Original text from your ${source}`}
+        aria-label={`Original text from ${identity}`}
         className={cn(
           "mx-1 inline-flex size-4.25 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white align-[-2px] text-stone-400 outline-none",
           "transition-colors duration-100 hover:border-stone-400 hover:text-stone-600 focus-visible:ring-2 focus-visible:ring-brand/40"
         )}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        closeDelay={150}
+        delay={100}
         onClick={(event) => event.stopPropagation()}
+        openOnHover
       >
         <SearchIcon className="size-2.5" aria-hidden />
       </PopoverTrigger>
       <PopoverPopup className="w-64">
         <div className="space-y-1.5">
-          <p className="text-[9.5px] font-semibold tracking-wider text-muted-foreground uppercase">
+          <PopoverTitle className="text-[9.5px] tracking-wider text-muted-foreground uppercase">
             Original · from your {source}
-          </p>
+          </PopoverTitle>
           <p className="text-[11px] leading-normal whitespace-pre-wrap text-muted-foreground">
-            {text}
+            {htmlToPlainText(text)}
           </p>
         </div>
       </PopoverPopup>
@@ -102,13 +132,17 @@ function EntryEvidence({ text, source }: { text: string; source: "experience" | 
 /** Apply spec #3: tiny include switch in the entry header (PortfolioSwitch pattern). */
 function EntryIncludeToggle({
   clientId,
+  identity,
   include,
   onChange
 }: {
   clientId: string;
+  identity: string;
   include: boolean;
   onChange?: (clientId: string, include: boolean) => void;
 }) {
+  const statusId = useId();
+  const switchId = useId();
   return (
     <span className="inline-flex shrink-0 items-center gap-1.5 font-sans text-[11px] text-stone-400">
       <Switch
@@ -116,10 +150,12 @@ function EntryIncludeToggle({
         onCheckedChange={(next) => onChange?.(clientId, next)}
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
-        className="[--thumb-size:--spacing(2.5)]"
-        aria-label="Include on the resume"
+        className="[--thumb-size:--spacing(2.5)] sm:[--thumb-size:--spacing(2.5)]"
+        aria-label={`Include ${identity} on the resume`}
+        aria-labelledby={`${statusId} ${switchId}`}
+        id={switchId}
       />
-      <span>{include ? "Included" : "Excluded"}</span>
+      <span id={statusId}>{include ? "Included" : "Excluded"}</span>
     </span>
   );
 }
@@ -256,6 +292,7 @@ function DocExperienceEntry({
 } & EntryAffordances) {
   const evidence = evidenceByClientId?.[entry.clientId];
   const include = includeByClientId?.[entry.clientId];
+  const identity = [entry.position ?? "Role", entry.company].filter(Boolean).join(", ");
   return (
     <article className={cn("cv-entry", include === false && ENTRY_EXCLUDED)}>
       <div className="min-w-0">
@@ -289,7 +326,9 @@ function DocExperienceEntry({
               )}
             </>
           ) : null}
-          {evidence ? <EntryEvidence text={evidence} source="experience" /> : null}
+          {evidence ? (
+            <EntryEvidence identity={identity} text={evidence} source="experience" />
+          ) : null}
         </p>
         <DocBullets highlights={entry.highlights ?? []} edit={edit} clientId={entry.clientId} />
       </div>
@@ -303,6 +342,7 @@ function DocExperienceEntry({
         {include != null ? (
           <EntryIncludeToggle
             clientId={entry.clientId}
+            identity={identity}
             include={include}
             onChange={onIncludeChange}
           />
@@ -363,6 +403,7 @@ function DocProjectEntry({
 } & EntryAffordances) {
   const evidence = evidenceByClientId?.[entry.clientId];
   const include = includeByClientId?.[entry.clientId];
+  const identity = entry.name ?? "Project";
   return (
     <article className={cn("cv-entry", include === false && ENTRY_EXCLUDED)}>
       <div className="min-w-0">
@@ -379,7 +420,7 @@ function DocProjectEntry({
               (entry.name ?? "Project")
             )}
           </strong>
-          {evidence ? <EntryEvidence text={evidence} source="project" /> : null}
+          {evidence ? <EntryEvidence identity={identity} text={evidence} source="project" /> : null}
         </p>
         {edit?.onProjectSummaryChange && entry.summary ? (
           <div className="mt-[0.08cm]">
@@ -404,6 +445,7 @@ function DocProjectEntry({
         {include != null ? (
           <EntryIncludeToggle
             clientId={entry.clientId}
+            identity={identity}
             include={include}
             onChange={onIncludeChange}
           />
