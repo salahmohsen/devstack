@@ -8,10 +8,13 @@ export type ApplyPackageEmailPaneProps = {
   application: ApplicationOutput;
   /** Local draft under edit; null for legacy accepted packages without a draft. */
   draft: ApplyPackageDraft | null;
-  onDraftChange: Dispatch<SetStateAction<ApplyPackageDraft | null>>;
+  /** Non-null by contract — the dialog guards the null-draft cases. */
+  onDraftChange: Dispatch<SetStateAction<ApplyPackageDraft>>;
   busy: boolean;
   /** After a successful Send the dialog closes. */
   onSent: () => void;
+  // Task 16 Send semantics: Save-when-dirty becomes kit-currency-gated —
+  // `if (!kitCurrent) save first` so Send never ships with stale kit PDFs.
 };
 
 /** Stub — the rendered Matte mail editor + attachment squares land with the next slice. */

@@ -8,7 +8,8 @@ export type ApplyPackageCoverPaneProps = {
   application: ApplicationOutput;
   /** Local draft under edit; null for legacy accepted packages without a draft. */
   draft: ApplyPackageDraft | null;
-  onDraftChange: Dispatch<SetStateAction<ApplyPackageDraft | null>>;
+  /** Non-null by contract — the dialog guards the null-draft cases. */
+  onDraftChange: Dispatch<SetStateAction<ApplyPackageDraft>>;
   busy: boolean;
 };
 

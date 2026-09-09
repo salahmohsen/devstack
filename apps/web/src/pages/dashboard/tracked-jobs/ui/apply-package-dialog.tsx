@@ -2,7 +2,15 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { BookOpenIcon, CheckIcon, ExternalLinkIcon, FileTextIcon, MailIcon } from "lucide-react";
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type SetStateAction
+} from "react";
 
 import { type ApplicationOutput, type ApplyPackageDraft } from "@tsu-stack/core";
 import { splitCoverLetterParagraphs } from "@tsu-stack/pdf/doc";
@@ -73,12 +81,20 @@ function PanePending() {
   );
 }
 
+/** Empty / whitespace-only emails compare (and save) as null. */
+function normalizeDraftEmail(value: string | null): string | null {
+  const trimmed = value?.trim() ?? null;
+  return trimmed != null && trimmed.length > 0 ? trimmed : null;
+}
+
 export function ApplyPackageDialog({ application }: { application: ApplicationOutput }) {
   const {
     packageDialogSection,
     setPackageDialogSection,
     closePackageDialog,
-    markApplyPackageInFlight
+    markApplyPackageInFlight,
+    acceptedDraftGeneratedAtById,
+    setAcceptedDraftGeneratedAt
   } = useApplicationStore();
   const acceptMutation = useAcceptApplyPackageMutation();
   const generateMutation = useGenerateApplyPackageMutation();
@@ -86,6 +102,12 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
     parseApplyPackageDraft(application.applyPackageDraft)
   );
   const [regenerateOpen, setRegenerateOpen] = useState(false);
+
+  // Panes edit a live non-null draft; the dialog owns the nullable state.
+  // Updaters only fire from panes rendering a draft, so `prev` is non-null there.
+  const updateDraft = useCallback((value: SetStateAction<ApplyPackageDraft>) => {
+    setDraft((prev) => (typeof value === "function" ? value(prev as ApplyPackageDraft) : value));
+  }, []);
 
   const serverDraft = useMemo(
     () => parseApplyPackageDraft(application.applyPackageDraft),
@@ -105,14 +127,38 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
 
   const kitAccepted = application.resumeId != null;
   const busy = acceptMutation.isPending || generateMutation.isPending;
-  const dirty = useMemo(
-    () =>
-      draft != null && serverDraft != null && JSON.stringify(draft) !== JSON.stringify(serverDraft),
-    [draft, serverDraft]
-  );
-  const canSave = draft != null && !busy && (dirty || !kitAccepted);
-  const saveDisabledHint =
-    draft == null ? "No draft to save" : kitAccepted && !dirty ? "No changes to save" : undefined;
+
+  /** Whitespace-only email edits must not keep Save lit (mirror the trim-on-submit). */
+  const dirty = useMemo(() => {
+    if (draft == null || serverDraft == null) return false;
+    const local = {
+      ...draft,
+      proposedRecruiterEmail: normalizeDraftEmail(draft.proposedRecruiterEmail)
+    };
+    const server = {
+      ...serverDraft,
+      proposedRecruiterEmail: normalizeDraftEmail(serverDraft.proposedRecruiterEmail)
+    };
+    return JSON.stringify(local) !== JSON.stringify(server);
+  }, [draft, serverDraft]);
+
+  /**
+   * Kit currency is explicit: accepted AND the accepted draft is this draft.
+   * The accepted-draft generatedAt marker lives in module state (survives
+   * dialog remounts); Regenerate's re-seed picks up a new generatedAt, so
+   * kitCurrent flips false and Save re-enables without extra flags.
+   */
+  const kitCurrent =
+    kitAccepted && acceptedDraftGeneratedAtById[application.id] === draft?.generatedAt;
+  // dirty stays as the belt-and-suspenders arm: accept keeps the server
+  // draft, so a local edit after accept keeps the same generatedAt marker.
+  const canSave = draft != null && !busy && (dirty || !kitCurrent);
+  const saveHint =
+    draft == null
+      ? "No draft to save"
+      : kitCurrent && !dirty
+        ? "Kit is current with this draft"
+        : undefined;
 
   const resumeCount = useMemo(() => {
     if (!draft) return null;
@@ -146,8 +192,9 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
         }
       },
       {
-        // Keep the dialog open post-accept: the chip flips to Accepted and
-        // Save disables once the refetched application syncs serverDraft.
+        // Kit is now current with this exact draft — record the marker so
+        // Save disables until a new edit or regenerate lands.
+        onSuccess: () => setAcceptedDraftGeneratedAt(applicationId, draft.generatedAt),
         onSettled: () => markApplyPackageInFlight(applicationId, false)
       }
     );
@@ -317,20 +364,23 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
           </p>
         </nav>
 
-        <div className="min-w-0 flex-1">
+        <div
+          key={packageDialogSection}
+          className="min-w-0 flex-1 motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
+        >
           <Suspense fallback={<PanePending />}>
             {packageDialogSection === "cover" ? (
               <ApplyPackageCoverPane
                 application={application}
                 draft={draft}
-                onDraftChange={setDraft}
+                onDraftChange={updateDraft}
                 busy={busy}
               />
             ) : packageDialogSection === "email" ? (
               <ApplyPackageEmailPane
                 application={application}
                 draft={draft}
-                onDraftChange={setDraft}
+                onDraftChange={updateDraft}
                 busy={busy}
                 onSent={closePackageDialog}
               />
@@ -338,7 +388,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
               <ApplyPackageResumePane
                 application={application}
                 draft={draft}
-                onDraftChange={setDraft}
+                onDraftChange={updateDraft}
                 busy={busy}
               />
             )}
@@ -351,6 +401,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
           Edits stay local until Save · Send saves first
         </p>
         <div className="flex items-center gap-2">
+          {saveHint ? <p className="text-xs text-muted-foreground">{saveHint}</p> : null}
           <Button
             type="button"
             variant="outline"
@@ -366,7 +417,6 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
             type="button"
             disabled={!canSave}
             loading={acceptMutation.isPending}
-            title={saveDisabledHint}
             onClick={handleSave}
           >
             Save

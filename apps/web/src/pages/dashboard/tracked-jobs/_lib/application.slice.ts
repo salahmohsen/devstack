@@ -37,6 +37,12 @@ type ApplicationUIState = {
   /** Active section inside the review dialog. */
   packageDialogSection: ApplyPackageSection;
   /**
+   * `draft.generatedAt` of the last accepted draft, per application.
+   * Kit currency = live draft's generatedAt matches this marker; module
+   * state so the marker survives dialog remounts.
+   */
+  acceptedDraftGeneratedAtById: Record<string, string | undefined>;
+  /**
    * New jobs "Track & package" handoff: prepare after Tracked jobs mounts.
    * Kept in module state so navigate does not drop the intent with the page.
    */
@@ -82,6 +88,8 @@ type ApplicationUIActions = {
   openPackageDialog: (applicationId: string, section?: ApplyPackageSection) => void;
   setPackageDialogSection: (section: ApplyPackageSection) => void;
   closePackageDialog: () => void;
+  /** Record / clear the accepted-draft generatedAt marker (null clears). */
+  setAcceptedDraftGeneratedAt: (id: string, generatedAt: string | null) => void;
   /** Queue Prepare for after Tracked jobs opens (Track & package). */
   requestPreparePackage: (applicationId: string) => void;
   clearPendingPreparePackage: () => void;
@@ -106,6 +114,7 @@ let state: ApplicationUIState = {
   applyPackageBusyPhaseById: {},
   packageDialogAppId: null,
   packageDialogSection: "resume",
+  acceptedDraftGeneratedAtById: {},
   pendingPreparePackageId: null,
   deleteConfirmApp: null,
   regenerateConfirmAppId: null,
@@ -182,6 +191,12 @@ const actions: ApplicationUIActions = {
   },
   setPackageDialogSection: (section) => setState({ packageDialogSection: section }),
   closePackageDialog: () => setState({ packageDialogAppId: null }),
+  setAcceptedDraftGeneratedAt: (id, generatedAt) => {
+    const next = { ...state.acceptedDraftGeneratedAtById };
+    if (generatedAt == null) delete next[id];
+    else next[id] = generatedAt;
+    setState({ acceptedDraftGeneratedAtById: next });
+  },
   requestPreparePackage: (applicationId) => {
     const nextInFlight = { ...state.applyPackageInFlightIds, [applicationId]: true as const };
     const nextPhase = {
