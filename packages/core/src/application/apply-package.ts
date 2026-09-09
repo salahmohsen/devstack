@@ -120,7 +120,10 @@ export const ApplyPackageDraftSchema = z.object({
   coverLetterBody: z.string(),
   outreachSubject: z.string(),
   outreachBody: z.string(),
-  /** AI rationale for the human reviewer. */
+  /**
+   * Deprecated: generation no longer emits notes (agent take replaced it).
+   * Kept so stored drafts parse.
+   */
   notes: z.string().optional(),
   jdBuckets: ApplyPackageJdBucketsSchema.optional(),
   /** JD ∩ portfolio dual forms (e.g. “Amazon Web Services (AWS)”). */
@@ -326,11 +329,14 @@ export const ApplyPackageSummaryAndLettersSchema = z.object({
     .describe("Resume summary tailored to this JD, or null if none"),
   coverLetterBody: z.string().describe("Full cover letter body, no greeting/sign-off extras"),
   outreachSubject: z.string().describe("Short email subject for first-apply outreach"),
-  outreachBody: z.string().describe("Plain-text outreach email body"),
+  outreachBody: z
+    .string()
+    .describe(
+      "Plain-text outreach email body: greeting + body paragraphs. No sign-off and no signature — the mail template adds the applicant's name."
+    ),
   proposedRecruiterEmail: optionalNullableEmail
     .nullable()
     .describe("Recruiter email only if present in the JD; otherwise null"),
-  notes: optionalLlmString.describe("Internal note for the seeker, not sent"),
   headline: optionalLlmString.describe(
     "Target role headline line (not an employer rename). Empty omits."
   ),
@@ -413,8 +419,6 @@ export function assembleApplyPackageDraft(
 
   const generatedAtTrimmed = input.generatedAt?.trim();
   const atsVendor = input.letters.atsVendor?.trim() ?? detectAtsVendor(input.jobContext.listingUrl);
-  const notes =
-    input.letters.notes != null ? humanizeApplyPackageProse(input.letters.notes) : undefined;
   const draft = {
     applicationId: input.applicationId,
     generatedAt:
@@ -434,7 +438,6 @@ export function assembleApplyPackageDraft(
     coverLetterBody: humanizeApplyPackageProse(input.letters.coverLetterBody),
     outreachSubject: humanizeApplyPackageProse(input.letters.outreachSubject),
     outreachBody: humanizeApplyPackageProse(input.letters.outreachBody),
-    ...(notes ? { notes } : {}),
     ...(input.letters.jdBuckets != null ? { jdBuckets: input.letters.jdBuckets } : {}),
     ...(input.letters.keywordDualForms != null
       ? { keywordDualForms: input.letters.keywordDualForms }

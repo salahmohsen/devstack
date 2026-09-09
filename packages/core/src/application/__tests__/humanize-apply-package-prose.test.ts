@@ -79,8 +79,7 @@ describe("assembleApplyPackageDraft humanizes prose", () => {
         outreachSubject: "FE role — Acme",
         outreachBody: "Hi — interested in the role.",
         proposedRecruiterEmail: null,
-        headline: "Senior Frontend — Remote",
-        notes: "Thin JD — title only"
+        headline: "Senior Frontend — Remote"
       }
     });
 
@@ -89,7 +88,6 @@ describe("assembleApplyPackageDraft humanizes prose", () => {
     expect(draft.coverLetterBody).toBe("I am writing, briefly, about fit.");
     expect(draft.outreachSubject).toBe("FE role, Acme");
     expect(draft.outreachBody).toBe("Hi, interested in the role.");
-    expect(draft.notes).toBe("Thin JD, title only");
     expect(draft.experiences[0]?.rewrittenBullets).toEqual([
       "Shipped React, TypeScript dashboards"
     ]);
