@@ -87,6 +87,65 @@ describe("buildCoverLetterModel — contact line", () => {
   it("contactLine is null with no contacts and no profile email", () => {
     expect(build({ contacts: [], profileEmail: "" }).contactLine).toBeNull();
   });
+
+  it("dedupes two contacts producing the same label", () => {
+    const { contactLine } = build({
+      contacts: [
+        { type: "github", value: "salah", sortOrder: 0 },
+        { type: "github", value: "salah", sortOrder: 1 }
+      ],
+      profileEmail: ""
+    });
+
+    expect(contactLine).toBe("github.com/salah");
+  });
+
+  it("honors real sortOrder over array order (DB sortOrder wins)", () => {
+    const { contactLine } = build({
+      contacts: [
+        { type: "github", value: "salah", sortOrder: 2 },
+        { type: "location", value: "Cairo, Egypt", sortOrder: 0 },
+        { type: "website", value: "salah.dev", sortOrder: 1 }
+      ],
+      profileEmail: ""
+    });
+
+    expect(contactLine).toBe("Cairo, Egypt | salah.dev | github.com/salah");
+  });
+
+  it("contactLine is null when only unknown or empty-typed contacts remain", () => {
+    expect(
+      build({
+        contacts: [
+          { type: "unknown", value: "nope" },
+          { type: "phone", value: "   " }
+        ],
+        profileEmail: ""
+      }).contactLine
+    ).toBeNull();
+  });
+});
+
+describe("buildCoverLetterModel — commit round-trip", () => {
+  it("re-joining committed paragraphs re-splits to the identical list", () => {
+    const body = "First para.\nStill first.\n\nSecond para.\n\nWarm regards,\nSalah";
+    const first = build({ body });
+    const round = build({ body: first.paragraphs.map((p) => p.text).join("\n\n") });
+
+    expect(round.paragraphs).toEqual(first.paragraphs);
+  });
+
+  it("collapses an intra-paragraph soft break (Enter) to a space on re-split", () => {
+    const body = "Dear team,\nI am excited.\n\nSign off here";
+    const first = build({ body });
+    expect(first.paragraphs.map((p) => p.text)).toEqual([
+      "Dear team, I am excited.",
+      "Sign off here"
+    ]);
+
+    const round = build({ body: first.paragraphs.map((p) => p.text).join("\n\n") });
+    expect(round.paragraphs.map((p) => p.text)).toEqual(first.paragraphs.map((p) => p.text));
+  });
 });
 
 describe("buildCoverLetterModel — header fields", () => {

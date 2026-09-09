@@ -52,16 +52,31 @@ export function CoverLetterPaper({ model, onBodyChange, className }: CoverLetter
       {model.roleTitle ? <p className="mt-[0.42cm]">Re: {model.roleTitle}</p> : null}
 
       <div className="mt-[0.55cm] flex flex-col gap-[0.42cm]">
-        {paragraphs.map((paragraph, index) => (
-          <EditablePaperField
-            key={paragraph.id}
-            multiline
-            allowEmpty
-            ariaLabel={`Cover letter paragraph ${index + 1}`}
-            value={paragraph.text}
-            onCommit={(next) => commitParagraph(index, next)}
-          />
-        ))}
+        {paragraphs.length === 0 ? (
+          <p className="text-stone-400 italic">
+            <EditablePaperField
+              multiline
+              allowEmpty
+              ariaLabel="Cover letter body"
+              value=""
+              placeholder="Add a paragraph"
+              onCommit={(next) => {
+                if (next) onBodyChange(next);
+              }}
+            />
+          </p>
+        ) : (
+          paragraphs.map((paragraph, index) => (
+            <EditablePaperField
+              key={paragraph.id}
+              multiline
+              allowEmpty
+              ariaLabel={`Cover letter paragraph ${index + 1}`}
+              value={paragraph.text}
+              onCommit={(next) => commitParagraph(index, next)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

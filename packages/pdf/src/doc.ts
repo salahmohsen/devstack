@@ -9,4 +9,5 @@
 export { buildRenderCvDoc } from "#@/map-rendercv-yaml";
 export type { PdfContact, ResumePdfInput, ResumePdfPortfolio, ResumePdfProfile } from "#@/types";
 export { displayContact } from "#@/contacts";
+export { formatLetterDate, splitCoverLetterParagraphs } from "#@/letter-format";
 export { buildCoverLetterContactItems } from "#@/letter-contacts";

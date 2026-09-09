@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { COVER_LETTER_TYPST_TEMPLATE } from "#@/cover-letter.template";
 import { PdfRenderFailedError } from "#@/errors";
 import { type CoverLetterContactItem, buildCoverLetterContactItems } from "#@/letter-contacts";
+import { formatLetterDate, splitCoverLetterParagraphs } from "#@/letter-format";
 import {
   compileTypstUa1,
   PDF_RENDER_TIMEOUT_MS,
@@ -16,31 +17,7 @@ import {
 } from "#@/spawn";
 import { type CoverLetterPdfInput } from "#@/types";
 
-/**
- * Split cover letter body into paragraphs (blank-line separated).
- * Falls back to a single paragraph with soft line breaks joined when no blank lines.
- */
-export function splitCoverLetterParagraphs(body: string): string[] {
-  const trimmed = body.replace(/\r\n/g, "\n").trim();
-  if (!trimmed) return [];
-
-  const byBlank = trimmed
-    .split(/\n\s*\n/)
-    .map((p) => p.replace(/\n+/g, " ").trim())
-    .filter(Boolean);
-
-  if (byBlank.length > 1) return byBlank;
-
-  return [trimmed.replace(/\n+/g, " ").trim()].filter(Boolean);
-}
-
-function formatLetterDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  });
-}
+export { splitCoverLetterParagraphs } from "#@/letter-format";
 
 function typstContactLine(items: CoverLetterContactItem[]): string {
   if (items.length === 0) return "[]";
