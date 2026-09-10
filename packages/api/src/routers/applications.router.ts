@@ -1341,6 +1341,9 @@ export const applicationsRouter = {
       NO_RECIPIENT: {
         message: "Set a valid recruiter email before sending outreach"
       },
+      NO_ATTACHMENTS: {
+        message: "Keep at least one attachment selected"
+      },
       MAIL_NOT_CONFIGURED: {
         message: "Configure Resend under Settings → Integrations before sending"
       },
@@ -1353,7 +1356,8 @@ export const applicationsRouter = {
       const result = await sendApplicationOutreach({
         applicationId: input.applicationId,
         userId,
-        mediaBucket: context.mediaBucket
+        mediaBucket: context.mediaBucket,
+        overrides: input.overrides
       });
       if (!result.ok) {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
@@ -1361,6 +1365,9 @@ export const applicationsRouter = {
         if (result.code === "NO_RESUME") throw errors.NO_RESUME({ message: result.message });
         if (result.code === "NO_COVER") throw errors.NO_COVER({ message: result.message });
         if (result.code === "NO_RECIPIENT") throw errors.NO_RECIPIENT({ message: result.message });
+        if (result.code === "NO_ATTACHMENTS") {
+          throw errors.NO_ATTACHMENTS({ message: result.message });
+        }
         if (result.code === "MAIL_NOT_CONFIGURED") {
           throw errors.MAIL_NOT_CONFIGURED({ message: result.message });
         }

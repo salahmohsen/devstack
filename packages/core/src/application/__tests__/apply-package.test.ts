@@ -204,14 +204,13 @@ describe("rewrite chunk schemas", () => {
     expect(p.success).toBe(true);
   });
 
-  it("coerces null optional LLM fields (atsVendor, notes, headline) to undefined", () => {
+  it("coerces null optional LLM fields (atsVendor, headline) to undefined", () => {
     const p = ApplyPackageSummaryAndLettersSchema.safeParse({
       professionalSummary: "x",
       coverLetterBody: "Dear...",
       outreachSubject: "Re:",
       outreachBody: "Hi",
       proposedRecruiterEmail: null,
-      notes: null,
       headline: null,
       keywordDualForms: null,
       jdBuckets: null,
@@ -219,10 +218,22 @@ describe("rewrite chunk schemas", () => {
     });
     expect(p.success).toBe(true);
     expect(p.data?.atsVendor).toBeUndefined();
-    expect(p.data?.notes).toBeUndefined();
     expect(p.data?.headline).toBeUndefined();
     expect(p.data?.keywordDualForms).toBeUndefined();
     expect(p.data?.jdBuckets).toBeUndefined();
+  });
+
+  it("no longer accepts letters notes (agent take replaced them)", () => {
+    const p = ApplyPackageSummaryAndLettersSchema.safeParse({
+      professionalSummary: "x",
+      coverLetterBody: "Dear...",
+      outreachSubject: "Re:",
+      outreachBody: "Hi",
+      proposedRecruiterEmail: null,
+      notes: "stale note"
+    });
+    expect(p.success).toBe(true);
+    expect(p.data).not.toHaveProperty("notes");
   });
 });
 

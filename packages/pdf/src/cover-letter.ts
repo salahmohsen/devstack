@@ -3,9 +3,10 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { contactHref, displayContact, parseRenderCvSocial, sortContacts } from "#@/contacts";
 import { COVER_LETTER_TYPST_TEMPLATE } from "#@/cover-letter.template";
 import { PdfRenderFailedError } from "#@/errors";
+import { type CoverLetterContactItem, buildCoverLetterContactItems } from "#@/letter-contacts";
+import { formatLetterDate, splitCoverLetterParagraphs } from "#@/letter-format";
 import {
   compileTypstUa1,
   PDF_RENDER_TIMEOUT_MS,
@@ -14,72 +15,9 @@ import {
   typstStringLiteral,
   type RenderPdfOptions
 } from "#@/spawn";
-import { type CoverLetterPdfInput, type PdfContact } from "#@/types";
+import { type CoverLetterPdfInput } from "#@/types";
 
-const CORE_CONTACT_TYPES = new Set(["location", "phone", "email", "website"]);
-
-export type CoverLetterContactItem = {
-  type: string;
-  label: string;
-  href: string | null;
-};
-
-/**
- * Split cover letter body into paragraphs (blank-line separated).
- * Falls back to a single paragraph with soft line breaks joined when no blank lines.
- */
-export function splitCoverLetterParagraphs(body: string): string[] {
-  const trimmed = body.replace(/\r\n/g, "\n").trim();
-  if (!trimmed) return [];
-
-  const byBlank = trimmed
-    .split(/\n\s*\n/)
-    .map((p) => p.replace(/\n+/g, " ").trim())
-    .filter(Boolean);
-
-  if (byBlank.length > 1) return byBlank;
-
-  return [trimmed.replace(/\n+/g, " ").trim()].filter(Boolean);
-}
-
-function formatLetterDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  });
-}
-
-/** Name + one contact line: same omit rules as the resume (no Discord / unknown / invalid socials). */
-export function buildCoverLetterContactItems(
-  contacts: PdfContact[],
-  profileEmail: string
-): CoverLetterContactItem[] {
-  const list = [...contacts];
-  const hasEmail = list.some((c) => c.type === "email");
-  if (!hasEmail && profileEmail.trim()) {
-    list.unshift({ type: "email", value: profileEmail.trim(), sortOrder: -1 });
-  }
-
-  const items: CoverLetterContactItem[] = [];
-  const seen = new Set<string>();
-  for (const contact of sortContacts(list)) {
-    const social = parseRenderCvSocial(contact.type, contact.value);
-    if (!social && !CORE_CONTACT_TYPES.has(contact.type)) continue;
-
-    const label = displayContact(contact.type, contact.value);
-    if (!label) continue;
-    const key = label.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    items.push({
-      type: contact.type,
-      label,
-      href: contactHref(contact.type, contact.value)
-    });
-  }
-  return items;
-}
+export { splitCoverLetterParagraphs } from "#@/letter-format";
 
 function typstContactLine(items: CoverLetterContactItem[]): string {
   if (items.length === 0) return "[]";

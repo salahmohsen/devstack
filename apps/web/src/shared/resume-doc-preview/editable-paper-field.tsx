@@ -23,6 +23,13 @@ type EditablePaperFieldProps = {
   ariaLabel: string;
   /** Commit an emptied field instead of restoring (Q6: empty bullet = delete). */
   allowEmpty?: boolean;
+  /**
+   * Busy lock (send window): rest-state clicks don't enter edit mode and an
+   * in-flight edit is cancelled (reverted to value) — no edits can land into
+   * a draft the send closure no longer sees. Undefined keeps the interactive
+   * behavior identical for existing consumers.
+   */
+  disabled?: boolean;
 };
 
 export function EditablePaperField({
@@ -32,7 +39,8 @@ export function EditablePaperField({
   placeholder,
   className,
   ariaLabel,
-  allowEmpty = false
+  allowEmpty = false,
+  disabled = false
 }: EditablePaperFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -75,9 +83,20 @@ export function EditablePaperField({
   };
 
   const beginEdit = () => {
+    if (disabled) return;
     setDraft(value);
     setEditing(true);
   };
+
+  // Disabled mid-edit (busy lock flipped on during a send): cancel — revert
+  // to value, never commit into a frozen draft.
+  useEffect(() => {
+    if (disabled && editing) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- cancel-on-disable is deliberate
+      setEditing(false);
+      setDraft(value);
+    }
+  }, [disabled, editing, value]);
 
   if (editing) {
     const shared = {
@@ -143,23 +162,34 @@ export function EditablePaperField({
     <button
       type="button"
       aria-label={`${ariaLabel} — click to edit`}
+      aria-disabled={disabled ? true : undefined}
+      data-disabled={disabled ? "" : undefined}
       onClick={beginEdit}
       className={cn(
-        "group/field relative inline cursor-text text-left font-[inherit] leading-[inherit] text-inherit",
+        "group/field relative inline text-left font-[inherit] leading-[inherit] text-inherit",
         "-mx-0.5 rounded-sm px-0.5 transition-colors duration-100 outline-none",
-        "hover:bg-brand/10 focus-visible:bg-brand/10 focus-visible:ring-2 focus-visible:ring-brand/40",
+        disabled
+          ? "cursor-default"
+          : "cursor-text hover:bg-brand/10 focus-visible:bg-brand/10 focus-visible:ring-2 focus-visible:ring-brand/40",
         className
       )}
     >
-      <span className="border-b border-transparent group-hover/field:border-dashed group-hover/field:border-brand/50">
+      <span
+        className={cn(
+          "border-b border-transparent",
+          !disabled && "group-hover/field:border-dashed group-hover/field:border-brand/50"
+        )}
+      >
         {value || <span className="text-muted-foreground/50 italic">{placeholder}</span>}
       </span>
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -top-1.5 -right-1 text-[0.7em] text-brand/0 transition-colors duration-100 select-none group-hover/field:text-brand/70"
-      >
-        ✎
-      </span>
+      {!disabled ? (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-1.5 -right-1 text-[0.7em] text-brand/0 transition-colors duration-100 select-none group-hover/field:text-brand/70"
+        >
+          ✎
+        </span>
+      ) : null}
     </button>
   );
 }

@@ -11,6 +11,7 @@ import {
   renderCoverLetterPdfBytes,
   splitCoverLetterParagraphs
 } from "#@/cover-letter";
+import { formatLetterDate, splitCoverLetterParagraphs as splitFromDoc } from "#@/doc";
 import { type SpawnFn } from "#@/spawn";
 import { type CoverLetterPdfInput } from "#@/types";
 
@@ -88,6 +89,13 @@ function binOnPath(bin: string): boolean {
 }
 
 const hasTypst = binOnPath("typst");
+
+describe("doc re-exports (letter-format, browser-safe)", () => {
+  it("re-exports splitCoverLetterParagraphs and formatLetterDate", () => {
+    expect(splitFromDoc("A\n\nB")).toEqual(["A", "B"]);
+    expect(formatLetterDate(new Date(2026, 8, 9))).toBe("September 9, 2026");
+  });
+});
 
 describe("splitCoverLetterParagraphs", () => {
   it("splits blank-line paragraphs and joins soft line breaks", () => {

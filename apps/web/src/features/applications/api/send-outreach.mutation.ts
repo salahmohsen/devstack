@@ -2,7 +2,7 @@ import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ApplicationListOutput } from "@tsu-stack/core";
 
 import { toastAiError } from "@/shared/lib/toast-ai-error";
@@ -47,6 +47,9 @@ export function useSendOutreachMutation() {
             case "NO_RECIPIENT":
               toast.error(error.message || "Set a valid recruiter email before sending outreach.");
               return;
+            case "NO_ATTACHMENTS":
+              toast.error(error.message || "Keep at least one attachment selected.");
+              return;
             case "MAIL_NOT_CONFIGURED":
               toastAiError(
                 error.message || "Configure Resend under Settings → Integrations before sending.",
@@ -84,7 +87,3 @@ export function useSendOutreachMutation() {
     })
   );
 }
-
-export type SendOutreachMutationResult = Awaited<
-  ReturnType<typeof orpcClient.applications.sendOutreach>
->;
