@@ -31,6 +31,8 @@ import {
 
 import { getProfileQueryOptions } from "@/features/profile";
 
+import { CHIP_PILL, CompactItemCard, PaneStage } from "./apply-package-pane-gate";
+
 export type ApplyPackageResumePaneProps = {
   application: ApplicationOutput;
   /** Local draft under edit; null for legacy accepted packages without a draft. */
@@ -39,9 +41,6 @@ export type ApplyPackageResumePaneProps = {
   onDraftChange: Dispatch<SetStateAction<ApplyPackageDraft>>;
   busy: boolean;
 };
-
-const CHIP_PILL =
-  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap";
 
 /** Flat textareas for the compact (below-lg) editors — old sheet semantics. */
 function bulletsToText(bullets: string[]): string {
@@ -350,7 +349,7 @@ export function ApplyPackageResumePane({
       </div>
 
       {/* lg+ — paper-first: the pane owns the scroll, the paper sits centered. */}
-      <div className="hidden min-h-0 flex-1 justify-center overflow-y-auto bg-muted/40 px-6 py-6 lg:flex">
+      <PaneStage className="hidden flex-1 lg:flex">
         <div className="w-full max-w-160">
           {portfolioErrorRow ??
             (preview ? (
@@ -367,7 +366,7 @@ export function ApplyPackageResumePane({
               <ResumeDocPreview skeleton className="mx-auto max-w-160" />
             ))}
         </div>
-      </div>
+      </PaneStage>
 
       {/* below-lg — compact strip + stacked editors (old sheet commit semantics). */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:hidden">
@@ -416,34 +415,15 @@ export function ApplyPackageResumePane({
               {draft.experiences.map((exp) => {
                 const switchId = `exp-include-${exp.experienceId}`;
                 return (
-                  <div
+                  <CompactItemCard
                     key={exp.experienceId}
-                    className={cn(
-                      "flex flex-col gap-2 rounded-xl border p-3.5",
-                      exp.include
-                        ? "border-border bg-background"
-                        : "border-border/50 bg-muted/20 opacity-70"
-                    )}
+                    switchId={switchId}
+                    title={exp.title}
+                    subtitle={exp.companyName}
+                    include={exp.include}
+                    disabled={busy}
+                    onIncludeChange={(include) => updateExperience(exp.experienceId, { include })}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{exp.title}</p>
-                        <p className="truncate text-xs text-muted-foreground">{exp.companyName}</p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                        <span id={`${switchId}-label`}>Include</span>
-                        <Switch
-                          id={switchId}
-                          checked={exp.include}
-                          disabled={busy}
-                          aria-label={`Include ${exp.title} on the resume`}
-                          aria-labelledby={`${switchId}-label`}
-                          onCheckedChange={(checked) =>
-                            updateExperience(exp.experienceId, { include: checked })
-                          }
-                        />
-                      </div>
-                    </div>
                     <Textarea
                       rows={Math.max(3, exp.rewrittenBullets.length || 3)}
                       value={bulletsToText(exp.rewrittenBullets)}
@@ -456,7 +436,7 @@ export function ApplyPackageResumePane({
                         })
                       }
                     />
-                  </div>
+                  </CompactItemCard>
                 );
               })}
             </div>
@@ -470,31 +450,14 @@ export function ApplyPackageResumePane({
               {draft.projects.map((project) => {
                 const switchId = `project-include-${project.projectId}`;
                 return (
-                  <div
+                  <CompactItemCard
                     key={project.projectId}
-                    className={cn(
-                      "flex flex-col gap-2 rounded-xl border p-3.5",
-                      project.include
-                        ? "border-border bg-background"
-                        : "border-border/50 bg-muted/20 opacity-70"
-                    )}
+                    switchId={switchId}
+                    title={project.name}
+                    include={project.include}
+                    disabled={busy}
+                    onIncludeChange={(include) => updateProject(project.projectId, { include })}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 truncate text-sm font-medium">{project.name}</p>
-                      <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                        <span id={`${switchId}-label`}>Include</span>
-                        <Switch
-                          id={switchId}
-                          checked={project.include}
-                          disabled={busy}
-                          aria-label={`Include ${project.name} on the resume`}
-                          aria-labelledby={`${switchId}-label`}
-                          onCheckedChange={(checked) =>
-                            updateProject(project.projectId, { include: checked })
-                          }
-                        />
-                      </div>
-                    </div>
                     <Textarea
                       rows={3}
                       value={project.rewrittenSummary}
@@ -519,7 +482,7 @@ export function ApplyPackageResumePane({
                         }
                       />
                     ) : null}
-                  </div>
+                  </CompactItemCard>
                 );
               })}
             </div>

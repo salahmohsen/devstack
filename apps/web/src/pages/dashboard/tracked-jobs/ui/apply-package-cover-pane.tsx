@@ -10,7 +10,7 @@ import { CoverLetterPaper } from "@/shared/resume-doc-preview/cover-letter-paper
 
 import { getProfileQueryOptions } from "@/features/profile";
 
-import { PaneQueryGate } from "./apply-package-pane-gate";
+import { PaneQueryGate, PaneStage } from "./apply-package-pane-gate";
 
 export type ApplyPackageCoverPaneProps = {
   application: ApplicationOutput;
@@ -85,19 +85,15 @@ export function ApplyPackageCoverPane({
     );
   }
 
-  const gateProps = {
-    pending: profileQuery.isPending,
-    errored: profileQuery.isError,
-    errorTitle: "Couldn't load your profile — the letter header may be incomplete.",
-    onRetry: () => void profileQuery.refetch()
-  };
-
   // One scroll container for every viewport — the same paper (never two live
   // copies with one CSS-hidden).
   return (
-    <div className="flex h-full min-h-0 justify-center overflow-y-auto bg-muted/40 p-4 lg:px-6 lg:py-6">
+    <PaneStage>
       <div className="w-full max-w-160">
-        <PaneQueryGate {...gateProps}>
+        <PaneQueryGate
+          queries={[profileQuery]}
+          errorTitle="Couldn't load your profile — the letter header may be incomplete."
+        >
           <CoverLetterPaper
             model={model}
             onBodyChange={(next) =>
@@ -110,6 +106,6 @@ export function ApplyPackageCoverPane({
           />
         </PaneQueryGate>
       </div>
-    </div>
+    </PaneStage>
   );
 }

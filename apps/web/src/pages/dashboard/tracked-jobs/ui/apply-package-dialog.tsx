@@ -35,6 +35,7 @@ import {
 } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 
 import { type EmailAttachments } from "./apply-package-email-pane";
+import { CHIP_PILL } from "./apply-package-pane-gate";
 
 const ApplyPackageResumePane = lazy(() =>
   import("./apply-package-resume-pane").then((m) => {
@@ -63,9 +64,6 @@ const SECTIONS: Array<{
   { id: "cover", label: "Cover letter", icon: BookOpenIcon },
   { id: "email", label: "Email", icon: MailIcon }
 ];
-
-const CHIP_PILL =
-  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap";
 
 /** Compact `host/path` label for the listing URL chip; falls back to a raw trim. */
 function listingChipLabel(url: string): string {

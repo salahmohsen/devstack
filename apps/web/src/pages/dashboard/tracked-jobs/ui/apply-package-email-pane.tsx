@@ -169,10 +169,8 @@ export function ApplyPackageEmailPane({
     <div className="h-full min-h-0 overflow-y-auto bg-muted/40">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 lg:p-6">
         <PaneQueryGate
-          pending={profileQuery.isPending}
-          errored={profileQuery.isError}
+          queries={[profileQuery]}
           errorTitle="Couldn't load your profile — the mail signature may be incomplete."
-          onRetry={() => void profileQuery.refetch()}
         >
           <div className="flex flex-col gap-1.5">
             <label htmlFor="apply-email-to" className="text-xs font-semibold text-muted-foreground">
