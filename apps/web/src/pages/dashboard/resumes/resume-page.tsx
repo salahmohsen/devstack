@@ -201,7 +201,7 @@ export function ResumesPage() {
   const isGenerating = generateMutation.isPending;
 
   function handleGenerate() {
-    generateMutation.mutate(undefined);
+    generateMutation.mutate({});
   }
 
   const gridRef = useRef<HTMLDivElement>(null);

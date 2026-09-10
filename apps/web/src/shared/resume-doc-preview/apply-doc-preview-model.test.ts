@@ -123,7 +123,9 @@ function makeLive(overrides: Partial<ApplyPackageLiveRows> = {}): ApplyPackageLi
         demoUrl: null,
         isArchived: false,
         portfolioEntryId: "pp-1",
-        stacks: [{ name: "Mastra", type: "ai", portfolioEntryId: "ps-1", sortOrder: 0 }]
+        stacks: [
+          { name: "Mastra", type: "ai", portfolioEntryId: "ps-1", isFeatured: true, sortOrder: 0 }
+        ]
       },
       {
         id: "proj-2",
@@ -137,8 +139,8 @@ function makeLive(overrides: Partial<ApplyPackageLiveRows> = {}): ApplyPackageLi
       }
     ],
     stacks: [
-      { id: "stack-1", name: "TypeScript", type: "language", sortOrder: 0 },
-      { id: "stack-2", name: "React", type: "ui", sortOrder: 1 }
+      { id: "stack-1", name: "TypeScript", type: "language", sortOrder: 0, isFeatured: true },
+      { id: "stack-2", name: "React", type: "ui", sortOrder: 1, isFeatured: false }
     ],
     educations: [
       {
@@ -229,7 +231,7 @@ describe("applyPackageDraftToResumePdfInput", () => {
 
     // Project stacks: identity from live join rows, included = portfolio entry.
     expect(input.portfolio.projects[0]?.stacks).toEqual([
-      { name: "Mastra", type: "ai", includedInPortfolio: true, sortOrder: 0 }
+      { name: "Mastra", type: "ai", includedInPortfolio: true, isFeatured: true, sortOrder: 0 }
     ]);
   });
 
@@ -249,7 +251,13 @@ describe("applyPackageDraftToResumePdfInput", () => {
     const input = pdfInput();
 
     expect(input.portfolio.stacks).toEqual([
-      { name: "TypeScript", type: "language", includedInPortfolio: true, sortOrder: 0 }
+      {
+        name: "TypeScript",
+        type: "language",
+        includedInPortfolio: true,
+        isFeatured: true,
+        sortOrder: 0
+      }
     ]);
     expect(JSON.stringify(input.portfolio.stacks)).not.toContain("TS-old-name");
   });

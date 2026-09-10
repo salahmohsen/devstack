@@ -173,11 +173,16 @@ function projectHeadingName(title: string, url: string | null): string {
   return `[${title}](${url})`;
 }
 
+/**
+ * Project `Stack:` lines are featured-only, always: a stack renders here only
+ * when it is portfolio-included AND `isFeatured`. The Skills section is not
+ * gated this way — see {@link skillEntries}.
+ */
 function projectEntries(
   projects: ResumePdfPortfolio["projects"],
   stacks: ResumePdfPortfolio["stacks"]
 ) {
-  const includedStacks = stacks.filter((s) => s.includedInPortfolio);
+  const featuredStacks = stacks.filter((s) => s.includedInPortfolio && s.isFeatured === true);
   return projects
     .filter((p) => p.includedInPortfolio && !p.isArchived)
     .map((proj) => {
@@ -196,7 +201,7 @@ function projectEntries(
             : fromSummary;
 
       const techNames = projectStackNames(
-        filterPortfolioProjectStacks(proj.stacks ?? [], includedStacks)
+        filterPortfolioProjectStacks(proj.stacks ?? [], featuredStacks)
       );
       if (techNames.length > 0) {
         highlights.push(`Stack: ${techNames.join(" · ")}`);
@@ -210,6 +215,7 @@ function projectEntries(
     });
 }
 
+/** Every portfolio-included stack, featured or not. */
 function skillEntries(stacks: ResumePdfPortfolio["stacks"]) {
   const included = stacks.filter((s) => s.includedInPortfolio);
   return groupStacksByType(included).map((group) => {

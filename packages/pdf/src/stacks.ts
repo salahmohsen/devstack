@@ -56,8 +56,8 @@ export function groupStacksByType(
  * Stack names for a project card on the resume.
  *
  * - Uses stack entity `name` only (never npm dependency package names).
- * - No type filter, deny-list, or cap — portfolio inclusion is the gate.
- * - Caller should pass only portfolio-included stacks.
+ * - No type filter, deny-list, or cap — the featured gate is the filter.
+ * - Caller should pass only featured, portfolio-included stacks.
  * - Order: sortOrder ascending, then first-seen name.
  */
 export function projectStackNames(stacks: Array<{ name: string; sortOrder?: number }>): string[] {
@@ -84,29 +84,32 @@ export function projectStackNames(stacks: Array<{ name: string; sortOrder?: numb
 }
 
 /**
- * Keep project stacks that are portfolio-included.
- * Prefers each stack's `includedInPortfolio` flag; falls back to membership
- * in the resume Skills set (portfolio stacks).
+ * Keep the project stacks that render on a project's `Stack:` line.
+ *
+ * The stack entity is the single source of truth: a project stack renders only
+ * when the same entity is in `featuredPortfolioStacks` (portfolio-included AND
+ * `isFeatured`). Name membership — not the project row's own flags — is the
+ * gate, because not every caller hydrates `isFeatured` onto the project join.
+ *
+ * The resume Skills section is deliberately NOT filtered this way; it carries
+ * every portfolio-included stack (see `skillEntries`).
  */
 export function filterPortfolioProjectStacks(
   projectStacks: Array<{
     name: string;
     type?: string | null;
     includedInPortfolio?: boolean;
+    isFeatured?: boolean;
     sortOrder?: number;
   }>,
-  portfolioStacks: Array<{ name: string; includedInPortfolio: boolean }>
+  featuredPortfolioStacks: Array<{ name: string }>
 ): Array<{ name: string; type?: string | null; sortOrder?: number }> {
-  const portfolioNames = new Set(
-    portfolioStacks
-      .filter((s) => s.includedInPortfolio)
-      .map((s) => s.name.trim().toLowerCase())
-      .filter(Boolean)
+  const featuredNames = new Set(
+    featuredPortfolioStacks.map((s) => s.name.trim().toLowerCase()).filter(Boolean)
   );
 
   return projectStacks.filter((s) => {
-    if (s.includedInPortfolio === true) return true;
     if (s.includedInPortfolio === false) return false;
-    return portfolioNames.has(s.name.trim().toLowerCase());
+    return featuredNames.has(s.name.trim().toLowerCase());
   });
 }

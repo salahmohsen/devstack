@@ -59,12 +59,15 @@ export function draftToResumePdfInput(draft: ResumeImportDraft): ResumePdfInput 
           demoUrl: null,
           description: project.description || null,
           stacks: project.stackNames.map((name) => {
-            // Featured-only: the pipeline drops project stacks that are not
-            // portfolio-included in the master stacks list.
+            // Imported stacks are created `isFeatured: false`, and project
+            // `Stack:` lines are featured-only, so they render only after the
+            // user features a skill. Kept explicit so the preview does not
+            // promise a line the real PDF would omit.
             const stack = draft.stacks.find((s) => s.name === name);
             return {
               name,
-              includedInPortfolio: Boolean(stack?.selected && stack?.includedInPortfolio)
+              includedInPortfolio: Boolean(stack?.selected && stack?.includedInPortfolio),
+              isFeatured: false
             };
           }),
           includedInPortfolio: true,

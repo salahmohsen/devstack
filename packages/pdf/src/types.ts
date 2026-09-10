@@ -30,12 +30,13 @@ export type ResumePdfPortfolio = {
     /**
      * Stack entities linked to the project.
      * Resume rendering uses `name` only (never npm dependency package names)
-     * and only when the stack is portfolio-included.
+     * and only when the stack is portfolio-included AND featured.
      */
     stacks: Array<{
       name: string;
       type?: string | null;
       includedInPortfolio?: boolean;
+      isFeatured?: boolean;
       sortOrder?: number;
     }>;
     includedInPortfolio: boolean;
@@ -49,6 +50,8 @@ export type ResumePdfPortfolio = {
     type?: string | null;
     includedInPortfolio: boolean;
     sortOrder?: number;
+    /** Skills section ignores this; project `Stack:` lines are featured-only. */
+    isFeatured?: boolean;
   }>;
   /**
    * Education rows (include-when-present: section renders only when non-empty).

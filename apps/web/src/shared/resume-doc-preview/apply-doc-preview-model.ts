@@ -45,10 +45,18 @@ export type ApplyPackageLiveRows = {
       type: string | null;
       /** Gate mirrors accept-apply-package: `includedInPortfolio = !!portfolioEntryId`. */
       portfolioEntryId: string | null;
+      /** Project `Stack:` lines are featured-only; Skills is not. */
+      isFeatured: boolean;
       sortOrder: number;
     }>;
   }>;
-  stacks: Array<{ id: string; name: string; type: string | null; sortOrder: number }>;
+  stacks: Array<{
+    id: string;
+    name: string;
+    type: string | null;
+    sortOrder: number;
+    isFeatured: boolean;
+  }>;
   educations: Array<{
     school: string;
     degree: string;
@@ -159,6 +167,7 @@ export function applyPackageDraftToResumePdfInput(input: {
           name: stack.name,
           type: stack.type,
           includedInPortfolio: Boolean(stack.portfolioEntryId),
+          isFeatured: stack.isFeatured,
           sortOrder: stack.sortOrder
         };
       }),
@@ -176,7 +185,8 @@ export function applyPackageDraftToResumePdfInput(input: {
         name: row?.name ?? s.name,
         type: row?.type ?? null,
         includedInPortfolio: true,
-        sortOrder: row?.sortOrder
+        sortOrder: row?.sortOrder,
+        isFeatured: Boolean(row?.isFeatured)
       };
     });
 

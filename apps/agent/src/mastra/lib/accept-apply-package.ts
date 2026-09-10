@@ -229,6 +229,7 @@ export async function acceptApplyPackage(input: {
                   name: join.stack.name,
                   type: join.stack.type ?? null,
                   includedInPortfolio: !!join.stack.portfolioEntryId,
+                  isFeatured: Boolean(join.stack.isFeatured),
                   sortOrder: join.stack.sortOrder
                 }
               : null
@@ -240,6 +241,7 @@ export async function acceptApplyPackage(input: {
               name: string;
               type: string | null;
               includedInPortfolio: boolean;
+              isFeatured: boolean;
               sortOrder: number;
             } => s != null
           ),
@@ -255,7 +257,8 @@ export async function acceptApplyPackage(input: {
         name: stackNameById.get(s.stackId) ?? s.name,
         type: stackTypeById.get(s.stackId) ?? null,
         includedInPortfolio: true,
-        sortOrder: row?.sortOrder
+        sortOrder: row?.sortOrder,
+        isFeatured: Boolean(row?.isFeatured)
       };
     });
 
