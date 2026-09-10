@@ -35,7 +35,6 @@ export type ApplyPackageEmailPaneProps = {
    * overrides. Resolves true only when the email actually went out.
    */
   onSend: (attachments: EmailAttachments) => Promise<boolean>;
-  sendPending: boolean;
   /** After a successful Send the dialog closes. */
   onSent: () => void;
 };
@@ -50,6 +49,7 @@ function AttachmentCard({
   missing,
   checked,
   disabled,
+  ariaLabel,
   onToggle
 }: {
   filename: string;
@@ -57,6 +57,7 @@ function AttachmentCard({
   missing: boolean;
   checked: boolean;
   disabled: boolean;
+  ariaLabel: string;
   onToggle: () => void;
 }) {
   return (
@@ -64,6 +65,7 @@ function AttachmentCard({
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={onToggle}
       className={cn(
@@ -108,7 +110,6 @@ export function ApplyPackageEmailPane({
   attachments,
   onAttachmentsChange,
   onSend,
-  sendPending,
   onSent
 }: ApplyPackageEmailPaneProps) {
   const hasDraft = draft != null;
@@ -152,7 +153,7 @@ export function ApplyPackageEmailPane({
   const toValue = draft.proposedRecruiterEmail ?? application.recruiterEmail ?? "";
   const hasRecipient = toValue.trim().length > 0;
   const anyAttachment = attachments.resume || attachments.cover;
-  const sendDisabled = !anyAttachment || busy || sendPending || sending;
+  const sendDisabled = !anyAttachment || busy || sending;
 
   async function handleSend() {
     setSending(true);
@@ -200,6 +201,7 @@ export function ApplyPackageEmailPane({
             bodyText={draft.outreachBody}
             senderName={profileQuery.data?.name ?? null}
             contacts={mailContacts}
+            disabled={busy}
             onSubjectChange={(subject) =>
               onDraftChange((prev) => {
                 return { ...prev, outreachSubject: subject };
@@ -223,6 +225,7 @@ export function ApplyPackageEmailPane({
               missing={application.resumeId == null}
               checked={attachments.resume}
               disabled={busy}
+              ariaLabel="Include resume PDF in the email"
               onToggle={() =>
                 onAttachmentsChange((prev) => {
                   return { ...prev, resume: !prev.resume };
@@ -241,6 +244,7 @@ export function ApplyPackageEmailPane({
               missing={application.coverLetterR2Key == null}
               checked={attachments.cover}
               disabled={busy}
+              ariaLabel="Include cover letter PDF in the email"
               onToggle={() =>
                 onAttachmentsChange((prev) => {
                   return { ...prev, cover: !prev.cover };
@@ -248,10 +252,10 @@ export function ApplyPackageEmailPane({
               }
             />
             {!anyAttachment ? (
-              <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+              <output className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
                 <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                 Keep at least one attachment — you can&apos;t send an empty application.
-              </p>
+              </output>
             ) : null}
           </div>
 
@@ -259,7 +263,7 @@ export function ApplyPackageEmailPane({
             <div className="flex items-center justify-end">
               <Button
                 type="button"
-                loading={sending || sendPending}
+                loading={sending}
                 disabled={sendDisabled}
                 onClick={() => void handleSend()}
               >

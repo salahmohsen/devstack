@@ -29,7 +29,7 @@ export function PaneQueryGate({
   if (pending) {
     return (
       <div className="grid min-h-40 place-items-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <output className="text-sm text-muted-foreground">Loading…</output>
       </div>
     );
   }

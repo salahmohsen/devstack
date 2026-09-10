@@ -113,6 +113,9 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
     resume: true,
     cover: true
   });
+  // One letter date per dialog open — owned here so section switches (which
+  // remount panes) don't drift the cover letter's date line.
+  const letterDate = useState(() => new Date())[0];
 
   // Panes edit a live non-null draft; the dialog owns the nullable state.
   // Updaters only fire from panes rendering a draft, so `prev` is non-null there.
@@ -197,9 +200,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
         applicationId,
         draft: {
           ...draft,
-          proposedRecruiterEmail: draft.proposedRecruiterEmail?.trim()
-            ? draft.proposedRecruiterEmail.trim()
-            : null
+          proposedRecruiterEmail: normalizeDraftEmail(draft.proposedRecruiterEmail)
         }
       },
       {
@@ -238,9 +239,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
           applicationId,
           draft: {
             ...draft,
-            proposedRecruiterEmail: draft.proposedRecruiterEmail?.trim()
-              ? draft.proposedRecruiterEmail.trim()
-              : null
+            proposedRecruiterEmail: normalizeDraftEmail(draft.proposedRecruiterEmail)
           }
         });
         // Inline save lands the kit — record the marker like handleSave does.
@@ -387,9 +386,11 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
                 key={section.id}
                 type="button"
                 aria-current={active ? "true" : undefined}
+                disabled={busy}
                 onClick={() => setPackageDialogSection(section.id)}
                 className={cn(
                   "flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-[13px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "disabled:cursor-not-allowed disabled:opacity-50",
                   active
                     ? "border-border bg-background text-foreground shadow-xs"
                     : "border-transparent text-muted-foreground hover:bg-background/60 hover:text-foreground"
@@ -428,6 +429,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
                 draft={draft}
                 onDraftChange={updateDraft}
                 busy={busy}
+                letterDate={letterDate}
               />
             ) : packageDialogSection === "email" ? (
               <ApplyPackageEmailPane
@@ -438,7 +440,6 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
                 attachments={emailAttachments}
                 onAttachmentsChange={setEmailAttachments}
                 onSend={handleSend}
-                sendPending={sendMutation.isPending}
                 onSent={closePackageDialog}
               />
             ) : (

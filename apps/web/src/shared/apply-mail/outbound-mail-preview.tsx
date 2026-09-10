@@ -17,6 +17,8 @@ export type OutboundMailPreviewProps = {
   onSubjectChange: (subject: string) => void;
   onBodyChange: (bodyText: string) => void;
   className?: string;
+  /** Busy lock — forwarded to every editable field (send window: frozen mail). */
+  disabled?: boolean;
 };
 
 /**
@@ -35,7 +37,8 @@ export function OutboundMailPreview({
   contacts,
   onSubjectChange,
   onBodyChange,
-  className
+  className,
+  disabled
 }: OutboundMailPreviewProps) {
   const mail = buildOutreachMailModel({ subject, bodyText, senderName, contacts });
 
@@ -51,6 +54,7 @@ export function OutboundMailPreview({
           ariaLabel="Email subject"
           value={mail.subject}
           placeholder="Subject"
+          disabled={disabled}
           onCommit={onSubjectChange}
         />
 
@@ -64,6 +68,7 @@ export function OutboundMailPreview({
                 ariaLabel="Email body"
                 value=""
                 placeholder="Write the email body"
+                disabled={disabled}
                 onCommit={(next) => {
                   if (next) onBodyChange(next);
                 }}
@@ -78,6 +83,7 @@ export function OutboundMailPreview({
                   className="outbound-mail__field"
                   ariaLabel={`Email paragraph ${index + 1}`}
                   value={paragraph}
+                  disabled={disabled}
                   onCommit={(next) => commitParagraph(index, next)}
                 />
               </p>

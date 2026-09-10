@@ -14,6 +14,8 @@ export type CoverLetterPaperProps = {
    */
   onBodyChange: (nextBody: string) => void;
   className?: string;
+  /** Busy lock — forwarded to every editable field (send window: frozen paper). */
+  disabled?: boolean;
 };
 
 /**
@@ -22,7 +24,12 @@ export type CoverLetterPaperProps = {
  * justified XCharter paragraphs. Header fields are derived and read-only;
  * body paragraphs are click-to-edit. No evidence icons, no include switches.
  */
-export function CoverLetterPaper({ model, onBodyChange, className }: CoverLetterPaperProps) {
+export function CoverLetterPaper({
+  model,
+  onBodyChange,
+  className,
+  disabled
+}: CoverLetterPaperProps) {
   const paragraphs = model.paragraphs;
 
   const commitParagraph = (index: number, next: string) => {
@@ -60,6 +67,7 @@ export function CoverLetterPaper({ model, onBodyChange, className }: CoverLetter
               ariaLabel="Cover letter body"
               value=""
               placeholder="Add a paragraph"
+              disabled={disabled}
               onCommit={(next) => {
                 if (next) onBodyChange(next);
               }}
@@ -73,6 +81,7 @@ export function CoverLetterPaper({ model, onBodyChange, className }: CoverLetter
               allowEmpty
               ariaLabel={`Cover letter paragraph ${index + 1}`}
               value={paragraph.text}
+              disabled={disabled}
               onCommit={(next) => commitParagraph(index, next)}
             />
           ))
