@@ -17,6 +17,7 @@ import { splitCoverLetterParagraphs } from "@tsu-stack/pdf/doc";
 import { Button } from "@tsu-stack/ui/components/button";
 import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import { DialogDescription, DialogFooter, DialogTitle } from "@tsu-stack/ui/components/dialog";
+import { Tabs, TabsList, TabsTab } from "@tsu-stack/ui/components/tabs";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { ItemAvatar } from "@/shared/ui/item-avatar";
@@ -265,6 +266,44 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
 
   const draftedAt = application.applyPackageDraftedAt;
 
+  // Shared pane surface — one JSX tree rendered into both layout branches.
+  const paneBody = (
+    <div
+      key={packageDialogSection}
+      className="min-w-0 flex-1 motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
+    >
+      <Suspense fallback={<PanePending />}>
+        {packageDialogSection === "cover" ? (
+          <ApplyPackageCoverPane
+            application={application}
+            draft={draft}
+            onDraftChange={updateDraft}
+            busy={busy}
+            letterDate={letterDate}
+          />
+        ) : packageDialogSection === "email" ? (
+          <ApplyPackageEmailPane
+            application={application}
+            draft={draft}
+            onDraftChange={updateDraft}
+            busy={busy}
+            attachments={emailAttachments}
+            onAttachmentsChange={setEmailAttachments}
+            onSend={handleSend}
+            onSent={closePackageDialog}
+          />
+        ) : (
+          <ApplyPackageResumePane
+            application={application}
+            draft={draft}
+            onDraftChange={updateDraft}
+            busy={busy}
+          />
+        )}
+      </Suspense>
+    </div>
+  );
+
   return (
     <>
       <header className="flex shrink-0 items-start gap-3.5 border-b px-6 pe-10 pt-4 pb-3.5">
@@ -364,7 +403,8 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
+      {/* ≥lg — sidebar + pane side-by-side. */}
+      <div className="hidden min-h-0 flex-1 lg:flex">
         <nav
           aria-label="Package sections"
           className="flex w-56 shrink-0 flex-col gap-0.5 border-r bg-muted/30 p-2.5"
@@ -418,40 +458,43 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
           </p>
         </nav>
 
-        <div
-          key={packageDialogSection}
-          className="min-w-0 flex-1 motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
-        >
-          <Suspense fallback={<PanePending />}>
-            {packageDialogSection === "cover" ? (
-              <ApplyPackageCoverPane
-                application={application}
-                draft={draft}
-                onDraftChange={updateDraft}
-                busy={busy}
-                letterDate={letterDate}
-              />
-            ) : packageDialogSection === "email" ? (
-              <ApplyPackageEmailPane
-                application={application}
-                draft={draft}
-                onDraftChange={updateDraft}
-                busy={busy}
-                attachments={emailAttachments}
-                onAttachmentsChange={setEmailAttachments}
-                onSend={handleSend}
-                onSent={closePackageDialog}
-              />
-            ) : (
-              <ApplyPackageResumePane
-                application={application}
-                draft={draft}
-                onDraftChange={updateDraft}
-                busy={busy}
-              />
-            )}
-          </Suspense>
-        </div>
+        {paneBody}
+      </div>
+
+      {/* below-lg — section tabs on top + stacked pane (spec #1 lock). */}
+      <div className="flex min-h-0 flex-1 flex-col lg:hidden">
+        <Tabs value={packageDialogSection} onValueChange={(v) => setPackageDialogSection(v)}>
+          <TabsList
+            variant="underline"
+            aria-label="Package sections"
+            className="w-full justify-start overflow-x-auto border-b border-border/50 px-3"
+          >
+            <TabsTab value="resume" disabled={busy}>
+              Resume
+              {resumeCount ? (
+                <span className="shrink-0 text-[11px] font-medium text-muted-foreground tabular-nums">
+                  {resumeCount}
+                </span>
+              ) : null}
+            </TabsTab>
+            <TabsTab value="cover" disabled={busy}>
+              Cover letter
+              {coverCount ? (
+                <span className="shrink-0 text-[11px] font-medium text-muted-foreground tabular-nums">
+                  {coverCount}
+                </span>
+              ) : null}
+            </TabsTab>
+            <TabsTab value="email" disabled={busy}>
+              Email
+              <span className="shrink-0 text-[11px] font-medium text-muted-foreground tabular-nums">
+                {emailCount}
+              </span>
+            </TabsTab>
+          </TabsList>
+        </Tabs>
+
+        {paneBody}
       </div>
 
       <DialogFooter className="flex-row items-center justify-between gap-3 bg-muted/40 px-6 py-3 sm:justify-between">
