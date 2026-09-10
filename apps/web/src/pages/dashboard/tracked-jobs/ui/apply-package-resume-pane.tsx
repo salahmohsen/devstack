@@ -252,6 +252,13 @@ export function ApplyPackageResumePane({
     });
   }
 
+  // Paper skill stubs carry the live stack name — map back to the draft row id.
+  function handleStackIncludeChange(name: string, include: boolean) {
+    const stackId = (stacksQuery.data ?? []).find((stack) => stack.name === name)?.id;
+    if (!stackId) return;
+    updateStack(stackId, { include });
+  }
+
   // Identity (name/org/title/dates) is live-owned — paper edits there no-op;
   // the rewritten text fields (headline, summary, bullets, project summary)
   // commit into the draft.
@@ -353,6 +360,7 @@ export function ApplyPackageResumePane({
                 evidenceByClientId={preview.evidenceByClientId}
                 includeByClientId={includeByClientId}
                 onIncludeChange={handleIncludeChange}
+                onStackIncludeChange={handleStackIncludeChange}
                 className="motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
               />
             ) : (
@@ -428,6 +436,7 @@ export function ApplyPackageResumePane({
                           id={switchId}
                           checked={exp.include}
                           disabled={busy}
+                          aria-label={`Include ${exp.title} on the resume`}
                           aria-labelledby={`${switchId}-label`}
                           onCheckedChange={(checked) =>
                             updateExperience(exp.experienceId, { include: checked })
@@ -478,6 +487,7 @@ export function ApplyPackageResumePane({
                           id={switchId}
                           checked={project.include}
                           disabled={busy}
+                          aria-label={`Include ${project.name} on the resume`}
                           aria-labelledby={`${switchId}-label`}
                           onCheckedChange={(checked) =>
                             updateProject(project.projectId, { include: checked })

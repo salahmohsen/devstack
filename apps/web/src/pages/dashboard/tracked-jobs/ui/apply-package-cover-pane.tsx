@@ -43,13 +43,17 @@ export function ApplyPackageCoverPane({
     () =>
       buildCoverLetterModel({
         candidateName: profileQuery.data?.name ?? "Candidate",
-        contacts: (profileQuery.data?.contacts ?? []).map((contact) => {
-          return {
-            type: contact.type,
-            value: contact.value,
-            sortOrder: contact.sortOrder
-          };
-        }),
+        // PDF parity: the paper renders opted-in contacts only, same filter as
+        // the resume build and the email pane.
+        contacts: (profileQuery.data?.contacts ?? [])
+          .filter((contact) => contact.includedInPortfolio)
+          .map((contact) => {
+            return {
+              type: contact.type,
+              value: contact.value,
+              sortOrder: contact.sortOrder
+            };
+          }),
         profileEmail: profileQuery.data?.email ?? "",
         companyName: application.companyName,
         roleTitle: application.title,

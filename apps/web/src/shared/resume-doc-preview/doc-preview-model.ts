@@ -166,6 +166,15 @@ export type DocPreviewSection = {
     rest: string;
     linkUrl?: string;
   }>;
+  /**
+   * Apply package only: user-excluded experiences/projects that stay
+   * toggleable (kept-capable live row exists) — rendered as muted stubs
+   * after the real entries so exclusion is reversible from the paper.
+   * Undefined on the onboarding path.
+   */
+  excluded?: Array<{ clientId: string; label: string }>;
+  /** Apply package only: excluded stack names (live row exists) as toggleable chips. */
+  excludedSkills?: string[];
 };
 
 /** Renderer section order: summary → experience → education → projects → skills → certifications. */

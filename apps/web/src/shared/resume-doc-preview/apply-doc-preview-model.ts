@@ -4,7 +4,8 @@ import { buildRenderCvDoc, type ResumePdfInput, type ResumePdfPortfolio } from "
 import {
   asRecord,
   docPreviewModelFromRenderCvDoc,
-  type DocPreviewModel
+  type DocPreviewModel,
+  type DocPreviewSection
 } from "@/shared/resume-doc-preview/doc-preview-model";
 
 /**
@@ -245,6 +246,48 @@ export type ApplyPackageDocPreview = {
 };
 
 /**
+ * Excluded-item stubs for the paper (Variant A promise: "Flip its include
+ * switch to add it"). Computed from the RAW draft + live maps, never the
+ * resolved draft: budget-hidden rows had `include: true` pre-resolve (they
+ * were force-hidden, not user-toggled), so saving them back as excluded
+ * would be a lie. Only user-controlled `include: false` rows with a
+ * kept-capable live row are toggleable — a row whose live row is missing
+ * entirely has no switch to flip.
+ */
+function excludedExperienceStubs(
+  draft: ApplyPackageDraft,
+  live: ApplyPackageLiveRows
+): NonNullable<DocPreviewSection["excluded"]> {
+  const byId = new Map(live.experiences.map((row) => [row.id, row] as const));
+  return draft.experiences.flatMap((draftRow) => {
+    if (draftRow.include) return [];
+    const row = byId.get(draftRow.experienceId);
+    // Kept-capable gate = the same portfolioEntryId check accept applies.
+    if (!row?.portfolioEntryId) return [];
+    return [
+      {
+        clientId: draftRow.experienceId,
+        label: [row.title, row.organization].filter(Boolean).join(", ") || "Role"
+      }
+    ];
+  });
+}
+
+function excludedProjectStubs(
+  draft: ApplyPackageDraft,
+  live: ApplyPackageLiveRows
+): NonNullable<DocPreviewSection["excluded"]> {
+  const byId = new Map(live.projects.map((row) => [row.id, row] as const));
+  return draft.projects.flatMap((draftRow) => {
+    if (draftRow.include) return [];
+    const row = byId.get(draftRow.projectId);
+    // Archived projects never render even when re-included — not toggleable.
+    if (!row?.portfolioEntryId || row.isArchived) return [];
+    return [{ clientId: draftRow.projectId, label: row.title || "Project" }];
+  });
+}
+
+/**
  * Tailored-paper preview for the review dialog's Resume pane. Mirrors accept
  * exactly: FIRST run `resolveApplyPackagePdfDraft` (review off → page-budget
  * hiding flips low-ranked `include` to false), THEN derive the paper, section
@@ -275,7 +318,7 @@ export function buildApplyPackageDocPreview(
   const kept = keptApplyPackageRows(resolvedDraft, live);
   const input = applyPackageDraftToResumePdfInput({ resolvedDraft, kept, live });
   const cv = asRecord(buildRenderCvDoc(input));
-  const model = docPreviewModelFromRenderCvDoc(cv, {
+  const baseModel = docPreviewModelFromRenderCvDoc(cv, {
     experienceRows: kept.experiences.map(({ draftRow }) => {
       return { clientId: draftRow.experienceId };
     }),
@@ -290,6 +333,28 @@ export function buildApplyPackageDocPreview(
       };
     })
   });
+
+  // Stub re-include affordances ride INSIDE the model sections (experience,
+  // projects, skills) — the onboarding path never sets them, so its DOM is
+  // untouched.
+  const excludedExperiences = excludedExperienceStubs(draft, live);
+  const excludedProjects = excludedProjectStubs(draft, live);
+  const stackById = new Map(live.stacks.map((row) => [row.id, row] as const));
+  const excludedSkills = draft.stacks.flatMap((draftRow) => {
+    if (draftRow.include) return [];
+    const row = stackById.get(draftRow.stackId);
+    return row ? [row.name] : [];
+  });
+
+  const model: DocPreviewModel = {
+    ...baseModel,
+    sections: baseModel.sections.map((section) => {
+      if (section.id === "experience") return { ...section, excluded: excludedExperiences };
+      if (section.id === "projects") return { ...section, excluded: excludedProjects };
+      if (section.id === "skills") return { ...section, excludedSkills };
+      return section;
+    })
+  };
 
   const evidenceByClientId: Record<string, string> = {};
   for (const { draftRow, live: row } of kept.experiences) {

@@ -575,4 +575,119 @@ describe("buildApplyPackageDocPreview", () => {
       expect(s.count).toBe(0);
     }
   });
+
+  describe("excluded-item stubs", () => {
+    it("include:false rows with kept-capable live rows appear as stubs; others do not", () => {
+      const draft = makeDraft({
+        experiences: [
+          { ...makeDraft().experiences[0]!, include: false },
+          { ...makeDraft().experiences[1]!, include: true },
+          // include:false but no portfolioEntryId → not toggleable, no stub.
+          { ...makeDraft().experiences[2]!, include: false }
+        ],
+        projects: [
+          {
+            projectId: "proj-1",
+            include: true,
+            name: "Omen-old",
+            rewrittenSummary: "Tailored agent paragraph",
+            rewrittenBullets: ["Agent rewrite"]
+          },
+          { projectId: "proj-2", include: false, name: "Old thing", rewrittenSummary: "Archived" }
+        ],
+        stacks: [
+          { stackId: "stack-1", include: true, name: "TS-old-name" },
+          // Live name wins over the stale draft name in the stub chip.
+          { stackId: "stack-2", include: false, name: "React-old" },
+          { stackId: "stack-ghost", include: false, name: "Ghost" }
+        ]
+      });
+      const live = makeLive();
+      live.projects[1] = { ...live.projects[1]!, isArchived: false };
+      const { model } = buildApplyPackageDocPreview(draft, live, OPTIONS);
+
+      const experience = section(model, "experience");
+      expect(experience?.count).toBe(1);
+      expect(experience?.excluded).toEqual([
+        { clientId: "exp-1", label: "Senior Engineer, Devhub" }
+      ]);
+
+      const projects = section(model, "projects");
+      expect(projects?.count).toBe(1);
+      expect(projects?.excluded).toEqual([{ clientId: "proj-2", label: "Old thing" }]);
+
+      const skills = section(model, "skills");
+      expect(skills?.excludedSkills).toEqual(["React"]);
+    });
+
+    it("archived project with include:false is not a stub (never renders even re-included)", () => {
+      const draft = makeDraft({
+        projects: [
+          {
+            projectId: "proj-1",
+            include: true,
+            name: "Omen-old",
+            rewrittenSummary: "Tailored agent paragraph",
+            rewrittenBullets: ["Agent rewrite"]
+          },
+          { projectId: "proj-2", include: false, name: "Old thing", rewrittenSummary: "Archived" }
+        ]
+      });
+      const { model } = buildApplyPackageDocPreview(draft, makeLive(), OPTIONS);
+
+      expect(section(model, "projects")?.excluded).toEqual([]);
+    });
+
+    it("section with only excluded rows stays absent but carries the stubs", () => {
+      const draft = makeDraft({
+        experiences: [{ ...makeDraft().experiences[0]!, include: false }],
+        projects: []
+      });
+      const { model } = buildApplyPackageDocPreview(draft, makeLive(), OPTIONS);
+
+      const experience = section(model, "experience");
+      expect(experience?.present).toBe(false);
+      expect(experience?.count).toBe(0);
+      expect(experience?.excluded?.[0]).toMatchObject({ clientId: "exp-1" });
+    });
+
+    it("draft row referencing a deleted live row is not a stub", () => {
+      const draft = makeDraft({
+        experiences: [
+          {
+            experienceId: "exp-deleted",
+            include: false,
+            companyName: "Ghost Co",
+            title: "Gone",
+            rewrittenBullets: []
+          },
+          ...makeDraft().experiences
+        ]
+      });
+      const { model } = buildApplyPackageDocPreview(draft, makeLive(), OPTIONS);
+
+      expect(section(model, "experience")?.excluded?.map((stub) => stub.clientId)).toEqual([]);
+    });
+
+    it("budget-hidden rows are not stubs (include was true pre-resolve)", () => {
+      const preview = buildApplyPackageDocPreview(makeBudgetDraft(), makeLive(), {
+        reviewApplyKit: false,
+        jobSkills: []
+      });
+
+      expect(preview.hiddenExperienceCount).toBe(1);
+      expect(section(preview.model, "experience")?.excluded).toEqual([]);
+      expect(section(preview.model, "projects")?.excluded).toEqual([]);
+      // Stacks are never budget-hidden — the user-excluded stub stays.
+      expect(section(preview.model, "skills")?.excludedSkills).toEqual(["React"]);
+    });
+
+    it("review ON leaves no stubs for a fully-included draft", () => {
+      const { model } = buildApplyPackageDocPreview(makeDraft(), makeLive(), OPTIONS);
+
+      expect(section(model, "experience")?.excluded).toEqual([]);
+      expect(section(model, "projects")?.excluded).toEqual([]);
+      expect(section(model, "skills")?.excludedSkills).toEqual(["React"]);
+    });
+  });
 });

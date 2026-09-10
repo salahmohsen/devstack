@@ -160,6 +160,68 @@ function EntryIncludeToggle({
   );
 }
 
+/**
+ * Excluded-entry stubs (apply spec: "Flip its include switch to add it") —
+ * muted italic lines after the real entries, so a user-excluded row stays
+ * reachable from the paper. Only rendered when the model carries stubs.
+ */
+function ExcludedEntryStubs({
+  stubs,
+  includeByClientId,
+  onIncludeChange
+}: {
+  stubs: NonNullable<DocPreviewSection["excluded"]>;
+  includeByClientId?: Record<string, boolean>;
+  onIncludeChange?: (clientId: string, include: boolean) => void;
+}) {
+  return (
+    <div className="cv-text-entries">
+      {stubs.map((stub) => (
+        <p
+          key={`excluded-${stub.clientId}`}
+          className="flex items-baseline justify-between gap-2 text-[12px] text-stone-400 italic"
+        >
+          <span className="min-w-0">{stub.label}</span>
+          <EntryIncludeToggle
+            clientId={stub.clientId}
+            identity={stub.label}
+            include={includeByClientId?.[stub.clientId] ?? false}
+            onChange={onIncludeChange}
+          />
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/** Excluded stack names as muted dashed chips with the same tiny switch pattern. */
+function ExcludedSkillStubs({
+  names,
+  onStackIncludeChange
+}: {
+  names: NonNullable<DocPreviewSection["excludedSkills"]>;
+  onStackIncludeChange?: (name: string, include: boolean) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {names.map((name) => (
+        <span
+          key={name}
+          className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-stone-300 px-2.5 py-0.5 font-sans text-[11px] text-stone-400 italic"
+        >
+          <Switch
+            checked={false}
+            onCheckedChange={(next) => onStackIncludeChange?.(name, next)}
+            className="[--thumb-size:--spacing(2.5)] sm:[--thumb-size:--spacing(2.5)]"
+            aria-label={`Include ${name}`}
+          />
+          {name}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /** Per-entry affordances threaded from `ResumeDocPreview` (apply package only). */
 type EntryAffordances = {
   evidenceByClientId?: Record<string, string>;
@@ -177,16 +239,33 @@ function SectionBlock({
   edit,
   evidenceByClientId,
   includeByClientId,
-  onIncludeChange
+  onIncludeChange,
+  onStackIncludeChange
 }: {
   section: DocPreviewSection;
   edit?: ResumeDocEditHandlers;
+  onStackIncludeChange?: (name: string, include: boolean) => void;
 } & EntryAffordances) {
   const affordances: EntryAffordances = {
     evidenceByClientId,
     includeByClientId,
     onIncludeChange
   };
+  const entryStubs =
+    (section.id === "experience" || section.id === "projects") && section.excluded?.length ? (
+      <ExcludedEntryStubs
+        stubs={section.excluded}
+        includeByClientId={includeByClientId}
+        onIncludeChange={onIncludeChange}
+      />
+    ) : null;
+  const skillStubs =
+    section.id === "skills" && section.excludedSkills?.length ? (
+      <ExcludedSkillStubs
+        names={section.excludedSkills}
+        onStackIncludeChange={onStackIncludeChange}
+      />
+    ) : null;
   return (
     <section className="cv-section" data-slot="doc-section" data-present={section.present}>
       <div className="cv-section-title flex items-center justify-between gap-2">
@@ -228,6 +307,7 @@ function SectionBlock({
                 />
               ))
             : null}
+          {entryStubs}
 
           {section.id === "education" && section.education
             ? section.education.map((entry, index) => (
@@ -249,6 +329,7 @@ function SectionBlock({
                 />
               ))
             : null}
+          {entryStubs}
 
           {section.id === "skills" && section.skills ? (
             <div className="cv-text-entries">
@@ -259,6 +340,7 @@ function SectionBlock({
               ))}
             </div>
           ) : null}
+          {skillStubs}
 
           {section.id === "certifications" && section.certifications ? (
             <div className="cv-text-entries">
@@ -271,6 +353,10 @@ function SectionBlock({
             </div>
           ) : null}
         </div>
+      ) : entryStubs || skillStubs ? (
+        // Nothing kept, but excluded rows remain re-includable — stubs replace
+        // the plain placeholder so exclusion is never a dead end.
+        <div className={cn("cv-section-body", SECTION_APPEAR)}>{entryStubs ?? skillStubs}</div>
       ) : (
         <p className="mt-2 font-sans text-xs text-stone-400 italic">
           Not on this resume — add anytime from the dashboard
@@ -559,6 +645,8 @@ export type ResumeDocPreviewProps = {
   /** Include state per entry id → renders the mini include switch (spec #3). */
   includeByClientId?: Record<string, boolean>;
   onIncludeChange?: (clientId: string, include: boolean) => void;
+  /** Apply package: excluded skill stubs — flipping re-includes the stack by name. */
+  onStackIncludeChange?: (name: string, include: boolean) => void;
 };
 
 /**
@@ -574,7 +662,8 @@ export function ResumeDocPreview({
   className,
   evidenceByClientId,
   includeByClientId,
-  onIncludeChange
+  onIncludeChange,
+  onStackIncludeChange
 }: ResumeDocPreviewProps) {
   if (skeleton || (!model && !draft)) {
     return (
@@ -609,6 +698,7 @@ export function ResumeDocPreview({
               evidenceByClientId={evidenceByClientId}
               includeByClientId={includeByClientId}
               onIncludeChange={onIncludeChange}
+              onStackIncludeChange={onStackIncludeChange}
             />
           ))}
         </div>
