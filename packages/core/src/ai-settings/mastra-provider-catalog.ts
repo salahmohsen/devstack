@@ -36744,9 +36744,14 @@ export function modelCapabilityFor(modelId: string): MastraModelCapability {
   return map[modelId] ?? UNKNOWN_MODEL_CAPABILITY;
 }
 
-/** Mastra model router id: provider/model */
+/**
+ * Mastra model router id: `provider/model`. Model slugs may themselves contain
+ * `/` (e.g. openrouter `anthropic/claude-...`, `~anthropic/claude-...-latest`);
+ * those are provider-side slugs, not router ids, so they still need the
+ * provider prefix. Already-prefixed ids (e.g. `openrouter/auto`) pass through.
+ */
 export function toMastraModelId(providerId: string, modelName: string): string {
-  if (modelName.includes("/")) return modelName;
+  if (modelName.startsWith(`${providerId}/`)) return modelName;
   return `${providerId}/${modelName}`;
 }
 
