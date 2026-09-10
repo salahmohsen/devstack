@@ -266,11 +266,12 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
 
   const draftedAt = application.applyPackageDraftedAt;
 
-  // Shared pane surface — one JSX tree rendered into both layout branches.
+  // Shared pane surface — rendered ONCE below the two nav variants. Two
+  // mounts would duplicate every pane (queries, editors, Send buttons).
   const paneBody = (
     <div
       key={packageDialogSection}
-      className="min-w-0 flex-1 motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
+      className="min-h-0 min-w-0 flex-1 motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
     >
       <Suspense fallback={<PanePending />}>
         {packageDialogSection === "cover" ? (
@@ -403,8 +404,8 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
         </div>
       </header>
 
-      {/* ≥lg — sidebar + pane side-by-side. */}
-      <div className="hidden min-h-0 flex-1 lg:flex">
+      {/* ≥lg — sidebar. */}
+      <div className="hidden min-h-0 lg:flex">
         <nav
           aria-label="Package sections"
           className="flex w-56 shrink-0 flex-col gap-0.5 border-r bg-muted/30 p-2.5"
@@ -457,12 +458,10 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
             Everything edits directly on the paper.
           </p>
         </nav>
-
-        {paneBody}
       </div>
 
-      {/* below-lg — section tabs on top + stacked pane (spec #1 lock). */}
-      <div className="flex min-h-0 flex-1 flex-col lg:hidden">
+      {/* below-lg — section tabs on top (spec #1 lock). */}
+      <div className="lg:hidden">
         <Tabs value={packageDialogSection} onValueChange={(v) => setPackageDialogSection(v)}>
           <TabsList
             variant="underline"
@@ -493,9 +492,10 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
             </TabsTab>
           </TabsList>
         </Tabs>
-
-        {paneBody}
       </div>
+
+      {/* Pane — rendered ONCE for both nav variants. */}
+      {paneBody}
 
       <DialogFooter className="flex-row items-center justify-between gap-3 bg-muted/40 px-6 py-3 sm:justify-between">
         <p className="text-xs text-muted-foreground">
