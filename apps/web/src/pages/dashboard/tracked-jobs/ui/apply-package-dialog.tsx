@@ -24,13 +24,16 @@ import { ItemAvatar } from "@/shared/ui/item-avatar";
 import {
   parseApplyPackageDraft,
   useAcceptApplyPackageMutation,
-  useGenerateApplyPackageMutation
+  useGenerateApplyPackageMutation,
+  useSendOutreachMutation
 } from "@/features/applications";
 
 import {
   useApplicationStore,
   type ApplyPackageSection
 } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+
+import { type EmailAttachments } from "./apply-package-email-pane";
 
 const ApplyPackageResumePane = lazy(() =>
   import("./apply-package-resume-pane").then((m) => {
@@ -98,10 +101,18 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
   } = useApplicationStore();
   const acceptMutation = useAcceptApplyPackageMutation();
   const generateMutation = useGenerateApplyPackageMutation();
+  const sendMutation = useSendOutreachMutation();
   const [draft, setDraft] = useState<ApplyPackageDraft | null>(() =>
     parseApplyPackageDraft(application.applyPackageDraft)
   );
   const [regenerateOpen, setRegenerateOpen] = useState(false);
+  // Send-time attachment selection — lives here so the sidebar Email count
+  // mirrors the squares. Dialog is keyed by application.id, so useState init
+  // resets to both-on for each new application.
+  const [emailAttachments, setEmailAttachments] = useState<EmailAttachments>({
+    resume: true,
+    cover: true
+  });
 
   // Panes edit a live non-null draft; the dialog owns the nullable state.
   // Updaters only fire from panes rendering a draft, so `prev` is non-null there.
@@ -126,7 +137,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
   }, [draftedAtIso]);
 
   const kitAccepted = application.resumeId != null;
-  const busy = acceptMutation.isPending || generateMutation.isPending;
+  const busy = acceptMutation.isPending || generateMutation.isPending || sendMutation.isPending;
 
   /** Whitespace-only email edits must not keep Save lit (mirror the trim-on-submit). */
   const dirty = useMemo(() => {
@@ -175,7 +186,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
     [draft]
   );
 
-  const emailCount = `${kitAccepted ? 2 : 0} PDF`;
+  const emailCount = `${Number(emailAttachments.resume) + Number(emailAttachments.cover)} PDF`;
 
   function handleSave() {
     if (!draft) return;
@@ -209,6 +220,48 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
         onSettled: () => markApplyPackageInFlight(applicationId, false)
       }
     );
+  }
+
+  /**
+   * Send = save-when-needed first, then deliver. The kit-current gate covers
+   * both the post-regenerate stale kit and post-accept local edits — Send
+   * never ships PDFs rendered from an older draft. Resolves true only when
+   * the email went out; mutation onError toasts surface the failure.
+   */
+  async function handleSend(attachments: EmailAttachments): Promise<boolean> {
+    if (!draft) return false;
+    const applicationId = application.id;
+    markApplyPackageInFlight(applicationId, true);
+    try {
+      if (!kitCurrent || dirty) {
+        await acceptMutation.mutateAsync({
+          applicationId,
+          draft: {
+            ...draft,
+            proposedRecruiterEmail: draft.proposedRecruiterEmail?.trim()
+              ? draft.proposedRecruiterEmail.trim()
+              : null
+          }
+        });
+        // Inline save lands the kit — record the marker like handleSave does.
+        setAcceptedDraftGeneratedAt(applicationId, draft.generatedAt);
+      }
+      await sendMutation.mutateAsync({
+        applicationId,
+        overrides: {
+          to:
+            (draft.proposedRecruiterEmail ?? application.recruiterEmail ?? "").trim() || undefined,
+          subject: draft.outreachSubject,
+          body: draft.outreachBody,
+          attachments
+        }
+      });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      markApplyPackageInFlight(applicationId, false);
+    }
   }
 
   const draftedAt = application.applyPackageDraftedAt;
@@ -382,6 +435,10 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
                 draft={draft}
                 onDraftChange={updateDraft}
                 busy={busy}
+                attachments={emailAttachments}
+                onAttachmentsChange={setEmailAttachments}
+                onSend={handleSend}
+                sendPending={sendMutation.isPending}
                 onSent={closePackageDialog}
               />
             ) : (
