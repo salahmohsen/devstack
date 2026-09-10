@@ -199,7 +199,7 @@ catalog:
 catalogMode: prefer
 
 minimumReleaseAgeExclude:
-  - "@mastra/core@1.54.0"
+  - "@mastra/core@1.54.0 || 1.66.0"
   - "@mastra/deployer@1.54.0"
   - "@mastra/duckdb@1.5.2"
   - "@mastra/memory@1.24.0"

@@ -1112,6 +1112,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-flash",
       "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4.1-flash",
       "gemini/gemini-2.5-flash",
       "gemini/gemini-2.5-flash-lite",
       "gemini/gemini-2.5-pro",
@@ -1338,8 +1339,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "custom",
       "deepseek-v3.2",
       "deepseek-v4-flash",
-      "deepseek-v4-flash-vision-exp",
       "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
       "devstral-2512",
       "ernie-4.5-vl-424b-a47b",
       "fugu-ultra",
@@ -1764,6 +1765,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshot/kimi-k2.7-code-highspeed",
       "moonshot/kimi-k3",
       "nebius/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "nebius/deepseek-ai/DeepSeek-V4-Pro-0813",
       "nebius/meta-llama/Llama-3.3-70B-Instruct",
       "nebius/nvidia/nemotron-3-super-120b-a12b",
       "nebius/nvidia/Nemotron-3-Ultra-550b-a55b",
@@ -2214,6 +2216,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "glm-5.2-ponytail",
       "glm-5.2-ponytail-lite",
       "glm-5.2-ponytail-ultra",
+      "glm-5.3",
+      "glm-5.3-flash",
       "gpt-oss-120b",
       "green-l",
       "green-l-raw",
@@ -2893,6 +2897,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
       "dots-studio/dots-3-note-preview:free",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-image",
@@ -2999,7 +3004,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "nousresearch/hermes-3-llama-3.1-405b",
       "nousresearch/hermes-3-llama-3.1-70b",
       "nousresearch/hermes-4-405b",
-      "nousresearch/hermes-4-70b",
       "nvidia/nemotron-3-nano-30b-a3b",
       "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       "nvidia/nemotron-3-super-120b-a12b",
@@ -3394,9 +3398,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepinfra/qwen3-vl-235b-a22b-instruct",
       "deepinfra/qwen3-vl-30b-a3b-instruct",
       "deepinfra/qwen3.5-9b",
-      "deepseek/deepseek-v4-flash",
-      "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4.1-flash",
       "embercloud/glm-4.5",
       "embercloud/glm-4.5-air",
       "embercloud/glm-4.7",
@@ -4142,6 +4145,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "abliteration-ai/abliterated-model",
       "abliteration-ai/abliterated-model-large",
       "abliteration-ai/abliterated-model-large-v2",
+      "agnes-3.0-flash",
       "aion-labs/aion-2.0",
       "aion-labs/aion-3.0",
       "aion-labs/aion-3.0-mini",
@@ -4254,6 +4258,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-pro-0813:thinking",
       "deepseek/deepseek-v4-pro:thinking",
       "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash:thinking",
       "Doctor-Shotgun/MS3.2-24B-Magnum-Diamond",
       "doubao-1.5-pro-256k",
       "doubao-1.5-pro-32k",
@@ -4301,6 +4306,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-3-pro-image-preview",
       "gemini-exp-1206",
       "gemma-4-12b-it",
+      "gemma-4-12b-it-semancer",
+      "gemma-4-12b-it-station-keeper",
       "gemma-4-26b-a4b-it-chimerax",
       "gemma-4-26b-a4b-it-darksoul",
       "gemma-4-26b-a4b-it-luminous",
@@ -4368,8 +4375,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "ibm-granite/granite-4.2-8b",
       "inception/mercury-2.5-preview",
       "inclusionai/ling-3.0-flash",
+      "inclusionai/ling-3.0-flash-vl",
       "inclusionai/ling-3.0-flash:thinking",
       "inflatebot/MN-12B-Mag-Mell-R1",
+      "k2-horizon-7b",
       "kimi-k2-instruct-fast",
       "LatitudeGames/Wayfarer-Large-70B-Llama-3.3",
       "liquid/lfm-2.5-2.6b",
@@ -4510,8 +4519,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/o4-mini-high",
       "ornith-ai/ornith-1.5-35b-a3b",
       "ornith-ai/ornith-1.5-35b-a3b:thinking",
-      "ornith-ai/ornith-1.5-9b",
-      "ornith-ai/ornith-1.5-9b:thinking",
       "pamanseau/OpenReasoning-Nemotron-32B",
       "perceptron/perceptron-mk1",
       "perplexity-academic-researcher",
@@ -4549,13 +4556,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen3.5-plus",
       "qwen/qwen3.5-plus-thinking",
       "qwen/Qwen3.6-35B-A3B",
-      "qwen/qwen3.6-35b-a3b-uncensored",
-      "qwen/qwen3.6-35b-a3b-uncensored:thinking",
       "qwen/Qwen3.6-35B-A3B:thinking",
       "qwen/qwen3.8-2.4t-a95b",
       "qwen/qwen3.8-27b-fable",
       "qwen/qwen3.8-27b-obliterated",
       "qwen/qwen3.8-27b-obliterated:thinking",
+      "qwen/qwen3.8-27b-queen",
       "qwen/qwen3.8-27b-uncensored",
       "qwen/qwen3.8-27b-uncensored:thinking",
       "qwen25-vl-72b-instruct",
@@ -4738,10 +4744,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-lite",
       "google/gemini-2.5-pro",
-      "google/gemini-3-pro",
       "google/gemini-3.1-flash-lite",
       "google/gemini-3.5-flash",
-      "google/gemma-4-31B-it",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
       "openai/gpt-4.1-nano",
@@ -4754,16 +4758,13 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.4-mini",
       "openai/gpt-5.4-nano",
       "openai/gpt-5.5",
-      "openai/gpt-oss-120b",
       "openai/o3",
       "openai/o3-mini",
       "openai/o4-mini",
       "openai/whisper-large-v3",
-      "Qwen/Qwen3-30B-A3B-Instruct-2507",
       "Qwen/Qwen3-Embedding-0.6B",
       "Qwen/Qwen3-Reranker-0.6B",
       "Qwen/Qwen3-VL-30B-A3B-Instruct",
-      "Qwen/Qwen3.5-122B-A10B",
       "Qwen/Qwen3.6-35B-A3B-FP8",
       "zai-org/GLM-5.1-FP8"
     ]
@@ -4928,6 +4929,14 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
       "openai/gpt-6-astra",
+      "openai/gpt-image-1",
+      "openai/gpt-image-1.5",
+      "openai/gpt-image-2",
+      "openai/gpt-image-2-2026-04-21",
+      "openai/gpt-image-2.5-flare",
+      "openai/gpt-image-2.5-flare-2026-09-08",
+      "openai/gpt-image-2.5-sunburst",
+      "openai/gpt-image-2.5-sunburst-2026-09-08",
       "openai/o3",
       "openai/o3-mini",
       "openai/o4-mini",
@@ -4960,6 +4969,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/deepseek/deepseek-v4-flash-vision-exp",
       "openrouter/deepseek/deepseek-v4-pro",
       "openrouter/deepseek/deepseek-v4-pro-0813",
+      "openrouter/deepseek/deepseek-v4.1-flash",
       "openrouter/google/gemma-2-27b-it",
       "openrouter/google/gemma-3-12b-it",
       "openrouter/google/gemma-3-27b-it",
@@ -5019,7 +5029,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/nousresearch/hermes-3-llama-3.1-405b",
       "openrouter/nousresearch/hermes-3-llama-3.1-70b",
       "openrouter/nousresearch/hermes-4-405b",
-      "openrouter/nousresearch/hermes-4-70b",
       "openrouter/nvidia/nemotron-3-nano-30b-a3b",
       "openrouter/nvidia/nemotron-3-super-120b-a12b",
       "openrouter/nvidia/nemotron-3-ultra-550b-a55b",
@@ -5064,6 +5073,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/qwen/qwen3.6-35b-a3b",
       "openrouter/qwen/qwen3.8-2.4t-a95b",
       "openrouter/qwen/qwen3.8-27b",
+      "openrouter/qwen/qwen3.8-flash",
       "openrouter/rekaai/reka-edge",
       "openrouter/rekaai/reka-flash-3",
       "openrouter/relace/relace-apply-3",
@@ -5574,6 +5584,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "OpenCode Go",
     apiKeyEnvVars: ["OPENCODE_API_KEY"],
     models: [
+      "deepseek-flash",
       "deepseek-v4-flash",
       "deepseek-v4-flash-vision-exp",
       "deepseek-v4-pro",
@@ -5802,6 +5813,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
       "dots-studio/dots-3-note-preview:free",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-image",
@@ -5905,7 +5917,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "nousresearch/hermes-3-llama-3.1-405b",
       "nousresearch/hermes-3-llama-3.1-70b",
       "nousresearch/hermes-4-405b",
-      "nousresearch/hermes-4-70b",
       "nvidia/nemotron-3-nano-30b-a3b",
       "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       "nvidia/nemotron-3-super-120b-a12b",
@@ -7866,7 +7877,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "spacexai/grok-imagine-image-2.0",
       "spacexai/grok-imagine-video",
       "spacexai/grok-imagine-video-1.5",
-      "spacexai/grok-imagine-video-1.5-preview",
       "spacexai/grok-stt",
       "spacexai/grok-tts",
       "spacexai/grok-voice-think-fast-1.0",
@@ -9311,7 +9321,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "above/mimo-v2.5-pro-ultraspeed": {
-    toolCall: true,
+    toolCall: null,
     structuredOutput: null
   },
   "above/qwen3.8-max": {
@@ -11798,6 +11808,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "crossmodel/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "crossmodel/gemini/gemini-2.5-flash": {
     toolCall: true,
     structuredOutput: true
@@ -12538,11 +12552,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/deepseek-v4-flash-vision-exp": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "llmgateway/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14158,6 +14172,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/nebius/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/nebius/meta-llama/Llama-3.3-70B-Instruct": {
     toolCall: true,
     structuredOutput: true
@@ -15675,6 +15693,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "greenpt/glm-5.2-ponytail-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "greenpt/glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17926,6 +17952,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/dots-studio/dots-3-note-preview:free": {
     toolCall: true,
     structuredOutput: true
@@ -18349,10 +18379,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "kilo/nousresearch/hermes-4-405b": {
     toolCall: false,
     structuredOutput: false
-  },
-  "kilo/nousresearch/hermes-4-70b": {
-    toolCall: null,
-    structuredOutput: null
   },
   "kilo/nvidia/nemotron-3-nano-30b-a3b": {
     toolCall: true,
@@ -19786,15 +19812,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/deepseek/deepseek-v4-flash": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "llmgateway-providers/deepseek/deepseek-v4-flash-vision-exp": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "llmgateway-providers/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/deepseek/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: false
   },
@@ -22186,6 +22208,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/agnes-3.0-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/aion-labs/aion-2.0": {
     toolCall: true,
     structuredOutput: false
@@ -22634,6 +22660,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/deepseek/deepseek-v4.1-flash:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/Doctor-Shotgun/MS3.2-24B-Magnum-Diamond": {
     toolCall: false,
     structuredOutput: false
@@ -22821,6 +22851,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/gemma-4-12b-it": {
     toolCall: true,
     structuredOutput: true
+  },
+  "nano-gpt/gemma-4-12b-it-semancer": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-12b-it-station-keeper": {
+    toolCall: true,
+    structuredOutput: false
   },
   "nano-gpt/gemma-4-26b-a4b-it-chimerax": {
     toolCall: true,
@@ -23090,6 +23128,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/inclusionai/ling-3.0-flash-vl": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/inclusionai/ling-3.0-flash:thinking": {
     toolCall: true,
     structuredOutput: false
@@ -23097,6 +23139,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/inflatebot/MN-12B-Mag-Mell-R1": {
     toolCall: false,
     structuredOutput: false
+  },
+  "nano-gpt/k2-horizon-7b": {
+    toolCall: null,
+    structuredOutput: null
   },
   "nano-gpt/kimi-k2-instruct-fast": {
     toolCall: false,
@@ -23658,14 +23704,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/ornith-ai/ornith-1.5-9b": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "nano-gpt/ornith-ai/ornith-1.5-9b:thinking": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "nano-gpt/pamanseau/OpenReasoning-Nemotron-32B": {
     toolCall: false,
     structuredOutput: false
@@ -23814,14 +23852,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen/qwen3.6-35b-a3b-uncensored": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "nano-gpt/qwen/qwen3.6-35b-a3b-uncensored:thinking": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "nano-gpt/qwen/Qwen3.6-35B-A3B:thinking": {
     toolCall: true,
     structuredOutput: false
@@ -23841,6 +23871,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/qwen/qwen3.8-27b-obliterated:thinking": {
     toolCall: true,
     structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-27b-queen": {
+    toolCall: true,
+    structuredOutput: false
   },
   "nano-gpt/qwen/qwen3.8-27b-uncensored": {
     toolCall: true,
@@ -24542,10 +24576,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nearai/google/gemini-3-pro": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "nearai/google/gemini-3.1-flash-lite": {
     toolCall: true,
     structuredOutput: true
@@ -24553,10 +24583,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nearai/google/gemini-3.5-flash": {
     toolCall: true,
     structuredOutput: true
-  },
-  "nearai/google/gemma-4-31B-it": {
-    toolCall: null,
-    structuredOutput: null
   },
   "nearai/openai/gpt-4.1": {
     toolCall: true,
@@ -24606,10 +24632,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nearai/openai/gpt-oss-120b": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "nearai/openai/o3": {
     toolCall: true,
     structuredOutput: true
@@ -24626,10 +24648,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "nearai/Qwen/Qwen3-30B-A3B-Instruct-2507": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "nearai/Qwen/Qwen3-Embedding-0.6B": {
     toolCall: false,
     structuredOutput: null
@@ -24641,10 +24659,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nearai/Qwen/Qwen3-VL-30B-A3B-Instruct": {
     toolCall: true,
     structuredOutput: true
-  },
-  "nearai/Qwen/Qwen3.5-122B-A10B": {
-    toolCall: null,
-    structuredOutput: null
   },
   "nearai/Qwen/Qwen3.6-35B-A3B-FP8": {
     toolCall: true,
@@ -25190,6 +25204,38 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openai/gpt-image-1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-image-1.5": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-image-2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-image-2-2026-04-21": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-image-2.5-flare": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-image-2.5-flare-2026-09-08": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-image-2.5-sunburst": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-image-2.5-sunburst-2026-09-08": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openai/o3": {
     toolCall: null,
     structuredOutput: null
@@ -25315,6 +25361,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/deepseek/deepseek-v4-pro-0813": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v4.1-flash": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25554,10 +25604,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/nousresearch/hermes-4-70b": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "netlify/openrouter/nvidia/nemotron-3-nano-30b-a3b": {
     toolCall: null,
     structuredOutput: null
@@ -25731,6 +25777,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/qwen/qwen3.8-27b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen3.8-flash": {
     toolCall: null,
     structuredOutput: null
   },
@@ -27562,6 +27612,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "opencode-go/deepseek-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "opencode-go/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
@@ -28390,6 +28444,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/dots-studio/dots-3-note-preview:free": {
     toolCall: true,
     structuredOutput: true
@@ -28801,10 +28859,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "openrouter/nousresearch/hermes-4-405b": {
     toolCall: false,
     structuredOutput: false
-  },
-  "openrouter/nousresearch/hermes-4-70b": {
-    toolCall: null,
-    structuredOutput: null
   },
   "openrouter/nvidia/nemotron-3-nano-30b-a3b": {
     toolCall: true,
@@ -32635,8 +32689,8 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "scnet-token-plan/DeepSeek-V3.2": {
-    toolCall: true,
-    structuredOutput: true
+    toolCall: null,
+    structuredOutput: null
   },
   "scnet-token-plan/DeepSeek-V4-Flash": {
     toolCall: true,
@@ -32691,7 +32745,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "scnet-token-plan/MiMo-V2.5-Pro": {
-    toolCall: true,
+    toolCall: null,
     structuredOutput: null
   },
   "scnet-token-plan/MiniMax-M2.5": {
@@ -34535,7 +34589,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "vercel/deepseek/deepseek-v4.1-flash-beta": {
-    toolCall: true,
+    toolCall: null,
     structuredOutput: null
   },
   "vercel/fish-audio/s1": {
@@ -35428,10 +35482,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "vercel/spacexai/grok-imagine-video-1.5": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "vercel/spacexai/grok-imagine-video-1.5-preview": {
-    toolCall: null,
     structuredOutput: null
   },
   "vercel/spacexai/grok-stt": {
@@ -36891,5 +36941,5 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
 
-// Catalog content hash: 4846593ca92c8c72 — informational (includes live models.dev capabilities).
-// Catalog registry hash: edcc4e41c5fbfc4b — compared by sync script --check; do not edit.
+// Catalog content hash: d81b32ca22ed971e — informational (includes live models.dev capabilities).
+// Catalog registry hash: 00cde7b92603f4df — compared by sync script --check; do not edit.
