@@ -120,7 +120,10 @@ export const ApplyPackageDraftSchema = z.object({
   coverLetterBody: z.string(),
   outreachSubject: z.string(),
   outreachBody: z.string(),
-  /** AI rationale for the human reviewer. */
+  /**
+   * Deprecated: generation no longer emits notes (agent take replaced it).
+   * Kept so stored drafts parse.
+   */
   notes: z.string().optional(),
   jdBuckets: ApplyPackageJdBucketsSchema.optional(),
   /** JD ∩ portfolio dual forms (e.g. “Amazon Web Services (AWS)”). */
@@ -221,8 +224,25 @@ export const AcceptApplyPackageInputSchema = z.object({
 });
 export type AcceptApplyPackageInput = z.infer<typeof AcceptApplyPackageInputSchema>;
 
+export const SendOutreachOverridesSchema = z.object({
+  /** Optional so overrides may carry only subject/body/attachments. */
+  to: optionalNullableEmail.optional(),
+  subject: z.string().min(1).max(500).optional(),
+  body: z.string().min(1).max(20_000).optional(),
+  /** Attachment selection for THIS send (send-time only, never persisted). */
+  attachments: z
+    .object({
+      resume: z.boolean(),
+      cover: z.boolean()
+    })
+    .optional()
+});
+export type SendOutreachOverrides = z.infer<typeof SendOutreachOverridesSchema>;
+
 export const SendOutreachInputSchema = z.object({
-  applicationId: z.string().min(1).describe("Application id to send first-apply outreach for")
+  applicationId: z.string().min(1).describe("Application id to send first-apply outreach for"),
+  /** Send-time overrides for to/subject/body/attachments (spec #8, #11). */
+  overrides: SendOutreachOverridesSchema.optional()
 });
 export type SendOutreachInput = z.infer<typeof SendOutreachInputSchema>;
 
@@ -326,11 +346,14 @@ export const ApplyPackageSummaryAndLettersSchema = z.object({
     .describe("Resume summary tailored to this JD, or null if none"),
   coverLetterBody: z.string().describe("Full cover letter body, no greeting/sign-off extras"),
   outreachSubject: z.string().describe("Short email subject for first-apply outreach"),
-  outreachBody: z.string().describe("Plain-text outreach email body"),
+  outreachBody: z
+    .string()
+    .describe(
+      "Plain-text outreach email body: greeting + body paragraphs. No sign-off and no signature — the mail template adds the applicant's name."
+    ),
   proposedRecruiterEmail: optionalNullableEmail
     .nullable()
     .describe("Recruiter email only if present in the JD; otherwise null"),
-  notes: optionalLlmString.describe("Internal note for the seeker, not sent"),
   headline: optionalLlmString.describe(
     "Target role headline line (not an employer rename). Empty omits."
   ),
@@ -413,8 +436,6 @@ export function assembleApplyPackageDraft(
 
   const generatedAtTrimmed = input.generatedAt?.trim();
   const atsVendor = input.letters.atsVendor?.trim() ?? detectAtsVendor(input.jobContext.listingUrl);
-  const notes =
-    input.letters.notes != null ? humanizeApplyPackageProse(input.letters.notes) : undefined;
   const draft = {
     applicationId: input.applicationId,
     generatedAt:
@@ -434,7 +455,6 @@ export function assembleApplyPackageDraft(
     coverLetterBody: humanizeApplyPackageProse(input.letters.coverLetterBody),
     outreachSubject: humanizeApplyPackageProse(input.letters.outreachSubject),
     outreachBody: humanizeApplyPackageProse(input.letters.outreachBody),
-    ...(notes ? { notes } : {}),
     ...(input.letters.jdBuckets != null ? { jdBuckets: input.letters.jdBuckets } : {}),
     ...(input.letters.keywordDualForms != null
       ? { keywordDualForms: input.letters.keywordDualForms }

@@ -22,7 +22,7 @@ export function useDashboardApplyPackage() {
   const generateMutation = useGenerateApplyPackageMutation();
   const acceptMutation = useAcceptApplyPackageMutation();
   const {
-    openPackageSheet,
+    openPackageDialog,
     applyPackageInFlightIds,
     applyPackageBusyPhaseById,
     markApplyPackageInFlight,
@@ -63,7 +63,7 @@ export function useDashboardApplyPackage() {
             if (reviewApplyKit) {
               setApplyPackageBusyPhase(applicationId, null);
               markApplyPackageInFlight(applicationId, false);
-              openPackageSheet(data.id);
+              openPackageDialog(data.id, "resume");
               return;
             }
             setApplyPackageBusyPhase(applicationId, "building-pdfs");
@@ -88,7 +88,7 @@ export function useDashboardApplyPackage() {
       acceptMutation,
       generateMutation,
       markApplyPackageInFlight,
-      openPackageSheet,
+      openPackageDialog,
       reviewApplyKit,
       setApplyPackageBusyPhase
     ]
@@ -97,7 +97,7 @@ export function useDashboardApplyPackage() {
   const runReview = useCallback(
     (applicationId: string) => {
       if (reviewApplyKit) {
-        openPackageSheet(applicationId);
+        openPackageDialog(applicationId, "resume");
         return;
       }
       markApplyPackageInFlight(applicationId, true);
@@ -115,7 +115,7 @@ export function useDashboardApplyPackage() {
     [
       acceptMutation,
       markApplyPackageInFlight,
-      openPackageSheet,
+      openPackageDialog,
       reviewApplyKit,
       setApplyPackageBusyPhase
     ]

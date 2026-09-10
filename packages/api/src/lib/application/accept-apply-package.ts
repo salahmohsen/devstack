@@ -111,7 +111,9 @@ function resolveDraft(
 
 /**
  * Materialize resume + cover PDFs from an apply package draft and write accepted fields.
- * Clears draft columns so accepted fields are the single source of truth.
+ * Keeps the package draft as the dialog's editable source (spec: draft survives accept);
+ * accepted fields + PDFs are projections of it. The stored draft always mirrors the draft
+ * the current accepted kit was built from.
  */
 export async function acceptApplyPackage(input: {
   applicationId: string;
@@ -237,6 +239,7 @@ export async function acceptApplyPackage(input: {
                 name: join.stack.name,
                 type: join.stack.type ?? null,
                 includedInPortfolio: !!join.stack.portfolioEntryId,
+                isFeatured: Boolean(join.stack.isFeatured),
                 sortOrder: join.stack.sortOrder
               }
             : null
@@ -248,6 +251,7 @@ export async function acceptApplyPackage(input: {
             name: string;
             type: string | null;
             includedInPortfolio: boolean;
+            isFeatured: boolean;
             sortOrder: number;
           } => s != null
         ),
@@ -263,7 +267,8 @@ export async function acceptApplyPackage(input: {
       name: stackNameById.get(s.stackId) ?? s.name,
       type: stackTypeById.get(s.stackId) ?? null,
       includedInPortfolio: true,
-      sortOrder: row?.sortOrder
+      sortOrder: row?.sortOrder,
+      isFeatured: Boolean(row?.isFeatured)
     };
   });
 
@@ -386,14 +391,13 @@ export async function acceptApplyPackage(input: {
       createdResumeId = createdResume.id;
       const row = await applicationRepository.update(app.id, input.userId, {
         resumeId: createdResume.id,
+        applyPackageDraft: draft,
         coverLetterBody: draft.coverLetterBody,
         coverLetterR2Key: coverR2Key,
         coverLetterFilename: coverFilename,
         outreachSubject: draft.outreachSubject,
         outreachBody: draft.outreachBody,
-        recruiterEmail,
-        applyPackageDraft: null,
-        applyPackageDraftedAt: null
+        recruiterEmail
       });
       if (!row) throw new Error("application update failed after new kit put");
       updated = row;

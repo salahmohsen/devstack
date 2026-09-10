@@ -508,9 +508,27 @@ describe("projects and skills", () => {
             }
           ],
           stacks: [
-            { name: "React", type: "ui", includedInPortfolio: true, sortOrder: 0 },
-            { name: "TypeScript", type: "language", includedInPortfolio: true, sortOrder: 2 },
-            { name: "Next.js", type: "framework", includedInPortfolio: true, sortOrder: 3 }
+            {
+              name: "React",
+              type: "ui",
+              includedInPortfolio: true,
+              isFeatured: true,
+              sortOrder: 0
+            },
+            {
+              name: "TypeScript",
+              type: "language",
+              includedInPortfolio: true,
+              isFeatured: true,
+              sortOrder: 2
+            },
+            {
+              name: "Next.js",
+              type: "framework",
+              includedInPortfolio: true,
+              isFeatured: true,
+              sortOrder: 3
+            }
           ],
           contacts: []
         }
@@ -521,6 +539,91 @@ describe("projects and skills", () => {
     expect(highlights.at(-1)).toBe("Stack: TypeScript · Next.js");
     expect(highlights.join(" ")).not.toContain("oxlint");
     expect(doc.cv.sections?.skills?.map((s) => s.label)).toEqual(["Language", "Framework", "UI"]);
+  });
+
+  it("project Stack: is featured-only while Skills keeps every portfolio stack", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          experiences: [],
+          projects: [
+            {
+              title: "Dev-Hub",
+              summary: "Career OS",
+              description: "<ul><li>Shipped it</li></ul>",
+              stacks: [
+                { name: "TypeScript", type: "language", includedInPortfolio: true, sortOrder: 0 },
+                { name: "Tailwind", type: "ui", includedInPortfolio: true, sortOrder: 1 }
+              ],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [
+            {
+              name: "TypeScript",
+              type: "language",
+              includedInPortfolio: true,
+              isFeatured: true,
+              sortOrder: 0
+            },
+            // Portfolio-included but NOT featured: Skills only, never a project line.
+            {
+              name: "Tailwind",
+              type: "ui",
+              includedInPortfolio: true,
+              isFeatured: false,
+              sortOrder: 1
+            }
+          ],
+          contacts: []
+        }
+      })
+    );
+
+    const highlights = doc.cv.sections?.projects?.[0]?.highlights ?? [];
+    expect(highlights.at(-1)).toBe("Stack: TypeScript");
+    expect(highlights.join(" ")).not.toContain("Tailwind");
+
+    const skills = doc.cv.sections?.skills ?? [];
+    expect(skills.map((s) => s.details).join(" | ")).toContain("Tailwind");
+    expect(skills.map((s) => s.details).join(" | ")).toContain("TypeScript");
+  });
+
+  it("omits the project Stack: line when no portfolio stack is featured", () => {
+    const { doc } = parseYaml(
+      baseInput({
+        portfolio: {
+          experiences: [],
+          projects: [
+            {
+              title: "Dev-Hub",
+              summary: "Career OS",
+              description: "<ul><li>Shipped it</li></ul>",
+              stacks: [
+                { name: "TypeScript", type: "language", includedInPortfolio: true, sortOrder: 0 }
+              ],
+              includedInPortfolio: true,
+              isArchived: false
+            }
+          ],
+          stacks: [
+            {
+              name: "TypeScript",
+              type: "language",
+              includedInPortfolio: true,
+              isFeatured: false,
+              sortOrder: 0
+            }
+          ],
+          contacts: []
+        }
+      })
+    );
+
+    const highlights = doc.cv.sections?.projects?.[0]?.highlights ?? [];
+    expect(highlights).toEqual(["Shipped it"]);
+    expect(doc.cv.sections?.skills?.[0]?.details).toContain("TypeScript");
   });
 
   it("links the project title to demoUrl only, never a repo URL", () => {

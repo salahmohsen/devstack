@@ -17,6 +17,16 @@
 
 ---
 
+## 2026-09-10 — Apply-package review dialog harness: single-mount panes, same-site oRPC, excluded-stub reachability
+
+- **Trigger:** Apply package review dialog (sheet → Paper Studio dialog): resume/cover-letter papers, Matte mail editor, attachment squares, Save/Send, live parity loop on seeded drafts
+- **Finding:** A shared JSX element rendered into two responsive branches (`hidden lg:flex` / `lg:hidden`) mounts TWICE — every pane duplicated (7 queries ×2, two Send buttons, two editable papers), and synthetic-event probes hit one copy while state lives in both. Symptom: a "controlled" input showing "" while its React fiber prop still held the typed value. Render shared panes ONCE outside the branch wrappers; only the cheap nav (sidebar/tabs) may duplicate.
+- **Finding:** Local-dev oRPC 401 storm with a JS-set session cookie: the page was on `127.0.0.1:3000` while `VITE_SERVER_URL` is `http://localhost:5200` — `127.0.0.1` and `localhost` are different SITES, so `SameSite=Lax` drops the cookie on cross-site POSTs (GETs may still look 200). SSR rendered (server functions carry the session) while every client oRPC POST 401'd — dialogs opened then instantly closed on missing data. Fix: browse via the SAME host as `VITE_SERVER_URL` (`localhost:3000`), where the user's real httpOnly cookie covers both origins.
+- **Finding:** A paper that mirrors the PDF (kept-rows-only model) makes deselection IRREVERSIBLE when the include switch lives on the entry — excluded items vanish behind a section placeholder. Same class as the 2026-09-08 rail lesson: keep every user-controllable row reachable. Fix: render excluded rows as muted italic stubs (with their live switch) inside the section; budget-hidden rows (server-forced) must NOT become stubs — compute stubs from the raw draft, not the resolved one.
+- **Finding:** Contact parity traps: the PDF renders opted-in contacts only (`findOptedInByUserId`); a pane passing ALL profile contacts shows non-opted-in socials the PDF omits. Filter `includedInPortfolio` at every paper/mail consumer, not just one.
+- **Finding:** Seeding a harness record: `applications.list` filters `tracking_status = 'tracked'` — a seeded application invisible in the UI despite correct stage/outcome is usually untracked. Also `vp dev` (web) dies silently to exit 137 under long harness sessions — health-check `curl :3000` before blaming the app; restarting restores HMR but stale lazy chunks 404 until a cacheless reload.
+- **Evidence class:** live dialog DOM probes (fiber props, `[role=switch]` inventories), oRPC 200/401/404 + NO_ATTACHMENTS probes, seeded-draft screenshots (loaded + sparse + mobile), DB state asserts (tracking_status, draft JSON)
+
 ## 2026-09-08 — Onboarding review redesign harness: rail deselect UX + coss cascade traps
 
 - **Trigger:** A3 paper-first review redesign (editable RenderCV preview + confirm rail + skills drawer, below-lg tabs)

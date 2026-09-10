@@ -105,13 +105,6 @@ const ImportJdSheet = lazy(() =>
     };
   })
 );
-const SendOutreachDialog = lazy(() =>
-  import("@/pages/dashboard/tracked-jobs/ui/send-outreach-dialog").then((m) => {
-    return {
-      default: m.SendOutreachDialog
-    };
-  })
-);
 
 const TRACKED_SORT_OPTIONS = [
   { value: "updatedAt", label: "Updated" },
@@ -160,8 +153,6 @@ export function TrackedJobsPage() {
     closeSheet,
     closeView,
     showView,
-    sendOutreachAppId,
-    closeSendOutreach,
     importJdSheetOpen,
     openImportJdSheet,
     closeImportJdSheet
@@ -328,11 +319,6 @@ export function TrackedJobsPage() {
     if (!viewItem) return null;
     return knownById.get(viewItem.id) ?? viewItem;
   }, [knownById, viewItem]);
-
-  const sendApplication = useMemo(() => {
-    if (!sendOutreachAppId) return null;
-    return knownById.get(sendOutreachAppId) ?? null;
-  }, [sendOutreachAppId, knownById]);
 
   // Side panel works for both board (View / card click) and list (row click).
   const isItemOpen = useMemo(
@@ -532,16 +518,6 @@ export function TrackedJobsPage() {
               }}
               mode={sheetMode}
               initialData={editItem}
-            />
-          ) : null}
-
-          {sendOutreachAppId != null ? (
-            <SendOutreachDialog
-              open
-              application={sendApplication}
-              onOpenChange={(open) => {
-                if (!open) closeSendOutreach();
-              }}
             />
           ) : null}
 

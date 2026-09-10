@@ -61,7 +61,7 @@ export function ApplicationPrimaryActionButton({
   iconOnly = false,
   className
 }: ApplicationPrimaryActionButtonProps) {
-  const { openEdit, openSendOutreach, openRegenerateConfirm } = useApplicationStore();
+  const { openEdit, openPackageDialog, openRegenerateConfirm } = useApplicationStore();
   const { reviewApplyKit, runGenerate, runReview, isPendingFor, busyLabelFor } =
     useDashboardApplyPackage();
   const primary = getApplicationPrimaryAction(app, { reviewApplyKit });
@@ -94,7 +94,7 @@ export function ApplicationPrimaryActionButton({
         openRegenerateConfirm(app.id);
         break;
       case "send":
-        openSendOutreach(app.id);
+        openPackageDialog(app.id, "email");
         break;
       case "open-listing": {
         const url = listingUrlFor(app);
