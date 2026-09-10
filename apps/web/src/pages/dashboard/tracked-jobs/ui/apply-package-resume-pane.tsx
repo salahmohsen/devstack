@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PencilIcon } from "lucide-react";
+import { PencilIcon, TriangleAlertIcon } from "lucide-react";
 import { useMemo, type Dispatch, type SetStateAction } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -12,6 +12,8 @@ import {
   type ApplyPackageProjectDraft,
   type ApplyPackageStackDraft
 } from "@tsu-stack/core";
+import { Alert, AlertAction, AlertTitle } from "@tsu-stack/ui/components/alert";
+import { Button } from "@tsu-stack/ui/components/button";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Switch } from "@tsu-stack/ui/components/switch";
 import { Textarea } from "@tsu-stack/ui/components/textarea";
@@ -97,10 +99,31 @@ export function ApplyPackageResumePane({
     profileQuery.isPending ||
     jobPreferenceQuery.isPending;
 
+  // A failed portfolio query must never render as "Not on this resume" —
+  // block the preview and surface the failure instead.
+  const queriesErrored =
+    experiencesQuery.isError ||
+    projectsQuery.isError ||
+    stacksQuery.isError ||
+    educationsQuery.isError ||
+    certificationsQuery.isError ||
+    profileQuery.isError ||
+    jobPreferenceQuery.isError;
+
+  function retryPortfolioQueries() {
+    void experiencesQuery.refetch();
+    void projectsQuery.refetch();
+    void stacksQuery.refetch();
+    void educationsQuery.refetch();
+    void certificationsQuery.refetch();
+    void profileQuery.refetch();
+    void jobPreferenceQuery.refetch();
+  }
+
   const reviewApplyKit = jobPreferenceQuery.data?.reviewApplyKit ?? true;
 
   const liveRows = useMemo<ApplyPackageLiveRows | null>(() => {
-    if (queriesPending) return null;
+    if (queriesPending || queriesErrored) return null;
     return {
       profile: {
         name: profileQuery.data?.name ?? "Candidate",
@@ -116,6 +139,7 @@ export function ApplyPackageResumePane({
     };
   }, [
     queriesPending,
+    queriesErrored,
     profileQuery.data,
     experiencesQuery.data,
     projectsQuery.data,
@@ -155,6 +179,20 @@ export function ApplyPackageResumePane({
   }, [draft]);
 
   const hiddenCount = preview ? preview.hiddenExperienceCount + preview.hiddenProjectCount : 0;
+
+  const portfolioErrorRow = queriesErrored ? (
+    <Alert variant="error">
+      <TriangleAlertIcon />
+      <AlertTitle className="min-w-0">
+        Couldn&apos;t load your portfolio data — the paper may be incomplete.
+      </AlertTitle>
+      <AlertAction>
+        <Button variant="outline" size="sm" type="button" onClick={retryPortfolioQueries}>
+          Retry
+        </Button>
+      </AlertAction>
+    </Alert>
+  ) : null;
 
   function updateDraft(patch: Partial<ApplyPackageDraft>) {
     onDraftChange((prev) => {
@@ -224,13 +262,22 @@ export function ApplyPackageResumePane({
     onEducationChange: () => undefined,
     onProjectChange: () => undefined,
     onBulletsChange: (clientId, lines) => {
-      if (draft?.experiences.some((exp) => exp.experienceId === clientId)) {
-        updateExperience(clientId, { rewrittenBullets: lines });
-        return;
-      }
-      if (draft?.projects.some((project) => project.projectId === clientId)) {
-        updateProject(clientId, { rewrittenBullets: lines });
-      }
+      onDraftChange((prev) => {
+        if (prev.experiences.some((exp) => exp.experienceId === clientId)) {
+          return {
+            ...prev,
+            experiences: prev.experiences.map((exp) =>
+              exp.experienceId === clientId ? { ...exp, rewrittenBullets: lines } : exp
+            )
+          };
+        }
+        return {
+          ...prev,
+          projects: prev.projects.map((project) =>
+            project.projectId === clientId ? { ...project, rewrittenBullets: lines } : project
+          )
+        };
+      });
     },
     onProjectSummaryChange: (projectId, text) =>
       updateProject(projectId, { rewrittenSummary: text }),
@@ -298,24 +345,26 @@ export function ApplyPackageResumePane({
       {/* lg+ — paper-first: the pane owns the scroll, the paper sits centered. */}
       <div className="hidden min-h-0 flex-1 justify-center overflow-y-auto bg-muted/40 px-6 py-6 lg:flex">
         <div className="w-full max-w-160">
-          {preview ? (
-            <ResumeDocPreview
-              model={preview.model}
-              edit={paperEdit}
-              evidenceByClientId={preview.evidenceByClientId}
-              includeByClientId={includeByClientId}
-              onIncludeChange={handleIncludeChange}
-              className="motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
-            />
-          ) : (
-            <ResumeDocPreview skeleton className="mx-auto max-w-160" />
-          )}
+          {portfolioErrorRow ??
+            (preview ? (
+              <ResumeDocPreview
+                model={preview.model}
+                edit={paperEdit}
+                evidenceByClientId={preview.evidenceByClientId}
+                includeByClientId={includeByClientId}
+                onIncludeChange={handleIncludeChange}
+                className="motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
+              />
+            ) : (
+              <ResumeDocPreview skeleton className="mx-auto max-w-160" />
+            ))}
         </div>
       </div>
 
       {/* below-lg — compact strip + stacked editors (old sheet commit semantics). */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:hidden">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+          {portfolioErrorRow}
           <ResumeDocCompactStrip model={preview?.model} />
 
           <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background p-4">
