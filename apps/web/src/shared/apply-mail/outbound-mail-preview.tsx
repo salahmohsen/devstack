@@ -90,32 +90,7 @@ export function OutboundMailPreview({
             ))
           )}
         </div>
-
-        <p className="outbound-mail__signature">
-          Warmly,
-          <br />
-          <span
-            className={
-              mail.senderName
-                ? "outbound-mail__sender"
-                : "outbound-mail__sender outbound-mail__sender--muted"
-            }
-          >
-            {mail.senderName || "Your name"}
-          </span>
-        </p>
       </div>
-
-      {mail.contactLines.length > 0 ? (
-        <p className="outbound-mail__contacts">
-          {mail.contactLines.map((line, index) => (
-            <span key={line.text}>
-              {index > 0 ? " · " : ""}
-              {line.text}
-            </span>
-          ))}
-        </p>
-      ) : null}
     </div>
   );
 }

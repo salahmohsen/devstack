@@ -426,7 +426,7 @@
 .rendercv-paper .cv-text-entries {
   display: flex;
   flex-direction: column;
-  gap: 0.36cm; /* 0.15cm + 0.6em par spacing */
+  gap: 0.2cm; /* 0.15cm + 0.6em par spacing */
 }
 
 .rendercv-paper .cv-text-entries strong {

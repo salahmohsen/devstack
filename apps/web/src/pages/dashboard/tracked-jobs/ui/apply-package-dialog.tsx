@@ -65,16 +65,6 @@ const SECTIONS: Array<{
   { id: "email", label: "Email", icon: MailIcon }
 ];
 
-/** Compact `host/path` label for the listing URL chip; falls back to a raw trim. */
-function listingChipLabel(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return `${parsed.host}${parsed.pathname.replace(/\/$/, "")}`.slice(0, 48);
-  } catch {
-    return url.trim().slice(0, 48);
-  }
-}
-
 function PanePending() {
   return (
     <div className="grid h-full place-items-center p-6">
@@ -312,9 +302,14 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
           size={40}
         />
         <div className="min-w-0 flex-1">
-          <DialogTitle className="truncate text-base leading-tight font-semibold tracking-[-0.01em]">
+          <DialogTitle className="flex items-center gap-2 truncate text-base leading-tight font-semibold tracking-[-0.01em]">
             {application.title}
             <span className="font-normal text-muted-foreground"> · {application.companyName}</span>
+            {draft?.jobContext.listingUrl ? (
+              <a href={draft.jobContext.listingUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLinkIcon className="size-3 shrink-0" aria-hidden />
+              </a>
+            ) : null}
           </DialogTitle>
           <DialogDescription render={<div className="mt-1.5 flex flex-wrap items-center gap-2" />}>
             {draft?.jobContext.listingFetched ? (
@@ -328,17 +323,7 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
                 Listing page included
               </span>
             ) : null}
-            {draft?.jobContext.listingUrl ? (
-              <a
-                href={draft.jobContext.listingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-muted-foreground hover:text-foreground"
-              >
-                <span className="truncate">{listingChipLabel(draft.jobContext.listingUrl)}</span>
-                <ExternalLinkIcon className="size-3 shrink-0" aria-hidden />
-              </a>
-            ) : null}
+
             {draft ? (
               draft.jobContext.descriptionUsed.trim().length > 0 ? (
                 <details className="group w-fit max-w-full rounded-md border border-border/60 bg-muted/20 open:basis-full">
@@ -456,6 +441,8 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
             Everything edits directly on the paper.
           </p>
         </nav>
+        {/* Pane — rendered ONCE for both nav variants. */}
+        {paneBody}
       </div>
 
       {/* below-lg — section tabs on top (spec #1 lock). */}
@@ -491,9 +478,6 @@ export function ApplyPackageDialog({ application }: { application: ApplicationOu
           </TabsList>
         </Tabs>
       </div>
-
-      {/* Pane — rendered ONCE for both nav variants. */}
-      {paneBody}
 
       <DialogFooter className="flex-row items-center justify-between gap-3 bg-muted/40 px-6 py-3 sm:justify-between">
         <p className="text-xs text-muted-foreground">
