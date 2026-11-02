@@ -1,3 +1,4 @@
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
@@ -30,6 +31,7 @@ import {
   honoLoggerMiddleware,
   type HonoLogVariables
 } from "@tsu-stack/logger/server/hono/middleware";
+import { assertRegistryResolves, createMcpServer } from "@tsu-stack/mcp";
 
 import { enqueueMailClassify } from "#@/queues/mail-classify-queue";
 import { getRuntime } from "#@/runtime-context";
@@ -163,6 +165,42 @@ app.get("/auth/open-api/generate-schema", async (c) => {
 });
 
 app.on(["POST", "GET"], "/auth/*", async (c) => auth.handler(c.req.raw));
+
+assertRegistryResolves(appRouter);
+
+app.use("*", async (c, next) => {
+  const isMcpPath = new URL(c.req.url).pathname.endsWith("/mcp");
+  if (!isMcpPath && c.req.header("x-api-key")) {
+    return c.json({ message: "API keys are only accepted on /mcp." }, 401);
+  }
+  await next();
+});
+
+app.all("/mcp", async (c) => {
+  const db = createDb();
+  return runWithDb(db, async () => {
+    const context = await createContext({
+      context: c,
+      logger: c.get("log"),
+      runtime: getRuntime()
+    });
+    if (!context.session?.user) {
+      return c.json({ message: "Missing or invalid x-api-key." }, 401);
+    }
+
+    const server = createMcpServer({
+      router: appRouter,
+      context,
+      confirmSecret: ENV_SERVER.BETTER_AUTH_SECRET
+    });
+    const transport = new WebStandardStreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true
+    });
+    await server.connect(transport);
+    return transport.handleRequest(c.req.raw);
+  });
+});
 
 app.post("/webhooks/github", async (c) => {
   const requestLog = c.get("log");

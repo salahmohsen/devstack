@@ -123,6 +123,9 @@ catalogs:
     '@mdx-js/rollup':
       specifier: ^3.1.1
       version: 3.1.1
+    '@modelcontextprotocol/sdk':
+      specifier: 1.29.0
+      version: 1.29.0
     '@number-flow/react':
       specifier: ^0.6.1
       version: 0.6.1
@@ -641,6 +644,9 @@ importers:
       '@hono/node-server':
         specifier: 'catalog:'
         version: 1.19.14(hono@4.12.32)
+      '@modelcontextprotocol/sdk':
+        specifier: 'catalog:'
+        version: 1.29.0(zod@4.4.3)
       '@orpc/json-schema':
         specifier: 'catalog:'
         version: 1.14.6(@opentelemetry/api@1.9.1)(crossws@0.4.10(srvx@0.11.22))(ws@8.21.0)
@@ -680,6 +686,9 @@ importers:
       '@tsu-stack/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@tsu-stack/mcp':
+        specifier: workspace:*
+        version: link:../../packages/mcp
       bullmq:
         specifier: 'catalog:'
         version: 5.81.2

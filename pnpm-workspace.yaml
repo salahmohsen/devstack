@@ -197,6 +197,7 @@ catalog:
   "@types/sanitize-html": ^2.16.1
   "@better-auth/api-key": 1.6.23
   "@better-auth/core": 1.6.23
+  "@modelcontextprotocol/sdk": 1.29.0
 
 catalogMode: prefer
 
