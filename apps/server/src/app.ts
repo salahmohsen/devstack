@@ -31,7 +31,7 @@ import {
   honoLoggerMiddleware,
   type HonoLogVariables
 } from "@tsu-stack/logger/server/hono/middleware";
-import { assertRegistryResolves, createMcpServer } from "@tsu-stack/mcp";
+import { assertRegistryResolves, createMcpServer, createRateLimiter } from "@tsu-stack/mcp";
 
 import { enqueueMailClassify } from "#@/queues/mail-classify-queue";
 import { getRuntime } from "#@/runtime-context";
@@ -176,17 +176,52 @@ app.on(["POST", "GET"], "/auth/*", async (c) => auth.handler(c.req.raw));
 
 assertRegistryResolves(appRouter);
 
+const mcpLimiter = createRateLimiter({ windowMs: 60_000, max: 600 });
+
 app.all("/mcp", async (c) => {
   const db = createDb();
   return runWithDb(db, async () => {
+    let session: Awaited<ReturnType<typeof auth.api.getSession>>;
+    try {
+      session = await auth.api.getSession({ headers: c.req.raw.headers });
+    } catch (error) {
+      const statusCode = (error as { statusCode?: unknown }).statusCode;
+      if (typeof statusCode === "number" && statusCode >= 400 && statusCode < 500) {
+        return c.json({ code: "INVALID_API_KEY", message: "Missing or invalid x-api-key." }, 401);
+      }
+      c.get("log")?.error(error instanceof Error ? error : String(error));
+      return c.json(
+        {
+          code: "AUTH_UNAVAILABLE",
+          message: "Authentication is temporarily unavailable. Retry shortly."
+        },
+        503
+      );
+    }
+    if (!session?.user) {
+      return c.json({ code: "INVALID_API_KEY", message: "Missing or invalid x-api-key." }, 401);
+    }
+
+    const decision = mcpLimiter.check(session.user.id);
+    if (!decision.ok) {
+      const retryAfterSeconds = Math.ceil(decision.retryAfterMs / 1000);
+      c.header("Retry-After", String(retryAfterSeconds));
+      return c.json(
+        {
+          code: "RATE_LIMITED",
+          message: `Rate limit exceeded. Retry in ${retryAfterSeconds}s.`,
+          retryAfterSeconds
+        },
+        429
+      );
+    }
+
     const context = await createContext({
       context: c,
       logger: c.get("log"),
-      runtime: getRuntime()
+      runtime: getRuntime(),
+      session
     });
-    if (!context.session?.user) {
-      return c.json({ message: "Missing or invalid x-api-key." }, 401);
-    }
 
     const server = createMcpServer({
       router: appRouter,

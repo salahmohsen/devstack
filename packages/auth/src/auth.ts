@@ -389,7 +389,7 @@ export const auth = betterAuth({
     apiKey({
       defaultPrefix: "tsu_mcp_",
       enableSessionForAPIKeys: true,
-      rateLimit: { enabled: true, timeWindow: 60_000, maxRequests: 120 }
+      rateLimit: { enabled: false }
     }),
     openAPI({
       theme: "deepSpace"

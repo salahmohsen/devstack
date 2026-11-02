@@ -80,6 +80,66 @@ export const TOOLS: readonly ToolDef[] = [
 
   tool("search.entities", "read"),
 
+  tool("profile.get", "read"),
+  tool("profile.update", "write"),
+  tool("profile.checkUsername", "read"),
+  tool("profile.rename", "destructive"),
+  tool("contact.get", "read"),
+
+  tool("aiSettings.get", "read"),
+  tool("aiSettings.update", "write"),
+  tool("aiSettings.listProviderModels", "read"),
+  tool("aiSettings.testProvider", "read"),
+
+  tool("mailSettings.get", "read"),
+  tool("mailSettings.update", "write"),
+  tool("mailSettings.test", "outbound"),
+  tool("mailSettings.rotateWebhook", "destructive"),
+
+  tool("mailSmartRules.list", "read"),
+  tool("mailSmartRules.create", "write"),
+  tool("mailSmartRules.update", "write"),
+  tool("mailSmartRules.delete", "destructive"),
+
+  tool("notificationSettings.get", "read"),
+  tool("notificationSettings.update", "write"),
+
+  tool("portfolio.list", "read"),
+  tool("portfolio.toggle", "write"),
+
+  tool("domain.get", "read"),
+  tool("domain.set", "write"),
+  tool("domain.verify", "write"),
+  tool("domain.remove", "destructive"),
+
+  tool("connections.getStatus", "read"),
+  tool("connections.syncGmail", "write"),
+  tool("connections.setGmailAutoSync", "write"),
+  tool("connections.startGmailWatch", "write"),
+  tool("connections.refreshGithub", "write"),
+  tool("connections.disconnectProvider", "destructive"),
+
+  tool("github.getSetupStatus", "read"),
+  tool("github.refreshInstallationAccess", "write"),
+  tool("github.privateGetProfileRepos", "read"),
+  tool("github.privateGetUserProfile", "read"),
+  tool("github.privateGetUserPinnedRepos", "read"),
+  tool("github.privateGetRepoOverview", "read"),
+  tool("github.privateGetRepoBranches", "read"),
+  tool("github.privateGetRepoTree", "read"),
+  tool("github.privateGetRepoFileContent", "read"),
+
+  tool("onboarding.status", "read"),
+  tool("onboarding.skip", "write"),
+  tool("onboarding.discardSource", "destructive"),
+
+  tool("agent.detectStacks", "write"),
+  tool("agent.organizeStacks", "write"),
+  tool("agent.listSuspendedRuns", "read"),
+  tool("agent.cancelWorkflowRun", "write"),
+  tool("agent.listHubMessages", "read"),
+  tool("agent.getHubChatSession", "read"),
+
   ...crud("experiences", [tool("experiences.listPage", "read")]),
   ...crud("educations"),
   ...crud("certifications"),
