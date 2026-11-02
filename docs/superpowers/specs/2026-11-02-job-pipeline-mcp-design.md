@@ -8,13 +8,13 @@ Control the whole job pipeline (discover, triage, apply, outreach, mail, profile
 
 ## Decisions
 
-| Topic        | Decision                                                                                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Transport    | Remote streamable HTTP MCP at `/mcp`, mounted on the Hono app in `apps/server/src/app.ts`. Stateless.                                                                                 |
-| Auth         | Better Auth `apiKey` plugin. Key minted in Settings under "MCP access". `Authorization: Bearer <key>` resolves to `userId` and builds the same oRPC context as a web session.         |
-| Tool backing | In-process oRPC router client over `appRouter`. No HTTP hop. Same middleware and tenant scoping as the website. Mastra hub tools are not reused, since most are client-enqueue stubs. |
-| Send safety  | Two-step confirm for `outbound` and `destructive` tools.                                                                                                                              |
-| Scope        | Pipeline plus profile data, about 55 tools.                                                                                                                                           |
+| Topic        | Decision                                                                                                                                                                                                                          |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transport    | Remote streamable HTTP MCP at `/mcp`, mounted on the Hono app in `apps/server/src/app.ts`. Stateless.                                                                                                                             |
+| Auth         | Better Auth `apiKey` plugin. Key minted in Settings under "MCP access". `x-api-key: <key>` (the plugin's native header) resolves to `userId` and builds the same oRPC context as a web session. Keys are accepted on `/mcp` only. |
+| Tool backing | In-process oRPC router client over `appRouter`. No HTTP hop. Same middleware and tenant scoping as the website. Mastra hub tools are not reused, since most are client-enqueue stubs.                                             |
+| Send safety  | Two-step confirm for `outbound` and `destructive` tools.                                                                                                                                                                          |
+| Scope        | Pipeline plus profile data, about 55 tools.                                                                                                                                                                                       |
 
 ## Architecture
 
