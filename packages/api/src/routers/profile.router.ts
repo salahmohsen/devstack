@@ -82,7 +82,8 @@ export const profileRouter = {
     }),
   update: protectedProcedure
     .route({
-      description: "Update the current owner's profile (name, email) and contact info",
+      description:
+        "Update the current owner's profile. name and email are required on every call (read profile.get first and resend the current values, since changing email unverifies it). summary and contacts are optional and left unchanged when omitted.",
       method: "POST"
     })
     .input(ProfileUpdateInputSchema)

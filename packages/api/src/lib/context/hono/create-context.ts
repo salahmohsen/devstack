@@ -29,16 +29,22 @@ type HonoBindings = Record<string, unknown>;
 
 export type OrpcContextBindings = HonoBindings;
 
+type AuthSession = Awaited<ReturnType<typeof auth.api.getSession>>;
+
 export async function createContext<TEnv extends { Bindings: HonoBindings }>({
   context,
   logger,
-  runtime
+  runtime,
+  session: resolvedSession
 }: {
   context: HonoContext<TEnv>;
   logger: RequestLogger;
   runtime: NodeRuntime;
+  /** Pass a session the caller already resolved to skip a second lookup. */
+  session?: AuthSession;
 }): Promise<OrpcContext> {
   const headers = context.req.raw.headers;
+  const viaApiKey = headers.has("x-api-key");
 
   // Host for custom-domain public portfolio resolution.
   // Prefer x-forwarded-host only when a trusted reverse proxy sets it (documented
@@ -55,13 +61,17 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
 
   // Session lookup must not take down public RPCs when the pool is briefly wedged.
   // Protected procedures still fail closed via their own session checks.
-  let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
-  try {
-    session = await auth.api.getSession({ headers });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    logger.error(`getSession failed (continuing unauthenticated): ${message}`);
-    session = null;
+  let session: AuthSession = null;
+  if (resolvedSession !== undefined) {
+    session = resolvedSession;
+  } else {
+    try {
+      session = await auth.api.getSession({ headers });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`getSession failed (continuing unauthenticated): ${message}`);
+      session = null;
+    }
   }
 
   /**
@@ -76,14 +86,16 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
   };
 
   if (session?.user?.id) {
-    try {
-      const tokens = await auth.api.getAccessToken({
-        body: { providerId: "github" },
-        headers
-      });
-      sessionOAuthToken = tokens.accessToken ?? null;
-    } catch {
-      // Session may lack GitHub link; private GitHub RPCs fail closed.
+    if (!viaApiKey) {
+      try {
+        const tokens = await auth.api.getAccessToken({
+          body: { providerId: "github" },
+          headers
+        });
+        sessionOAuthToken = tokens.accessToken ?? null;
+      } catch {
+        // Session may lack GitHub link; private GitHub RPCs fail closed.
+      }
     }
 
     try {
