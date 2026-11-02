@@ -59,6 +59,7 @@ import { Route as rootLayout_protectedDashboardSettingsShortcutsIndexRouteImport
 import { Route as rootLayout_protectedDashboardSettingsRulesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/rules/index'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/notifications/index'
+import { Route as rootLayout_protectedDashboardSettingsMcpIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/mcp/index'
 import { Route as rootLayout_protectedDashboardSettingsMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/mail/index'
 import { Route as rootLayout_protectedDashboardSettingsJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/jobs/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
@@ -358,6 +359,12 @@ const rootLayout_protectedDashboardSettingsNotificationsIndexRoute =
     path: '/notifications/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsMcpIndexRoute =
+  rootLayout_protectedDashboardSettingsMcpIndexRouteImport.update({
+    id: '/mcp/',
+    path: '/mcp/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsMailIndexRoute =
   rootLayout_protectedDashboardSettingsMailIndexRouteImport.update({
     id: '/mail/',
@@ -487,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/dashboard/settings/jobs/': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
+  '/dashboard/settings/mcp/': typeof rootLayout_protectedDashboardSettingsMcpIndexRoute
   '/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   '/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
@@ -542,6 +550,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/invites': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/dashboard/settings/jobs': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/dashboard/settings/mail': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
+  '/dashboard/settings/mcp': typeof rootLayout_protectedDashboardSettingsMcpIndexRoute
   '/dashboard/settings/notifications': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   '/dashboard/settings/rules': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
@@ -607,6 +616,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/(root-layout)/__protected/dashboard/settings/jobs/': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/mcp/': typeof rootLayout_protectedDashboardSettingsMcpIndexRoute
   '/(root-layout)/__protected/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   '/(root-layout)/__protected/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/invites/'
     | '/dashboard/settings/jobs/'
     | '/dashboard/settings/mail/'
+    | '/dashboard/settings/mcp/'
     | '/dashboard/settings/notifications/'
     | '/dashboard/settings/profile/'
     | '/dashboard/settings/rules/'
@@ -725,6 +736,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/invites'
     | '/dashboard/settings/jobs'
     | '/dashboard/settings/mail'
+    | '/dashboard/settings/mcp'
     | '/dashboard/settings/notifications'
     | '/dashboard/settings/profile'
     | '/dashboard/settings/rules'
@@ -789,6 +801,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings/invites/'
     | '/(root-layout)/__protected/dashboard/settings/jobs/'
     | '/(root-layout)/__protected/dashboard/settings/mail/'
+    | '/(root-layout)/__protected/dashboard/settings/mcp/'
     | '/(root-layout)/__protected/dashboard/settings/notifications/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
     | '/(root-layout)/__protected/dashboard/settings/rules/'
@@ -1159,6 +1172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/mcp/': {
+      id: '/(root-layout)/__protected/dashboard/settings/mcp/'
+      path: '/mcp'
+      fullPath: '/dashboard/settings/mcp/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsMcpIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/mail/': {
       id: '/(root-layout)/__protected/dashboard/settings/mail/'
       path: '/mail'
@@ -1321,6 +1341,7 @@ interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsInvitesIndexRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   rootLayout_protectedDashboardSettingsJobsIndexRoute: typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   rootLayout_protectedDashboardSettingsMailIndexRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRoute
+  rootLayout_protectedDashboardSettingsMcpIndexRoute: typeof rootLayout_protectedDashboardSettingsMcpIndexRoute
   rootLayout_protectedDashboardSettingsNotificationsIndexRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   rootLayout_protectedDashboardSettingsRulesIndexRoute: typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
@@ -1343,6 +1364,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
       rootLayout_protectedDashboardSettingsJobsIndexRoute,
     rootLayout_protectedDashboardSettingsMailIndexRoute:
       rootLayout_protectedDashboardSettingsMailIndexRoute,
+    rootLayout_protectedDashboardSettingsMcpIndexRoute:
+      rootLayout_protectedDashboardSettingsMcpIndexRoute,
     rootLayout_protectedDashboardSettingsNotificationsIndexRoute:
       rootLayout_protectedDashboardSettingsNotificationsIndexRoute,
     rootLayout_protectedDashboardSettingsProfileIndexRoute:
