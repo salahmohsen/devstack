@@ -1357,7 +1357,7 @@ importers:
   packages/mcp:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: 1.29.0
+        specifier: 'catalog:'
         version: 1.29.0(zod@4.4.3)
       '@orpc/server':
         specifier: 'catalog:'
