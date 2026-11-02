@@ -10,11 +10,13 @@ export function toToolName(path: string): string {
     .join("_");
 }
 
-const tool = (path: string, effect: Effect): ToolDef => {return {
-  name: toToolName(path),
-  path,
-  effect
-}};
+const tool = (path: string, effect: Effect): ToolDef => {
+  return {
+    name: toToolName(path),
+    path,
+    effect
+  };
+};
 
 const crud = (router: string, extra: ToolDef[] = []): ToolDef[] => [
   tool(`${router}.list`, "read"),
