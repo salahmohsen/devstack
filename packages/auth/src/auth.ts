@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { APIError, betterAuth } from "better-auth";
@@ -385,6 +386,7 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    apiKey({ defaultPrefix: "tsu_mcp_", enableSessionForAPIKeys: true }),
     openAPI({
       theme: "deepSpace"
     }),
