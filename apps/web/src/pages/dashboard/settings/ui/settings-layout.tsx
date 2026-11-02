@@ -32,7 +32,8 @@ type NavItem = {
     | "/dashboard/settings/jobs"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
-    | "/dashboard/settings/shortcuts";
+    | "/dashboard/settings/shortcuts"
+    | "/dashboard/settings/mcp";
   icon: typeof UserRound;
   group: "You" | "Workspace" | "Intelligence";
 };
@@ -61,6 +62,14 @@ const SETTINGS_NAV: readonly NavItem[] = [
     description: "Keyboard shortcuts you can customize",
     to: "/dashboard/settings/shortcuts",
     icon: Keyboard,
+    group: "You"
+  },
+  {
+    id: "mcp",
+    label: "MCP access",
+    description: "API keys for Claude Code and other MCP clients",
+    to: "/dashboard/settings/mcp",
+    icon: KeyRound,
     group: "You"
   },
   {
