@@ -39,6 +39,7 @@ Pick the most specific file for the task. Use links within that file instead of 
 - [Media storage and uploads](.agents/media-storage.md) for preemptive S3 object conventions, first-implementation workflow, delete policy, and storage env configuration.
 - [UI guidelines](.agents/ui.md) for app UI composition, extraction decisions, and `packages/ui` boundaries.
 - [TypeScript conventions](.agents/typescript.md) for schema placement, import boundaries, and `lib/` vs `utils/`.
+- [MCP server](.agents/mcp.md) for the `/mcp` endpoint, API-key auth, the tool allowlist, and the outbound confirm gate.
 - [Environment variables](.agents/environment-variables.md) for env scoping, validation, and Docker propagation.
 - [Logging](.agents/logging.md) for `@tsu-stack/logger` / evlog wide events, levels, request-scoped emit-once rules, agent jobs, and CLI (`map` / `doctor`). Load when adding durable logs, upgrading evlog, or wiring the agent app logger.
 - [Mastra agent app](apps/agent/AGENTS.md) for agents, workflows, tools, scorers, memory threads, feedback/datasets, and AI job conventions. Load the `mastra` skill first for any Mastra work.
