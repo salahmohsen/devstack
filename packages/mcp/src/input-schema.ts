@@ -22,6 +22,24 @@ export function describeProcedure(procedure: ProcedureLike, fallback: string): s
   return route?.description ?? route?.summary ?? fallback;
 }
 
+function toObjectSchema(schema: JsonSchema): JsonSchema | null {
+  if (schema.type === "object") return schema;
+  if (!Array.isArray(schema.allOf)) return null;
+
+  const parts = (schema.allOf as JsonSchema[]).map(toObjectSchema);
+  if (parts.some((part) => part === null)) return null;
+
+  const objects = parts as JsonSchema[];
+  const required = new Set(
+    objects.flatMap((part) => (part.required as string[] | undefined) ?? [])
+  );
+  return {
+    type: "object",
+    properties: Object.assign({}, ...objects.map((part) => part.properties)),
+    ...(required.size > 0 ? { required: [...required] } : {})
+  };
+}
+
 export function buildInputSchema(
   path: string,
   effect: Effect,
@@ -31,10 +49,10 @@ export function buildInputSchema(
   if (hit) return hit;
 
   const zodSchema = procedure["~orpc"]?.inputSchema;
-  let schema: JsonSchema = { type: "object", properties: {} };
+  let schema: JsonSchema = { type: "object", properties: {}, additionalProperties: true };
   if (zodSchema) {
     const [, converted] = converter.convert(zodSchema as never, { strategy: "input" });
-    if ((converted as JsonSchema).type === "object") schema = converted as JsonSchema;
+    schema = toObjectSchema(converted as JsonSchema) ?? schema;
   }
 
   if (isGated(effect)) {

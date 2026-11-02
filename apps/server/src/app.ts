@@ -57,6 +57,14 @@ export const app = apiBasePath ? new Hono<AppEnv>().basePath(apiBasePath) : new 
 app.use("*", async (c, next) => cors(corsOptions)(c, next));
 app.options("*", async (c, next) => cors(corsOptions)(c, next));
 
+app.use("*", async (c, next) => {
+  const isMcpPath = new URL(c.req.url).pathname.endsWith("/mcp");
+  if (!isMcpPath && c.req.header("x-api-key")) {
+    return c.json({ message: "API keys are only accepted on /mcp." }, 401);
+  }
+  await next();
+});
+
 app.use(
   "/*",
   honoLoggerMiddleware({
@@ -167,14 +175,6 @@ app.get("/auth/open-api/generate-schema", async (c) => {
 app.on(["POST", "GET"], "/auth/*", async (c) => auth.handler(c.req.raw));
 
 assertRegistryResolves(appRouter);
-
-app.use("*", async (c, next) => {
-  const isMcpPath = new URL(c.req.url).pathname.endsWith("/mcp");
-  if (!isMcpPath && c.req.header("x-api-key")) {
-    return c.json({ message: "API keys are only accepted on /mcp." }, 401);
-  }
-  await next();
-});
 
 app.all("/mcp", async (c) => {
   const db = createDb();
