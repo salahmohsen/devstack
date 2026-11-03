@@ -19,7 +19,15 @@ const FETCH_TIMEOUT_MS = 15_000;
 /** Known public OpenAI-compatible models endpoints (no invented base URLs). */
 const LIVE_MODELS_URL: Readonly<Record<string, string>> = {
   "opencode-go": "https://opencode.ai/zen/go/v1/models",
-  opencode: "https://opencode.ai/zen/v1/models"
+  opencode: "https://opencode.ai/zen/v1/models",
+  // Free-tier slugs (`:free`, `-free`) rotate weekly; the shipped catalog goes stale
+  // within days, so these gateways must be listed live.
+  openrouter: "https://openrouter.ai/api/v1/models",
+  kilo: "https://api.kilo.ai/api/gateway/models",
+  nvidia: "https://integrate.api.nvidia.com/v1/models",
+  deepseek: "https://api.deepseek.com/models",
+  groq: "https://api.groq.com/openai/v1/models",
+  mistral: "https://api.mistral.ai/v1/models"
 };
 
 type CacheEntry = {
@@ -112,7 +120,10 @@ function parseOpenAiModelsList(json: unknown, kind: string): Array<{ id: string;
     if (typeof rawId !== "string" || !rawId.trim()) continue;
 
     // API may return bare ids (`gpt-5.6-luna`) or already-prefixed; normalize to Mastra id.
-    const bare = rawId.includes("/") ? rawId.slice(rawId.lastIndexOf("/") + 1) : rawId.trim();
+    // Only strip our own provider prefix: slugs like openrouter `google/gemma-...:free`
+    // are provider-side namespaces and must survive intact.
+    const trimmed = rawId.trim();
+    const bare = trimmed.startsWith(`${kind}/`) ? trimmed.slice(kind.length + 1) : trimmed;
     if (!bare) continue;
     const id = toMastraModelId(kind, bare);
     if (seen.has(id)) continue;

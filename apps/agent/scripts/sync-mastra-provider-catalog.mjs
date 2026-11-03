@@ -109,18 +109,33 @@ assertRegistryNotDrifted();
 const reg = JSON.parse(readFileSync(regPath, "utf8"));
 const modelsDev = await fetchModelsDev();
 
+/**
+ * Mastra flags retired models per provider in `deprecatedModels` but still lists
+ * them in `models` (free-tier slugs especially: ~50 of opencode's 130 are dead
+ * and return "Model is unavailable"). Mirror Mastra: keep them out of the
+ * selectable catalog and export them separately so saved bindings can warn.
+ */
+const deprecated = [];
+
 const providers = Object.entries(reg.providers)
   .map(([id, p]) => {
     const env = p.apiKeyEnvVar;
     const apiKeyEnvVars = Array.isArray(env) ? env : env ? [env] : [];
+    const retired = new Set(Array.isArray(p.deprecatedModels) ? p.deprecatedModels : []);
+    for (const model of [...retired].sort()) {
+      if ((p.models || []).includes(model)) deprecated.push(`${id}/${model}`);
+    }
     return {
       id,
       name: p.name || id,
       apiKeyEnvVars,
-      models: [...(p.models || [])].sort((a, b) => a.localeCompare(b))
+      models: [...(p.models || [])]
+        .filter((m) => !retired.has(m))
+        .sort((a, b) => a.localeCompare(b))
     };
   })
   .sort((a, b) => a.name.localeCompare(b.name));
+deprecated.sort();
 
 /** `provider/model` → capability flags joined from models.dev. Unknown → null. */
 const capabilities = {};
@@ -159,7 +174,7 @@ const catalogHash = createHash("sha256")
  * the gate must catch.
  */
 const registryHash = createHash("sha256")
-  .update(JSON.stringify({ providers }))
+  .update(JSON.stringify({ providers, deprecated }))
   .digest("hex")
   .slice(0, 16);
 
@@ -195,6 +210,15 @@ export function getMastraProvider(id: string): MastraProviderCatalogEntry | unde
 
 export function isMastraProviderId(id: string): id is MastraProviderId {
   return byId.has(id as MastraProviderId);
+}
+
+/** \`provider/model\` ids Mastra marks deprecated (gateway no longer serves them). */
+export const MASTRA_DEPRECATED_MODELS = ${JSON.stringify(deprecated, null, 2)} as const;
+
+const deprecatedSet = new Set<string>(MASTRA_DEPRECATED_MODELS);
+
+export function isMastraModelDeprecated(modelId: string): boolean {
+  return deprecatedSet.has(modelId);
 }
 
 /** Capability flags for a model. null = unknown (not in models.dev, custom, free-typed). */

@@ -33,7 +33,7 @@
     "@better-auth/drizzle-adapter": "catalog:",
     "@mastra/ai-sdk": "catalog:",
     "@mastra/auth-better-auth": "catalog:",
-    "@mastra/core": "^1.66.0",
+    "@mastra/core": "^1.81.0",
     "@mastra/duckdb": "catalog:",
     "@mastra/evals": "catalog:",
     "@mastra/loggers": "catalog:",
