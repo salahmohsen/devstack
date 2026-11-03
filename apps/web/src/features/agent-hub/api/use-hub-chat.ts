@@ -39,6 +39,8 @@ export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
   /** Set when the initial load failed for good; the composer stays locked until retry. */
   historyError: HubHistoryErrorKind | null;
   retryHistory: () => void;
+  /** Cancel every waiting client card and approval so the composer is free again. */
+  clearPendingHitl: () => void;
   hasMoreHistory: boolean;
   isLoadingOlder: boolean;
   loadOlderMessages: () => Promise<void>;

@@ -17,14 +17,20 @@ import {
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
   cancelOutputForHubHitl,
+  sealHubApprovalCards,
   sealWaitingHubHitlOnRemount,
   staleWaitingHubConfirmCards,
+  waitingHubApprovalCards,
   waitingHubConfirmCards
 } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import {
   classifyHubHistoryError,
   type HubHistoryErrorKind
 } from "@/features/agent-hub/lib/classify-hub-history-error";
+import {
+  findHubApprovalId,
+  withApprovalRequested
+} from "@/features/agent-hub/lib/hub-approval-resume";
 import {
   consumeHubApplicationPlantNewChat,
   consumeHubCreateIntent,
@@ -306,6 +312,35 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     [chat]
   );
 
+  const clearPendingHitl = React.useCallback(() => {
+    for (const card of waitingHubConfirmCards(chat.messages)) {
+      void addToolOutput({
+        tool: card.toolName,
+        toolCallId: card.toolCallId,
+        output: cancelOutputForHubHitl(card.toolName)
+      });
+    }
+    for (const card of waitingHubApprovalCards(chat.messages)) {
+      const approvalId = findHubApprovalId(chat.messages, card.toolCallId);
+      // The SDK only answers approvals on the last message; anything else, or an
+      // approval whose id is gone, is denied locally with no resume.
+      if (approvalId && chat.messages.at(-1)?.id === card.messageId) {
+        setMessagesRef.current(
+          withApprovalRequested(chat.messages, card.toolCallId, approvalId) as typeof messages
+        );
+        void chat.addToolApprovalResponse({
+          id: approvalId,
+          approved: false,
+          reason: "cancelled"
+        });
+      } else {
+        setMessagesRef.current(
+          sealHubApprovalCards(chat.messages, [card]).messages as typeof messages
+        );
+      }
+    }
+  }, [addToolOutput, chat]);
+
   const retryHistory = React.useCallback(() => {
     if (historyRetryTimerRef.current != null) {
       clearTimeout(historyRetryTimerRef.current);
@@ -402,6 +437,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     historyReady,
     historyError,
     retryHistory,
+    clearPendingHitl,
     hasMoreHistory,
     isLoadingOlder,
     loadOlderMessages,

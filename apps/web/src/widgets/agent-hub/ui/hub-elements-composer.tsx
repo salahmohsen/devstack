@@ -38,7 +38,6 @@ import {
 import { ComposerTriggerPopover } from "@/shared/ui/composer-trigger-popover";
 
 import {
-  cancelOutputForHubHitl,
   HubApplicationPlantEffect,
   HubComposerDirectiveChip,
   HubComposerModelPicker,
@@ -46,8 +45,7 @@ import {
   HUB_SLASH_COMMAND_META,
   HUB_TOOL_MENTIONS,
   lastHubHitlKind,
-  useHubChat,
-  waitingHubConfirmCards
+  useHubChat
 } from "@/features/agent-hub";
 
 const TRIGGER_ICON_MAP = {
@@ -168,35 +166,31 @@ export function HubElementsComposer({
           </ComposerBar>
         </Composer>
 
-        {!disabled ? (
-          <>
-            <ComposerTriggerPopover
-              char="@"
-              adapter={mention.adapter}
-              directive={mention.directive}
-              iconMap={TRIGGER_ICON_MAP}
-              fallbackIcon={WrenchIcon}
-              emptyItemsLabel="No matching tools"
-            />
-            <ComposerTriggerPopover
-              char="/"
-              adapter={slash.adapter}
-              action={slash.action}
-              iconMap={TRIGGER_ICON_MAP}
-              fallbackIcon={SlashIcon}
-              emptyItemsLabel="No matching commands"
-            />
-          </>
-        ) : null}
+        <ComposerTriggerPopover
+          char="@"
+          adapter={mention.adapter}
+          directive={mention.directive}
+          iconMap={TRIGGER_ICON_MAP}
+          fallbackIcon={WrenchIcon}
+          emptyItemsLabel="No matching tools"
+        />
+        <ComposerTriggerPopover
+          char="/"
+          adapter={slash.adapter}
+          action={slash.action}
+          iconMap={TRIGGER_ICON_MAP}
+          fallbackIcon={SlashIcon}
+          emptyItemsLabel="No matching commands"
+        />
       </ComposerPrimitive.Root>
     </ComposerPrimitive.Unstable_TriggerPopoverRoot>
   );
 }
 
 function HubClearPending() {
-  const { messages, addToolOutput } = useHubChat();
+  const { messages, clearPendingHitl } = useHubChat();
   const hitl = lastHubHitlKind(messages);
-  if (hitl !== "client") return null;
+  if (hitl !== "client" && hitl !== "approval") return null;
 
   return (
     <Button
@@ -204,15 +198,7 @@ function HubClearPending() {
       size="sm"
       variant="ghost"
       className="h-7 rounded-full px-2.5 text-xs"
-      onClick={() => {
-        for (const card of waitingHubConfirmCards(messages)) {
-          void addToolOutput({
-            tool: card.toolName,
-            toolCallId: card.toolCallId,
-            output: cancelOutputForHubHitl(card.toolName)
-          });
-        }
-      }}
+      onClick={clearPendingHitl}
     >
       Clear pending
     </Button>
