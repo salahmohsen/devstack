@@ -68,6 +68,35 @@ describe("parseAiError", () => {
     expect(p.title).toBe("Session expired");
   });
 
+  it("classifies the real expired OpenCode key as a rejected key", () => {
+    const p = parseAiError(
+      "rewrite-projects (chunk 1/2): This API key has expired. Create a new API key in OpenCode Console and replace it in your client or secret store."
+    );
+    expect(p.title).toBe("Your AI provider key was rejected");
+    expect(p.showAiSettings).toBe(true);
+    expect(p.retryable).toBe(true);
+  });
+
+  it.each([
+    "invalid x-api-key",
+    "Incorrect API key provided: sk-abc",
+    "The API key was revoked",
+    '{"message":"Unauthorized","name":"AI_APICallError","statusCode":401,"url":"https://api.openai.com/v1/chat/completions"}'
+  ])("classifies %s as a rejected key", (raw) => {
+    expect(parseAiError(raw).title).toBe("Your AI provider key was rejected");
+  });
+
+  it("keeps a missing key on the not-set-up message", () => {
+    expect(parseAiError("No API key configured").title).toBe("AI provider not set up");
+  });
+
+  it("does not call unrelated memory or network text offline", () => {
+    expect(parseAiError("Model reply used too much memory of the context").kind).not.toBe(
+      "unavailable"
+    );
+    expect(parseAiError("Social network post is too long").kind).not.toBe("unavailable");
+  });
+
   it("keeps stacks only under technicalDetails", () => {
     const p = parseAiError(OPENCODE_BALANCE);
     expect(p.technicalDetails).toContain("file:///app");

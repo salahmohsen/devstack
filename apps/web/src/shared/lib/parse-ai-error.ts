@@ -61,6 +61,9 @@ export type PresentAiErrorOptions = {
   notes?: string[];
 };
 
+const KEY_REJECTED_RE =
+  /api[\s_-]?key[^.\n]{0,30}\b(?:expired|invalid|revoked|rejected|disabled|deactivated)|\b(?:expired|invalid|revoked|incorrect|rejected)\s+(?:x-)?api[\s_-]?key|invalid[_\s-]api[_\s-]key|authentication_error/i;
+
 const BILLING_URL_RE = /https?:\/\/[^\s"'<>\\]+/gi;
 
 function extractHttpUrls(text: string): string[] {
@@ -267,6 +270,26 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
     };
   }
 
+  const optInText = /opt.?in|hosted in china|region|not available in|explicit opt/i.test(haystack);
+  if (
+    !optInText &&
+    (KEY_REJECTED_RE.test(haystack) ||
+      (isAiProviderApiError(json, technical) && json?.statusCode === 401))
+  ) {
+    return {
+      kind: "provider_error",
+      variant: "error",
+      title: "Your AI provider key was rejected",
+      description:
+        "The key has expired, was revoked, or is invalid. Replace it in Settings, AI, then retry.",
+      billingUrl: null,
+      externalActionLabel: null,
+      showAiSettings: true,
+      retryable: true,
+      technicalDetails: technical
+    };
+  }
+
   if (
     /configure an ai provider|settings\s*→\s*ai|byo|missing_byo|api key|no api key|llm:missing_byo|ai organize suggestions were skipped|provider not configured/i.test(
       haystack
@@ -348,7 +371,7 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
   }
 
   if (
-    /threadid.*undefined|resourceid and a threadid|memory|hub is unavailable|agent returned 5|internal server error|econnrefused|fetch failed|network|llm timeout|timeout after|upstream request failed|temporarily unavailable \(503\)|agent is unreachable|agent overloaded|create_run_failed|agent:unreachable|agent:create_run/i.test(
+    /threadid.*undefined|resourceid and a threadid|memory (?:store|unavailable|error|failed)|hub is unavailable|agent returned 5|internal server error|econnrefused|fetch failed|network (?:error|request failed|is unreachable|connection)|networkerror|llm timeout|timeout after|upstream request failed|temporarily unavailable \(503\)|agent is unreachable|agent overloaded|create_run_failed|agent:unreachable|agent:create_run/i.test(
       haystack
     )
   ) {
