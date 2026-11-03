@@ -22,6 +22,10 @@ import {
   waitingHubConfirmCards
 } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import {
+  classifyHubHistoryError,
+  type HubHistoryErrorKind
+} from "@/features/agent-hub/lib/classify-hub-history-error";
+import {
   consumeHubApplicationPlantNewChat,
   consumeHubCreateIntent,
   consumeHubInterviewRehearsal,
@@ -78,6 +82,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const startingPlantChatRef = React.useRef(false);
 
   const [historyReady, setHistoryReady] = React.useState(false);
+  const [historyError, setHistoryError] = React.useState<HubHistoryErrorKind | null>(null);
   const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
   const nextHistoryPageRef = React.useRef(1);
@@ -143,6 +148,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
         try {
           const page = await fetchHubMessagesPage(0);
           historyRetryAttemptRef.current = 0;
+          setHistoryError(null);
           markHubHitlRemountSeen();
           // Initial hydrate must replace — a stale empty Chat path must not block import.
           importHistory(page.uiMessages, true);
@@ -161,12 +167,13 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
             setMessagesRef.current((prev) => (prev.length > 0 ? [...prev] : prev));
           }, 50);
           return;
-        } catch {
-          // Keep historyReady false so HubWelcome does not paint over a real
-          // thread while the agent is restarting (silent auto-retry).
-          if (attempt >= HISTORY_RETRY_DELAYS_MS.length) {
+        } catch (error) {
+          // Keep historyReady false so HubWelcome never paints over a real
+          // thread and the composer stays locked while the load is failing.
+          const kind = classifyHubHistoryError(error);
+          if (kind === "auth" || attempt >= HISTORY_RETRY_DELAYS_MS.length) {
             historyLoadRef.current = null;
-            setHistoryReady(true);
+            setHistoryError(kind);
             return;
           }
           const delay = HISTORY_RETRY_DELAYS_MS[attempt] ?? 4000;
@@ -204,6 +211,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
       if (historyRetryTimerRef.current != null) return;
       historyLoadRef.current = null;
       historyRetryAttemptRef.current = 0;
+      setHistoryError(null);
       setHistoryReady(false);
       void ensureHistory();
     };
@@ -298,6 +306,17 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     [chat]
   );
 
+  const retryHistory = React.useCallback(() => {
+    if (historyRetryTimerRef.current != null) {
+      clearTimeout(historyRetryTimerRef.current);
+      historyRetryTimerRef.current = null;
+    }
+    historyLoadRef.current = null;
+    historyRetryAttemptRef.current = 0;
+    setHistoryError(null);
+    void ensureHistory();
+  }, [ensureHistory]);
+
   const startNewChat = React.useCallback(async () => {
     // Abort first: a live stream would otherwise repaint the old reply into the
     // new thread, and a cancel below could auto-resume against the old epoch.
@@ -322,6 +341,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     setMessagesRef.current([]);
     setHasMoreHistory(false);
     nextHistoryPageRef.current = 1;
+    setHistoryError(null);
     setHistoryReady(false);
     // Re-hydrate empty history for the new epoch thread (retry on transient fail).
     await ensureHistory();
@@ -380,6 +400,8 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     ...helpers,
     chat,
     historyReady,
+    historyError,
+    retryHistory,
     hasMoreHistory,
     isLoadingOlder,
     loadOlderMessages,

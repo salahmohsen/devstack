@@ -6,6 +6,7 @@ import {
   orpcClient
 } from "@tsu-stack/api/client/tanstack-start/orpc";
 
+import { type HubHistoryErrorKind } from "@/features/agent-hub/lib/classify-hub-history-error";
 import { getHubComposerModel } from "@/features/agent-hub/lib/hub-composer-model";
 import { getHubComposerPersonality } from "@/features/agent-hub/lib/hub-composer-personality";
 import { messagesForMastraMemoryChat } from "@/features/agent-hub/lib/messages-for-mastra-memory";
@@ -35,6 +36,9 @@ type HubChatHelpers = ReturnType<typeof useChat>;
 export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
   chat: Chat<UIMessage>;
   historyReady: boolean;
+  /** Set when the initial load failed for good; the composer stays locked until retry. */
+  historyError: HubHistoryErrorKind | null;
+  retryHistory: () => void;
   hasMoreHistory: boolean;
   isLoadingOlder: boolean;
   loadOlderMessages: () => Promise<void>;
