@@ -43,7 +43,12 @@ export async function resolveRuntimeAiCredentials(
   const providerKind = providerKindFromModelId(modelId) ?? "deepseek";
 
   if (providerKind === CHATGPT_PLAN_PROVIDER_KIND) {
-    return { modelId, providerKind, apiKey: await getChatgptPlanAccessToken(userId) };
+    return {
+      modelId,
+      providerKind,
+      apiKey: await getChatgptPlanAccessToken(userId),
+      planUserId: userId
+    };
   }
   const providers = row?.providers ?? [];
   const overrideProviderId = override?.providerId?.trim();
