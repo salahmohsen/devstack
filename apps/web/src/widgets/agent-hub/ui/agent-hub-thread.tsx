@@ -6,6 +6,7 @@ import {
   unstable_useThreadMessageIds
 } from "@assistant-ui/react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { ArrowDownIcon } from "lucide-react";
 import * as React from "react";
 
@@ -21,6 +22,7 @@ import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { MessageScroller } from "@/shared/ui/agents/message-scroller";
+import { AiErrorBanner } from "@/shared/ui/ai-error-banner";
 import { DaySeparatorRule, DaySeparatorTime } from "@/shared/ui/assistant-ui/day-separator";
 import { EditComposer, threadRootStyle } from "@/shared/ui/assistant-ui/thread";
 
@@ -56,6 +58,8 @@ export function AgentHubThread({ variant = "home" }: { variant?: "home" | "float
   const {
     messages,
     historyReady,
+    historyError,
+    retryHistory,
     hasMoreHistory,
     isLoadingOlder,
     loadOlderMessages,
@@ -140,7 +144,11 @@ export function AgentHubThread({ variant = "home" }: { variant?: "home" | "float
             isEmpty && "min-h-full justify-center"
           )}
         >
-          {!historyReady ? (
+          {historyError ? (
+            <HubHistoryErrorBanner kind={historyError} onRetry={retryHistory} />
+          ) : null}
+
+          {!historyReady && !historyError ? (
             <div className="flex flex-1 items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
               <Spinner className="size-4" aria-hidden />
               Loading conversation…
@@ -196,17 +204,57 @@ export function AgentHubThread({ variant = "home" }: { variant?: "home" | "float
             <HubElementsComposer
               disabled={!historyReady || hitl === "approval"}
               placeholder={
-                hitl === "approval"
-                  ? "Waiting for approval…"
-                  : isRunning
-                    ? "Generating a response…"
-                    : "Ask the hub anything…"
+                historyError
+                  ? historyError === "auth"
+                    ? "Sign in again to continue"
+                    : "Conversation didn’t load. Retry above"
+                  : hitl === "approval"
+                    ? "Waiting for approval…"
+                    : isRunning
+                      ? "Generating a response…"
+                      : "Ask the hub anything…"
               }
             />
           </div>
         </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
+  );
+}
+
+function HubHistoryErrorBanner({
+  kind,
+  onRetry
+}: {
+  kind: "auth" | "transient";
+  onRetry: () => void;
+}) {
+  const isAuth = kind === "auth";
+  return (
+    <div className="flex flex-col gap-2 py-6">
+      <AiErrorBanner
+        presentation={{
+          kind: isAuth ? "unauthorized" : "unavailable",
+          variant: "error",
+          title: isAuth ? "Session expired" : "Couldn’t load your conversation",
+          description: isAuth
+            ? "Sign in again to see your conversation, then retry."
+            : "Your messages are safe. Check your connection, then retry.",
+          billingUrl: null,
+          externalActionLabel: null,
+          showAiSettings: false,
+          retryable: true,
+          technicalDetails: null
+        }}
+        onRetry={onRetry}
+        className="w-full"
+      />
+      {isAuth ? (
+        <Button variant="outline" size="sm" className="self-start" render={<Link to="/sign-in" />}>
+          Sign in
+        </Button>
+      ) : null}
+    </div>
   );
 }
 

@@ -6,8 +6,10 @@ import {
   orpcClient
 } from "@tsu-stack/api/client/tanstack-start/orpc";
 
+import { type HubHistoryErrorKind } from "@/features/agent-hub/lib/classify-hub-history-error";
 import { getHubComposerModel } from "@/features/agent-hub/lib/hub-composer-model";
 import { getHubComposerPersonality } from "@/features/agent-hub/lib/hub-composer-personality";
+import { createHubResumeBudget } from "@/features/agent-hub/lib/hub-resume-budget";
 import { messagesForMastraMemoryChat } from "@/features/agent-hub/lib/messages-for-mastra-memory";
 import { shouldAutoResumeHubChat } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
@@ -35,6 +37,11 @@ type HubChatHelpers = ReturnType<typeof useChat>;
 export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
   chat: Chat<UIMessage>;
   historyReady: boolean;
+  /** Set when the initial load failed for good; the composer stays locked until retry. */
+  historyError: HubHistoryErrorKind | null;
+  retryHistory: () => void;
+  /** Cancel every waiting client card and approval so the composer is free again. */
+  clearPendingHitl: () => void;
   hasMoreHistory: boolean;
   isLoadingOlder: boolean;
   loadOlderMessages: () => Promise<void>;
@@ -78,9 +85,11 @@ export const HubChatContext = createContext<HubChatContextValue | null>(null);
  * Transport proxies oRPC event iterators — do not re-decode SSE on the client.
  */
 export function createHubChat(): Chat<UIMessage> {
+  const resumeBudget = createHubResumeBudget();
   return new Chat<UIMessage>({
     id: HUB_CHAT_ID,
-    sendAutomaticallyWhen: shouldAutoResumeHubChat,
+    sendAutomaticallyWhen: ({ messages }) =>
+      shouldAutoResumeHubChat({ messages }) && resumeBudget.tryConsume(messages),
     transport: {
       async sendMessages(sendOptions) {
         // Memory-backed hub: do NOT send full UI history (Mastra loads the thread).
