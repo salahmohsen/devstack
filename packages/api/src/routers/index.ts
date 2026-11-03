@@ -5,6 +5,7 @@ import { agentRouter } from "#@/routers/agent.router";
 import { aiSettingsRouter } from "#@/routers/ai-settings.router";
 import { applicationsRouter } from "#@/routers/applications.router";
 import { certificationsRouter } from "#@/routers/certifications.router";
+import { chatgptPlanRouter } from "#@/routers/chatgpt-plan.router";
 import { connectionsRouter } from "#@/routers/connections.router";
 import { portfolioContactRouter } from "#@/routers/contact.router";
 import { domainRouter } from "#@/routers/domain.router";
@@ -31,6 +32,7 @@ import { stacksRouter } from "#@/routers/stacks.router";
 export const appRouter = {
   agent: agentRouter,
   aiSettings: aiSettingsRouter,
+  chatgptPlan: chatgptPlanRouter,
   applications: applicationsRouter,
   github: githubRouter,
   health: healthRouter,

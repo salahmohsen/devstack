@@ -25,3 +25,4 @@ export type {
 
 export { AiProvidersSection } from "@/features/ai-settings/ui/ai-providers";
 export { ConnectAiCard } from "@/features/ai-settings/ui/connect-ai-card";
+export { ChatgptPlanSection } from "@/features/ai-settings/ui/chatgpt-plan-card";

@@ -3,10 +3,13 @@ import { createHash } from "node:crypto";
 import { RequestContext } from "@mastra/core/di";
 
 import {
+  CHATGPT_PLAN_PROVIDER_KIND,
   LLM_REQUEST_CONTEXT_KEYS,
   providerKindFromModelId,
   type RuntimeLlmConfig
 } from "@tsu-stack/core";
+
+import { chatgptPlanLanguageModel } from "#@/mastra/lib/chatgpt-plan-model";
 
 /**
  * Mastra OpenAI-compatible model config for in-process `agent.generate({ model })`.
@@ -18,6 +21,8 @@ export type GenerateModelOverride = {
   apiKey: string;
   headers?: Record<string, string>;
 };
+
+export type GenerateModel = GenerateModelOverride | ReturnType<typeof chatgptPlanLanguageModel>;
 
 /**
  * OpenCode gateways require a stable `x-opencode-session` per conversation and a
@@ -70,7 +75,7 @@ export function createByoRequestContext(
 export type ResolvedGenerateModel =
   | {
       ok: true;
-      model: GenerateModelOverride;
+      model: GenerateModel;
       source: "byo";
     }
   | {
@@ -81,12 +86,27 @@ export type ResolvedGenerateModel =
 /**
  * Product LLM auth is Settings BYO only — no process.env provider keys.
  */
-export function resolveGenerateModel(llm: RuntimeLlmConfig | undefined): ResolvedGenerateModel {
+export function resolveGenerateModel(
+  llm: RuntimeLlmConfig | undefined,
+  userId?: string
+): ResolvedGenerateModel {
   const apiKey = llm?.apiKey?.trim();
   const modelId = llm?.modelId?.trim();
 
   if (!modelId || !modelId.includes("/")) {
     return { ok: false, note: "llm:missing_or_invalid_model_id" };
+  }
+
+  if (llm?.providerKind === CHATGPT_PLAN_PROVIDER_KIND && apiKey) {
+    return {
+      ok: true,
+      model: chatgptPlanLanguageModel({
+        modelId,
+        accessToken: apiKey,
+        userId: llm.planUserId ?? userId
+      }),
+      source: "byo"
+    };
   }
 
   if (!apiKey) {
@@ -131,11 +151,15 @@ export function byoModelFromRequestContext({
   requestContext
 }: {
   requestContext?: { get: (key: string) => unknown };
-}): GenerateModelOverride {
+}): GenerateModel {
   const llm = requestContext
     ? runtimeLlmFromRequestContext((key) => requestContext.get(key))
     : undefined;
-  const resolved = resolveGenerateModel(llm);
+  const contextUserId = requestContext?.get("userId");
+  const resolved = resolveGenerateModel(
+    llm,
+    typeof contextUserId === "string" ? contextUserId : undefined
+  );
   if (!resolved.ok) {
     throw new Error(
       `BYO AI required: ${resolved.note}. Configure Settings → AI provider key + model.`
@@ -146,7 +170,7 @@ export function byoModelFromRequestContext({
 
 /** Build `agent.generate(..., { model })` from workflow `input.llm`. */
 export function generateModelOption(llm: RuntimeLlmConfig | undefined): {
-  model?: GenerateModelOverride;
+  model?: GenerateModel;
   skipNote?: string;
 } {
   const resolved = resolveGenerateModel(llm);

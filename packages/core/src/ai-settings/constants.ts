@@ -77,6 +77,7 @@ export const AI_PROVIDER_OPTIONS = [...MASTRA_PROVIDER_CATALOG.map((p) => p.id),
 
 export function aiProviderLabel(kind: string): string {
   if (kind === "custom") return "Custom";
+  if (kind === "chatgpt-plan") return "ChatGPT plan";
   return getMastraProvider(kind)?.name ?? kind;
 }
 

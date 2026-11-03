@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import {
+  CHATGPT_PLAN_PROVIDER_KIND,
+  ChatgptPlanError,
   getMastraProvider,
   toMastraModelId,
   type ListProviderModelsInput,
@@ -8,6 +10,7 @@ import {
 } from "@tsu-stack/core";
 import { userAiSettingsRepository } from "@tsu-stack/db";
 
+import { listChatgptPlanModels } from "#@/lib/settings/chatgpt-plan";
 import { openSecret } from "#@/lib/settings/seal-secret";
 
 const CACHE_TTL_MS = 20 * 60 * 1000;
@@ -177,6 +180,27 @@ export async function listProviderModels(
 ): Promise<ListProviderModelsOutput> {
   const { userId, input } = deps;
   const kind = input.kind;
+
+  if (kind === CHATGPT_PLAN_PROVIDER_KIND) {
+    try {
+      const { models } = await listChatgptPlanModels(userId);
+      return {
+        models,
+        source: models.length > 0 ? "live" : "empty",
+        providerId: input.providerId ?? null
+      };
+    } catch (error) {
+      return {
+        models: [],
+        source: "empty",
+        providerId: input.providerId ?? null,
+        errorMessage:
+          error instanceof ChatgptPlanError
+            ? error.message.replace(/^\[[A-Z_]+\]\s*/, "")
+            : "Could not load ChatGPT models."
+      };
+    }
+  }
 
   const keyResult = await resolveApiKey(userId, input);
   const providerId = "providerId" in keyResult ? keyResult.providerId : null;

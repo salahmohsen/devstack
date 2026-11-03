@@ -2,6 +2,7 @@ export * from "#@/admin/index";
 export * from "#@/ai-settings/index";
 export * from "#@/application/index";
 export * from "#@/certification/index";
+export * from "#@/chatgpt-plan/index";
 export * from "#@/common/index";
 export * from "#@/connections/index";
 export * from "#@/domain/index";

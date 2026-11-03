@@ -25,6 +25,7 @@
     "test:unit": "vp test run"
   },
   "dependencies": {
+    "@ai-sdk/openai": "catalog:",
     "@aws-sdk/client-s3": "catalog:",
     "@aws-sdk/lib-storage": "catalog:",
     "@aws-sdk/s3-presigned-post": "catalog:",
