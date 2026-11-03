@@ -1,4 +1,5 @@
 import {
+  CHATGPT_PLAN_PROVIDER_KIND,
   defaultModelIdForFeature,
   isMastraRouterModelId,
   providerKindFromModelId,
@@ -7,6 +8,7 @@ import {
 } from "@tsu-stack/core";
 import { userAiSettingsRepository } from "@tsu-stack/db";
 
+import { getChatgptPlanAccessToken } from "#@/lib/settings/chatgpt-plan";
 import { openSecret } from "#@/lib/settings/seal-secret";
 
 /**
@@ -39,6 +41,15 @@ export async function resolveRuntimeAiCredentials(
   }
 
   const providerKind = providerKindFromModelId(modelId) ?? "deepseek";
+
+  if (providerKind === CHATGPT_PLAN_PROVIDER_KIND) {
+    return {
+      modelId,
+      providerKind,
+      apiKey: await getChatgptPlanAccessToken(userId),
+      planUserId: userId
+    };
+  }
   const providers = row?.providers ?? [];
   const overrideProviderId = override?.providerId?.trim();
   const boundId = overrideProviderId ?? row?.modelProviderIds?.[feature]?.trim();

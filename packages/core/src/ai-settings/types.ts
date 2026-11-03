@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CHATGPT_PLAN_PROVIDER_KIND } from "#@/chatgpt-plan/constants";
+
 import { HubAvatarIdSchema, HubPersonalityIdSchema } from "./hub-personality";
 import { isMastraProviderId } from "./mastra-provider-catalog";
 
@@ -27,7 +29,9 @@ export const AiProviderKindSchema = z
   .min(1)
   .max(64)
   .superRefine((value, ctx) => {
-    if (value === "custom" || isMastraProviderId(value)) return;
+    if (value === "custom" || value === CHATGPT_PLAN_PROVIDER_KIND || isMastraProviderId(value)) {
+      return;
+    }
     ctx.addIssue({
       code: "custom",
       message: "Unknown AI provider (must be a Mastra model-router provider id or custom)"

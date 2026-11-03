@@ -20,7 +20,9 @@ export const RuntimeLlmConfigSchema = z.object({
    * Decrypted BYO key when the user configured one for this provider.
    * Required for LLM steps; omit only when the step can degrade to heuristic.
    */
-  apiKey: z.string().min(1).max(512).optional()
+  apiKey: z.string().min(1).max(4096).optional(),
+  /** Set only for the ChatGPT plan provider, so plan errors can be recorded for that user. */
+  planUserId: z.string().min(1).max(128).optional()
 });
 export type RuntimeLlmConfig = z.infer<typeof RuntimeLlmConfigSchema>;
 

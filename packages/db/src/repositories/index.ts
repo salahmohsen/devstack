@@ -137,3 +137,8 @@ export {
   type CreateUsernameSlugAliasInput,
   type UsernameSlugAliasEntity
 } from "./username-slug-alias.repository.ts";
+export {
+  userChatgptPlanRepository,
+  type ChatgptPlanConnectedPatch,
+  type UserChatgptPlanEntity
+} from "./user-chatgpt-plan.repository.ts";
