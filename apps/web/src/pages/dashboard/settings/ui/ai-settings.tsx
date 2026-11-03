@@ -67,6 +67,7 @@ import { useAppForm } from "@/shared/form";
 
 import {
   AiProvidersSection,
+  ChatgptPlanSection,
   useGetAiSettingsQuery,
   useListProviderModelsMutation,
   useTestAiProviderMutation,
@@ -899,6 +900,8 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
             providers={data.providers}
             modelProviderIds={data.modelProviderIds ?? {}}
           />
+
+          <ChatgptPlanSection />
 
           <SettingsSection
             title="Models"

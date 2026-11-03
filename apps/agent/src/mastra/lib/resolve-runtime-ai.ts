@@ -1,12 +1,22 @@
 import {
+  CHATGPT_PLAN_LIMIT_PAUSE_MS,
+  CHATGPT_PLAN_PROVIDER_KIND,
+  chatgptPlanError,
   defaultModelIdForFeature,
+  getFreshAccessToken,
   isMastraRouterModelId,
   providerKindFromModelId,
   type AiFeature,
   type RuntimeLlmConfig
 } from "@tsu-stack/core";
-import { createDb, runWithDb, userAiSettingsRepository } from "@tsu-stack/db";
+import {
+  createDb,
+  runWithDb,
+  userAiSettingsRepository,
+  userChatgptPlanRepository
+} from "@tsu-stack/db";
 
+import { chatgptPlanTokenStore } from "#@/mastra/lib/chatgpt-plan-store";
 import { openSecret } from "#@/mastra/lib/open-secret";
 
 /**
@@ -28,6 +38,21 @@ export async function resolveRuntimeAiCredentials(
   }
 
   const providerKind = providerKindFromModelId(modelId) ?? "deepseek";
+
+  if (providerKind === CHATGPT_PLAN_PROVIDER_KIND) {
+    const plan = await runWithDb(db, () => userChatgptPlanRepository.findByUserId(userId));
+    if (
+      plan?.lastErrorCode === "CHATGPT_PLAN_LIMIT" &&
+      plan.lastErrorAt &&
+      Date.now() - plan.lastErrorAt.getTime() < CHATGPT_PLAN_LIMIT_PAUSE_MS
+    ) {
+      throw chatgptPlanError("CHATGPT_PLAN_LIMIT");
+    }
+    const apiKey = await runWithDb(db, () =>
+      getFreshAccessToken({ userId, store: chatgptPlanTokenStore, fetch })
+    );
+    return { modelId, providerKind, apiKey, planUserId: userId };
+  }
   const providers = row?.providers ?? [];
   const boundId = row?.modelProviderIds?.[feature]?.trim();
 

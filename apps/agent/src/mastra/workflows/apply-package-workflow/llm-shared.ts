@@ -3,7 +3,7 @@ import { type z } from "zod";
 
 import { type RuntimeLlmConfig } from "@tsu-stack/core";
 
-import { createByoRequestContext, type GenerateModelOverride } from "#@/mastra/runtime-llm";
+import { createByoRequestContext, type GenerateModel } from "#@/mastra/runtime-llm";
 
 export const REWRITE_CHUNK_TIMEOUT_MS = 60_000;
 export const LETTERS_TIMEOUT_MS = 90_000;
@@ -29,7 +29,7 @@ type RaceGenerateAgent = {
         /** Prefer capability-aware injection for BYO models without native SO. */
         jsonPromptInjection?: boolean | "auto" | "inline" | "system";
       };
-      model: GenerateModelOverride;
+      model: GenerateModel;
       requestContext: RequestContext;
       modelSettings?: { maxOutputTokens?: number };
       /**
@@ -117,7 +117,7 @@ export async function raceGenerate<TSchema extends z.ZodTypeAny>(
   agent: RaceGenerateAgent,
   prompt: string,
   schema: TSchema,
-  model: GenerateModelOverride,
+  model: GenerateModel,
   requestContext: RequestContext,
   options: {
     maxOutputTokens: number;

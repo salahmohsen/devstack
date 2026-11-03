@@ -3,6 +3,7 @@ import { type UIMessage } from "ai";
 import {
   hubToolNameFromPart,
   isHubToolUiPart,
+  isHubApprovalToolName,
   isOpenDailyBriefToolName,
   isOpenEntityFormToolName,
   isOpenEntityInspectToolName,
@@ -127,6 +128,58 @@ export function waitingHubConfirmCards(messages: readonly UIMessage[]): WaitingH
   return waiting;
 }
 
+/** Approval-gated tools still waiting for Approve or Decline. */
+export function waitingHubApprovalCards(messages: readonly UIMessage[]): WaitingHubHitl[] {
+  const waiting: WaitingHubHitl[] = [];
+  for (const message of messages) {
+    if (message.role !== "assistant") continue;
+    for (const raw of message.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      const toolCallId = part.toolCallId ?? "";
+      if (!toolCallId) continue;
+      const name = hubToolNameFromPart(part);
+      const requested = part.state === "approval-requested";
+      if (!requested && !(isHubApprovalToolName(name) && isWaitingState(part.state))) continue;
+      waiting.push({ toolCallId, toolName: name, messageId: message.id });
+    }
+  }
+  return waiting;
+}
+
+/**
+ * Deny waiting approval parts locally, without a server round trip or resume.
+ * Used when history hydrates or the user clears a pending approval whose
+ * approval id is gone: the suspended run cannot be answered from here anyway.
+ */
+export function sealHubApprovalCards(
+  messages: readonly UIMessage[],
+  cards: readonly WaitingHubHitl[] = waitingHubApprovalCards(messages)
+): { messages: UIMessage[]; cancelledIds: string[] } {
+  if (cards.length === 0) return { messages: messages as UIMessage[], cancelledIds: [] };
+  const ids = new Set(cards.map((card) => card.toolCallId));
+  const next = messages.map((message) => {
+    if (message.role !== "assistant") return message;
+    let changed = false;
+    const parts = (message.parts ?? []).map((raw) => {
+      const part = raw as HubToolNamePart & { approval?: { id?: string } };
+      if (!part.toolCallId || !ids.has(part.toolCallId)) return raw;
+      changed = true;
+      return {
+        ...part,
+        state: "output-denied",
+        approval: {
+          id: part.approval?.id ?? `local::${part.toolCallId}`,
+          approved: false,
+          reason: "cancelled"
+        }
+      };
+    });
+    return changed ? ({ ...message, parts } as UIMessage) : message;
+  });
+  return { messages: next, cancelledIds: cards.map((card) => card.toolCallId) };
+}
+
 /** Waiting Confirm cards that are not on the latest assistant message. */
 export function staleWaitingHubConfirmCards(messages: readonly UIMessage[]): WaitingHubHitl[] {
   const lastAssistant = [...messages].toReversed().find((message) => message.role === "assistant");
@@ -169,13 +222,13 @@ export function sealWaitingHubHitlOnRemount(messages: readonly UIMessage[]): {
   messages: UIMessage[];
   cancelledIds: string[];
 } {
-  const waiting = waitingHubConfirmCards(messages);
-  if (waiting.length === 0) {
-    return { messages: messages as UIMessage[], cancelledIds: [] };
-  }
+  const approvals = sealHubApprovalCards(messages);
+  const sealedApprovals = approvals.messages;
+  const waiting = waitingHubConfirmCards(sealedApprovals);
+  if (waiting.length === 0) return approvals;
 
   const cancelById = new Map(waiting.map((card) => [card.toolCallId, card.toolName]));
-  const next = messages.map((message) => {
+  const next = sealedApprovals.map((message) => {
     if (message.role !== "assistant") return message;
     let changed = false;
     const parts = (message.parts ?? []).map((raw) => {
@@ -195,6 +248,6 @@ export function sealWaitingHubHitlOnRemount(messages: readonly UIMessage[]): {
 
   return {
     messages: next,
-    cancelledIds: waiting.map((card) => card.toolCallId)
+    cancelledIds: [...approvals.cancelledIds, ...waiting.map((card) => card.toolCallId)]
   };
 }

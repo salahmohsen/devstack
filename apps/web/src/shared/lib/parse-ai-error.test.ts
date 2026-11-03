@@ -6,6 +6,30 @@ const OPENCODE_BALANCE = `Hub agent error (500): {"message":"Insufficient balanc
 
 const OPENCODE_CHINA_OPT_IN = `{"message":"The latest version of this model is only available hosted in China and requires explicit opt in: https://opencode.ai/workspace/wrk_01KW1NZSR76GWDSCKXRE4YSTCN/go","name":"AI_APICallError","stack":"AI_APICallError: The latest version of this model is only available hosted in China and requires explicit opt in: https://opencode.ai/workspace/wrk_01KW1NZSR76GWDSCKXRE4YSTCN/go\\n    at file:///Users/salah/Developer/personal-hub/node_modules/...","url":"https://opencode.ai/zen/go/v1/chat/completions","statusCode":403,"isRetryable":false}`;
 
+describe("parseAiError ChatGPT plan", () => {
+  it("shows the plan limit with the typed marker", () => {
+    const p = parseAiError(
+      "Hub agent error (500): [CHATGPT_PLAN_LIMIT] ChatGPT plan limit reached."
+    );
+    expect(p.kind).toBe("chatgpt_plan_limit");
+    expect(p.title).toBe("ChatGPT plan limit reached");
+    expect(p.showAiSettings).toBe(true);
+  });
+
+  it("recognises the raw limit code from a failed stream", () => {
+    const p = parseAiError(
+      '{"type":"response.failed","code":"subscription_sharing_usage_limit_exceeded"}'
+    );
+    expect(p.kind).toBe("chatgpt_plan_limit");
+  });
+
+  it("asks to reconnect when the sign-in is gone", () => {
+    const p = parseAiError("[CHATGPT_PLAN_RECONNECT] ChatGPT sign-in expired or was revoked.");
+    expect(p.kind).toBe("chatgpt_plan_reconnect");
+    expect(p.title).toBe("Reconnect ChatGPT");
+  });
+});
+
 describe("parseAiError", () => {
   it("classifies OpenCode insufficient balance with billing URL", () => {
     const p = parseAiError(OPENCODE_BALANCE);
@@ -66,6 +90,35 @@ describe("parseAiError", () => {
     const p = parseAiError("Unauthorized: session expired");
     expect(p.kind).toBe("unauthorized");
     expect(p.title).toBe("Session expired");
+  });
+
+  it("classifies the real expired OpenCode key as a rejected key", () => {
+    const p = parseAiError(
+      "rewrite-projects (chunk 1/2): This API key has expired. Create a new API key in OpenCode Console and replace it in your client or secret store."
+    );
+    expect(p.title).toBe("Your AI provider key was rejected");
+    expect(p.showAiSettings).toBe(true);
+    expect(p.retryable).toBe(true);
+  });
+
+  it.each([
+    "invalid x-api-key",
+    "Incorrect API key provided: sk-abc",
+    "The API key was revoked",
+    '{"message":"Unauthorized","name":"AI_APICallError","statusCode":401,"url":"https://api.openai.com/v1/chat/completions"}'
+  ])("classifies %s as a rejected key", (raw) => {
+    expect(parseAiError(raw).title).toBe("Your AI provider key was rejected");
+  });
+
+  it("keeps a missing key on the not-set-up message", () => {
+    expect(parseAiError("No API key configured").title).toBe("AI provider not set up");
+  });
+
+  it("does not call unrelated memory or network text offline", () => {
+    expect(parseAiError("Model reply used too much memory of the context").kind).not.toBe(
+      "unavailable"
+    );
+    expect(parseAiError("Social network post is too long").kind).not.toBe("unavailable");
   });
 
   it("keeps stacks only under technicalDetails", () => {

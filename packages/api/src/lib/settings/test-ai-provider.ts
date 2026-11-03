@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import {
+  CHATGPT_PLAN_PROVIDER_KIND,
+  ChatgptPlanError,
   pickProbeModelId,
   type TestAiProviderInput,
   type TestAiProviderOutput
@@ -9,6 +11,7 @@ import { userAiSettingsRepository } from "@tsu-stack/db";
 
 import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
 import { type OrpcContextAgentWorker } from "#@/lib/context/types";
+import { getChatgptPlanAccessToken } from "#@/lib/settings/chatgpt-plan";
 import { openSecret } from "#@/lib/settings/seal-secret";
 
 const PROVIDER_PING_AGENT_ID = "provider-ping";
@@ -143,6 +146,19 @@ async function resolveApiKey(
   userId: string,
   input: TestAiProviderInput
 ): Promise<{ apiKey: string } | { error: string }> {
+  if (input.kind === CHATGPT_PLAN_PROVIDER_KIND) {
+    try {
+      return { apiKey: await getChatgptPlanAccessToken(userId) };
+    } catch (error) {
+      return {
+        error:
+          error instanceof ChatgptPlanError
+            ? error.message.replace(/^\[[A-Z_]+\]\s*/, "")
+            : "Could not reach ChatGPT."
+      };
+    }
+  }
+
   const draft = input.apiKey?.trim();
   if (draft) return { apiKey: draft };
 
@@ -218,7 +234,8 @@ export async function testAiProviderConnection(
   const llm = {
     modelId,
     providerKind: input.kind,
-    apiKey
+    apiKey,
+    ...(input.kind === CHATGPT_PLAN_PROVIDER_KIND ? { planUserId: userId } : {})
   };
 
   const controller = new AbortController();

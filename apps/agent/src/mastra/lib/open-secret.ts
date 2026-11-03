@@ -1,4 +1,4 @@
-import { createDecipheriv, scryptSync } from "node:crypto";
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 
 /**
  * Open Settings AI key ciphertext sealed by packages/api `seal-secret`.
@@ -35,4 +35,14 @@ export function openSecret(ciphertext: string | null | undefined): string | null
   } catch {
     return null;
   }
+}
+
+/** Seal with the same format as packages/api `sealSecret`; null when the secret is unset. */
+export function sealSecret(plaintext: string): string | null {
+  const key = deriveKey();
+  if (!key) return null;
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  return `${PREFIX}${Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString("base64")}`;
 }
