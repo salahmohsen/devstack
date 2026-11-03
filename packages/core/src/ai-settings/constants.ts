@@ -89,13 +89,13 @@ export const AI_PROVIDER_LABELS: Record<string, string> = Object.fromEntries(
  * Default models — match apps/agent model-config (Mastra `provider/model` format).
  */
 export const DEFAULT_AI_MODELS: Record<AiFeature, string> = {
-  classify: "deepseek/deepseek-v4-flash",
-  reply: "deepseek/deepseek-v4-flash",
-  resumeImport: "deepseek/deepseek-v4-flash",
-  stacks: "deepseek/deepseek-v4-flash",
-  hubChat: "deepseek/deepseek-v4-flash",
-  scorer: "deepseek/deepseek-v4-flash",
-  applyPackage: "deepseek/deepseek-v4-flash"
+  classify: "deepseek/deepseek-flash",
+  reply: "deepseek/deepseek-flash",
+  resumeImport: "deepseek/deepseek-flash",
+  stacks: "deepseek/deepseek-flash",
+  hubChat: "deepseek/deepseek-flash",
+  scorer: "deepseek/deepseek-flash",
+  applyPackage: "deepseek/deepseek-flash"
 };
 
 export const DEFAULT_PROVIDER_KIND: AiProviderKind = "deepseek";

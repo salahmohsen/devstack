@@ -12,7 +12,7 @@ import { type AiFeature, AiModelIdSchema } from "./types";
  * Product rule: BYO only — no process.env provider keys on the agent.
  */
 export const RuntimeLlmConfigSchema = z.object({
-  /** Mastra model router id: `provider/model` (e.g. deepseek/deepseek-v4-flash). */
+  /** Mastra model router id: `provider/model` (e.g. deepseek/deepseek-flash). */
   modelId: AiModelIdSchema,
   /** Provider id prefix of modelId (or custom). */
   providerKind: z.string().min(1).max(64),

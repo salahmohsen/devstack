@@ -1,5 +1,5 @@
 import { AI_FEATURES, DEFAULT_AI_MODELS } from "./constants";
-import { getMastraProvider, toMastraModelId } from "./mastra-provider-catalog";
+import { getMastraProvider, modelCapabilityFor, toMastraModelId } from "./mastra-provider-catalog";
 import { providerKindFromModelId } from "./runtime-llm";
 import { type AiFeature, type AiModelsMap, type AiSettingsOutput } from "./types";
 
@@ -34,9 +34,47 @@ export function pickProbeModelId(
   if (kind === "custom") return null;
 
   const entry = getMastraProvider(kind);
-  const first = entry?.models[0];
-  if (!first) return null;
-  return toMastraModelId(kind, first);
+  const best = bestProbeModel(kind, entry?.models ?? []);
+  if (!best) return null;
+  return toMastraModelId(kind, best);
+}
+
+/** Non-chat models (image/embedding/audio/moderation) can never answer a ping. */
+const NON_CHAT_MODEL =
+  /image|embed|tts|whisper|flux|rerank|guard|safety|moderat|video|audio|transcri|speech|ocr|vision-exp|diffusion|sdxl/i;
+/** Cheap/fast chat models — a probe should not burn a flagship call. */
+const CHEAP_MODEL = /flash|mini|lite|small|nano|haiku|instant|lightning|tiny/i;
+/**
+ * Free-tier slugs rotate and are rate-limited per key; a stale or exhausted free
+ * model would make a healthy key look broken, so paid models are probed first.
+ */
+const FREE_MODEL = /(^|[-:/])free($|[-:])|:free$|-free$/i;
+/** Alias/router slugs resolve unpredictably (openrouter `~anthropic/...-latest`). */
+const ALIAS_MODEL = /^~|-latest$|^auto$|\/auto$/i;
+
+function probeScore(kind: string, model: string): number {
+  const cap = modelCapabilityFor(toMastraModelId(kind, model));
+  let score = 0;
+  if (NON_CHAT_MODEL.test(model)) score -= 100;
+  if (FREE_MODEL.test(model)) score -= 20;
+  if (ALIAS_MODEL.test(model)) score -= 10;
+  if (cap.toolCall === true) score += 10;
+  if (cap.structuredOutput === true) score += 3;
+  if (CHEAP_MODEL.test(model)) score += 5;
+  return score;
+}
+
+function bestProbeModel(kind: string, models: readonly string[]): string | null {
+  let best: string | null = null;
+  let bestScore = -Infinity;
+  for (const model of models) {
+    const score = probeScore(kind, model);
+    if (score > bestScore) {
+      best = model;
+      bestScore = score;
+    }
+  }
+  return best;
 }
 
 export function defaultAiSettingsOutput(): AiSettingsOutput {

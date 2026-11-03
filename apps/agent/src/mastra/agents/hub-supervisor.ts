@@ -121,9 +121,14 @@ export function createHubSupervisor() {
         },
         messageFilter: ({ messages }) => {
           const withoutToolParts = messages.filter((m) => {
-            const parts = m.content?.parts;
+            // MastraDBMessage content is `{ parts }`; newer core also types model-message shapes.
+            const content = m.content as unknown;
+            const parts =
+              content && typeof content === "object" && "parts" in content
+                ? (content as { parts?: unknown }).parts
+                : undefined;
             if (!Array.isArray(parts) || parts.length === 0) return true;
-            return !parts.some((p) => p?.type === "tool-invocation");
+            return !parts.some((p: { type?: string } | null) => p?.type === "tool-invocation");
           });
           return withoutToolParts.slice(-8);
         }

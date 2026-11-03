@@ -26,6 +26,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-fable-5-1",
       "claude-haiku-4-5",
       "claude-haiku-4-5-20251001",
+      "claude-haiku-5-5",
       "claude-opus-4-1-20250805",
       "claude-opus-4-1-20250805-thinking",
       "claude-opus-4-5-20251101",
@@ -33,12 +34,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-opus-4-7-thinking",
       "claude-opus-4-8",
       "claude-opus-5",
+      "claude-opus-5-5",
       "claude-opus-5-thinking",
       "claude-sonnet-4-5-20250929",
       "claude-sonnet-4-5-20250929-thinking",
       "claude-sonnet-4-6",
       "claude-sonnet-4-6-thinking",
       "claude-sonnet-5",
+      "claude-sonnet-5-5",
+      "deepseek-flash",
       "deepseek-v3.2",
       "deepseek-v3.2-thinking",
       "doubao-seed-1-6-thinking-250715",
@@ -64,6 +68,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-3.6-flash",
       "gemini-3.7-flash",
       "gemini-3.8-flash",
+      "gemini-4-argon",
       "glm-4.5",
       "glm-4.5v",
       "glm-4.6",
@@ -100,6 +105,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-terra",
       "gpt-5.6-terra-pro",
       "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
       "grok-4-1-fast-reasoning",
       "grok-4-fast-non-reasoning",
       "grok-4-fast-reasoning",
@@ -108,12 +116,14 @@ export const MASTRA_PROVIDER_CATALOG = [
       "grok-4.3",
       "grok-4.5",
       "grok-4.6",
+      "grok-4.7",
       "kimi-k2-0905-preview",
       "kimi-k2-thinking",
       "kimi-k2.5",
       "kimi-k2.6",
       "kimi-k2.7-code",
       "kimi-k3",
+      "kimi-k3.1-pro",
       "MiniMax-M1",
       "MiniMax-M2",
       "MiniMax-M2.1",
@@ -145,36 +155,22 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Abacus",
     apiKeyEnvVars: ["ABACUS_API_KEY"],
     models: [
-      "claude-3-7-sonnet-20250219",
       "claude-fable-5",
       "claude-haiku-4-5-20251001",
-      "claude-opus-4-1-20250805",
-      "claude-opus-4-20250514",
       "claude-opus-4-5-20251101",
       "claude-opus-4-6",
       "claude-opus-4-7",
       "claude-opus-4-8",
       "claude-opus-5",
-      "claude-sonnet-4-20250514",
       "claude-sonnet-4-5-20250929",
       "claude-sonnet-4-6",
       "claude-sonnet-5",
-      "deepseek-ai/DeepSeek-R1",
-      "deepseek-ai/DeepSeek-V3.1-Terminus",
-      "deepseek-ai/DeepSeek-V3.2",
-      "deepseek-ai/DeepSeek-V4-Flash",
-      "deepseek-ai/DeepSeek-V4-Pro",
-      "deepseek/deepseek-v3.1",
       "gemini-2.5-flash",
       "gemini-2.5-flash-image",
       "gemini-2.5-pro",
       "gemini-3-flash-preview",
       "gemini-3-pro-image",
-      "gemini-3-pro-image-preview",
-      "gemini-3.1-flash-image",
-      "gemini-3.1-flash-image-preview",
       "gemini-3.1-flash-lite",
-      "gemini-3.1-flash-lite-preview",
       "gemini-3.1-pro-preview",
       "gemini-3.5-flash",
       "gemini-3.5-flash-lite",
@@ -185,22 +181,13 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-4.1-mini",
       "gpt-4.1-nano",
       "gpt-4o",
-      "gpt-4o-2024-11-20",
       "gpt-4o-mini",
       "gpt-5",
-      "gpt-5-codex",
       "gpt-5-mini",
       "gpt-5-nano",
       "gpt-5.1",
-      "gpt-5.1-chat-latest",
-      "gpt-5.1-codex",
-      "gpt-5.1-codex-max",
       "gpt-5.2",
-      "gpt-5.2-chat-latest",
-      "gpt-5.2-codex",
-      "gpt-5.3-chat-latest",
       "gpt-5.3-codex",
-      "gpt-5.3-codex-xhigh",
       "gpt-5.4",
       "gpt-5.4-mini",
       "gpt-5.4-nano",
@@ -208,20 +195,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-luna",
       "gpt-5.6-sol",
       "gpt-5.6-terra",
-      "grok-4-0709",
-      "grok-4-1-fast-non-reasoning",
-      "grok-4-fast-non-reasoning",
       "grok-4.3",
       "grok-4.5",
       "grok-4.6",
-      "grok-code-fast-1",
-      "kimi-k2-turbo-preview",
-      "kimi-k2.5",
-      "llama-3.3-70b-versatile",
-      "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
-      "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-      "meta-llama/Meta-Llama-3.1-8B-Instruct",
-      "meta-llama/Meta-Llama-3.3-70B-Instruct",
       "mimo-v2-pro",
       "MiniMaxAI/MiniMax-M2.7",
       "MiniMaxAI/MiniMax-M3",
@@ -235,19 +211,13 @@ export const MASTRA_PROVIDER_CATALOG = [
       "o3-pro",
       "o4-mini",
       "openai/gpt-oss-120b",
-      "qwen-2.5-coder-32b",
-      "Qwen/Qwen2.5-72B-Instruct",
-      "Qwen/Qwen3-235B-A22B-Instruct-2507",
       "Qwen/Qwen3-32B",
       "Qwen/Qwen3-Coder-480B-A35B-Instruct",
       "Qwen/Qwen3.6-27B",
-      "Qwen/QwQ-32B",
-      "qwen3-max",
       "qwen3.7-max",
       "qwen3.8-max",
       "route-llm",
       "thinkingmachines/Inkling",
-      "zai-org/GLM-4.5",
       "zai-org/GLM-4.6",
       "zai-org/GLM-4.7",
       "zai-org/GLM-5",
@@ -266,14 +236,14 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "above.dev",
     apiKeyEnvVars: ["ABOVE_API_KEY"],
     models: [
-      "deepseek-v4-flash",
-      "deepseek-v4-flash-vision-exp",
       "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
       "glm-5.2",
       "glm-5.2-fast",
       "glm-5.3-flash",
-      "mimo-v2.5-pro",
-      "mimo-v2.5-pro-ultraspeed",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro",
+      "mimo-v2.6-pro-ultraspeed",
       "qwen3.8-max"
     ]
   },
@@ -281,13 +251,13 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "agentrouter",
     name: "AgentRouter",
     apiKeyEnvVars: ["AGENTROUTER_API_KEY"],
-    models: ["claude-opus-4-8", "claude-opus-5", "gpt-5.6-sol"]
+    models: ["claude-opus-4-8", "claude-opus-5", "deepseek-v4-flash", "glm-5.3", "gpt-5.6-sol"]
   },
   {
     id: "agnes",
     name: "Agnes AI",
     apiKeyEnvVars: ["AGNES_API_KEY"],
-    models: ["agnes-2.0-flash", "agnes-2.5-flash", "agnes-2.5-pro-alpha"]
+    models: ["agnes-2.5-flash", "agnes-2.5-pro-alpha", "agnes-3.0-flash"]
   },
   {
     id: "ai-router",
@@ -296,40 +266,245 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: ["gpt-5.4", "gpt-5.5", "gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"]
   },
   {
+    id: "aimlapi",
+    name: "AI/ML API",
+    apiKeyEnvVars: ["AIMLAPI_API_KEY"],
+    models: [
+      "aion-labs/aion-rp-llama-3.1-8b",
+      "alibaba/qwen-max",
+      "alibaba/qwen-plus",
+      "alibaba/qwen3-coder-480b-a35b-instruct",
+      "alibaba/qwen3-next-80b-a3b-instruct",
+      "alibaba/qwen3.8-2.4t-a95b",
+      "alibaba/qwen3.8-27b",
+      "alibaba/qwen3.8-flash",
+      "alibaba/qwen3.8-max",
+      "alibaba/qwen3.8-max-prime",
+      "amazon/nova-lite-v1",
+      "amazon/nova-micro-v1",
+      "amazon/nova-pro-v1",
+      "anthracite-org/magnum-v4-72b",
+      "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5.1",
+      "anthropic/claude-haiku-4.5",
+      "anthropic/claude-haiku-5.5",
+      "anthropic/claude-opus-4.5",
+      "anthropic/claude-opus-4.7",
+      "anthropic/claude-opus-4.8",
+      "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5.5",
+      "anthropic/claude-sonnet-4.5",
+      "anthropic/claude-sonnet-4.6",
+      "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5.5",
+      "bytedance-seed/seed-1.6-flash",
+      "bytedance-seed/seed-2.0-code",
+      "bytedance-seed/seed-2.0-lite",
+      "bytedance-seed/seed-2.0-mini",
+      "cognitivecomputations/dolphin-mistral-24b-venice-edition",
+      "cohere/command-a",
+      "cohere/command-r-08-2024",
+      "cohere/command-r-plus-08-2024",
+      "cohere/command-r7b-12-2024",
+      "deepseek/deepseek-chat",
+      "deepseek/deepseek-chat-v3-0324",
+      "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-vision-exp",
+      "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
+      "google/gemini-3-8-flash",
+      "google/gemini-3.1-flash-lite-preview",
+      "google/gemini-3.1-pro-preview",
+      "google/gemini-3.1-pro-preview-customtools",
+      "google/gemini-3.6-flash",
+      "google/gemini-3.7-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-flash-latest",
+      "google/gemma-2-27b-it",
+      "google/gemma-3-12b-it",
+      "google/gemma-3-27b-it",
+      "google/gemma-3-4b-it",
+      "google/gemma-4-26b-a4b-it",
+      "google/gemma-4-31b-it",
+      "gryphe/mythomax-l2-13b",
+      "ibm-granite/granite-4.0-h-micro",
+      "inception/mercury-2",
+      "inception/mercury-2.5",
+      "inference-net/schematron-v2-small",
+      "inference-net/schematron-v2-turbo",
+      "mancer/weaver",
+      "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "meta/muse-glimmer-30b",
+      "meta/muse-spark-1.1",
+      "meta/muse-spark-1.2",
+      "meta/muse-spark-1.3",
+      "mistralai/codestral-2508",
+      "mistralai/devstral-2512",
+      "mistralai/ministral-14b-2512",
+      "mistralai/ministral-3b-2512",
+      "mistralai/ministral-8b-2512",
+      "mistralai/mistral-large",
+      "mistralai/mistral-large-2407",
+      "mistralai/mistral-medium-3",
+      "mistralai/mistral-medium-3-5",
+      "mistralai/mistral-medium-3.1",
+      "mistralai/mistral-nemo",
+      "mistralai/mistral-saba",
+      "mistralai/mistral-small-24b-instruct-2501",
+      "mistralai/mistral-small-2603",
+      "mistralai/mistral-small-3.1-24b-instruct",
+      "mistralai/mistral-small-3.2-24b-instruct",
+      "mistralai/mixtral-8x22b-instruct",
+      "mistralai/voxtral-small-24b-2507",
+      "moonshot/kimi-k3",
+      "moonshotai/kimi-k2",
+      "moonshotai/kimi-k2-0905",
+      "moonshotai/kimi-k2-thinking",
+      "morph/morph-v3-fast",
+      "morph/morph-v3-large",
+      "nousresearch/hermes-3-llama-3.1-405b",
+      "nousresearch/hermes-3-llama-3.1-70b",
+      "openai/gpt-4.1",
+      "openai/gpt-4.1-mini",
+      "openai/gpt-4o",
+      "openai/gpt-4o-2024-05-13",
+      "openai/gpt-4o-2024-08-06",
+      "openai/gpt-4o-2024-11-20",
+      "openai/gpt-4o-mini",
+      "openai/gpt-5",
+      "openai/gpt-5-1",
+      "openai/gpt-5-2",
+      "openai/gpt-5-4",
+      "openai/gpt-5-5",
+      "openai/gpt-5-mini",
+      "openai/gpt-5-nano",
+      "openai/gpt-5-pro",
+      "openai/gpt-5.1-codex-max",
+      "openai/gpt-5.2-pro",
+      "openai/gpt-5.3-codex",
+      "openai/gpt-5.4-image-2",
+      "openai/gpt-5.4-mini",
+      "openai/gpt-5.4-nano",
+      "openai/gpt-5.4-pro",
+      "openai/gpt-5.5-pro",
+      "openai/gpt-5.6-luna",
+      "openai/gpt-5.6-luna-pro",
+      "openai/gpt-5.6-sol",
+      "openai/gpt-5.6-sol-pro",
+      "openai/gpt-5.6-terra",
+      "openai/gpt-5.6-terra-pro",
+      "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-terra",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "openai/gpt-oss-safeguard-20b",
+      "openai/o3-pro",
+      "perceptron/perceptron-mk1.5",
+      "perplexity/sonar",
+      "perplexity/sonar-pro",
+      "rekaai/reka-edge",
+      "relace/relace-apply-3",
+      "relace/relace-search",
+      "sakana/fugu-max",
+      "sakana/fugu-ultra",
+      "sakana/fugu-ultra-v2",
+      "sao10k/l3-lunaris-8b",
+      "sao10k/l3.1-euryale-70b",
+      "sao10k/l3.3-euryale-70b",
+      "stepfun/step-5-preview",
+      "tencent/hy-mt2-1.8b",
+      "tencent/hy-mt2-30b-a3b",
+      "tencent/hy-mt2-7b",
+      "tencent/hy3",
+      "tencent/hy4-preview",
+      "thedrummer/cydonia-24b-v4.1",
+      "thedrummer/skyfall-36b-v2",
+      "thedrummer/unslopnemo-12b",
+      "thinkingmachines/inkling",
+      "thinkingmachines/inkling-small",
+      "unbiased/pareto",
+      "undi95/remm-slerp-l2-13b",
+      "upstage/solar-pro-3",
+      "upstage/solar-pro4",
+      "x-ai/grok-4-20-0309-non-reasoning",
+      "x-ai/grok-4-fast-non-reasoning",
+      "xiaomi/mimo-v2.5",
+      "xiaomi/mimo-v2.5-pro",
+      "z-ai/glm-4.5v",
+      "z-ai/glm-4.6v",
+      "z-ai/glm-4.7-flash",
+      "z-ai/glm-5-turbo",
+      "z-ai/glm-5.3-flash",
+      "z-ai/glm-5v-turbo",
+      "zhipu/glm-5.2",
+      "zhipu/glm-5.3"
+    ]
+  },
+  {
     id: "aiand",
     name: "ai&",
     apiKeyEnvVars: ["AIAND_API_KEY"],
     models: [
-      "deepseek-ai/deepseek-v4-flash",
       "deepseek-ai/deepseek-v4-pro",
+      "deepseek-ai/deepseek-v4.1-flash",
+      "deepseek-ai/deepseek-v4.1-flash-1017",
       "google/gemma-4-31b-it",
-      "moonshotai/kimi-k2.7-code",
+      "meta/muse-spark-open",
       "moonshotai/kimi-k3",
       "motif-technologies/motif-3",
       "openai/gpt-oss-120b",
       "qwen/qwen3.6-27b",
       "qwen/qwen3.8-27b",
-      "zai-org/glm-5.2",
-      "zai-org/glm-5.3"
+      "zai-org/glm-5.3",
+      "zai-org/glm-5.3-flash"
     ]
+  },
+  {
+    id: "ai21",
+    name: "AI21 Labs",
+    apiKeyEnvVars: ["AI21_API_KEY"],
+    models: ["jamba-large", "jamba-mini"]
+  },
+  {
+    id: "ainetcafe",
+    name: "ainetcafe",
+    apiKeyEnvVars: ["AINETCAFE_API_KEY"],
+    models: ["Kimi-K3"]
   },
   {
     id: "aixy",
     name: "Aixy",
     apiKeyEnvVars: ["AIXY_API_KEY"],
-    models: ["openai/gpt-4.1-mini"]
+    models: [
+      "anthropic/claude-fable-5-1",
+      "anthropic/claude-haiku-5-5",
+      "anthropic/claude-opus-5-5",
+      "anthropic/claude-sonnet-5-5",
+      "gemini/gemini-3.8-flash",
+      "gemini/gemini-4-argon",
+      "openai/gpt-5.6-luna",
+      "openai/gpt-5.6-sol",
+      "openai/gpt-5.6-terra",
+      "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol"
+    ]
   },
   {
     id: "aki-io",
     name: "AKI.IO",
     apiKeyEnvVars: ["AKI_IO_API_KEY"],
     models: [
-      "deepseek-v4-flash-0731-284b",
+      "deepseek-v4.1-flash-552b",
       "gemma4-26b",
+      "glm5.3-754b",
       "gpt-oss-120b",
-      "kimi-k2.7-code-1100b",
       "mistral4-119b",
-      "qwen3.6-35b",
       "qwen3.8-27b"
     ]
   },
@@ -340,59 +515,34 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-v4-flash-0731",
       "glm-5.2",
-      "qvq-max",
+      "kimi-k3",
       "qwen-flash",
       "qwen-max",
       "qwen-mt-plus",
-      "qwen-mt-turbo",
-      "qwen-omni-turbo",
-      "qwen-omni-turbo-realtime",
       "qwen-plus",
       "qwen-plus-character-ja",
-      "qwen-turbo",
-      "qwen-vl-max",
       "qwen-vl-ocr",
-      "qwen-vl-plus",
-      "qwen2-5-14b-instruct",
-      "qwen2-5-32b-instruct",
-      "qwen2-5-72b-instruct",
-      "qwen2-5-7b-instruct",
-      "qwen2-5-omni-7b",
-      "qwen2-5-vl-72b-instruct",
-      "qwen2-5-vl-7b-instruct",
-      "qwen3-14b",
-      "qwen3-235b-a22b",
-      "qwen3-32b",
-      "qwen3-8b",
       "qwen3-asr-flash",
-      "qwen3-coder-30b-a3b-instruct",
-      "qwen3-coder-480b-a35b-instruct",
       "qwen3-coder-flash",
-      "qwen3-coder-plus",
-      "qwen3-livetranslate-flash-realtime",
-      "qwen3-max",
-      "qwen3-next-80b-a3b-instruct",
-      "qwen3-next-80b-a3b-thinking",
       "qwen3-omni-flash",
-      "qwen3-omni-flash-realtime",
-      "qwen3-vl-235b-a22b",
       "qwen3-vl-30b-a3b",
       "qwen3-vl-plus",
       "qwen3.5-122b-a10b",
       "qwen3.5-27b",
       "qwen3.5-35b-a3b",
       "qwen3.5-397b-a17b",
+      "qwen3.5-flash",
       "qwen3.5-plus",
       "qwen3.6-27b",
       "qwen3.6-35b-a3b",
       "qwen3.6-flash",
-      "qwen3.6-max-preview",
       "qwen3.6-plus",
+      "qwen3.7-flash",
       "qwen3.7-max",
       "qwen3.7-plus",
       "qwen3.8-flash",
       "qwen3.8-max",
-      "qwq-plus"
+      "qwen3.8-omni-flash"
     ]
   },
   {
@@ -400,88 +550,44 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Alibaba (China)",
     apiKeyEnvVars: ["DASHSCOPE_API_KEY"],
     models: [
-      "deepseek-r1",
-      "deepseek-r1-0528",
       "deepseek-r1-distill-llama-70b",
-      "deepseek-r1-distill-llama-8b",
       "deepseek-r1-distill-qwen-1-5b",
-      "deepseek-r1-distill-qwen-14b",
-      "deepseek-r1-distill-qwen-32b",
-      "deepseek-r1-distill-qwen-7b",
-      "deepseek-v3",
-      "deepseek-v3-1",
-      "deepseek-v3-2-exp",
-      "deepseek-v4-flash",
       "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
       "glm-5",
       "glm-5.1",
       "glm-5.2",
-      "kimi-k2-thinking",
+      "glm-5.3",
       "kimi-k2.5",
       "kimi-k2.6",
+      "kimi-k3",
       "kimi/kimi-k2.5",
       "MiniMax-M2.5",
       "MiniMax/MiniMax-M2.7",
-      "moonshot-kimi-k2-instruct",
-      "qvq-max",
       "qwen-deep-research",
       "qwen-doc-turbo",
       "qwen-flash",
       "qwen-long",
-      "qwen-math-plus",
-      "qwen-math-turbo",
       "qwen-max",
       "qwen-mt-plus",
-      "qwen-mt-turbo",
-      "qwen-omni-turbo",
-      "qwen-omni-turbo-realtime",
       "qwen-plus",
       "qwen-plus-character",
-      "qwen-turbo",
-      "qwen-vl-max",
       "qwen-vl-ocr",
-      "qwen-vl-plus",
-      "qwen2-5-14b-instruct",
-      "qwen2-5-32b-instruct",
-      "qwen2-5-72b-instruct",
-      "qwen2-5-7b-instruct",
-      "qwen2-5-coder-32b-instruct",
-      "qwen2-5-coder-7b-instruct",
-      "qwen2-5-math-72b-instruct",
-      "qwen2-5-math-7b-instruct",
-      "qwen2-5-omni-7b",
-      "qwen2-5-vl-72b-instruct",
-      "qwen2-5-vl-7b-instruct",
-      "qwen3-14b",
-      "qwen3-235b-a22b",
-      "qwen3-32b",
-      "qwen3-8b",
       "qwen3-asr-flash",
-      "qwen3-coder-30b-a3b-instruct",
-      "qwen3-coder-480b-a35b-instruct",
       "qwen3-coder-flash",
-      "qwen3-coder-plus",
-      "qwen3-max",
-      "qwen3-next-80b-a3b-instruct",
-      "qwen3-next-80b-a3b-thinking",
       "qwen3-omni-flash",
-      "qwen3-omni-flash-realtime",
-      "qwen3-vl-235b-a22b",
-      "qwen3-vl-30b-a3b",
       "qwen3-vl-plus",
       "qwen3.5-397b-a17b",
       "qwen3.5-flash",
       "qwen3.5-plus",
       "qwen3.6-flash",
-      "qwen3.6-max-preview",
       "qwen3.6-plus",
       "qwen3.7-flash",
       "qwen3.7-max",
       "qwen3.7-plus",
       "qwen3.8-flash",
       "qwen3.8-max",
-      "qwq-32b",
-      "qwq-plus",
+      "qwen3.8-omni-flash",
       "siliconflow/deepseek-r1-0528",
       "siliconflow/deepseek-v3-0324",
       "siliconflow/deepseek-v3.1-terminus",
@@ -493,53 +599,28 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "alibaba-coding-plan",
     name: "Alibaba Coding Plan",
     apiKeyEnvVars: ["ALIBABA_CODING_PLAN_API_KEY"],
-    models: [
-      "glm-4.7",
-      "glm-5",
-      "kimi-k2.5",
-      "MiniMax-M2.5",
-      "qwen3-coder-next",
-      "qwen3-coder-plus",
-      "qwen3-max-2026-01-23",
-      "qwen3.5-plus",
-      "qwen3.6-flash",
-      "qwen3.6-plus",
-      "qwen3.7-max",
-      "qwen3.7-plus"
-    ]
+    models: ["glm-5", "kimi-k2.5", "MiniMax-M2.5", "qwen3.5-plus", "qwen3.6-plus", "qwen3.7-plus"]
   },
   {
     id: "alibaba-coding-plan-cn",
     name: "Alibaba Coding Plan (China)",
     apiKeyEnvVars: ["ALIBABA_CODING_PLAN_API_KEY"],
-    models: [
-      "glm-4.7",
-      "glm-5",
-      "kimi-k2.5",
-      "MiniMax-M2.5",
-      "qwen3-coder-next",
-      "qwen3-coder-plus",
-      "qwen3-max-2026-01-23",
-      "qwen3.5-plus",
-      "qwen3.6-flash",
-      "qwen3.6-plus",
-      "qwen3.7-max",
-      "qwen3.7-plus"
-    ]
+    models: ["glm-5", "kimi-k2.5", "MiniMax-M2.5", "qwen3.5-plus", "qwen3.6-plus", "qwen3.7-plus"]
   },
   {
     id: "alibaba-token-plan",
     name: "Alibaba Token Plan",
     apiKeyEnvVars: ["ALIBABA_TOKEN_PLAN_API_KEY"],
     models: [
-      "deepseek-v3.2",
-      "deepseek-v4-flash",
       "deepseek-v4-flash-0731",
       "deepseek-v4-pro",
       "deepseek-v4-pro-0813",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
       "glm-5",
       "glm-5.1",
       "glm-5.2",
+      "glm-5.3",
       "happyhorse-1.1-i2v",
       "happyhorse-1.1-r2v",
       "happyhorse-1.1-t2v",
@@ -555,7 +636,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen3.7-plus",
       "qwen3.8-flash",
       "qwen3.8-max",
-      "qwen3.8-max-preview",
       "wan2.7-image",
       "wan2.7-image-pro"
     ]
@@ -565,14 +645,15 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Alibaba Token Plan (China)",
     apiKeyEnvVars: ["ALIBABA_TOKEN_PLAN_API_KEY"],
     models: [
-      "deepseek-v3.2",
-      "deepseek-v4-flash",
       "deepseek-v4-flash-0731",
       "deepseek-v4-pro",
       "deepseek-v4-pro-0813",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
       "glm-5",
       "glm-5.1",
       "glm-5.2",
+      "glm-5.3",
       "happyhorse-1.1-i2v",
       "happyhorse-1.1-r2v",
       "happyhorse-1.1-t2v",
@@ -588,7 +669,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen3.7-plus",
       "qwen3.8-flash",
       "qwen3.8-max",
-      "qwen3.8-max-preview",
       "wan2.7-image",
       "wan2.7-image-pro"
     ]
@@ -599,15 +679,14 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["AMBIENT_API_KEY"],
     models: [
       "ambient/large",
-      "deepseek/deepseek-v4-flash",
-      "deepseek/deepseek-v4-flash-0731",
-      "moonshotai/kimi-k2.6",
-      "moonshotai/kimi-k2.7-code",
-      "stepfun/step-3.7-flash",
-      "xiaomi/mimo-v2.5",
-      "z-ai/glm-5.2",
-      "zai-org/GLM-5.1-FP8",
-      "zai-org/GLM-5.2-FP8"
+      "ambient/small",
+      "minimax/minimax-m3",
+      "qwen/qwen3-30b-a3b-instruct-2507",
+      "qwen/qwen3.6-27b",
+      "qwen/qwen3.6-35b-a3b",
+      "qwen/qwen3.8-27b",
+      "unsloth/qwen3.8-27b-gguf",
+      "z-ai/glm-5.2"
     ]
   },
   {
@@ -616,8 +695,14 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["AMD_API_KEY"],
     models: [
       "DeepSeek-V4-Flash",
-      "DeepSeek-V4-Flash-Vision-Exp",
-      "MiniCPM5-1B",
+      "DeepSeek-V4.1-Flash",
+      "Gemma-4-31B-IT",
+      "GLM-5.3-Flash",
+      "MiMo-V2.6-Flash",
+      "MiniCPM-V-4.7-1B",
+      "MiniCPM-V-4.7-35B-A3B",
+      "MiniCPM5-2B",
+      "Qwen3.8-27B",
       "Qwen3.8-Flash-Next"
     ]
   },
@@ -630,16 +715,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-fable-5-1",
       "claude-haiku-4-5",
       "claude-haiku-4-5-20251001",
+      "claude-haiku-5-5",
       "claude-opus-4-5",
       "claude-opus-4-5-20251101",
       "claude-opus-4-6",
       "claude-opus-4-7",
       "claude-opus-4-8",
       "claude-opus-5",
+      "claude-opus-5-5",
       "claude-sonnet-4-5",
       "claude-sonnet-4-5-20250929",
       "claude-sonnet-4-6",
-      "claude-sonnet-5"
+      "claude-sonnet-5",
+      "claude-sonnet-5-5"
     ]
   },
   {
@@ -662,7 +750,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-2.5-pro",
       "google/gemini-3-flash-preview",
       "google/gemini-3-pro-preview",
-      "mistralai/devstral-2512",
       "mistralai/mistral-large-2512",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
@@ -685,12 +772,14 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["ARCEE_API_KEY"],
     models: [
       "deepseek/deepseek-v4-flash-latest",
-      "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
       "moonshotai/kimi-k3",
-      "thinkingmachines/inkling-small",
       "trinity-large-thinking",
-      "zai-org/glm-5.2"
+      "zai-org/glm-5.2",
+      "zai-org/glm-5.3",
+      "zai-org/glm-5.3-flash"
     ]
   },
   {
@@ -738,29 +827,27 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Baseten",
     apiKeyEnvVars: ["BASETEN_API_KEY"],
     models: [
-      "deepseek-ai/DeepSeek-V3.1",
       "deepseek-ai/DeepSeek-V4-Flash-0731",
-      "deepseek-ai/DeepSeek-V4-Pro",
       "deepseek-ai/DeepSeek-V4-Pro-0813",
-      "MiniMaxAI/MiniMax-M2.5",
-      "moonshotai/Kimi-K2.5",
-      "moonshotai/Kimi-K2.6",
-      "moonshotai/Kimi-K2.7-Code",
+      "deepseek-ai/DeepSeek-V4.1-Flash",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017-Fast",
+      "deepseek-ai/DeepSeek-V4.1-Flash-Fast",
       "moonshotai/Kimi-K3",
-      "nvidia/Nemotron-120B-A12B",
       "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
       "openai/gpt-oss-120b",
-      "thinkingmachines/inkling",
-      "thinkingmachines/inkling-small",
-      "zai-org/GLM-4.7",
-      "zai-org/GLM-5",
-      "zai-org/GLM-5.1",
       "zai-org/GLM-5.2",
       "zai-org/GLM-5.2-Fast",
       "zai-org/GLM-5.3",
       "zai-org/GLM-5.3-Fast",
       "zai-org/GLM-5.3-Flash"
     ]
+  },
+  {
+    id: "bee",
+    name: "Bee by HEOSSI",
+    apiKeyEnvVars: ["BEE_API_KEY"],
+    models: ["bee-brood", "bee-buzz", "bee-cell", "bee-comb", "bee-hive", "bee-swarm"]
   },
   {
     id: "berget",
@@ -771,7 +858,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
       "moonshotai/Kimi-K3",
       "Qwen/Qwen3.8-27B-FP8",
-      "zai-org/GLM-5.2",
       "zai-org/GLM-5.3-Flash"
     ]
   },
@@ -779,13 +865,45 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "blueclaw",
     name: "Blue Claw",
     apiKeyEnvVars: ["BLUECLAW_API_KEY"],
-    models: ["Qwen/Qwen3.6-35B-A3B-FP8", "Qwen3.6-27B"]
+    models: ["Qwen3.8-27B"]
   },
   {
     id: "bothub",
     name: "Bothub",
     apiKeyEnvVars: ["BOTHUB_API_KEY"],
-    models: ["gemma-4-31b-it:free", "nemotron-3-ultra-550b-a55b:free"]
+    models: [
+      "deepseek-v4-flash-0731",
+      "deepseek-v4-pro-0813",
+      "gemma-4-31b-it:free",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "gpt-5.6-luna",
+      "muse-spark-1.3-contributor",
+      "nemotron-3-ultra-550b-a55b:free"
+    ]
+  },
+  {
+    id: "boundless",
+    name: "Boundless",
+    apiKeyEnvVars: ["BOUNDLESS_API_KEY"],
+    models: [
+      "claude-fable-5.1",
+      "claude-opus-5.5",
+      "deepseek-v4-pro-0813",
+      "deepseek-v4.1-flash",
+      "dsv4",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "kimi-k3",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro",
+      "minimax-m3",
+      "nemotron3-super",
+      "qwen3.6",
+      "qwen3.8-flash"
+    ]
   },
   {
     id: "cerebras",
@@ -798,32 +916,22 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Charm Hyper",
     apiKeyEnvVars: ["HYPER_API_KEY"],
     models: [
-      "deepseek-v4-flash",
       "deepseek-v4-flash-0731",
-      "deepseek-v4-pro",
       "deepseek-v4-pro-0813",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
       "gemma-4-26b-a4b-it",
-      "glm-5",
-      "glm-5.1",
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
       "gpt-oss-120b",
       "inkling",
       "kimi-k2-thinking",
-      "kimi-k2.5",
-      "kimi-k2.6",
       "kimi-k2.7-code",
       "kimi-k3",
-      "llama-3.3-70b-instruct",
-      "llama-4-maverick-17b-128e-instruct-fp8",
       "minimax-m2.7",
       "minimax-m3",
-      "qwen3-coder-480b-a35b-instruct-int4-mixed-ar",
-      "qwen3-next-80b-a3b-instruct",
-      "qwen3.6-flash",
-      "qwen3.6-max",
-      "qwen3.6-plus",
+      "prism",
       "qwen3.7-flash",
       "qwen3.7-max",
       "qwen3.7-plus",
@@ -840,18 +948,21 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-ai/DeepSeek-V3.2-TEE",
       "deepseek-ai/DeepSeek-V4-Flash-0731-TEE",
+      "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017",
       "google/gemma-4-31B-turbo-TEE",
       "moonshotai/Kimi-K2.6-TEE",
+      "moonshotai/Kimi-K2.7-Code",
       "moonshotai/Kimi-K3-TEE",
-      "Nemotron-3-Nano-Omni-30B-TEE",
-      "Qwen/Qwen3-235B-A22B-Thinking-2507-TEE",
-      "Qwen/Qwen3-32B-TEE",
       "Qwen/Qwen3.5-397B-A17B-TEE",
       "Qwen/Qwen3.6-27B-TEE",
+      "Qwen/Qwen3.8-2.4T-A95B",
       "Qwen/Qwen3.8-27B-TEE",
-      "unsloth/Mistral-Nemo-Instruct-2407-TEE",
+      "Qwen/Qwen3.8-Max-0902",
       "zai-org/GLM-5.1-TEE",
-      "zai-org/GLM-5.2-TEE"
+      "zai-org/GLM-5.2-Fast",
+      "zai-org/GLM-5.2-TEE",
+      "zai-org/GLM-5.3"
     ]
   },
   {
@@ -884,17 +995,17 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "ClinePass",
     apiKeyEnvVars: ["CLINE_API_KEY"],
     models: [
-      "cline-pass/deepseek-v4-flash",
       "cline-pass/deepseek-v4-pro",
-      "cline-pass/glm-5.2",
+      "cline-pass/deepseek-v4.1-flash",
       "cline-pass/glm-5.3",
       "cline-pass/glm-5.3-flash",
-      "cline-pass/kimi-k2.6",
-      "cline-pass/kimi-k2.7-code",
       "cline-pass/kimi-k3",
       "cline-pass/mimo-v2.5",
       "cline-pass/mimo-v2.5-pro",
+      "cline-pass/mimo-v2.6-flash",
+      "cline-pass/mimo-v2.6-pro",
       "cline-pass/minimax-m3",
+      "cline-pass/muse-spark-1.3-contributor",
       "cline-pass/qwen3.7-max",
       "cline-pass/qwen3.7-plus",
       "cline-pass/qwen3.8-max"
@@ -908,8 +1019,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "meta-llama/Llama-3.3-70B-Instruct",
       "MiniMaxAI/MiniMax-M2.5",
       "openai/gpt-oss-120b",
-      "speakleash/Bielik-11B-v2.6-Instruct",
-      "speakleash/Bielik-11B-v3.0-Instruct"
+      "speakleash/Bielik-11B-v3.0-Instruct",
+      "zai-org/GLM-5.3"
     ]
   },
   {
@@ -921,6 +1032,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
       "@cf/deepseek-ai/deepseek-v4-flash-0731",
       "@cf/deepseek-ai/deepseek-v4-pro-0813",
+      "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
       "@cf/google/gemma-4-26b-a4b-it",
       "@cf/ibm-granite/granite-4.0-h-micro",
       "@cf/meta/llama-3.1-8b-instruct-fp8",
@@ -947,10 +1059,118 @@ export const MASTRA_PROVIDER_CATALOG = [
     ]
   },
   {
+    id: "commandcode",
+    name: "CommandCode",
+    apiKeyEnvVars: ["CMD_API_KEY"],
+    models: [
+      "claude-fable-5",
+      "claude-fable-5-1",
+      "claude-haiku-4-5-20251001",
+      "claude-haiku-5-5",
+      "claude-opus-4-7",
+      "claude-opus-4-8",
+      "claude-opus-5",
+      "claude-opus-5-5",
+      "claude-sonnet-4-6",
+      "claude-sonnet-5",
+      "claude-sonnet-5-5",
+      "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-fast",
+      "deepseek/deepseek-v4-flash-vision-exp",
+      "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-fast",
+      "google/gemini-3.1-flash-lite",
+      "google/gemini-3.5-flash",
+      "google/gemini-3.5-flash-lite",
+      "google/gemini-3.6-flash",
+      "google/gemini-3.7-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
+      "gpt-5.3-codex",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-6.1-terra",
+      "meta/muse-spark-1.1",
+      "meta/muse-spark-1.2",
+      "meta/muse-spark-1.2-contributor",
+      "meta/muse-spark-1.3",
+      "meta/muse-spark-1.3-contributor",
+      "meta/muse-wonder-1.0",
+      "MiniMaxAI/MiniMax-M2.5",
+      "MiniMaxAI/MiniMax-M2.7",
+      "MiniMaxAI/MiniMax-M3",
+      "mistral/mistral-large-4",
+      "moonshotai/Kimi-K2.7-Code",
+      "moonshotai/Kimi-K2.7-Code-Highspeed",
+      "moonshotai/Kimi-K3",
+      "nvidia/nemotron-3-ultra-550b-a55b",
+      "Qwen/Qwen3.8-27B",
+      "Qwen/Qwen3.8-Flash",
+      "Qwen/Qwen3.8-Max",
+      "Qwen/Qwen3.8-Max-0902",
+      "Qwen/Qwen3.8-Omni-Flash",
+      "sakana/fugu-ultra",
+      "stepfun/Step-3.5-Flash",
+      "stepfun/Step-3.7-Flash",
+      "stepfun/Step-5-Preview",
+      "tencent/hy3-paid",
+      "tencent/hy4-preview",
+      "thinkingmachines/inkling",
+      "thinkingmachines/inkling-small",
+      "xai/grok-4.5",
+      "xai/grok-4.6",
+      "xai/grok-4.7",
+      "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3-flashx",
+      "zai-org/GLM-5.2",
+      "zai-org/GLM-5.2-Fast",
+      "zai-org/GLM-5.3"
+    ]
+  },
+  {
     id: "coralbricks",
     name: "CoralBricks",
     apiKeyEnvVars: ["CORAL_API_KEY"],
-    models: ["glm-5.3-fp4", "gpt-oss-120b", "kimi-k3"]
+    models: ["deepseek-v4.1-flash-fast"]
+  },
+  {
+    id: "wandb",
+    name: "CoreWeave",
+    apiKeyEnvVars: ["WANDB_API_KEY"],
+    models: [
+      "deepseek-ai/DeepSeek-V3.1",
+      "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "deepseek-ai/DeepSeek-V4.1-Flash",
+      "google/gemma-4-26B-A4B-it",
+      "google/gemma-4-31B-it",
+      "ibm-granite/granite-4.2-8b",
+      "meta-llama/Llama-3.1-8B-Instruct",
+      "meta-llama/Llama-3.3-70B-Instruct",
+      "MiniMaxAI/MiniMax-M3",
+      "moonshotai/Kimi-K2.6",
+      "moonshotai/Kimi-K2.7-Code",
+      "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+      "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B",
+      "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "Qwen/Qwen3.6-35B-A3B",
+      "Qwen/Qwen3.8-27B",
+      "reflection/Beam-1.0-501B-A23B",
+      "zai-org/GLM-5.2",
+      "zai-org/GLM-5.3",
+      "zai-org/GLM-5.3-Flash"
+    ]
   },
   {
     id: "cortecs",
@@ -961,19 +1181,22 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-4-5-sonnet",
       "claude-4-6-sonnet",
       "claude-haiku-4-5",
+      "claude-haiku-5.5",
       "claude-opus-5",
+      "claude-opus-5.5",
       "claude-opus4-5",
       "claude-opus4-6",
       "claude-opus4-7",
       "claude-opus4-8",
-      "claude-sonnet-4",
       "claude-sonnet-5",
+      "claude-sonnet-5.5",
       "codestral-2508",
-      "deepseek-r1-0528",
       "deepseek-v3.2",
       "deepseek-v4-flash-0731",
       "deepseek-v4-pro",
       "deepseek-v4-pro-0813",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
       "devstral-2512",
       "gemini-2.5-flash",
       "gemini-2.5-pro",
@@ -983,17 +1206,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-3.6-flash",
       "gemini-3.7-flash",
       "gemini-3.8-flash",
+      "gemini-4-argon",
       "gemma-3-27b-it",
       "gemma-4-26b-a4b-it",
       "gemma-4-31b-it",
       "glm-4.7-flash",
-      "glm-5",
-      "glm-5-turbo",
       "glm-5.1",
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
-      "glm-5v-turbo",
       "gpt-4.1",
       "gpt-4.1-mini",
       "gpt-4.1-nano",
@@ -1007,30 +1228,33 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-luna",
       "gpt-5.6-sol",
       "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-6.1-terra",
       "gpt-oss-120b",
       "gpt-oss-20b",
       "gpt-oss-safeguard-120b",
       "hermes-4-405b",
-      "kimi-k2.5",
       "kimi-k2.6",
       "kimi-k2.7-code",
       "kimi-k3",
-      "llama-3.1-405b-instruct",
-      "llama-3.1-8b-instruct",
+      "kolibri-1",
       "llama-3.3-70b-instruct",
       "minicpm-v-4.5",
       "minimax-m2",
       "minimax-m2.1",
       "minimax-m2.5",
-      "minimax-m2.7",
       "minimax-m3",
+      "minimax-m3.1-flash",
       "ministral-14b-2512",
       "ministral-3b-2512",
       "ministral-8b-2512",
       "mistral-7b-instruct-v0.2",
-      "mistral-7b-instruct-v0.3",
       "mistral-large-2402",
       "mistral-large-2512",
+      "mistral-large-4-0",
       "mistral-medium-3.5",
       "mistral-nemo-instruct-2407",
       "mistral-small-2503",
@@ -1043,7 +1267,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "nova-micro-v1",
       "nova-pro-v1",
       "nvidia-nemotron-3-nano-30b-a3b",
-      "pixtral-12b-2409",
       "pixtral-large-2502",
       "qwen2.5-vl-72b-instruct",
       "qwen3-235b-a22b-instruct-2507",
@@ -1052,7 +1275,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen3-coder-30b-a3b-instruct",
       "qwen3-coder-next",
       "qwen3-vl-235b-a22b",
-      "qwen3.5-122b-a10b",
       "qwen3.5-397b-a17b",
       "qwen3.5-9b",
       "qwen3.6-27b",
@@ -1066,37 +1288,6 @@ export const MASTRA_PROVIDER_CATALOG = [
     ]
   },
   {
-    id: "crof",
-    name: "CrofAI",
-    apiKeyEnvVars: ["CROF_API_KEY"],
-    models: [
-      "deepseek-v3.2",
-      "deepseek-v4-flash",
-      "deepseek-v4-flash-0731",
-      "deepseek-v4-flash-vision-exp",
-      "deepseek-v4-pro",
-      "deepseek-v4-pro-0813",
-      "gemma-4-31b-it",
-      "glm-5.1",
-      "glm-5.2",
-      "glm-5.3",
-      "glm-5.3-flash",
-      "greg-1-mini",
-      "greg-2-super",
-      "greg-2-ultra",
-      "greg-rp",
-      "kimi-k2.6",
-      "kimi-k2.7-code",
-      "kimi-k3",
-      "kimi-k3-eco",
-      "mimo-v2.5-pro",
-      "qwen3.5-397b-a17b",
-      "qwen3.5-9b",
-      "qwen3.6-27b",
-      "qwen3.8-27b"
-    ]
-  },
-  {
     id: "crossmodel",
     name: "CrossModel",
     apiKeyEnvVars: ["CROSSMODEL_API_KEY"],
@@ -1104,13 +1295,14 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5-1",
       "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-5-5",
       "anthropic/claude-opus-4-7",
       "anthropic/claude-opus-4-8",
       "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5-5",
       "anthropic/claude-sonnet-4-6",
       "anthropic/claude-sonnet-5",
-      "deepseek/deepseek-v4-flash",
-      "deepseek/deepseek-v4-flash-vision-exp",
+      "anthropic/claude-sonnet-5-5",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4.1-flash",
       "gemini/gemini-2.5-flash",
@@ -1123,6 +1315,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini/gemini-3.6-flash",
       "gemini/gemini-3.7-flash",
       "gemini/gemini-3.8-flash",
+      "gemini/gemini-4-argon",
       "minimax/minimax-m2.7",
       "minimax/minimax-m3",
       "moonshot/kimi-k2.6",
@@ -1138,6 +1331,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
       "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
       "qwen/qwen3.6-flash",
       "qwen/qwen3.6-plus",
       "qwen/qwen3.7-flash",
@@ -1145,14 +1341,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen3.7-plus",
       "qwen/qwen3.8-flash",
       "qwen/qwen3.8-max",
+      "qwen/qwen3.8-omni-flash",
       "tencent/hy3",
       "tencent/hy4-preview",
       "x-ai/grok-4.3",
       "x-ai/grok-4.5",
       "x-ai/grok-4.6",
+      "x-ai/grok-4.7",
       "x-ai/grok-build-0.1",
-      "xiaomi/mimo-v2.5",
-      "xiaomi/mimo-v2.5-pro",
+      "xiaomi/mimo-v2.6-flash",
+      "xiaomi/mimo-v2.6-pro",
       "z-ai/glm-4.7",
       "z-ai/glm-5",
       "z-ai/glm-5-turbo",
@@ -1167,17 +1365,11 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Crusoe",
     apiKeyEnvVars: ["CRUSOE_API_KEY"],
     models: [
-      "deepseek-ai/DeepSeek-V3-0324",
       "google/gemma-4-31b-it",
-      "meta-llama/Llama-3.3-70B-Instruct",
-      "moonshotai/Kimi-K2.6",
       "nvidia/Nemotron-3-Nano-Omni-Reasoning-30B-A3B",
       "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
       "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
-      "openai/gpt-oss-120b",
-      "Qwen/Qwen3-235B-A22B-Instruct-2507",
-      "zai/GLM-5.1",
-      "zai/GLM-5.2"
+      "openai/gpt-oss-120b"
     ]
   },
   {
@@ -1212,15 +1404,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "databricks-claude-opus-4-5",
       "databricks-claude-opus-4-6",
       "databricks-claude-opus-4-7",
-      "databricks-claude-sonnet-4",
       "databricks-claude-sonnet-4-5",
       "databricks-claude-sonnet-4-6",
-      "databricks-gemini-2-5-flash",
-      "databricks-gemini-2-5-pro",
       "databricks-gemini-3-1-flash-lite",
       "databricks-gemini-3-1-pro",
+      "databricks-gemini-3-5-flash",
       "databricks-gemini-3-flash",
-      "databricks-gemini-3-pro",
       "databricks-glm-5-2",
       "databricks-gpt-5",
       "databricks-gpt-5-1",
@@ -1235,8 +1424,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "databricks-gpt-5-mini",
       "databricks-gpt-5-nano",
       "databricks-gpt-oss-120b",
-      "databricks-gpt-oss-20b",
-      "databricks-kimi-k2-7-code"
+      "databricks-gpt-oss-20b"
     ]
   },
   {
@@ -1244,12 +1432,12 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Deep Infra",
     apiKeyEnvVars: ["DEEPINFRA_API_KEY"],
     models: [
+      "anthropic/claude-fable-5",
       "ByteDance/Seed-2.0-code",
       "ByteDance/Seed-2.0-mini",
       "ByteDance/Seed-2.0-pro",
       "deepseek-ai/DeepSeek-R1-0528",
       "deepseek-ai/DeepSeek-V3",
-      "deepseek-ai/DeepSeek-V3-0324",
       "deepseek-ai/DeepSeek-V3.1",
       "deepseek-ai/DeepSeek-V3.2",
       "deepseek-ai/DeepSeek-V4-Flash",
@@ -1257,32 +1445,29 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
       "deepseek-ai/DeepSeek-V4-Pro",
       "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "deepseek-ai/DeepSeek-V4.1-Flash",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "google/gemma-3-12b-it",
+      "google/gemma-3-27b-it",
+      "google/gemma-3-4b-it",
       "google/gemma-4-26B-A4B-it",
       "google/gemma-4-31B-it",
-      "google/gemma-4-E4B-it",
       "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-      "MiniMaxAI/MiniMax-M2.5",
-      "MiniMaxAI/MiniMax-M2.7",
+      "meta-llama/Llama-Guard-4-12B",
       "MiniMaxAI/MiniMax-M3",
-      "moonshotai/Kimi-K2.5",
+      "mistralai/Mistral-Small-24B-Instruct-2501",
       "moonshotai/Kimi-K2.6",
-      "moonshotai/Kimi-K2.7-Code",
       "moonshotai/Kimi-K3",
-      "nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
-      "nvidia/Nemotron-3-Nano-30B-A3B",
-      "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "Qwen/Qwen3-235B-A22B-Instruct-2507",
       "Qwen/Qwen3-30B-A3B",
       "Qwen/Qwen3-32B",
       "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
-      "Qwen/Qwen3-Max",
       "Qwen/Qwen3-Next-80B-A3B-Instruct",
       "Qwen/Qwen3-VL-235B-A22B-Instruct",
-      "Qwen/Qwen3.5-122B-A10B",
+      "Qwen/Qwen3-VL-30B-A3B-Instruct",
       "Qwen/Qwen3.5-27B",
       "Qwen/Qwen3.5-35B-A3B",
       "Qwen/Qwen3.5-397B-A17B",
@@ -1290,20 +1475,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Qwen/Qwen3.6-27B",
       "Qwen/Qwen3.6-35B-A3B",
       "Qwen/Qwen3.7-Max",
-      "Qwen/Qwen3.8-2.4T-A95B",
       "Qwen/Qwen3.8-27B",
+      "Qwen/Qwen3.8-Flash",
       "Qwen/Qwen3.8-Max",
-      "stepfun-ai/Step-3.7-Flash",
-      "tencent/Hy3",
-      "thinkingmachines/Inkling",
+      "tencent/Hy4-preview",
       "thinkingmachines/Inkling-Small",
-      "XiaomiMiMo/MiMo-V2.5",
-      "XiaomiMiMo/MiMo-V2.5-Pro",
+      "XiaomiMiMo/MiMo-V2.6-Flash",
+      "XiaomiMiMo/MiMo-V2.6-Pro",
       "zai-org/GLM-4.6",
       "zai-org/GLM-4.7",
-      "zai-org/GLM-4.7-Flash",
-      "zai-org/GLM-5",
-      "zai-org/GLM-5.1",
       "zai-org/GLM-5.2",
       "zai-org/GLM-5.3",
       "zai-org/GLM-5.3-Flash"
@@ -1313,7 +1493,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "deepseek",
     name: "DeepSeek",
     apiKeyEnvVars: ["DEEPSEEK_API_KEY"],
-    models: ["deepseek-v4-flash", "deepseek-v4-flash-vision-exp", "deepseek-v4-pro"]
+    models: ["deepseek-flash", "deepseek-v4-pro"]
   },
   {
     id: "llmgateway",
@@ -1325,28 +1505,29 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-fable-5-1",
       "claude-haiku-4-5",
       "claude-haiku-4-5-20251001",
-      "claude-opus-4-1-20250805",
+      "claude-haiku-5-5",
       "claude-opus-4-5-20251101",
       "claude-opus-4-6",
       "claude-opus-4-7",
       "claude-opus-4-8",
       "claude-opus-5",
+      "claude-opus-5-5",
       "claude-sonnet-4-5",
       "claude-sonnet-4-5-20250929",
       "claude-sonnet-4-6",
       "claude-sonnet-5",
+      "claude-sonnet-5-5",
       "codestral-2508",
       "custom",
       "deepseek-v3.2",
       "deepseek-v4-flash",
       "deepseek-v4-pro",
       "deepseek-v4.1-flash",
-      "devstral-2512",
-      "ernie-4.5-vl-424b-a47b",
+      "deepseek-v4.1-flash-1017",
+      "deepseek-v4.1-flash-cyber",
+      "fugu-max",
       "fugu-ultra",
-      "gemini-2.5-flash",
-      "gemini-2.5-flash-lite",
-      "gemini-2.5-pro",
+      "fugu-ultra-v2.0",
       "gemini-3-flash-preview",
       "gemini-3.1-flash-lite",
       "gemini-3.1-pro-preview",
@@ -1355,6 +1536,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-3.6-flash",
       "gemini-3.7-flash",
       "gemini-3.8-flash",
+      "gemini-4-argon",
       "gemini-pro-latest",
       "gemma-4-26b-a4b-it",
       "gemma-4-31b-it",
@@ -1368,20 +1550,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "glm-4.6v",
       "glm-4.6v-flashx",
       "glm-4.7",
-      "glm-4.7-flash",
       "glm-4.7-flashx",
       "glm-5",
+      "glm-5-turbo",
       "glm-5.1",
       "glm-5.2",
       "glm-5.2-fast",
       "glm-5.3",
+      "glm-5.3-fast",
       "glm-5.3-flash",
-      "gpt-3.5-turbo",
-      "gpt-4",
-      "gpt-4-turbo",
+      "glm-5.3-flashx",
+      "glm-5v-turbo",
       "gpt-4.1",
       "gpt-4.1-mini",
-      "gpt-4.1-nano",
       "gpt-4o",
       "gpt-4o-mini",
       "gpt-4o-mini-transcribe",
@@ -1407,10 +1588,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-sol",
       "gpt-5.6-terra",
       "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-6.1-terra",
+      "gpt-live-transcribe",
       "gpt-oss-120b",
       "gpt-oss-20b",
+      "gpt-transcribe",
+      "granite-4.2-8b",
       "grok-4",
-      "grok-4-1-fast-non-reasoning",
       "grok-4-1-fast-reasoning",
       "grok-4-20-beta-0309-non-reasoning",
       "grok-4-20-beta-0309-reasoning",
@@ -1419,26 +1606,30 @@ export const MASTRA_PROVIDER_CATALOG = [
       "grok-4-3",
       "grok-4-5",
       "grok-4-6",
+      "grok-4-7",
       "grok-build-0-1",
+      "hy-mt2-plus",
       "hy3",
+      "hy4-preview",
       "kimi-k2",
-      "kimi-k2-thinking",
       "kimi-k2.5",
       "kimi-k2.6",
       "kimi-k2.7-code",
       "kimi-k2.7-code-highspeed",
+      "kimi-k2.8-preview",
       "kimi-k3",
       "kimi-k3-fast",
+      "kimi-k3.1-pro",
+      "kimi-k3.1-pro-highspeed",
       "ling-3.0-flash",
-      "llama-3-70b-instruct",
+      "ling-3.0-flash-vl",
       "llama-3.1-70b-instruct",
       "llama-3.2-11b-instruct",
-      "llama-3.2-3b-instruct",
       "llama-3.3-70b-instruct",
       "llama-4-maverick-17b-instruct",
       "llama-4-scout-17b-instruct",
-      "mimo-v2.5",
-      "mimo-v2.5-pro",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro",
       "minimax-m2",
       "minimax-m2.1",
       "minimax-m2.1-lightning",
@@ -1447,65 +1638,66 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax-m2.7",
       "minimax-m2.7-highspeed",
       "minimax-m3",
+      "minimax-m3.1-flash",
       "minimax-text-01",
       "ministral-14b-2512",
       "ministral-3b-2512",
       "ministral-8b-2512",
       "mistral-large-2512",
+      "mistral-large-4",
       "mistral-large-latest",
+      "mistral-medium-3-5",
       "mistral-small-2506",
+      "mistral-small-2603",
+      "muse-glimmer-30b",
       "muse-spark-1.1",
       "muse-spark-1.2",
       "muse-spark-1.2-contributor",
       "muse-spark-1.3",
       "muse-spark-1.3-contributor",
+      "muse-wonder-1.0",
       "nemotron-3-ultra-550b",
-      "o1",
       "o3",
-      "o3-mini",
-      "o4-mini",
-      "qwen-coder-plus",
       "qwen-flash",
       "qwen-max",
-      "qwen-omni-turbo",
       "qwen-plus",
       "qwen-plus-latest",
-      "qwen3-235b-a22b-fp8",
-      "qwen3-235b-a22b-instruct-2507",
-      "qwen3-235b-a22b-thinking-2507",
+      "qwen3-14b",
+      "qwen3-30b-a3b",
       "qwen3-32b",
-      "qwen3-coder-30b-a3b-instruct",
-      "qwen3-coder-480b-a35b-instruct",
       "qwen3-coder-flash",
-      "qwen3-coder-next",
-      "qwen3-coder-plus",
-      "qwen3-max",
-      "qwen3-next-80b-a3b-instruct",
-      "qwen3-next-80b-a3b-thinking",
       "qwen3-vl-235b-a22b-instruct",
-      "qwen3-vl-235b-a22b-thinking",
       "qwen3-vl-30b-a3b-instruct",
-      "qwen3-vl-flash",
       "qwen3-vl-plus",
+      "qwen3.5-122b-a10b",
+      "qwen3.5-27b",
+      "qwen3.5-35b-a3b",
       "qwen3.5-9b",
+      "qwen3.6-27b",
       "qwen3.6-35b-a3b",
       "qwen3.6-flash",
-      "qwen3.6-max-preview",
       "qwen3.6-plus",
       "qwen3.7-flash",
       "qwen3.7-max",
       "qwen3.7-plus",
+      "qwen3.8-2.4t-a95b",
       "Qwen3.8-27B",
       "qwen3.8-flash",
       "qwen3.8-max",
+      "qwen3.8-omni-flash",
       "qwen35-397b-a17b",
+      "reka-edge-2603",
       "seed-1-6-250615",
       "seed-1-6-250915",
       "seed-1-6-flash-250715",
       "seed-1-8-251228",
+      "seed-2-0-code-preview-260328",
+      "seed-2-0-lite-260428",
+      "seed-2-0-mini-260428",
+      "seed-2-0-pro-260328",
       "sonar",
-      "sonar-pro",
-      "sonar-reasoning-pro"
+      "step-3.7-flash",
+      "step-5-preview"
     ]
   },
   {
@@ -1513,74 +1705,59 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "DigitalOcean",
     apiKeyEnvVars: ["DIGITALOCEAN_ACCESS_TOKEN"],
     models: [
-      "alibaba-qwen3-32b",
       "all-mini-lm-l6-v2",
-      "anthropic-claude-3-opus",
-      "anthropic-claude-3.5-haiku",
-      "anthropic-claude-3.5-sonnet",
-      "anthropic-claude-3.7-sonnet",
-      "anthropic-claude-4.1-opus",
-      "anthropic-claude-4.5-haiku",
       "anthropic-claude-4.5-sonnet",
       "anthropic-claude-4.6-sonnet",
       "anthropic-claude-5-sonnet",
+      "anthropic-claude-5.5-haiku",
       "anthropic-claude-fable-5",
       "anthropic-claude-fable-5.1",
       "anthropic-claude-haiku-4.5",
-      "anthropic-claude-opus-4",
       "anthropic-claude-opus-4.5",
       "anthropic-claude-opus-4.6",
       "anthropic-claude-opus-4.7",
       "anthropic-claude-opus-4.8",
       "anthropic-claude-opus-5",
-      "anthropic-claude-sonnet-4",
+      "anthropic-claude-opus-5.5",
+      "anthropic-claude-sonnet-5.5",
       "arcee-trinity-large-thinking",
       "bge-m3",
       "bge-reranker-v2-m3",
       "deepseek-3.2",
       "deepseek-4-flash",
-      "deepseek-r1-distill-llama-70b",
-      "deepseek-v3",
       "deepseek-v4-flash-0731",
       "deepseek-v4-pro",
       "deepseek-v4-pro-0813",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
       "e5-large-v2",
       "fal-ai/elevenlabs/tts/multilingual-v2",
       "fal-ai/fast-sdxl",
       "fal-ai/flux/schnell",
       "fal-ai/stable-audio-25/text-to-audio",
       "gemma-4-31B-it",
-      "glm-5",
-      "glm-5.1",
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
       "gte-large-en-v1.5",
-      "kimi-k2.5",
       "kimi-k2.6",
       "kimi-k3",
       "llama-4-maverick",
-      "llama3-8b-instruct",
-      "llama3.3-70b-instruct",
       "mimo-v2.5-pro",
       "minimax-m2.5",
-      "ministral-3-8b-instruct-2512",
+      "minimax-m3.1-flash",
       "mistral-3-14B",
-      "mistral-7b-instruct-v0.3",
-      "mistral-nemo-instruct-2407",
       "multi-qa-mpnet-base-dot-v1",
-      "nemotron-3-nano-30b",
       "nemotron-3-nano-omni",
       "nemotron-3-ultra-550b",
+      "nemotron-3.5-super-vl",
       "nemotron-nano-12b-v2-vl",
-      "nvidia-nemotron-3-super-120b",
       "openai-gpt-4.1",
       "openai-gpt-4o",
       "openai-gpt-4o-mini",
       "openai-gpt-5",
       "openai-gpt-5-mini",
       "openai-gpt-5-nano",
-      "openai-gpt-5.1-codex-max",
       "openai-gpt-5.2",
       "openai-gpt-5.2-pro",
       "openai-gpt-5.3-codex",
@@ -1592,7 +1769,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai-gpt-5.6-luna",
       "openai-gpt-5.6-sol",
       "openai-gpt-5.6-terra",
+      "openai-gpt-6-1-sol",
       "openai-gpt-6-astra",
+      "openai-gpt-6-luna",
+      "openai-gpt-6-sol",
       "openai-gpt-image-1",
       "openai-gpt-image-1.5",
       "openai-gpt-image-2",
@@ -1601,12 +1781,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai-o1",
       "openai-o3",
       "openai-o3-mini",
-      "qwen-2.5-14b-instruct",
-      "qwen3-coder-flash",
       "qwen3-embedding-0.6b",
       "qwen3-tts-voicedesign",
       "qwen3.5-397b-a17b",
       "qwen3.8-max",
+      "reflection-beam",
       "stable-diffusion-3.5-large",
       "wan2-2-t2v-a14b"
     ]
@@ -1615,7 +1794,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "dinference",
     name: "DInference",
     apiKeyEnvVars: ["DINFERENCE_API_KEY"],
-    models: ["glm-4.7", "glm-5", "glm-5.1", "glm-5.2", "gpt-oss-120b", "minimax-m2.5"]
+    models: ["glm-4.7", "glm-5", "gpt-oss-120b"]
   },
   {
     id: "ebcloud",
@@ -1640,25 +1819,56 @@ export const MASTRA_PROVIDER_CATALOG = [
       "amazon/amazon.nova-micro-v1:0@us",
       "amazon/amazon.nova-pro-v1:0",
       "amazon/amazon.nova-pro-v1:0@us",
+      "amazon/google.gemma-3-12b-it",
+      "amazon/google.gemma-3-12b-it@us",
+      "amazon/google.gemma-3-27b-it",
+      "amazon/google.gemma-3-27b-it@us",
+      "amazon/google.gemma-3-4b-it",
+      "amazon/google.gemma-3-4b-it@us",
       "amazon/mistral.pixtral-large-2502-v1:0",
       "amazon/mistral.pixtral-large-2502-v1:0@us",
+      "amazon/mistral.voxtral-mini-3b-2507",
+      "amazon/mistral.voxtral-mini-3b-2507@us",
+      "amazon/mistral.voxtral-small-24b-2507",
+      "amazon/mistral.voxtral-small-24b-2507@us",
       "amazon/moonshot.kimi-k2-thinking",
       "amazon/moonshotai.kimi-k2.5",
+      "amazon/openai.gpt-oss-safeguard-20b",
+      "amazon/openai.gpt-oss-safeguard-20b@us",
+      "amazon/qwen.qwen3-coder-next",
       "amazon/zai.glm-4.7-flash",
       "amazon/zai.glm-4.7-flash@us",
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5-1",
       "anthropic/claude-fable-latest",
+      "anthropic/claude-haiku-5-5",
+      "anthropic/claude-haiku-latest",
       "anthropic/claude-opus-4-5",
       "anthropic/claude-opus-4-5-20251101",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-opus-4-7",
       "anthropic/claude-opus-4-8",
       "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5-5",
       "anthropic/claude-opus-latest",
       "anthropic/claude-sonnet-4-6",
       "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5-5",
       "anthropic/claude-sonnet-latest",
+      "arkanecloud/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "arkanecloud/deepseek-ai/DeepSeek-V4.1-Flash",
+      "arkanecloud/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "arkanecloud/meta-llama/Llama-3.1-70B-Instruct",
+      "arkanecloud/meta-llama/Llama-3.1-8B-Instruct",
+      "arkanecloud/meta-llama/Llama-3.3-70B-Instruct",
+      "arkanecloud/ministral-14b",
+      "arkanecloud/nvidia/nemotron-3-super-120b-a12b",
+      "arkanecloud/nvidia/nemotron-3-ultra-550b-a55b",
+      "arkanecloud/openai/gpt-oss-120b",
+      "arkanecloud/openai/gpt-oss-20b",
+      "arkanecloud/Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "azure/gpt-4.1-nano",
+      "azure/gpt-4.1-nano@eu",
       "azure/gpt-5.1-codex",
       "azure/gpt-5.1-codex-max",
       "azure/gpt-5.1-codex-mini",
@@ -1667,11 +1877,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "cloudflare/@cf/aisingapore/gemma-sea-lion-v4-27b-it",
       "cloudflare/@cf/deepseek-ai/deepseek-v4-flash-0731",
       "cloudflare/@cf/deepseek-ai/deepseek-v4-pro-0813",
+      "cloudflare/@cf/deepseek-ai/deepseek-v4.1-flash-1017",
+      "cloudflare/@cf/meta/llama-3.2-1b-instruct",
+      "cloudflare/@cf/meta/llama-3.2-3b-instruct",
       "cloudflare/@cf/meta/llama-guard-3-8b",
+      "cloudflare/@cf/mistralai/mistral-small-3.1-24b-instruct",
       "cloudflare/@cf/openai/gpt-oss-120b",
       "cloudflare/@cf/openai/gpt-oss-20b",
       "cloudflare/@cf/qwen/qwen2.5-coder-32b-instruct",
       "cloudflare/@cf/zai-org/glm-4.7-flash",
+      "cohere/c4ai-aya-expanse-32b",
       "cohere/command-a-03-2025",
       "cohere/command-r-08-2024",
       "cohere/command-r-plus-08-2024",
@@ -1683,44 +1898,77 @@ export const MASTRA_PROVIDER_CATALOG = [
       "databricks/databricks-gpt-oss-20b",
       "databricks/databricks-gpt-oss-20b@eu",
       "databricks/databricks-inkling",
+      "databricks/databricks-qwen3-next-80b-a3b-instruct",
+      "databricks/databricks-qwen3-next-80b-a3b-instruct@eu",
       "deepinfra/ByteDance/Seed-2.0-code",
       "deepinfra/ByteDance/Seed-2.0-mini",
       "deepinfra/deepseek-ai/DeepSeek-R1",
+      "deepinfra/deepseek-ai/DeepSeek-R1-0528",
       "deepinfra/deepseek-ai/DeepSeek-V3",
       "deepinfra/deepseek-ai/DeepSeek-V3-0324",
       "deepinfra/deepseek-ai/DeepSeek-V4-Flash-0731",
       "deepinfra/deepseek-ai/DeepSeek-V4-Pro-0813",
+      "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash",
+      "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "deepinfra/google/gemma-3-12b-it",
+      "deepinfra/google/gemma-3-27b-it",
+      "deepinfra/google/gemma-3-4b-it",
+      "deepinfra/Gryphe/MythoMax-L2-13b",
+      "deepinfra/ibm-granite/granite-4.2-8b",
       "deepinfra/meta-llama/Llama-3.2-11B-Vision-Instruct",
+      "deepinfra/meta-llama/Llama-3.2-3B-Instruct",
       "deepinfra/meta-llama/Llama-3.3-70B-Instruct",
       "deepinfra/meta-llama/Llama-Guard-3-8B",
+      "deepinfra/meta-llama/Llama-Guard-4-12B",
       "deepinfra/meta-models/Muse-Glimmer-30B",
+      "deepinfra/microsoft/WizardLM-2-8x22B",
+      "deepinfra/mistralai/Mistral-Small-24B-Instruct-2501",
+      "deepinfra/mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "deepinfra/moonshotai/Kimi-K2-Instruct",
       "deepinfra/moonshotai/Kimi-K2.5",
+      "deepinfra/nemotron-3-super-120b-a12b",
       "deepinfra/nemotron-3-ultra-550b-a55b",
+      "deepinfra/NousResearch/Hermes-3-Llama-3.1-405B",
+      "deepinfra/NousResearch/Hermes-3-Llama-3.1-70B",
       "deepinfra/nvidia/Llama-3.1-Nemotron-70B-Instruct",
       "deepinfra/nvidia/Nemotron-3-Nano-30B-A3B",
       "deepinfra/openai/gpt-oss-120b",
       "deepinfra/openai/gpt-oss-20b",
+      "deepinfra/Qwen/Qwen2.5-7B-Instruct",
+      "deepinfra/Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "deepinfra/Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "deepinfra/Qwen/Qwen3-Coder-480B-A35B-Instruct",
+      "deepinfra/Qwen/Qwen3-Max",
+      "deepinfra/Qwen/Qwen3-Next-80B-A3B-Instruct",
+      "deepinfra/Qwen/Qwen3-VL-235B-A22B-Instruct",
+      "deepinfra/Qwen/Qwen3-VL-30B-A3B-Instruct",
       "deepinfra/stepfun-ai/Step-3.5-Flash",
       "deepinfra/stepfun-ai/Step-3.7-Flash",
+      "deepinfra/stepfun-ai/Step-5-Preview",
       "deepinfra/tencent/Hy3",
+      "deepinfra/tencent/Hy4-preview",
       "deepinfra/thinkingmachines/Inkling",
       "deepinfra/thinkingmachines/Inkling-Small",
       "deepinfra/zai-org/GLM-4.7-Flash",
+      "deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-chat",
       "deepseek/deepseek-v4-flash",
       "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
-      "fireworks_ai/accounts/fireworks/models/deepseek-v4-flash-0731",
-      "fireworks_ai/accounts/fireworks/models/deepseek-v4-pro-0813",
+      "fireworks_ai/accounts/fireworks/models/ember-1",
+      "fireworks_ai/accounts/fireworks/models/gpt-oss-120b",
       "fireworks_ai/accounts/fireworks/models/inkling",
-      "fireworks_ai/accounts/fireworks/models/muse-glimmer-30b",
+      "fireworks_ai/accounts/fireworks/models/muse-spark-open",
       "fireworks_ai/gpt-oss-120b",
       "flexai/DeepSeek-V4-Flash-0731",
+      "flexai/DeepSeek-V4-Flash-0731@eu",
+      "flexai/DeepSeek-V4.1-Flash-1017",
       "flexai/gpt-oss-120b",
       "flexai/gpt-oss-20b",
       "flexai/Muse-Glimmer-30B",
-      "flexai/Nemotron-3-Super-120B-A12B",
       "flexai/Step-3.7-Flash",
+      "google/deep-research-max-preview-04-2026",
+      "google/deep-research-preview-04-2026",
       "google/gemini-2.5-flash-image",
       "google/gemini-3-flash-preview",
       "google/gemini-3-pro-image",
@@ -1737,45 +1985,95 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.6-flash",
       "google/gemini-3.7-flash",
       "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
       "google/gemini-flash-latest",
+      "google/gemini-nano-banana-2.1",
       "google/gemini-pro-latest",
+      "google/gemini-robotics-er-2-preview",
+      "greenference/gpt-oss-20b",
+      "greenpt/deepseek-v4-flash-0731",
+      "greenpt/deepseek-v4.1-flash",
+      "greenpt/gpt-oss-120b",
+      "greenpt/llama-3.3-70b-instruct",
+      "greenpt/qwen3-235b-a22b-instruct-2507",
+      "groq/meta-llama/llama-prompt-guard-2-22m",
+      "groq/meta-llama/llama-prompt-guard-2-86m",
       "groq/openai/gpt-oss-120b",
       "groq/openai/gpt-oss-20b",
+      "groq/openai/gpt-oss-safeguard-20b",
+      "infomaniak/mistralai/Ministral-3-14B-Instruct-2512",
       "ionos/meta-llama/Llama-3.3-70B-Instruct",
       "ionos/openai/gpt-oss-120b",
+      "ionos/Qwen/Qwen3-Coder-Next",
+      "meta/muse-spark-1.1",
+      "meta/muse-spark-1.2",
+      "meta/muse-spark-1.3",
+      "meta/muse-wonder-1.0",
+      "microsoft/gpt-4",
+      "microsoft/o3-mini",
       "minimax/MiniMax-M2",
       "minimax/MiniMax-M2.1",
       "minimax/MiniMax-M2.5",
       "minimax/MiniMax-M2.7",
       "minimax/MiniMax-M3",
+      "minimax/MiniMax-M3.1-Flash",
+      "mistral/codestral-2508",
+      "mistral/codestral-2508@eu",
       "mistral/codestral-latest",
+      "mistral/codestral-latest@eu",
       "mistral/devstral-2512",
+      "mistral/devstral-2512@eu",
       "mistral/devstral-medium-latest",
+      "mistral/devstral-medium-latest@eu",
       "mistral/magistral-medium-latest",
+      "mistral/magistral-medium-latest@eu",
+      "mistral/ministral-14b-2512",
+      "mistral/ministral-14b-2512@eu",
+      "mistral/ministral-3b-2512",
+      "mistral/ministral-3b-2512@eu",
+      "mistral/ministral-8b-2512",
+      "mistral/ministral-8b-2512@eu",
+      "mistral/mistral-large-2407",
+      "mistral/mistral-large-2407@eu",
       "mistral/mistral-large-2512",
+      "mistral/mistral-large-2512@eu",
+      "mistral/mistral-large-4@eu",
       "mistral/mistral-large-latest",
+      "mistral/mistral-large-latest@eu",
       "mistral/mistral-medium-2505",
+      "mistral/mistral-medium-2505@eu",
       "mistral/mistral-medium-2604",
+      "mistral/mistral-medium-2604@eu",
+      "mistral/mistral-medium-3",
+      "mistral/mistral-medium-3-5",
+      "mistral/mistral-medium-3-5@eu",
+      "mistral/mistral-medium-3@eu",
       "mistral/mistral-medium-latest",
+      "mistral/mistral-medium-latest@eu",
       "mistral/mistral-small-2603",
+      "mistral/mistral-small-2603@eu",
       "mistral/mistral-small-latest",
+      "mistral/mistral-small-latest@eu",
       "mistral/voxtral-small-latest",
+      "mistral/voxtral-small-latest@eu",
       "moonshot/kimi-k2.6",
       "moonshot/kimi-k2.7-code",
       "moonshot/kimi-k2.7-code-highspeed",
       "moonshot/kimi-k3",
+      "moonshot/kimi-k3.1-pro",
       "nebius/deepseek-ai/DeepSeek-V4-Flash-0731",
       "nebius/deepseek-ai/DeepSeek-V4-Pro-0813",
-      "nebius/meta-llama/Llama-3.3-70B-Instruct",
+      "nebius/deepseek-ai/DeepSeek-V4.1-Flash",
+      "nebius/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "nebius/google/gemma-3-27b-it",
+      "nebius/meta-models/muse-spark-open",
       "nebius/nvidia/nemotron-3-super-120b-a12b",
       "nebius/nvidia/Nemotron-3-Ultra-550b-a55b",
       "nebius/openai/gpt-oss-120b",
-      "openai/gpt-3.5-turbo",
-      "openai/gpt-4",
-      "openai/gpt-4-turbo",
+      "nebius/Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "nebius/Qwen/Qwen3-30B-A3B-Instruct-2507",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
-      "openai/gpt-4.1-nano",
       "openai/gpt-4o",
       "openai/gpt-4o-2024-08-06",
       "openai/gpt-4o-2024-11-20",
@@ -1784,6 +2082,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5-mini",
       "openai/gpt-5-nano",
       "openai/gpt-5-pro",
+      "openai/gpt-5-search-api",
       "openai/gpt-5.1",
       "openai/gpt-5.2",
       "openai/gpt-5.2-pro",
@@ -1798,15 +2097,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
       "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-terra",
       "openai/gpt-latest",
       "openai/gpt-mini-latest",
       "openai/gpt-pro-latest",
-      "openai/o1",
-      "openai/o1-pro",
       "openai/o3",
-      "openai/o3-mini",
       "openai/o3-pro",
-      "openai/o4-mini",
       "ovhcloud/gpt-oss-120b",
       "ovhcloud/gpt-oss-20b",
       "perplexityai/sonar",
@@ -1815,41 +2114,46 @@ export const MASTRA_PROVIDER_CATALOG = [
       "perplexityai/sonar-reasoning-pro",
       "qwen/deepseek-v4-flash-0731",
       "qwen/deepseek-v4-pro-0813",
+      "qwen/deepseek-v4.1-flash",
+      "qwen/deepseek-v4.1-flash-1017",
       "qwen/qwen-max",
-      "qwen/qwen-vl-max",
-      "qwen/qwen-vl-plus",
-      "qwen/qwen3-235b-a22b-instruct-2507",
-      "qwen/qwen3-coder-30b-a3b-instruct",
-      "qwen/qwen3-coder-480b-a35b-instruct",
+      "qwen/qwen-mt-plus",
       "qwen/qwen3-coder-flash",
-      "qwen/qwen3-coder-next",
-      "qwen/qwen3-coder-next@eu",
-      "qwen/qwen3-coder-plus",
-      "qwen/qwen3-max",
-      "qwen/qwen3-max@eu",
-      "qwen/qwen3-next-80b-a3b-instruct",
-      "qwen/qwen3-next-80b-a3b-thinking",
-      "qwen/qwen3-vl-235b-a22b-instruct",
-      "qwen/qwen3-vl-235b-a22b-thinking",
       "qwen/qwen3.8-2.4t-a95b",
       "qwen/qwen3.8-27b",
       "qwen/qwen3.8-flash",
       "qwen/qwen3.8-max",
       "qwen/qwen3.8-max-0902",
-      "qwen/qwq-plus",
+      "qwen/qwen3.8-omni-flash",
       "scaleway/deepseek-v4-flash-0731",
+      "scaleway/deepseek-v4.1-flash",
+      "scaleway/deepseek-v4.1-flash-1017",
+      "scaleway/gemma-3-27b-it",
       "scaleway/gpt-oss-120b",
       "scaleway/llama-3.3-70b-instruct",
+      "scaleway/qwen3-235b-a22b-instruct-2507",
+      "scaleway/qwen3-coder-30b-a3b-instruct",
+      "sference/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "sference/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "tencent/deepseek-v4-pro-0813",
+      "tencent/deepseek-v4.1-flash",
+      "tencent/deepseek-v4.1-flash-1017",
+      "tencent/hy3",
+      "tencent/hy4-preview",
+      "tencent/step-5-preview",
+      "tensorx/deepseek/deepseek-r1-0528",
       "tensorx/deepseek/deepseek-v4-flash-0731",
       "tensorx/deepseek/deepseek-v4-pro-0813",
+      "tensorx/deepseek/deepseek-v4.1-flash",
+      "tensorx/deepseek/deepseek-v4.1-flash-1017",
       "tensorx/moonshotai/kimi-k2.5",
-      "together_ai/deepseek-ai/DeepSeek-V4-Flash-0731",
       "together_ai/deepseek-ai/DeepSeek-V4-Pro-0813",
+      "together_ai/deepseek-ai/DeepSeek-V4.1-Flash",
+      "together_ai/deepseek-ai/DeepSeek-V4.1-Flash-1017",
       "together_ai/meta-models/Muse-Glimmer-30B",
       "together_ai/openai/gpt-oss-120b",
-      "together_ai/openai/gpt-oss-20b",
+      "together_ai/reflection/Beam-1.0-501B-A23B",
       "together_ai/thinkingmachines/Inkling",
-      "together_ai/thinkingmachines/Inkling-Small",
       "vertex/gemini-2.5-flash-image",
       "vertex/gemini-3-flash-preview",
       "vertex/gemini-3-pro-image",
@@ -1874,13 +2178,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "vertex/gemini-3.8-flash",
       "vertex/gemini-3.8-flash@eu",
       "vertex/gemini-3.8-flash@us",
+      "vertex/gemini-4-argon",
+      "vertex/gemini-4-argon@eu",
+      "vertex/gemini-4-argon@us",
       "vertex/gemini-flash-latest",
+      "vertex/gemini-nano-banana-2.1",
       "vertex/gemini-pro-latest",
+      "xai/grok-4-fast-non-reasoning",
       "xai/grok-4.20-0309-non-reasoning",
       "xai/grok-4.20-0309-reasoning",
       "xai/grok-4.3",
       "xai/grok-4.5",
       "xai/grok-4.6",
+      "xai/grok-4.7",
       "xai/grok-build-0.1",
       "xai/grok-latest",
       "zai/glm-4.6",
@@ -1900,17 +2210,20 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "EmpirioLabs AI",
     apiKeyEnvVars: ["EMPIRIOLABS_API_KEY"],
     models: [
-      "deepseek-v3-2",
-      "deepseek-v4-flash",
+      "deepseek-v4-1-flash-1017",
       "deepseek-v4-flash-0731",
       "deepseek-v4-pro",
       "deepseek-v4-pro-0813",
+      "fugu-max",
       "fugu-ultra-v1-0",
       "fugu-ultra-v1-1",
+      "fugu-ultra-v2-0",
+      "gemma-3-27b",
       "gemma-4-26b-a4b",
       "glm-4-5-flash",
       "glm-4-6v-flash",
       "glm-4-7-flash",
+      "glm-4-7-flashx",
       "glm-5-1",
       "glm-5-2",
       "glm-5-3",
@@ -1919,11 +2232,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "kimi-k2-7-code",
       "kimi-k2-7-code-highspeed",
       "kimi-k3",
-      "mimo-v2-5",
-      "mimo-v2-5-pro",
-      "minimax-m2-7",
-      "minimax-m2-7-highspeed",
+      "mimo-v2-6-flash",
+      "mimo-v2-6-pro",
+      "mimo-v2-6-pro-ultraspeed",
       "minimax-m3",
+      "minimax-m3-1-flash",
       "mistral-small-4",
       "muse-glimmer-30b",
       "muse-spark-1-1",
@@ -1932,15 +2245,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen3-5-122b-a10b",
       "qwen3-5-27b",
       "qwen3-5-35b-a3b",
-      "qwen3-5-397b-a17b",
       "qwen3-5-4b",
       "qwen3-5-9b",
       "qwen3-5-flash",
-      "qwen3-5-plus",
       "qwen3-6-27b",
       "qwen3-6-35b-a3b",
       "qwen3-6-flash",
-      "qwen3-6-max-preview",
       "qwen3-6-plus",
       "qwen3-7-flash",
       "qwen3-7-max",
@@ -1949,7 +2259,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen3-8-flash",
       "qwen3-8-max",
       "qwen3-8-max-0902",
-      "qwen3-max",
+      "qwen3-8-omni-flash",
       "seed-2-0-code",
       "seed-2-0-lite",
       "seed-2-0-mini",
@@ -1957,7 +2267,24 @@ export const MASTRA_PROVIDER_CATALOG = [
       "seed-2-1-turbo",
       "step-3-5-flash",
       "step-3-5-flash-2603",
-      "step-3-7-flash"
+      "step-3-7-flash",
+      "step-5-preview"
+    ]
+  },
+  {
+    id: "engy",
+    name: "engy",
+    apiKeyEnvVars: ["ENGY_API_KEY"],
+    models: [
+      "deepseek-v4-flash-0731",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
+      "glm-5.2",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "kimi-k3",
+      "qwen3.6-35b-a3b",
+      "qwen3.8-27b"
     ]
   },
   {
@@ -1990,10 +2317,8 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "anthropic/claude-opus-4.1",
       "anthropic/claude-opus-4.8",
-      "anthropic/claude-sonnet-4",
       "anthropic/claude-sonnet-4.6",
       "bytedance/seedance-2",
-      "deepseek-ai/deepseek-r1-distill-llama-70b",
       "deepseek/deepseek-v4-pro",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-pro",
@@ -2002,8 +2327,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.1-pro-preview",
       "google/gemini-3.5-flash",
       "google/gemma-4-31b-it",
-      "google/imagen-4.0-fast",
-      "google/imagen-4.0-ultra",
       "google/veo3.1",
       "google/veo3.1-fast",
       "google/veo3.1-lite",
@@ -2011,7 +2334,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "leonardo-ai/lucid-realism",
       "minimax/minimax-m2.7",
       "minimax/minimax-m2.7-highspeed",
-      "moonshotai/kimi-k2",
       "moonshotai/kimi-k2.6",
       "openai/gpt-4.1",
       "openai/gpt-5",
@@ -2025,12 +2347,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-image-2",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
-      "openai/gpt-realtime-1.5",
-      "qwen/qwen3-coder",
       "sarvam/sarvam-105b",
-      "sarvam/sarvam-30b",
       "wanx/wan-v2-6",
-      "x-ai/grok-4",
       "x-ai/grok-4.3",
       "x-ai/grok-build-0.1",
       "z-ai/glm-5",
@@ -2042,27 +2360,31 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Fireworks AI",
     apiKeyEnvVars: ["FIREWORKS_API_KEY"],
     models: [
-      "accounts/fireworks/models/deepseek-v4-flash-0731",
-      "accounts/fireworks/models/deepseek-v4-flash-vision-exp",
-      "accounts/fireworks/models/deepseek-v4-pro-0813",
-      "accounts/fireworks/models/glm-5p2",
+      "accounts/fireworks/models/deepseek-v4p1-flash",
+      "accounts/fireworks/models/deepseek-v4p1-flash-1017",
+      "accounts/fireworks/models/ember-1",
       "accounts/fireworks/models/glm-5p3",
       "accounts/fireworks/models/glm-5p3-flash",
-      "accounts/fireworks/models/gpt-oss-120b",
-      "accounts/fireworks/models/inkling",
-      "accounts/fireworks/models/kimi-k2p6",
-      "accounts/fireworks/models/kimi-k2p7-code",
       "accounts/fireworks/models/kimi-k3",
       "accounts/fireworks/models/minimax-m3",
-      "accounts/fireworks/models/muse-glimmer-30b",
-      "accounts/fireworks/models/nemotron-3-ultra-nvfp4",
-      "accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b",
-      "accounts/fireworks/models/qwen3p7-plus",
+      "accounts/fireworks/models/minimax-m3p1-flash",
+      "accounts/fireworks/models/muse-spark-open",
       "accounts/fireworks/models/qwen3p8-2p4t-a95b",
       "accounts/fireworks/models/qwen3p8-max",
-      "accounts/fireworks/routers/glm-5p2-fast",
+      "accounts/fireworks/routers/deepseek-flash-latest",
+      "accounts/fireworks/routers/deepseek-v4p1-flash-1017-spot",
+      "accounts/fireworks/routers/deepseek-v4p1-flash-spot",
       "accounts/fireworks/routers/glm-5p3-fast",
-      "accounts/fireworks/routers/kimi-k3-fast"
+      "accounts/fireworks/routers/glm-5p3-spot",
+      "accounts/fireworks/routers/glm-fast-latest",
+      "accounts/fireworks/routers/glm-flash-latest",
+      "accounts/fireworks/routers/glm-latest",
+      "accounts/fireworks/routers/kimi-fast-latest",
+      "accounts/fireworks/routers/kimi-k3-fast",
+      "accounts/fireworks/routers/kimi-k3-spot",
+      "accounts/fireworks/routers/kimi-latest",
+      "accounts/fireworks/routers/minimax-latest",
+      "accounts/fireworks/routers/qwen-max-latest"
     ]
   },
   {
@@ -2087,12 +2409,11 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Friendli",
     apiKeyEnvVars: ["FRIENDLI_TOKEN"],
     models: [
-      "deepseek-ai/DeepSeek-V3.2",
       "google/gemma-4-31B-it",
-      "MiniMaxAI/MiniMax-M2.5",
       "zai-org/GLM-5.1",
       "zai-org/GLM-5.2",
-      "zai-org/GLM-5.3"
+      "zai-org/GLM-5.3",
+      "zai-org/GLM-5.3-Flash"
     ]
   },
   {
@@ -2120,12 +2441,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "grok-4-1-fast-reasoning",
       "grok-4-3",
       "grok-code-fast-1",
-      "kimi-k2-6",
-      "kimi-k2.5",
-      "minimax-m2-5",
-      "minimax-m2-7",
-      "qwen-3-6-plus",
-      "zai-glm-5-1"
+      "kimi-k2-6"
     ]
   },
   {
@@ -2145,6 +2461,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshotai/kimi-k2.7-code-highspeed",
       "openai/gpt-5.5",
       "Qwen/Qwen3.7-Max",
+      "Qwen/Qwen3.8-Flash",
+      "Qwen/Qwen3.8-Max",
       "zai-org/GLM-5-FP8",
       "zai-org/GLM-5.1-FP8",
       "zai-org/GLM-5.2-FP8"
@@ -2159,19 +2477,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deep-research-preview-04-2026",
       "gemini-2.5-computer-use-preview-10-2025",
       "gemini-2.5-flash",
-      "gemini-2.5-flash-image",
       "gemini-2.5-flash-lite",
       "gemini-2.5-flash-preview-tts",
       "gemini-2.5-pro",
       "gemini-2.5-pro-preview-tts",
       "gemini-3-flash-preview",
       "gemini-3-pro-image",
-      "gemini-3-pro-image-preview",
       "gemini-3.1-flash-image",
-      "gemini-3.1-flash-image-preview",
       "gemini-3.1-flash-lite",
       "gemini-3.1-flash-lite-image",
-      "gemini-3.1-flash-lite-preview",
       "gemini-3.1-flash-live-preview",
       "gemini-3.1-flash-tts-preview",
       "gemini-3.1-pro-preview",
@@ -2182,18 +2496,17 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-3.6-flash",
       "gemini-3.7-flash",
       "gemini-3.8-flash",
+      "gemini-4-argon",
       "gemini-embedding-001",
       "gemini-embedding-2",
       "gemini-flash-latest",
       "gemini-flash-lite-latest",
       "gemini-omni-flash-preview",
+      "gemini-pro-latest",
       "gemma-4-26b-a4b-it",
       "gemma-4-31b-it",
       "lyria-3-clip-preview",
-      "lyria-3-pro-preview",
-      "veo-3.1-fast-generate-preview",
-      "veo-3.1-generate-preview",
-      "veo-3.1-lite-generate-preview"
+      "lyria-3-pro-preview"
     ]
   },
   {
@@ -2202,10 +2515,8 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["GREENPT_API_KEY"],
     models: [
       "deepseek-v4-flash-0731",
-      "devstral-2-123b-instruct-2512",
-      "gemma-3-27b-it",
+      "deepseek-v4.1-flash",
       "gemma4",
-      "glm-5.1",
       "glm-5.2",
       "glm-5.2-caveman",
       "glm-5.2-caveman-lite",
@@ -2225,21 +2536,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "green-r-raw",
       "green-s",
       "green-s-pro",
-      "holo2-30b-a3b",
       "kimi-k2.6",
-      "kimi-k2.6-fast",
       "kimi-k2.7-code",
       "kimi-k3",
       "llama-3.3-70b-instruct",
       "minimax-m2.5",
       "mistral-medium-3.5-128b",
       "mistral-small-3.2-24b-instruct-2506",
-      "pixtral-12b-2409",
       "qwen3-235b-a22b-instruct-2507",
-      "qwen3-coder-30b-a3b-instruct",
       "qwen3.5-397b-a17b",
-      "qwen3.6-35b-a3b",
-      "voxtral-small-24b-2507"
+      "qwen3.6-35b-a3b"
     ]
   },
   {
@@ -2250,16 +2556,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "allam-2-7b",
       "canopylabs/orpheus-arabic-saudi",
       "canopylabs/orpheus-v1-english",
-      "groq/compound",
-      "groq/compound-mini",
-      "llama-3.1-8b-instant",
-      "llama-3.3-70b-versatile",
       "meta-llama/llama-prompt-guard-2-22m",
       "meta-llama/llama-prompt-guard-2-86m",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "openai/gpt-oss-safeguard-20b",
-      "qwen/qwen3.6-27b",
       "qwen/qwen3.8-27b",
       "whisper-large-v3",
       "whisper-large-v3-turbo"
@@ -2369,6 +2670,12 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: ["Qwen/Qwen3.6-35B-A3B-FP8", "Qwen3.8-27B"]
   },
   {
+    id: "hopper",
+    name: "Hopper",
+    apiKeyEnvVars: ["HOPPER_API_KEY"],
+    models: ["deepseek-v4.1-flash-1017", "deepseek-v4.1-flash-1017-abliterated"]
+  },
+  {
     id: "hpc-ai",
     name: "HPC-AI",
     apiKeyEnvVars: ["HPC_AI_API_KEY"],
@@ -2400,15 +2707,23 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
       "deepseek-ai/DeepSeek-V4-Pro",
       "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "deepseek-ai/DeepSeek-V4.1-Flash",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "google/gemma-3-12b-it",
+      "google/gemma-3-27b-it",
+      "google/gemma-3-4b-it",
       "google/gemma-4-26B-A4B-it",
       "google/gemma-4-31B-it",
       "meta-llama/Llama-3.1-8B-Instruct",
       "meta-llama/Llama-3.3-70B-Instruct",
+      "meta-llama/Llama-Guard-4-12B",
+      "MiniMaxAI/MiniMax-M1-80k",
       "MiniMaxAI/MiniMax-M2",
       "MiniMaxAI/MiniMax-M2.1",
       "MiniMaxAI/MiniMax-M2.5",
       "MiniMaxAI/MiniMax-M2.7",
       "MiniMaxAI/MiniMax-M3",
+      "MiniMaxAI/MiniMax-M3.1-Flash",
       "moonshotai/Kimi-K2-Instruct",
       "moonshotai/Kimi-K2-Instruct-0905",
       "moonshotai/Kimi-K2-Thinking",
@@ -2424,15 +2739,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Qwen/Qwen3-235B-A22B-Thinking-2507",
       "Qwen/Qwen3-30B-A3B",
       "Qwen/Qwen3-32B",
+      "Qwen/Qwen3-8B",
       "Qwen/Qwen3-Coder-30B-A3B-Instruct",
       "Qwen/Qwen3-Coder-480B-A35B-Instruct",
       "Qwen/Qwen3-Coder-Next",
       "Qwen/Qwen3-Embedding-4B",
       "Qwen/Qwen3-Embedding-8B",
       "Qwen/Qwen3-Next-80B-A3B-Instruct",
-      "Qwen/Qwen3-Next-80B-A3B-Thinking",
       "Qwen/Qwen3-VL-235B-A22B-Instruct",
       "Qwen/Qwen3-VL-235B-A22B-Thinking",
+      "Qwen/Qwen3-VL-30B-A3B-Instruct",
       "Qwen/Qwen3.5-122B-A10B",
       "Qwen/Qwen3.5-27B",
       "Qwen/Qwen3.5-35B-A3B",
@@ -2445,12 +2761,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "stepfun-ai/Step-3.5-Flash",
       "stepfun-ai/Step-3.7-Flash",
       "tencent/Hy3",
+      "tencent/Hy4-preview",
       "thinkingmachines/Inkling",
       "thinkingmachines/Inkling-Small",
-      "XiaomiMiMo/MiMo-V2-Flash",
       "XiaomiMiMo/MiMo-V2.5",
       "XiaomiMiMo/MiMo-V2.5-Pro",
-      "zai-org/GLM-4.5",
+      "zai-org/AutoGLM-Phone-9B-Multilingual",
       "zai-org/GLM-4.5-Air",
       "zai-org/GLM-4.5V",
       "zai-org/GLM-4.6",
@@ -2462,27 +2778,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "zai-org/GLM-5.2",
       "zai-org/GLM-5.3",
       "zai-org/GLM-5.3-Flash"
-    ]
-  },
-  {
-    id: "iflowcn",
-    name: "iFlow",
-    apiKeyEnvVars: ["IFLOW_API_KEY"],
-    models: [
-      "deepseek-r1",
-      "deepseek-v3",
-      "deepseek-v3.2",
-      "glm-4.6",
-      "kimi-k2",
-      "kimi-k2-0905",
-      "qwen3-235b",
-      "qwen3-235b-a22b-instruct",
-      "qwen3-235b-a22b-thinking-2507",
-      "qwen3-32b",
-      "qwen3-coder-plus",
-      "qwen3-max",
-      "qwen3-max-preview",
-      "qwen3-vl-plus"
     ]
   },
   {
@@ -2499,12 +2794,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-sonnet-4-5",
       "anthropic/claude-sonnet-4-6",
       "anthropic/claude-sonnet-5",
-      "cerebras/gpt-oss-120b",
       "deepseek/deepseek-v4-flash",
       "deepseek/deepseek-v4-pro",
-      "fireworks/glm-5.2",
-      "fireworks/gpt-oss-120b",
-      "fireworks/gpt-oss-20b",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-lite",
       "google/gemini-2.5-pro",
@@ -2513,8 +2804,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.5-flash",
       "google/gemini-3.5-flash-lite",
       "google/gemini-3.6-flash",
-      "groq/gpt-oss-120b",
-      "groq/gpt-oss-20b",
       "moonshotai/kimi-k3",
       "openai/gpt-3.5-turbo",
       "openai/gpt-4-turbo",
@@ -2550,7 +2839,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen3.6-flash",
       "qwen/qwen3.7-max",
       "qwen/qwen3.7-plus",
-      "qwen/qwen3.8-max-preview",
       "thinkingmachines/inkling",
       "xai/grok-4.20-0309-non-reasoning",
       "xai/grok-4.20-0309-reasoning",
@@ -2572,7 +2860,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "inception",
     name: "Inception",
     apiKeyEnvVars: ["INCEPTION_API_KEY"],
-    models: ["mercury-2", "mercury-edit-2"]
+    models: ["mercury-2", "mercury-2.5", "mercury-3", "mercury-edit-2"]
   },
   {
     id: "inceptron",
@@ -2582,24 +2870,36 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek-ai/DeepSeek-V4-Flash-0731",
       "moonshotai/Kimi-K2.6",
       "moonshotai/Kimi-K2.7-Code",
-      "zai-org/GLM-5.2"
+      "zai-org/GLM-5.2",
+      "zai-org/GLM-5.3",
+      "zai-org/GLM-5.3-Flash"
     ]
+  },
+  {
+    id: "inco",
+    name: "Inco",
+    apiKeyEnvVars: ["INCO_API_KEY"],
+    models: [
+      "deepseek-v4.1-flash:fast",
+      "glm-5.3",
+      "glm-5.3-flash:fast",
+      "glm-5.3:fast",
+      "kimi-k3:fast",
+      "minimax-m3",
+      "minimax-m3:fast"
+    ]
+  },
+  {
+    id: "infer",
+    name: "Infer by Flow7",
+    apiKeyEnvVars: ["INFER_API_KEY"],
+    models: ["infer/gpt-5.6-sol:official", "infer/gpt-6-astra:official"]
   },
   {
     id: "inference",
     name: "Inference",
     apiKeyEnvVars: ["INFERENCE_API_KEY"],
-    models: [
-      "google/gemma-3",
-      "meta/llama-3.1-8b-instruct",
-      "meta/llama-3.2-11b-vision-instruct",
-      "meta/llama-3.2-1b-instruct",
-      "meta/llama-3.2-3b-instruct",
-      "mistral/mistral-nemo-12b-instruct",
-      "osmosis/osmosis-structure-0.6b",
-      "qwen/qwen-2.5-7b-vision-instruct",
-      "qwen/qwen3-embedding-4b"
-    ]
+    models: ["google/gemma-3", "meta/llama-3.2-1b-instruct", "meta/llama-3.2-3b-instruct"]
   },
   {
     id: "inferx",
@@ -2631,8 +2931,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "mistralai/Ministral-3-14B-Instruct-2512",
       "mistralai/Mistral-Small-4-119B-2603",
       "moonshotai/Kimi-K2.6",
-      "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
-      "Qwen/Qwen3.5-122B-A10B-FP8",
       "Qwen/Qwen3.5-397B-A17B-FP8",
       "swiss-ai/Apertus-v1.5-70B"
     ]
@@ -2644,19 +2942,13 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-ai/DeepSeek-R1-0528",
       "Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar",
-      "meta-llama/Llama-3.2-90B-Vision-Instruct",
       "meta-llama/Llama-3.3-70B-Instruct",
       "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
-      "mistralai/Devstral-Small-2505",
-      "mistralai/Magistral-Small-2506",
-      "mistralai/Mistral-Large-Instruct-2411",
       "mistralai/Mistral-Nemo-Instruct-2407",
       "moonshotai/Kimi-K2-Instruct-0905",
       "moonshotai/Kimi-K2-Thinking",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
-      "Qwen/Qwen2.5-VL-32B-Instruct",
-      "Qwen/Qwen3-235B-A22B-Thinking-2507",
       "Qwen/Qwen3-Next-80B-A3B-Instruct",
       "zai-org/GLM-4.6"
     ]
@@ -2665,7 +2957,18 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "iteracompute",
     name: "IteraCompute",
     apiKeyEnvVars: ["ITERACOMPUTE_API_KEY"],
-    models: ["iteracompute/ornith-1.5-35b-a3b", "iteracompute/qwen3.8-27b"]
+    models: [
+      "deepseek/deepseek-v4-flash-0731",
+      "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
+      "minimax/minimax-m3",
+      "moonshotai/kimi-k2.7-code",
+      "moonshotai/kimi-k3",
+      "qwen/qwen3.8-2.4t-a95b",
+      "qwen/qwen3.8-27b",
+      "z-ai/glm-5.3",
+      "z-ai/glm-5.3-flash"
+    ]
   },
   {
     id: "jalapeno",
@@ -2676,15 +2979,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "DeepSeek-V4-Pro",
       "GLM-5.1",
       "GLM-5.2",
-      "Hy3",
       "Kimi-K2.5",
       "Kimi-K2.7-Code",
       "Kimi-K3",
       "MiniMax-M3",
-      "Qwen3-Next-80B-A3B-Instruct",
-      "Qwen3-Next-80B-A3B-Thinking",
-      "Qwen3-VL-235B-A22B-Instruct",
-      "Qwen3-VL-235B-A22B-Thinking",
       "Qwen3.5-122B-A10B",
       "Qwen3.5-27B",
       "Qwen3.5-35B-A3B",
@@ -2699,25 +2997,18 @@ export const MASTRA_PROVIDER_CATALOG = [
       "baidu/ernie-4.5-300b-a47b-paddle",
       "baidu/ernie-4.5-vl-424b-a47b",
       "claude-haiku-4-5-20251001",
-      "claude-opus-4-1-20250805",
-      "claude-opus-4-20250514",
       "claude-opus-4-5-20251101",
       "claude-opus-4-6",
-      "claude-sonnet-4-20250514",
       "claude-sonnet-4-5-20250929",
       "deepseek/deepseek-r1-0528",
       "deepseek/deepseek-v3-0324",
       "deepseek/deepseek-v3.1",
       "gemini-2.5-flash",
       "gemini-2.5-flash-lite",
-      "gemini-2.5-flash-lite-preview-06-17",
-      "gemini-2.5-flash-lite-preview-09-2025",
       "gemini-2.5-flash-preview-05-20",
       "gemini-2.5-pro",
       "gemini-2.5-pro-preview-06-05",
       "gemini-3-flash-preview",
-      "gemini-3-pro-preview",
-      "gpt-5-chat-latest",
       "gpt-5-codex",
       "gpt-5-mini",
       "gpt-5-nano",
@@ -2732,8 +3023,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "grok-4-0709",
       "grok-4-1-fast-non-reasoning",
       "grok-4-1-fast-reasoning",
-      "grok-4-fast-non-reasoning",
-      "grok-4-fast-reasoning",
       "grok-code-fast-1",
       "minimax/minimax-m2.1",
       "minimaxai/minimax-m1-80k",
@@ -2742,7 +3031,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshotai/kimi-k2.5",
       "o3",
       "o3-mini",
-      "o4-mini",
       "qwen/qwen3-235b-a22b-fp8",
       "qwen/qwen3-235b-a22b-instruct-2507",
       "qwen/qwen3-235b-a22b-thinking-2507",
@@ -2770,58 +3058,44 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-opus-5",
       "claude-sonnet-4-6",
       "claude-sonnet-5",
+      "deepseek-v4-1-flash",
       "deepseek-v4-flash",
-      "deepseek-v4-flash:free",
       "deepseek-v4-pro",
-      "gemini-2-5-flash",
-      "gemini-2-5-flash-lite",
       "gemini-3-1-flash-lite",
       "gemini-3-1-flash-tts",
       "gemini-3-1-pro",
-      "gemini-3-5-flash",
-      "gemini-3-6-flash",
-      "gemini-3-7-flash",
       "gemma-4-31b-it",
       "glm-4-7-flash:free",
-      "glm-5-1",
       "glm-5-2",
       "glm-5-3",
       "glm-5-3-flash",
-      "gpt-5-4-mini",
       "gpt-5-5",
       "gpt-5-6-luna",
       "gpt-5-6-sol",
-      "gpt-5-6-terra",
       "gpt-image-2",
       "gpt-oss-120b",
       "gpt-oss-20b",
       "grok-4-5",
       "grok-4-6",
-      "grok-build-0-1",
+      "grok-imagine-image",
       "grok-imagine-image-2-0",
       "hy3",
       "hy3:free",
       "kimi-k2-6",
-      "kimi-k2-6:free",
       "kimi-k2-7-code",
-      "kimi-k2-7-code:free",
       "kimi-k3",
-      "mimo-v2-5",
-      "mimo-v2-5-pro",
-      "mimo-v2-5:free",
       "minimax-m2-7",
       "minimax-m2-7-highspeed",
       "minimax-m3",
-      "mistral-large:free",
-      "mistral-medium-3-5:free",
-      "nemotron-3-nano-30b-a3b",
+      "nano-banana-2",
+      "nano-banana-2-lite",
+      "nano-banana-pro",
       "nemotron-3-super-120b-a12b",
       "nemotron-3-super-120b-a12b:free",
       "nemotron-3-ultra-550b-a55b",
       "qwen3-7-plus",
       "qwen3-8-max",
       "step-3-7-flash",
-      "step-3-7-flash:free",
       "whisper-large-v3-turbo"
     ]
   },
@@ -2834,51 +3108,54 @@ export const MASTRA_PROVIDER_CATALOG = [
       "~anthropic/claude-haiku-latest",
       "~anthropic/claude-opus-latest",
       "~anthropic/claude-sonnet-latest",
+      "~deepseek/deepseek-flash-latest",
+      "~deepseek/deepseek-pro-latest",
       "~deepseek/deepseek-v4-flash-latest",
       "~google/gemini-flash-latest",
       "~google/gemini-pro-latest",
       "~moonshotai/kimi-latest",
-      "~openai/gpt-latest",
+      "~openai/gpt-astra-latest",
+      "~openai/gpt-luna-latest",
       "~openai/gpt-mini-latest",
+      "~openai/gpt-sol-latest",
+      "~openai/gpt-terra-latest",
+      "~unbiased/pareto-latest",
       "~x-ai/grok-latest",
       "~z-ai/glm-flash-latest",
       "~z-ai/glm-latest",
       "aion-labs/aion-2.0",
       "aion-labs/aion-3.0",
       "aion-labs/aion-3.0-mini",
+      "aion-labs/aion-3.5",
+      "aion-labs/aion-3.5-mini",
       "aion-labs/aion-rp-llama-3.1-8b",
       "amazon/nova-2-lite-v1",
       "amazon/nova-lite-v1",
       "amazon/nova-micro-v1",
-      "amazon/nova-premier-v1",
       "amazon/nova-pro-v1",
       "anthracite-org/magnum-v4-72b",
-      "anthropic/claude-3-haiku",
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5.1",
       "anthropic/claude-haiku-4.5",
-      "anthropic/claude-opus-4",
+      "anthropic/claude-haiku-5.5",
       "anthropic/claude-opus-4.1",
       "anthropic/claude-opus-4.5",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-opus-4.7",
       "anthropic/claude-opus-4.8",
       "anthropic/claude-opus-5",
-      "anthropic/claude-sonnet-4",
+      "anthropic/claude-opus-5.5",
       "anthropic/claude-sonnet-4.5",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-5",
-      "arcee-ai/trinity-large-thinking",
-      "baidu/ernie-4.5-vl-424b-a47b",
-      "bytedance-seed/seed-1.6",
-      "bytedance-seed/seed-1.6-flash",
+      "anthropic/claude-sonnet-5.5",
       "bytedance-seed/seed-2-1-turbo",
-      "bytedance-seed/seed-2.0-code",
       "bytedance-seed/seed-2.0-lite",
       "bytedance-seed/seed-2.0-mini",
       "bytedance/ui-tars-1.5-7b",
       "cognitivecomputations/dolphin-mistral-24b-venice-edition",
       "cohere/command-a",
+      "cohere/command-a-plus",
       "cohere/command-r-08-2024",
       "cohere/command-r-plus-08-2024",
       "cohere/command-r7b-12-2024",
@@ -2886,9 +3163,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-chat",
       "deepseek/deepseek-chat-v3-0324",
       "deepseek/deepseek-chat-v3.1",
-      "deepseek/deepseek-r1",
       "deepseek/deepseek-r1-0528",
-      "deepseek/deepseek-r1-distill-llama-70b",
       "deepseek/deepseek-v3.1-terminus",
       "deepseek/deepseek-v3.2",
       "deepseek/deepseek-v3.2-exp",
@@ -2898,13 +3173,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
       "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
       "dots-studio/dots-3-note-preview:free",
-      "google/gemini-2.5-flash",
+      "elorian/glimpse",
+      "fireworks/ember-1",
       "google/gemini-2.5-flash-image",
-      "google/gemini-2.5-flash-lite",
-      "google/gemini-2.5-pro",
       "google/gemini-2.5-pro-preview",
-      "google/gemini-2.5-pro-preview-05-06",
       "google/gemini-3-flash-preview",
       "google/gemini-3-pro-image",
       "google/gemini-3-pro-image-preview",
@@ -2920,6 +3194,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.6-flash",
       "google/gemini-3.7-flash",
       "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
+      "google/gemini-nano-banana-2.1",
       "google/gemma-2-27b-it",
       "google/gemma-3-12b-it",
       "google/gemma-3-27b-it",
@@ -2929,22 +3205,24 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/lyria-3-clip-preview",
       "google/lyria-3-pro-preview",
       "gryphe/mythomax-l2-13b",
-      "ibm-granite/granite-4.0-h-micro",
       "ibm-granite/granite-4.2-8b",
       "inception/mercury-2",
       "inception/mercury-2.5",
+      "inception/mercury-3",
       "inclusionai/ling-3.0-flash",
-      "inclusionai/ling-3.0-flash-fin",
-      "inclusionai/ling-3.0-flash-fin:free",
-      "inclusionai/ling-3.0-flash-sante:free",
+      "inclusionai/ling-3.0-flash-vl",
+      "inclusionai/ling-3.1-flash",
+      "inclusionai/ling-3.1-flash-1019-free",
+      "inference-net/schematron-v2-small",
+      "inference-net/schematron-v2-turbo",
       "kilo-auto/balanced",
       "kilo-auto/efficient",
       "kilo-auto/free",
       "kilo-auto/frontier",
       "kilo-auto/small",
-      "kwaipilot/kat-coder-pro-v2",
-      "kwaipilot/kat-coder-pro-v2.5",
+      "liquid/lfm-2.5-2.6b",
       "liquid/lfm-2.5-2.6b:free",
+      "liquid/lfm-2.5-24b-a2b",
       "mancer/weaver",
       "meituan/longcat-2.0",
       "meta-llama/llama-3.1-70b-instruct",
@@ -2961,8 +3239,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "meta/muse-spark-1.2-contributor",
       "meta/muse-spark-1.3",
       "meta/muse-spark-1.3-contributor",
+      "meta/muse-spark-open",
+      "meta/muse-wonder",
       "microsoft/phi-4",
-      "microsoft/wizardlm-2-8x22b",
       "minimax/minimax-01",
       "minimax/minimax-m1",
       "minimax/minimax-m2",
@@ -2971,6 +3250,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.5",
       "minimax/minimax-m2.7",
       "minimax/minimax-m3",
+      "minimax/minimax-m3.1-flash",
       "mistralai/codestral-2508",
       "mistralai/devstral-2512",
       "mistralai/ministral-14b-2512",
@@ -2979,6 +3259,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "mistralai/mistral-large",
       "mistralai/mistral-large-2407",
       "mistralai/mistral-large-2512",
+      "mistralai/mistral-large-4-0",
       "mistralai/mistral-medium-3",
       "mistralai/mistral-medium-3-5",
       "mistralai/mistral-medium-3.1",
@@ -2990,6 +3271,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "mistralai/mistral-small-3.2-24b-instruct",
       "mistralai/mixtral-8x22b-instruct",
       "mistralai/voxtral-small-24b-2507",
+      "moondream/moondream3-preview",
+      "moondream/moondream3.1-9b-a2b",
       "moonshotai/kimi-k2",
       "moonshotai/kimi-k2-0905",
       "moonshotai/kimi-k2-thinking",
@@ -2997,30 +3280,26 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshotai/kimi-k2.6",
       "moonshotai/kimi-k2.7-code",
       "moonshotai/kimi-k3",
+      "moonshotai/kimi-k3.1-pro",
       "morph/morph-v3-fast",
       "morph/morph-v3-large",
-      "nex-agi/nex-n2.5-mini:free",
-      "nex-agi/nex-n2.5-pro:free",
-      "nousresearch/hermes-3-llama-3.1-405b",
-      "nousresearch/hermes-3-llama-3.1-70b",
+      "nex-agi/nex-n2.5-mini",
+      "nex-agi/nex-n2.5-pro",
       "nousresearch/hermes-4-405b",
       "nvidia/nemotron-3-nano-30b-a3b",
       "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       "nvidia/nemotron-3-super-120b-a12b",
-      "nvidia/nemotron-3-super-120b-a12b:free",
       "nvidia/nemotron-3-ultra-550b-a55b",
       "nvidia/nemotron-3-ultra-550b-a55b:free",
       "nvidia/nemotron-3.5-content-safety",
       "nvidia/nemotron-3.5-content-safety:free",
       "nvidia/nemotron-3.5-lightning",
       "nvidia/nemotron-3.5-lightning:free",
-      "openai/gpt-3.5-turbo",
+      "nvidia/nemotron-3.5-super-vl",
+      "nvidia/nemotron-3.5-super-vl:free",
       "openai/gpt-3.5-turbo-0613",
       "openai/gpt-3.5-turbo-16k",
-      "openai/gpt-3.5-turbo-instruct",
       "openai/gpt-4",
-      "openai/gpt-4-turbo",
-      "openai/gpt-4-turbo-preview",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
       "openai/gpt-4.1-nano",
@@ -3041,7 +3320,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.1-codex-max",
       "openai/gpt-5.1-codex-mini",
       "openai/gpt-5.2",
-      "openai/gpt-5.2-chat",
       "openai/gpt-5.2-codex",
       "openai/gpt-5.2-pro",
       "openai/gpt-5.3-codex",
@@ -3055,83 +3333,73 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-luna",
       "openai/gpt-5.6-luna-pro",
       "openai/gpt-5.6-sol",
-      "openai/gpt-5.6-sol-discounted",
       "openai/gpt-5.6-sol-pro",
       "openai/gpt-5.6-terra",
       "openai/gpt-5.6-terra-pro",
       "openai/gpt-6-astra",
       "openai/gpt-6-astra-pro",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-luna-pro",
+      "openai/gpt-6-sol",
+      "openai/gpt-6-sol-pro",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-sol-pro",
+      "openai/gpt-6.1-terra",
+      "openai/gpt-6.1-terra-pro",
       "openai/gpt-audio",
       "openai/gpt-audio-mini",
       "openai/gpt-chat-latest",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "openai/gpt-oss-safeguard-20b",
-      "openai/o1",
-      "openai/o1-pro",
       "openai/o3",
-      "openai/o3-mini",
-      "openai/o3-mini-high",
       "openai/o3-pro",
-      "openai/o4-mini",
-      "openai/o4-mini-high",
       "openrouter/auto",
       "openrouter/bodybuilder",
       "openrouter/free",
       "openrouter/pareto-code",
+      "particle-ai/particle-1",
       "perceptron/perceptron-mk1",
+      "perceptron/perceptron-mk1.5",
       "perplexity/sonar",
       "perplexity/sonar-deep-research",
       "perplexity/sonar-pro",
       "perplexity/sonar-pro-search",
       "perplexity/sonar-reasoning-pro",
-      "poolside/laguna-s-2.1",
       "poolside/laguna-s-2.1:free",
-      "poolside/laguna-xs-2.1",
       "poolside/laguna-xs-2.1:free",
+      "prism-ml/ternary-bonsai-2-27b",
+      "prism-ml/ternary-bonsai-2-9b",
       "qwen/qwen-2.5-72b-instruct",
       "qwen/qwen-2.5-7b-instruct",
       "qwen/qwen-2.5-coder-32b-instruct",
       "qwen/qwen-plus",
-      "qwen/qwen-plus-2025-07-28",
       "qwen/qwen2.5-vl-72b-instruct",
       "qwen/qwen3-14b",
-      "qwen/qwen3-235b-a22b",
       "qwen/qwen3-235b-a22b-2507",
       "qwen/qwen3-235b-a22b-thinking-2507",
       "qwen/qwen3-30b-a3b",
       "qwen/qwen3-30b-a3b-instruct-2507",
-      "qwen/qwen3-30b-a3b-thinking-2507",
       "qwen/qwen3-32b",
-      "qwen/qwen3-8b",
       "qwen/qwen3-coder",
       "qwen/qwen3-coder-30b-a3b-instruct",
       "qwen/qwen3-coder-flash",
       "qwen/qwen3-coder-next",
-      "qwen/qwen3-coder-plus",
-      "qwen/qwen3-max",
-      "qwen/qwen3-max-thinking",
       "qwen/qwen3-next-80b-a3b-instruct",
-      "qwen/qwen3-next-80b-a3b-thinking",
       "qwen/qwen3-vl-235b-a22b-instruct",
-      "qwen/qwen3-vl-235b-a22b-thinking",
       "qwen/qwen3-vl-30b-a3b-instruct",
       "qwen/qwen3-vl-30b-a3b-thinking",
-      "qwen/qwen3-vl-32b-instruct",
       "qwen/qwen3-vl-8b-instruct",
-      "qwen/qwen3-vl-8b-thinking",
       "qwen/qwen3.5-122b-a10b",
       "qwen/qwen3.5-27b",
       "qwen/qwen3.5-35b-a3b",
       "qwen/qwen3.5-397b-a17b",
-      "qwen/qwen3.5-9b",
       "qwen/qwen3.5-flash-02-23",
       "qwen/qwen3.5-plus-02-15",
       "qwen/qwen3.5-plus-20260420",
       "qwen/qwen3.6-27b",
       "qwen/qwen3.6-35b-a3b",
       "qwen/qwen3.6-flash",
-      "qwen/qwen3.6-max-preview",
       "qwen/qwen3.6-plus",
       "qwen/qwen3.7-flash",
       "qwen/qwen3.7-max",
@@ -3140,23 +3408,27 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen3.8-27b",
       "qwen/qwen3.8-flash",
       "qwen/qwen3.8-max-0902",
+      "qwen/qwen3.8-max-prime",
+      "qwen/qwen3.8-omni-flash",
+      "recursive/flint-v1.0:free",
+      "reflection/beam-1.0-501b-a23b",
+      "reflection/beam-free",
       "rekaai/reka-edge",
       "rekaai/reka-flash-3",
       "relace/relace-apply-3",
       "relace/relace-search",
+      "sakana/fugu-max",
       "sakana/fugu-ultra",
+      "sakana/fugu-ultra-v2",
       "sakana/sakana-namazu",
       "sao10k/l3-lunaris-8b",
       "sao10k/l3.1-euryale-70b",
-      "sao10k/l3.3-euryale-70b",
-      "stealth/claude-opus-4.6",
-      "stealth/claude-opus-4.7",
-      "stealth/claude-opus-4.8",
-      "stealth/claude-sonnet-4.6",
-      "stealth/qwen3.6-plus",
+      "scaledown/extract",
+      "scaledown/summarize",
+      "stealth/glyph-cluster",
       "stepfun/step-3.5-flash",
       "stepfun/step-3.7-flash",
-      "stepfun/step-3.7-flash:free",
+      "stepfun/step-5-preview",
       "tencent/hunyuan-a13b-instruct",
       "tencent/hy-mt2-1.8b",
       "tencent/hy-mt2-30b-a3b",
@@ -3169,10 +3441,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "thedrummer/unslopnemo-12b",
       "thinkingmachines/inkling",
       "thinkingmachines/inkling-small",
-      "thinkingmachines/inkling-small:free",
-      "thinkingmachines/inkling:free",
+      "unbiased/pareto-26.10",
+      "unbiased/pareto-26.9",
       "undi95/remm-slerp-l2-13b",
-      "upstage/solar-pro-3",
+      "upstage/solar-mini4",
       "upstage/solar-pro4",
       "writer/palmyra-x5",
       "x-ai/grok-4.20",
@@ -3180,9 +3452,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "x-ai/grok-4.3",
       "x-ai/grok-4.5",
       "x-ai/grok-4.6",
+      "x-ai/grok-4.7",
       "x-ai/grok-build-0.1",
-      "xiaomi/mimo-v2.5",
-      "xiaomi/mimo-v2.5-pro",
+      "xiaomi/mimo-v2.6-flash",
+      "xiaomi/mimo-v2.6-pro",
+      "xiaomi/mimo-v2.6-pro-ultraspeed",
+      "xingchen-agi/xing4.0-29b-a4b:free",
       "z-ai/glm-4.5",
       "z-ai/glm-4.5-air",
       "z-ai/glm-4.5v",
@@ -3196,14 +3471,36 @@ export const MASTRA_PROVIDER_CATALOG = [
       "z-ai/glm-5.2",
       "z-ai/glm-5.3",
       "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3-flashx",
+      "z-ai/glm-5.3-prime",
       "z-ai/glm-5v-turbo"
     ]
   },
   {
-    id: "kimi-for-coding",
-    name: "Kimi For Coding",
+    id: "kimi-code-plan-global",
+    name: "Kimi For Coding (kimi.ai)",
     apiKeyEnvVars: ["KIMI_API_KEY"],
-    models: ["k3", "k3-256k", "kimi-for-coding", "kimi-for-coding-highspeed"]
+    models: [
+      "k3",
+      "k3-256k",
+      "k3.1-pro",
+      "k3.1-pro-highspeed",
+      "kimi-for-coding",
+      "kimi-for-coding-highspeed"
+    ]
+  },
+  {
+    id: "kimi-code-plan-cn",
+    name: "Kimi For Coding (kimi.com)",
+    apiKeyEnvVars: ["KIMI_API_KEY"],
+    models: [
+      "k3",
+      "k3-256k",
+      "k3.1-pro",
+      "k3.1-pro-highspeed",
+      "kimi-for-coding",
+      "kimi-for-coding-highspeed"
+    ]
   },
   {
     id: "klokintegration",
@@ -3227,26 +3524,13 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "lilac",
     name: "Lilac",
     apiKeyEnvVars: ["LILAC_API_KEY"],
-    models: [
-      "google/gemma-4-31b-it",
-      "minimaxai/minimax-m3",
-      "moonshotai/kimi-k2.6",
-      "zai-org/glm-5.2"
-    ]
+    models: []
   },
   {
-    id: "llama",
-    name: "Llama",
-    apiKeyEnvVars: ["LLAMA_API_KEY"],
-    models: [
-      "cerebras-llama-4-maverick-17b-128e-instruct",
-      "cerebras-llama-4-scout-17b-16e-instruct",
-      "groq-llama-4-maverick-17b-128e-instruct",
-      "llama-3.3-70b-instruct",
-      "llama-3.3-8b-instruct",
-      "llama-4-maverick-17b-128e-instruct-fp8",
-      "llama-4-scout-17b-16e-instruct-fp8"
-    ]
+    id: "liquid",
+    name: "Liquid Inference",
+    apiKeyEnvVars: ["LIQUID_API_KEY"],
+    models: ["liquid.auto"]
   },
   {
     id: "llmgateway-providers",
@@ -3255,89 +3539,95 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "alibaba/deepseek-v4-flash",
       "alibaba/deepseek-v4-pro",
+      "alibaba/deepseek-v4.1-flash",
+      "alibaba/deepseek-v4.1-flash-1017",
       "alibaba/glm-5",
       "alibaba/glm-5.2",
+      "alibaba/glm-5.3",
       "alibaba/kimi-k2.5",
-      "alibaba/qwen-coder-plus",
+      "alibaba/kimi-k3",
       "alibaba/qwen-flash",
       "alibaba/qwen-max",
-      "alibaba/qwen-omni-turbo",
       "alibaba/qwen-plus",
       "alibaba/qwen-plus-latest",
       "alibaba/qwen3-coder-flash",
-      "alibaba/qwen3-coder-plus",
-      "alibaba/qwen3-max",
-      "alibaba/qwen3-vl-flash",
       "alibaba/qwen3-vl-plus",
+      "alibaba/qwen3.5-122b-a10b",
+      "alibaba/qwen3.5-27b",
+      "alibaba/qwen3.5-35b-a3b",
       "alibaba/qwen3.6-35b-a3b",
       "alibaba/qwen3.6-flash",
-      "alibaba/qwen3.6-max-preview",
       "alibaba/qwen3.6-plus",
       "alibaba/qwen3.7-flash",
       "alibaba/qwen3.7-max",
       "alibaba/qwen3.7-plus",
       "alibaba/qwen3.8-flash",
       "alibaba/qwen3.8-max",
+      "alibaba/qwen3.8-omni-flash",
       "alibaba/qwen35-397b-a17b",
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5-1",
       "anthropic/claude-haiku-4-5",
       "anthropic/claude-haiku-4-5-20251001",
+      "anthropic/claude-haiku-5-5",
       "anthropic/claude-opus-4-5-20251101",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-opus-4-7",
       "anthropic/claude-opus-4-8",
       "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5-5",
       "anthropic/claude-sonnet-4-5",
       "anthropic/claude-sonnet-4-5-20250929",
       "anthropic/claude-sonnet-4-6",
       "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5-5",
       "aws-bedrock/claude-fable-5",
+      "aws-bedrock/claude-fable-5-1",
       "aws-bedrock/claude-haiku-4-5",
       "aws-bedrock/claude-haiku-4-5-20251001",
-      "aws-bedrock/claude-opus-4-1-20250805",
+      "aws-bedrock/claude-haiku-5-5",
       "aws-bedrock/claude-opus-4-5-20251101",
       "aws-bedrock/claude-opus-4-6",
       "aws-bedrock/claude-opus-4-7",
       "aws-bedrock/claude-opus-4-8",
       "aws-bedrock/claude-opus-5",
+      "aws-bedrock/claude-opus-5-5",
       "aws-bedrock/claude-sonnet-4-5",
       "aws-bedrock/claude-sonnet-4-5-20250929",
       "aws-bedrock/claude-sonnet-4-6",
       "aws-bedrock/claude-sonnet-5",
+      "aws-bedrock/claude-sonnet-5-5",
       "aws-bedrock/grok-4-3",
       "aws-bedrock/grok-4-6",
-      "aws-bedrock/llama-3.1-70b-instruct",
-      "aws-bedrock/llama-4-maverick-17b-instruct",
-      "aws-bedrock/llama-4-scout-17b-instruct",
+      "aws-bedrock/grok-4-7",
+      "aws-bedrock/kimi-k3",
       "aws-mantle/gpt-5.6-luna",
       "aws-mantle/gpt-5.6-sol",
       "aws-mantle/gpt-5.6-terra",
-      "azure-ai-foundry/grok-4-1-fast-non-reasoning",
+      "aws-mantle/gpt-6-astra",
       "azure-ai-foundry/grok-4-1-fast-reasoning",
       "azure-ai-foundry/grok-4-3",
       "azure-anthropic/claude-fable-5",
+      "azure-anthropic/claude-fable-5-1",
       "azure-anthropic/claude-opus-4-6",
       "azure-anthropic/claude-opus-4-7",
       "azure-anthropic/claude-opus-4-8",
       "azure-anthropic/claude-opus-5",
+      "azure-anthropic/claude-opus-5-5",
       "azure-anthropic/claude-sonnet-5",
-      "azure/gpt-3.5-turbo",
-      "azure/gpt-4",
-      "azure/gpt-4-turbo",
+      "azure-anthropic/claude-sonnet-5-5",
       "azure/gpt-4.1",
       "azure/gpt-4.1-mini",
-      "azure/gpt-4.1-nano",
       "azure/gpt-4o",
       "azure/gpt-5",
       "azure/gpt-5-mini",
       "azure/gpt-5-nano",
+      "azure/gpt-5-pro",
       "azure/gpt-5.1",
       "azure/gpt-5.1-codex",
       "azure/gpt-5.1-codex-mini",
       "azure/gpt-5.2",
       "azure/gpt-5.2-codex",
-      "azure/gpt-5.2-pro",
       "azure/gpt-5.3-codex",
       "azure/gpt-5.4",
       "azure/gpt-5.4-mini",
@@ -3348,18 +3638,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "azure/gpt-5.6-sol",
       "azure/gpt-5.6-terra",
       "azure/gpt-6-astra",
+      "azure/gpt-6-luna",
+      "azure/gpt-6-sol",
+      "azure/gpt-6.1-sol",
+      "azure/gpt-6.1-terra",
       "azure/gpt-oss-120b",
-      "azure/o1",
-      "azure/o3",
-      "azure/o3-mini",
-      "azure/o4-mini",
       "baidu/deepseek-v4-flash",
       "baidu/deepseek-v4-pro",
-      "baidu/glm-5",
+      "baidu/deepseek-v4.1-flash",
+      "baidu/deepseek-v4.1-flash-1017",
       "baidu/glm-5.1",
       "baidu/glm-5.2",
       "baidu/glm-5.3",
-      "baidu/kimi-k2.6",
+      "baidu/glm-5.3-flash",
       "bytedance/deepseek-v3.2",
       "bytedance/deepseek-v4-flash",
       "bytedance/deepseek-v4-pro",
@@ -3370,66 +3661,64 @@ export const MASTRA_PROVIDER_CATALOG = [
       "bytedance/seed-1-6-250915",
       "bytedance/seed-1-6-flash-250715",
       "bytedance/seed-1-8-251228",
+      "bytedance/seed-2-0-code-preview-260328",
+      "bytedance/seed-2-0-lite-260428",
+      "bytedance/seed-2-0-mini-260428",
+      "bytedance/seed-2-0-pro-260328",
       "canopywave/deepseek-v4-flash",
       "canopywave/deepseek-v4-pro",
       "canopywave/glm-5.2",
       "canopywave/kimi-k2.6",
       "canopywave/kimi-k3",
-      "cerebras/gemma-4-31b-it",
-      "cerebras/glm-4.7",
       "cerebras/gpt-oss-120b",
-      "cerebras/llama-3.3-70b-instruct",
-      "cerebras/qwen3-235b-a22b-instruct-2507",
+      "cloudflare/deepseek-v4-flash",
+      "cloudflare/deepseek-v4-pro",
+      "cloudflare/deepseek-v4.1-flash-1017",
+      "cloudflare/glm-5.3",
+      "cloudflare/glm-5.3-flash",
       "consensusprotocol/deepseek-v4-flash",
+      "consensusprotocol/deepseek-v4.1-flash",
+      "consensusprotocol/gemma-4-31b-it",
       "consensusprotocol/glm-5.3-flash",
       "consensusprotocol/gpt-oss-20b",
+      "consensusprotocol/mimo-v2.6-flash",
+      "consensusprotocol/minimax-m3",
       "consensusprotocol/Qwen3.8-27B",
       "deepinfra/deepseek-v3.2",
       "deepinfra/deepseek-v4-flash",
       "deepinfra/deepseek-v4-pro",
+      "deepinfra/deepseek-v4.1-flash",
+      "deepinfra/deepseek-v4.1-flash-1017",
       "deepinfra/gemma-4-26b-a4b-it",
       "deepinfra/gemma-4-31b-it",
-      "deepinfra/glm-5.1",
-      "deepinfra/hy3",
+      "deepinfra/granite-4.2-8b",
       "deepinfra/ling-3.0-flash",
-      "deepinfra/mimo-v2.5",
-      "deepinfra/mimo-v2.5-pro",
+      "deepinfra/ling-3.0-flash-vl",
+      "deepinfra/mimo-v2.6-flash",
+      "deepinfra/mimo-v2.6-pro",
+      "deepinfra/muse-glimmer-30b",
       "deepinfra/nemotron-3-ultra-550b",
       "deepinfra/qwen3-vl-235b-a22b-instruct",
       "deepinfra/qwen3-vl-30b-a3b-instruct",
       "deepinfra/qwen3.5-9b",
       "deepseek/deepseek-v4-pro",
-      "deepseek/deepseek-v4.1-flash",
-      "embercloud/glm-4.5",
-      "embercloud/glm-4.5-air",
-      "embercloud/glm-4.7",
-      "embercloud/glm-4.7-flash",
-      "embercloud/glm-5",
-      "embercloud/glm-5.1",
-      "embercloud/glm-5.2",
-      "embercloud/kimi-k2.5",
-      "embercloud/qwen3-coder-next",
-      "fireworks/deepseek-v4-flash",
-      "fireworks/deepseek-v4-pro",
+      "deepseek/deepseek-v4.1-flash-1017",
+      "entrim/deepseek-v4.1-flash-1017",
+      "entrim/glm-5.3",
+      "entrim/glm-5.3-flash",
+      "fireworks/deepseek-v4.1-flash",
+      "fireworks/glm-5.3",
+      "fireworks/glm-5.3-flash",
       "fireworks/kimi-k3",
       "fireworks/kimi-k3-fast",
-      "gonka24/deepseek-v4-flash",
-      "gonka24/minimax-m2.7",
-      "google-ai-studio/gemini-2.5-flash",
-      "google-ai-studio/gemini-2.5-flash-lite",
-      "google-ai-studio/gemini-2.5-pro",
       "google-ai-studio/gemini-3-flash-preview",
       "google-ai-studio/gemini-3.1-flash-lite",
       "google-ai-studio/gemini-3.1-pro-preview",
-      "google-ai-studio/gemini-3.5-flash",
       "google-ai-studio/gemini-3.5-flash-lite",
       "google-ai-studio/gemini-3.6-flash",
-      "google-ai-studio/gemini-3.7-flash",
       "google-ai-studio/gemini-3.8-flash",
+      "google-ai-studio/gemini-4-argon",
       "google-ai-studio/gemini-pro-latest",
-      "google-vertex/gemini-2.5-flash",
-      "google-vertex/gemini-2.5-flash-lite",
-      "google-vertex/gemini-2.5-pro",
       "google-vertex/gemini-3-flash-preview",
       "google-vertex/gemini-3.1-flash-lite",
       "google-vertex/gemini-3.1-pro-preview",
@@ -3438,14 +3727,26 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google-vertex/gemini-3.6-flash",
       "google-vertex/gemini-3.7-flash",
       "google-vertex/gemini-3.8-flash",
+      "google-vertex/gemini-4-argon",
+      "greenference/glm-5.3-flash",
+      "greenference/qwen3-14b",
+      "greenference/qwen3-30b-a3b",
+      "greenference/qwen3.6-27b",
       "groq/gpt-oss-120b",
       "groq/gpt-oss-20b",
+      "inference.net/deepseek-v4.1-flash-1017",
+      "inference.net/deepseek-v4.1-flash-cyber",
+      "inference.net/glm-5.3",
+      "inference.net/glm-5.3-flash",
       "inference.net/llama-3.2-11b-instruct",
+      "inference.net/minimax-m3.1-flash",
+      "luminal/deepseek-v4.1-flash",
       "meta-contributor/muse-spark-1.2-contributor",
       "meta-contributor/muse-spark-1.3-contributor",
       "meta/muse-spark-1.1",
       "meta/muse-spark-1.2",
       "meta/muse-spark-1.3",
+      "meta/muse-wonder-1.0",
       "minimax/minimax-m2",
       "minimax/minimax-m2.1",
       "minimax/minimax-m2.1-lightning",
@@ -3454,23 +3755,31 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.7",
       "minimax/minimax-m2.7-highspeed",
       "minimax/minimax-m3",
+      "minimax/minimax-m3.1-flash",
       "minimax/minimax-text-01",
       "mistral/codestral-2508",
       "mistral/devstral-2512",
+      "mistral/glm-5.3",
       "mistral/ministral-14b-2512",
       "mistral/ministral-3b-2512",
       "mistral/ministral-8b-2512",
       "mistral/mistral-large-2512",
+      "mistral/mistral-large-4",
       "mistral/mistral-large-latest",
+      "mistral/mistral-medium-3-5",
       "mistral/mistral-small-2506",
+      "mistral/mistral-small-2603",
       "moonshot/kimi-k2.5",
       "moonshot/kimi-k2.6",
       "moonshot/kimi-k2.7-code",
       "moonshot/kimi-k2.7-code-highspeed",
       "moonshot/kimi-k3",
-      "novita/deepseek-v3.2",
+      "moonshot/kimi-k3.1-pro",
+      "moonshot/kimi-k3.1-pro-highspeed",
+      "nebius/minimax-m3.1-flash",
       "novita/deepseek-v4-flash",
-      "novita/ernie-4.5-vl-424b-a47b",
+      "novita/deepseek-v4.1-flash",
+      "novita/deepseek-v4.1-flash-1017",
       "novita/gemma-4-26b-a4b-it",
       "novita/gemma-4-31b-it",
       "novita/glm-4.5v",
@@ -3488,38 +3797,24 @@ export const MASTRA_PROVIDER_CATALOG = [
       "novita/kimi-k2.7-code",
       "novita/kimi-k3",
       "novita/ling-3.0-flash",
-      "novita/llama-3-70b-instruct",
-      "novita/llama-3.2-3b-instruct",
       "novita/llama-3.3-70b-instruct",
       "novita/llama-4-maverick-17b-instruct",
       "novita/llama-4-scout-17b-instruct",
-      "novita/mimo-v2.5",
-      "novita/mimo-v2.5-pro",
-      "novita/minimax-m2.1",
       "novita/minimax-m2.5",
       "novita/minimax-m2.7",
-      "novita/qwen3-235b-a22b-fp8",
-      "novita/qwen3-235b-a22b-instruct-2507",
-      "novita/qwen3-235b-a22b-thinking-2507",
-      "novita/qwen3-coder-30b-a3b-instruct",
-      "novita/qwen3-coder-480b-a35b-instruct",
-      "novita/qwen3-max",
-      "novita/qwen3-next-80b-a3b-instruct",
-      "novita/qwen3-vl-235b-a22b-instruct",
-      "novita/qwen3-vl-235b-a22b-thinking",
+      "novita/minimax-m3.1-flash",
       "novita/qwen3-vl-30b-a3b-instruct",
+      "novita/qwen3.5-122b-a10b",
       "novita/qwen3.6-35b-a3b",
       "novita/qwen3.7-max",
+      "novita/qwen3.8-2.4t-a95b",
       "novita/qwen3.8-27b",
       "novita/qwen3.8-flash",
       "novita/qwen3.8-max",
       "novita/qwen35-397b-a17b",
-      "openai/gpt-3.5-turbo",
-      "openai/gpt-4",
-      "openai/gpt-4-turbo",
+      "novita/step-3.7-flash",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
-      "openai/gpt-4.1-nano",
       "openai/gpt-4o",
       "openai/gpt-4o-mini",
       "openai/gpt-4o-mini-transcribe",
@@ -3542,45 +3837,84 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
       "openai/gpt-6-astra",
-      "openai/o1",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-terra",
+      "openai/gpt-live-transcribe",
+      "openai/gpt-transcribe",
       "openai/o3",
-      "openai/o3-mini",
-      "openai/o4-mini",
       "perplexity/sonar",
-      "perplexity/sonar-pro",
-      "perplexity/sonar-reasoning-pro",
       "quartz/gemini-3.1-pro-preview",
       "ranoai/deepseek-v4-flash",
+      "reka-ai/deepseek-v4.1-flash",
+      "reka-ai/deepseek-v4.1-flash-1017",
+      "reka-ai/glm-5.3",
+      "reka-ai/glm-5.3-flash",
+      "reka-ai/reka-edge-2603",
+      "runpod/kimi-k3",
       "runware/deepseek-v4-flash",
       "runware/deepseek-v4-pro",
+      "runware/deepseek-v4.1-flash",
+      "runware/deepseek-v4.1-flash-1017",
       "runware/gemma-4-31b-it",
       "runware/glm-5.2",
       "runware/glm-5.3",
       "runware/glm-5.3-flash",
-      "runware/gpt-oss-120b",
-      "runware/kimi-k2.6",
       "runware/kimi-k3",
+      "sakana/fugu-max",
       "sakana/fugu-ultra",
+      "sakana/fugu-ultra-v2.0",
+      "sciforium/deepseek-v4.1-flash-1017",
+      "scx-ai-gp/deepseek-v4.1-flash",
       "scx-ai-gp/glm-5.2",
       "scx-ai-gp/glm-5.2-fast",
       "scx-ai-gp/glm-5.3",
+      "scx-ai-gp/glm-5.3-fast",
       "scx-ai-gp/glm-5.3-flash",
       "scx-ai-gp/kimi-k2.7-code",
       "scx-ai-gp/kimi-k3",
       "scx-ai-gp/qwen3.8-max",
-      "scx-ai/gemma-4-31b-it",
       "scx-ai/gpt-oss-120b",
-      "scx-ai/llama-4-maverick-17b-instruct",
       "scx-ai/minimax-m2.7",
       "scx-ai/qwen3-32b",
-      "together-ai/deepseek-v4-flash",
+      "tencent/deepseek-v4-flash",
+      "tencent/deepseek-v4-pro",
+      "tencent/deepseek-v4.1-flash",
+      "tencent/deepseek-v4.1-flash-1017",
+      "tencent/glm-5",
+      "tencent/glm-5-turbo",
+      "tencent/glm-5.1",
+      "tencent/glm-5.2",
+      "tencent/glm-5.3",
+      "tencent/glm-5.3-flash",
+      "tencent/glm-5.3-flashx",
+      "tencent/glm-5v-turbo",
+      "tencent/hy-mt2-plus",
+      "tencent/hy3",
+      "tencent/hy4-preview",
+      "tencent/kimi-k2.6",
+      "tencent/kimi-k2.7-code",
+      "tencent/kimi-k2.7-code-highspeed",
+      "tencent/kimi-k2.8-preview",
+      "tencent/kimi-k3",
+      "tencent/mimo-v2.6-flash",
+      "tencent/mimo-v2.6-pro",
+      "tencent/minimax-m2.7",
+      "tencent/minimax-m3",
+      "tencent/step-5-preview",
       "together-ai/deepseek-v4-pro",
-      "together-ai/gemma-4-31b-it",
+      "together-ai/deepseek-v4.1-flash",
+      "together-ai/deepseek-v4.1-flash-1017",
       "together-ai/glm-4.7",
+      "together-ai/glm-5.3",
+      "together-ai/glm-5.3-flash",
       "together-ai/gpt-oss-120b",
-      "together-ai/gpt-oss-20b",
       "together-ai/kimi-k3",
       "together-ai/minimax-m3",
+      "together-ai/minimax-m3.1-flash",
+      "together-ai/muse-glimmer-30b",
+      "together-ai/qwen3.8-2.4t-a95b",
       "vertex-anthropic/claude-haiku-4-5",
       "vertex-anthropic/claude-opus-4-5-20251101",
       "vertex-anthropic/claude-opus-4-6",
@@ -3588,26 +3922,20 @@ export const MASTRA_PROVIDER_CATALOG = [
       "vertex-anthropic/claude-sonnet-4-5",
       "vertex-anthropic/claude-sonnet-4-6",
       "vertex-anthropic/claude-sonnet-5",
-      "vertex-openai/deepseek-v3.2",
-      "vertex-openai/glm-4.7",
-      "vertex-openai/glm-5",
       "vertex-openai/grok-4-20-non-reasoning",
       "vertex-openai/grok-4-20-reasoning",
       "vertex-openai/grok-4-6",
-      "vertex-openai/kimi-k2-thinking",
-      "vertex-openai/qwen3-235b-a22b-instruct-2507",
-      "vertex-openai/qwen3-coder-480b-a35b-instruct",
-      "vertex-openai/qwen3-next-80b-a3b-instruct",
-      "vertex-openai/qwen3-next-80b-a3b-thinking",
+      "vertex-openai/grok-4-7",
       "xai/grok-4",
       "xai/grok-4-20-beta-0309-non-reasoning",
       "xai/grok-4-20-beta-0309-reasoning",
       "xai/grok-4-3",
       "xai/grok-4-5",
       "xai/grok-4-6",
+      "xai/grok-4-7",
       "xai/grok-build-0-1",
-      "xiaomi/mimo-v2.5",
-      "xiaomi/mimo-v2.5-pro",
+      "xiaomi/mimo-v2.6-flash",
+      "xiaomi/mimo-v2.6-pro",
       "zai/glm-4-32b-0414-128k",
       "zai/glm-4.5",
       "zai/glm-4.5-air",
@@ -3630,7 +3958,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "llmtech",
     name: "LLM Tech",
     apiKeyEnvVars: ["LLMTECH_API_KEY"],
-    models: ["unsloth/Qwen3.8-27B-NVFP4"]
+    models: ["nvidia/Qwen3.8-27B-NVFP4"]
   },
   {
     id: "llmtr",
@@ -3638,12 +3966,8 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["LLMTR_API_KEY"],
     models: [
       "gemma-4",
-      "google/gemini-2.5-flash-lite",
       "magibu-11b-v8",
-      "medgemma-4b",
       "meta/muse-spark-1.2-contributor",
-      "mimo/mimo-v2.5",
-      "mimo/mimo-v2.5-pro",
       "mistral/voxtral-small-latest",
       "muse-glimmer-30b-tr",
       "perplexity/sonar-deep-research",
@@ -3653,8 +3977,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen-flash",
       "qwen/qwen-plus",
       "qwen/qwen3-coder-flash",
-      "qwen/qwen3-coder-plus",
-      "qwen/qwen3-max",
       "qwen/qwen3-vl-plus",
       "qwen/qwen3.5-397b-a17b",
       "qwen/qwen3.5-plus",
@@ -3681,7 +4003,46 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "longcat",
     name: "LongCat",
     apiKeyEnvVars: ["LONGCAT_API_KEY"],
-    models: ["LongCat-2.0"]
+    models: ["LongCat-2.0", "LongCat-2.5-Preview"]
+  },
+  {
+    id: "lowrouter",
+    name: "LowRouter",
+    apiKeyEnvVars: ["LOWROUTER_API_KEY"],
+    models: [
+      "auto/mistralai/codestral-2508",
+      "auto/mistralai/ministral-14b-2512",
+      "auto/mistralai/ministral-3b-2512",
+      "auto/mistralai/ministral-8b-2512",
+      "auto/mistralai/mistral-large-2512",
+      "auto/mistralai/mistral-large-4",
+      "auto/mistralai/mistral-medium-3.5",
+      "auto/mistralai/mistral-small-2603",
+      "auto/openai/gpt-4.1",
+      "auto/openai/gpt-4.1-mini",
+      "auto/openai/gpt-4o",
+      "auto/openai/gpt-4o-mini",
+      "auto/openai/gpt-5",
+      "auto/openai/gpt-5-mini",
+      "auto/openai/gpt-5-nano",
+      "auto/openai/gpt-5.2",
+      "auto/openai/gpt-5.4",
+      "auto/openai/gpt-5.4-mini",
+      "auto/openai/gpt-5.5",
+      "auto/openai/gpt-5.6-luna",
+      "auto/openai/gpt-5.6-sol",
+      "auto/openai/gpt-5.6-terra",
+      "auto/openai/gpt-6-astra",
+      "auto/openai/gpt-6-luna",
+      "auto/openai/gpt-6-sol",
+      "auto/openai/gpt-6.1-sol",
+      "auto/openai/gpt-6.1-terra",
+      "auto/openai/gpt-oss-120b",
+      "auto/openai/gpt-oss-20b",
+      "auto/openai/gpt-oss-safeguard-120b",
+      "auto/openai/gpt-oss-safeguard-20b",
+      "auto/openai/o3"
+    ]
   },
   {
     id: "lucidquery",
@@ -3720,10 +4081,24 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Qwen/Qwen2.5-VL-32B-Instruct",
       "Qwen/Qwen3-235B-A22B-Instruct-2507",
       "Qwen/Qwen3.5-Plus",
-      "XiaomiMiMo/MiMo-V2-Flash",
       "zai-org/GLM-4.6",
       "zai-org/GLM-4.7",
       "zai-org/GLM-5"
+    ]
+  },
+  {
+    id: "melious",
+    name: "Melious",
+    apiKeyEnvVars: ["MELIOUS_API_KEY"],
+    models: [
+      "deepseek-v4-flash-0731",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "kimi-k2.6",
+      "kimi-k2.7-code",
+      "kimi-k3"
     ]
   },
   {
@@ -3731,21 +4106,21 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Merge Gateway",
     apiKeyEnvVars: ["MERGE_GATEWAY_API_KEY"],
     models: [
-      "anthropic/claude-3-7-sonnet-20250219",
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5-1",
       "anthropic/claude-haiku-4-5-20251001",
+      "anthropic/claude-haiku-5-5",
       "anthropic/claude-opus-4-1-20250805",
-      "anthropic/claude-opus-4-20250514",
       "anthropic/claude-opus-4-5-20251101",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-opus-4-7",
       "anthropic/claude-opus-4-8",
       "anthropic/claude-opus-5",
-      "anthropic/claude-sonnet-4-20250514",
+      "anthropic/claude-opus-5-5",
       "anthropic/claude-sonnet-4-5-20250929",
       "anthropic/claude-sonnet-4-6",
       "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5-5",
       "bytedance/dola-seed-2.0-code",
       "bytedance/dola-seed-2.0-code-preview",
       "bytedance/dola-seed-2.0-lite",
@@ -3756,15 +4131,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "cohere/command-r-plus-08-2024",
       "cohere/command-r7b-12-2024",
       "deepseek/deepseek-r1",
+      "deepseek/deepseek-r1-0528",
       "deepseek/deepseek-v3",
       "deepseek/deepseek-v3.1",
       "deepseek/deepseek-v3.2",
       "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-0423",
       "deepseek/deepseek-v4-flash-0731",
       "deepseek/deepseek-v4-flash-0731-fast",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0423",
       "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
       "google/gemini-2.5-computer-use-preview-10-2025",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-image",
@@ -3772,10 +4151,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-2.5-pro",
       "google/gemini-3-flash-preview",
       "google/gemini-3-pro-image",
-      "google/gemini-3-pro-preview",
       "google/gemini-3.1-flash-image",
       "google/gemini-3.1-flash-lite",
-      "google/gemini-3.1-flash-lite-preview",
       "google/gemini-3.1-pro-preview",
       "google/gemini-3.1-pro-preview-customtools",
       "google/gemini-3.5-flash",
@@ -3783,16 +4160,20 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.6-flash",
       "google/gemini-3.7-flash",
       "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
       "google/gemini-embedding-001",
+      "google/gemini-embedding-2",
       "google/gemini-flash-latest",
       "google/gemini-flash-lite-latest",
+      "google/gemma-3-12b-it",
+      "google/gemma-3-27b-it",
+      "google/gemma-3-4b-it",
       "google/gemma-4-26b-a4b-it",
       "google/gemma-4-31b-it",
       "meta/llama-3.1-70b-instruct",
       "meta/llama-3.1-8b-instruct",
       "meta/llama-3.3-70b-instruct",
-      "meta/muse-spark-1.1",
-      "meta/muse-spark-1.2",
+      "meta/muse-spark-open",
       "minimax/minimax-m2",
       "minimax/minimax-m2.1",
       "minimax/minimax-m2.5",
@@ -3800,13 +4181,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.7",
       "minimax/minimax-m2.7-highspeed",
       "minimax/minimax-m3",
+      "minimax/minimax-m3.1-flash",
       "mistral/codestral-latest",
       "mistral/devstral-2512",
-      "mistral/devstral-medium-2507",
-      "mistral/devstral-medium-latest",
-      "mistral/devstral-small-2507",
       "mistral/magistral-medium-latest",
-      "mistral/mistral-large-2411",
       "mistral/mistral-large-2512",
       "mistral/mistral-large-latest",
       "mistral/mistral-medium-2505",
@@ -3818,7 +4196,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshot/kimi-k2.7-code",
       "moonshot/kimi-k2.7-code-highspeed",
       "moonshot/kimi-k3",
-      "moonshotai/kimi-k2-thinking",
+      "moonshot/kimi-k3.1-pro",
+      "nvidia/nemotron-3-nano-30b-a3b",
       "nvidia/nemotron-3.5-lightning-30b-a3b",
       "nvidia/nemotron-nano-9b-v2",
       "openai/gpt-3.5-turbo",
@@ -3836,6 +4215,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5-chat-latest",
       "openai/gpt-5-mini",
       "openai/gpt-5-nano",
+      "openai/gpt-5-search-api",
       "openai/gpt-5.1",
       "openai/gpt-5.1-chat-latest",
       "openai/gpt-5.2",
@@ -3849,13 +4229,21 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
       "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-terra",
+      "openai/gpt-audio",
+      "openai/gpt-audio-mini",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "openai/gpt-oss-safeguard-120b",
+      "openai/gpt-oss-safeguard-20b",
       "openai/o1",
       "openai/o3",
       "openai/o3-mini",
       "openai/o4-mini",
+      "openai/whisper-1",
       "qwen/qwen-flash",
       "qwen/qwen-plus",
       "qwen/qwen3-235b-a22b",
@@ -3867,15 +4255,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen3-coder-next",
       "qwen/qwen3-coder-plus",
       "qwen/qwen3-max",
+      "qwen/qwen3-max-preview",
       "qwen/qwen3-next-80b-a3b-instruct",
       "qwen/qwen3-next-80b-a3b-thinking",
       "qwen/qwen3-vl-235b-a22b-instruct",
       "qwen/qwen3-vl-235b-a22b-thinking",
+      "qwen/qwen3-vl-30b-a3b-instruct",
+      "qwen/qwen3-vl-flash",
       "qwen/qwen3-vl-plus",
       "qwen/qwen3.5-122b-a10b",
       "qwen/qwen3.5-27b",
       "qwen/qwen3.5-35b-a3b",
       "qwen/qwen3.5-397b-a17b",
+      "qwen/qwen3.5-4b",
       "qwen/qwen3.5-9b",
       "qwen/qwen3.5-flash",
       "qwen/qwen3.5-plus",
@@ -3887,7 +4279,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen3.7-max",
       "qwen/qwen3.7-plus",
       "qwen/qwen3.8-2.4t-a95b",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.8-flash",
       "qwen/qwen3.8-max",
+      "sakana/fugu-max",
       "sakana/fugu-ultra",
       "sakana/sakana-namazu",
       "thinkingmachines/inkling",
@@ -3898,6 +4293,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "xai/grok-4.3",
       "xai/grok-4.5",
       "xai/grok-4.6",
+      "xai/grok-4.7",
       "xai/grok-build-0.1",
       "zai/glm-4.5",
       "zai/glm-4.5-air",
@@ -3923,104 +4319,62 @@ export const MASTRA_PROVIDER_CATALOG = [
       "muse-spark-1.2",
       "muse-spark-1.2-contributor",
       "muse-spark-1.3",
-      "muse-spark-1.3-contributor"
+      "muse-spark-1.3-contributor",
+      "muse-wonder-1.0"
     ]
+  },
+  {
+    id: "minimax-cn",
+    name: "MiniMax (minimax.cn)",
+    apiKeyEnvVars: ["MINIMAX_API_KEY"],
+    models: ["MiniMax-M3", "MiniMax-M3.1-Flash"]
   },
   {
     id: "minimax",
     name: "MiniMax (minimax.io)",
     apiKeyEnvVars: ["MINIMAX_API_KEY"],
-    models: [
-      "MiniMax-M2",
-      "MiniMax-M2.1",
-      "MiniMax-M2.5",
-      "MiniMax-M2.5-highspeed",
-      "MiniMax-M2.7",
-      "MiniMax-M2.7-highspeed",
-      "MiniMax-M3"
-    ]
+    models: ["MiniMax-M3", "MiniMax-M3.1-Flash"]
   },
   {
-    id: "minimax-cn",
-    name: "MiniMax (minimaxi.com)",
+    id: "minimax-cn-coding-plan",
+    name: "MiniMax Token Plan (minimax.cn)",
     apiKeyEnvVars: ["MINIMAX_API_KEY"],
-    models: [
-      "MiniMax-M2",
-      "MiniMax-M2.1",
-      "MiniMax-M2.5",
-      "MiniMax-M2.5-highspeed",
-      "MiniMax-M2.7",
-      "MiniMax-M2.7-highspeed",
-      "MiniMax-M3"
-    ]
+    models: ["MiniMax-M3", "MiniMax-M3.1-Flash"]
   },
   {
     id: "minimax-coding-plan",
     name: "MiniMax Token Plan (minimax.io)",
     apiKeyEnvVars: ["MINIMAX_API_KEY"],
-    models: [
-      "MiniMax-M2",
-      "MiniMax-M2.1",
-      "MiniMax-M2.5",
-      "MiniMax-M2.5-highspeed",
-      "MiniMax-M2.7",
-      "MiniMax-M2.7-highspeed",
-      "MiniMax-M3"
-    ]
-  },
-  {
-    id: "minimax-cn-coding-plan",
-    name: "MiniMax Token Plan (minimaxi.com)",
-    apiKeyEnvVars: ["MINIMAX_API_KEY"],
-    models: [
-      "MiniMax-M2",
-      "MiniMax-M2.1",
-      "MiniMax-M2.5",
-      "MiniMax-M2.5-highspeed",
-      "MiniMax-M2.7",
-      "MiniMax-M2.7-highspeed",
-      "MiniMax-M3"
-    ]
+    models: ["MiniMax-M3", "MiniMax-M3.1-Flash"]
   },
   {
     id: "mistral",
     name: "Mistral",
     apiKeyEnvVars: ["MISTRAL_API_KEY"],
     models: [
+      "codestral-2508",
       "codestral-latest",
-      "devstral-2512",
-      "devstral-latest",
-      "devstral-medium-2507",
-      "devstral-medium-latest",
-      "devstral-small-2505",
-      "devstral-small-2507",
-      "labs-devstral-small-2512",
-      "magistral-medium-latest",
-      "magistral-small",
+      "deepseek-v4-1-flash-1017",
+      "ministral-14b-2512",
+      "ministral-3b-2512",
       "ministral-3b-latest",
+      "ministral-8b-2512",
       "ministral-8b-latest",
       "mistral-embed",
-      "mistral-large-2411",
       "mistral-large-2512",
+      "mistral-large-4",
+      "mistral-large-4-0-8",
       "mistral-large-latest",
-      "mistral-medium-2505",
-      "mistral-medium-2508",
       "mistral-medium-2604",
       "mistral-medium-latest",
-      "mistral-nemo",
-      "mistral-small-2506",
       "mistral-small-2603",
       "mistral-small-latest",
-      "open-mistral-7b",
-      "open-mistral-nemo",
-      "open-mixtral-8x22b",
-      "open-mixtral-8x7b",
-      "pixtral-12b",
-      "pixtral-large-latest",
       "voxtral-mini-latest",
       "voxtral-mini-tts-latest",
+      "voxtral-small-2507",
       "voxtral-small-latest",
-      "zai-glm-5-2"
+      "zai-glm-5-3",
+      "zai-glm-5-3-flash"
     ]
   },
   {
@@ -4039,16 +4393,29 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "moark",
     name: "Moark",
     apiKeyEnvVars: ["MOARK_API_KEY"],
-    models: ["GLM-4.7", "MiniMax-M2.1"]
+    models: [
+      "DeepSeek-V4-Flash",
+      "deepseek-v4-flash-0731",
+      "DeepSeek-V4-Pro",
+      "GLM-5.3",
+      "Kimi-K2.6",
+      "kimi-k3",
+      "MiniMax-M2.7",
+      "Qwen3.6-Flash"
+    ]
   },
   {
     id: "modal",
     name: "Modal",
     apiKeyEnvVars: ["MODAL_PROXY_TOKEN"],
     models: [
+      "deepseek-ai/DeepSeek-V4.1-Flash",
+      "meta-models/Muse-Spark-Open-816B-A42B",
       "moonshotai/Kimi-K3",
+      "nvidia/GLM-5.3-Flash-NVFP4",
       "Qwen/Qwen3.8-2.4T-A95B",
       "thinkingmachines/Inkling-NVFP4",
+      "zai-org/GLM-5.3",
       "zai-org/GLM-5.3-Flash"
     ]
   },
@@ -4105,22 +4472,82 @@ export const MASTRA_PROVIDER_CATALOG = [
     ]
   },
   {
+    id: "modular",
+    name: "Modular",
+    apiKeyEnvVars: ["MODULAR_API_KEY"],
+    models: [
+      "deepseek/deepseek-v4.1-flash",
+      "google/gemma-4-31b-it",
+      "minimax/minimax-m3",
+      "MiniMaxAI/MiniMax-M3.1-Flash"
+    ]
+  },
+  {
     id: "moonshotai",
     name: "Moonshot AI",
     apiKeyEnvVars: ["MOONSHOT_API_KEY"],
-    models: ["kimi-k2.6", "kimi-k2.7-code", "kimi-k2.7-code-highspeed", "kimi-k3"]
+    models: [
+      "kimi-k2.6",
+      "kimi-k2.7-code",
+      "kimi-k2.7-code-highspeed",
+      "kimi-k3",
+      "kimi-k3.1-pro",
+      "kimi-k3.1-pro-highspeed"
+    ]
   },
   {
     id: "moonshotai-cn",
     name: "Moonshot AI (China)",
     apiKeyEnvVars: ["MOONSHOT_API_KEY"],
-    models: ["kimi-k2.6", "kimi-k2.7-code", "kimi-k2.7-code-highspeed", "kimi-k3"]
+    models: [
+      "kimi-k2.6",
+      "kimi-k2.7-code",
+      "kimi-k2.7-code-highspeed",
+      "kimi-k3",
+      "kimi-k3.1-pro",
+      "kimi-k3.1-pro-highspeed"
+    ]
   },
   {
     id: "morph",
     name: "Morph",
     apiKeyEnvVars: ["MORPH_API_KEY"],
-    models: ["auto", "morph-v3-fast", "morph-v3-large"]
+    models: [
+      "auto",
+      "morph-dsv41flash",
+      "morph-dsv41flash-1017",
+      "morph-dsv4flash",
+      "morph-glm52-744b",
+      "morph-glm53-744b",
+      "morph-glm53flash",
+      "morph-kimik3",
+      "morph-kimik3-fast",
+      "morph-v3-fast",
+      "morph-v3-large"
+    ]
+  },
+  {
+    id: "munito",
+    name: "Munito AI",
+    apiKeyEnvVars: ["MUNITO_API_KEY"],
+    models: [
+      "aleph-alpha/kolibri-1",
+      "deepseek-ai/deepseek-v4-flash",
+      "deepseek-ai/deepseek-v4.1-flash-1017",
+      "qwen/qwen3.8-27b",
+      "zai-org/glm-5.3-flash"
+    ]
+  },
+  {
+    id: "munito-eu",
+    name: "Munito AI (EU)",
+    apiKeyEnvVars: ["MUNITO_API_KEY"],
+    models: [
+      "aleph-alpha/kolibri-1",
+      "deepseek-ai/deepseek-v4-flash",
+      "qwen/qwen3.8-27b",
+      "zai-org/glm-5.3-flash"
+    ]
   },
   {
     id: "nan",
@@ -4129,9 +4556,10 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-v4-flash",
       "gemma4",
-      "glm5.2",
+      "glm5.3",
       "glm5.3-flash",
-      "mimo-v2.5",
+      "mimo-v2.6-flash",
+      "qwen-image-2.1",
       "qwen3.6",
       "qwen3.8-flash"
     ]
@@ -4144,17 +4572,18 @@ export const MASTRA_PROVIDER_CATALOG = [
       "abacusai/Dracarys-72B-Instruct",
       "abliteration-ai/abliterated-model",
       "abliteration-ai/abliterated-model-large",
+      "abliteration-ai/abliterated-model-large-flash",
       "abliteration-ai/abliterated-model-large-v2",
       "agnes-3.0-flash",
       "aion-labs/aion-2.0",
       "aion-labs/aion-3.0",
       "aion-labs/aion-3.0-mini",
+      "aion-labs/aion-3.5",
+      "aion-labs/aion-3.5-mini",
       "aion-labs/aion-rp-llama-3.1-8b",
-      "alibaba/qwen3.6-27b",
-      "alibaba/qwen3.6-27b:thinking",
-      "alibaba/qwen3.6-flash",
-      "alibaba/qwen3.8-flash",
-      "alibaba/qwen3.8-max-0902",
+      "aisingapore/gemma-sea-lion-v4-27b-it",
+      "aisingapore/qwen-sea-lion-v4-32b-it",
+      "aleph-alpha/kolibri-1",
       "amazon/nova-2-lite-v1",
       "amazon/nova-lite-v1",
       "amazon/nova-pro-v1",
@@ -4163,7 +4592,17 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5.1",
       "anthropic/claude-fable-latest",
+      "anthropic/claude-haiku-4.5",
+      "anthropic/claude-haiku-4.5:thinking",
+      "anthropic/claude-haiku-5.5",
       "anthropic/claude-haiku-latest",
+      "anthropic/claude-opus-4.1",
+      "anthropic/claude-opus-4.1:thinking",
+      "anthropic/claude-opus-4.1:thinking:1024",
+      "anthropic/claude-opus-4.1:thinking:32768",
+      "anthropic/claude-opus-4.1:thinking:8192",
+      "anthropic/claude-opus-4.5",
+      "anthropic/claude-opus-4.5:thinking",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-opus-4.6:thinking",
       "anthropic/claude-opus-4.6:thinking:low",
@@ -4174,11 +4613,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-opus-4.8",
       "anthropic/claude-opus-4.8:thinking",
       "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5.5",
       "anthropic/claude-opus-latest",
+      "anthropic/claude-sonnet-4.5",
+      "anthropic/claude-sonnet-4.5:thinking",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-4.6:thinking",
       "anthropic/claude-sonnet-5",
       "anthropic/claude-sonnet-5:thinking",
+      "anthropic/claude-sonnet-5.5",
+      "anthropic/claude-sonnet-5.5:thinking",
       "anthropic/claude-sonnet-latest",
       "arcee-ai/trinity-large-thinking",
       "asi1-mini",
@@ -4186,10 +4630,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "auto-model-basic",
       "auto-model-premium",
       "auto-model-standard",
-      "baseten/Kimi-K2-Instruct-FP4",
-      "brave",
-      "brave-pro",
-      "brave-research",
       "bytedance-seed/seed-2-1-turbo",
       "bytedance-seed/seed-2.0-code",
       "bytedance-seed/seed-2.0-lite",
@@ -4197,37 +4637,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "bytedance/doubao-seed-2.1-turbo",
       "bytedance/doubao-seed-character",
       "celeris-1",
-      "chutesai/Mistral-Small-3.2-24B-Instruct-2506",
-      "claude-haiku-4-5-20251001",
-      "claude-haiku-4-5-20251001-thinking",
-      "claude-opus-4-1-20250805",
-      "claude-opus-4-1-thinking",
-      "claude-opus-4-1-thinking:1024",
-      "claude-opus-4-1-thinking:32768",
-      "claude-opus-4-1-thinking:8192",
-      "claude-opus-4-20250514",
-      "claude-opus-4-5-20251101",
-      "claude-opus-4-5-20251101:thinking",
-      "claude-opus-4-thinking",
-      "claude-opus-4-thinking:1024",
-      "claude-opus-4-thinking:32768",
-      "claude-opus-4-thinking:8192",
-      "claude-sonnet-4-20250514",
-      "claude-sonnet-4-5-20250929",
-      "claude-sonnet-4-5-20250929-thinking",
-      "claude-sonnet-4-thinking",
-      "claude-sonnet-4-thinking:1024",
-      "claude-sonnet-4-thinking:32768",
-      "claude-sonnet-4-thinking:64000",
-      "claude-sonnet-4-thinking:8192",
       "claw-high",
       "claw-low",
       "claw-medium",
       "cohere/command-r-plus-08-2024",
       "command-a-reasoning-08-2025",
-      "crofai/greg-2-super",
-      "crofai/greg-2-ultra",
-      "deepclaude",
       "deepcogito/cogito-v1-preview-qwen-32B",
       "deepseek-ai/DeepSeek-R1-0528",
       "deepseek-ai/DeepSeek-V3.1",
@@ -4238,64 +4652,58 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek-ai/deepseek-v3.2-exp-thinking",
       "deepseek-chat",
       "deepseek-chat-cheaper",
-      "deepseek-r1",
-      "deepseek-r1-sambanova",
-      "deepseek-reasoner",
-      "deepseek-reasoner-cheaper",
       "deepseek-v3-0324",
       "deepseek/deepseek-latest",
       "deepseek/deepseek-v3.2",
       "deepseek/deepseek-v3.2:thinking",
       "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-0423",
+      "deepseek/deepseek-v4-flash-0423:thinking",
       "deepseek/deepseek-v4-flash-0731",
       "deepseek/deepseek-v4-flash-0731:thinking",
       "deepseek/deepseek-v4-flash-latest",
       "deepseek/deepseek-v4-flash-vision-exp",
-      "deepseek/deepseek-v4-flash-vision-exp-uncensored",
       "deepseek/deepseek-v4-flash:thinking",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
       "deepseek/deepseek-v4-pro-0813:thinking",
       "deepseek/deepseek-v4-pro:thinking",
       "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-0910-uncensored",
+      "deepseek/deepseek-v4.1-flash-0910-uncensored:thinking",
+      "deepseek/deepseek-v4.1-flash-1017",
+      "deepseek/deepseek-v4.1-flash-1017-uncensored",
+      "deepseek/deepseek-v4.1-flash-1017-uncensored:thinking",
+      "deepseek/deepseek-v4.1-flash-1017:thinking",
+      "deepseek/deepseek-v4.1-flash-uncensored",
+      "deepseek/deepseek-v4.1-flash-uncensored:thinking",
       "deepseek/deepseek-v4.1-flash:thinking",
       "Doctor-Shotgun/MS3.2-24B-Magnum-Diamond",
-      "doubao-1.5-pro-256k",
-      "doubao-1.5-pro-32k",
-      "doubao-1.5-vision-pro-32k",
-      "doubao-seed-1-6-250615",
-      "doubao-seed-1-6-flash-250615",
       "doubao-seed-2-0-code-preview-260215",
       "doubao-seed-2-0-lite-260215",
       "doubao-seed-2-0-mini-260215",
       "doubao-seed-2-0-pro-260215",
+      "elorian/glimpse",
       "Envoid/Llama-3.05-Nemotron-Tenyxchat-Storybreaker-70B",
       "Envoid/Llama-3.05-NT-Storybreaker-Ministral-70B",
       "ernie-5.0-thinking-preview",
       "ernie-5.1",
       "ernie-5.1:thinking",
-      "ernie-x1.1-preview",
       "EVA-UNIT-01/EVA-LLaMA-3.33-70B-v0.0",
       "EVA-UNIT-01/EVA-LLaMA-3.33-70B-v0.1",
       "EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2",
       "EVA-UNIT-01/EVA-Qwen2.5-72B-v0.2",
-      "exa-answer",
       "failspy/Meta-Llama-3-70B-Instruct-abliterated-v3.5",
       "fastgpt",
       "featherless-ai/Qwerky-72B",
+      "fireworks/ember-1",
       "GalrionSoftworks/MN-LooseCannon-12B-v1",
       "gemini-2.0-pro-exp-02-05",
       "gemini-2.0-pro-reasoner",
       "gemini-2.5-flash",
       "gemini-2.5-flash-lite",
       "gemini-2.5-flash-lite-preview-06-17",
-      "gemini-2.5-flash-lite-preview-09-2025",
-      "gemini-2.5-flash-lite-preview-09-2025-thinking",
       "gemini-2.5-flash-nothinking",
-      "gemini-2.5-flash-preview-04-17",
-      "gemini-2.5-flash-preview-04-17:thinking",
-      "gemini-2.5-flash-preview-05-20",
-      "gemini-2.5-flash-preview-05-20:thinking",
       "gemini-2.5-flash-preview-09-2025",
       "gemini-2.5-flash-preview-09-2025-thinking",
       "gemini-2.5-pro",
@@ -4307,8 +4715,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-exp-1206",
       "gemma-4-12b-it",
       "gemma-4-12b-it-semancer",
+      "gemma-4-12b-it-starry-ocean",
       "gemma-4-12b-it-station-keeper",
       "gemma-4-26b-a4b-it-chimerax",
+      "gemma-4-26b-a4b-it-chimeraxheretic",
       "gemma-4-26b-a4b-it-darksoul",
       "gemma-4-26b-a4b-it-luminous",
       "gemma-4-26b-a4b-it-moonlight",
@@ -4317,12 +4727,18 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemma-4-26b-a4b-it-shadowsiren",
       "Gemma-4-26B-A4B-MeroMero",
       "Gemma-4-26B-A4B-MeroMero:thinking",
-      "gemma-4-26b-a4b-uncensored",
-      "gemma-4-26b-a4b-uncensored:thinking",
+      "Gemma-4-31B-Agares-v1",
+      "Gemma-4-31B-Animus-V14.1",
+      "Gemma-4-31B-AssGuard",
       "Gemma-4-31B-Claude-4.6-Opus-Reasoning-Distilled",
       "Gemma-4-31B-Cognitive-Unshackled",
+      "Gemma-4-31B-Dark-Gemistry",
       "Gemma-4-31B-DarkIdol",
+      "Gemma-4-31B-Fabled",
       "Gemma-4-31B-GarnetV2",
+      "Gemma-4-31B-Gembrain-uncensored-heretic",
+      "Gemma-4-31B-Gembrain-X-Core",
+      "Gemma-4-31B-Isometry-RP",
       "gemma-4-31b-it-darkidol",
       "gemma-4-31b-it-fabled",
       "gemma-4-31b-it-garnet",
@@ -4330,18 +4746,18 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemma-4-31b-it-gemsicle",
       "gemma-4-31b-it-isometry",
       "gemma-4-31b-it-novelist",
+      "gemma-4-31b-it-scarlet",
+      "Gemma-4-31B-K1-v5",
+      "Gemma-4-31B-MeroMero",
       "Gemma-4-31B-MeroMero-v2",
       "Gemma-4-31B-MeroMero-v2:thinking",
+      "Gemma-4-31B-Novelist",
       "Gemma-4-31B-Queen",
-      "gemma-4-e2b-it",
-      "gemma-4-e4b-it",
-      "glm-4-air-0111",
+      "Gemma-4-31B-SDFT-Heretic-RP",
+      "Gemma-4-31B-StyleTune",
       "glm-4-long",
-      "glm-4-plus-0111",
-      "glm-4.1v-thinking-flash",
-      "glm-4.1v-thinking-flashx",
       "GLM-4.6-Derestricted-v5",
-      "glm-z1-airx",
+      "google/diffusiongemma",
       "google/gemini-3-flash-preview",
       "google/gemini-3-flash-preview-thinking",
       "google/gemini-3.1-flash-lite",
@@ -4355,14 +4771,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.6-flash",
       "google/gemini-3.7-flash",
       "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
       "google/gemini-flash-latest",
       "google/gemini-flash-lite-latest",
       "google/gemini-pro-latest",
       "google/gemma-4-26b-a4b-it",
+      "google/gemma-4-26b-a4b-it-cybersecurity",
       "google/gemma-4-26b-a4b-it:thinking",
       "google/gemma-4-31b-it",
       "google/gemma-4-31b-it:thinking",
+      "google/gemma4-31b-splituntied",
       "Gryphe/MythoMax-L2-13b",
+      "heabsy/cyberheabsy",
+      "heabsy/qwen3.8-27b-uncensored-fast",
       "hermes-high",
       "hermes-low",
       "hermes-medium",
@@ -4374,14 +4795,18 @@ export const MASTRA_PROVIDER_CATALOG = [
       "huihui-ai/Qwen2.5-32B-Instruct-abliterated",
       "ibm-granite/granite-4.2-8b",
       "inception/mercury-2.5-preview",
+      "inception/mercury-3",
       "inclusionai/ling-3.0-flash",
       "inclusionai/ling-3.0-flash-vl",
       "inclusionai/ling-3.0-flash:thinking",
+      "inclusionai/ling-3.1-flash",
+      "inference-net/schematron-v2-small",
+      "inference-net/schematron-v2-turbo",
       "inflatebot/MN-12B-Mag-Mell-R1",
-      "k2-horizon-7b",
-      "kimi-k2-instruct-fast",
       "LatitudeGames/Wayfarer-Large-70B-Llama-3.3",
+      "lightonai/LightOnOCR-2-1B",
       "liquid/lfm-2.5-2.6b",
+      "liquid/lfm-2.5-24b-a2b",
       "LLM360/K2-Think",
       "longcat-2.0",
       "longcat-2.0:thinking",
@@ -4389,6 +4814,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "meganova-ai/manta-flash-1.0",
       "meganova-ai/manta-mini-1.0",
       "meganova-ai/manta-pro-1.0",
+      "meituan/longcat-2.5-preview",
       "mercury-2",
       "mercury-coder-small",
       "Meta-Llama-3-1-8B-Instruct-FP8",
@@ -4403,11 +4829,13 @@ export const MASTRA_PROVIDER_CATALOG = [
       "meta/muse-spark-1.2-contributor",
       "meta/muse-spark-1.3",
       "meta/muse-spark-1.3-contributor",
+      "meta/muse-spark-open",
+      "meta/muse-wonder",
       "microsoft/wizardlm-2-8x22b",
       "MiniMax-M1",
-      "MiniMax-M2",
       "minimax/minimax-01",
       "minimax/minimax-latest",
+      "minimax/minimax-m2",
       "minimax/minimax-m2-her",
       "minimax/minimax-m2.1",
       "minimax/minimax-m2.5",
@@ -4415,29 +4843,34 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.7-turbo",
       "minimax/minimax-m3",
       "minimax/minimax-m3:thinking",
+      "minimax/minimax-m3.1-flash",
       "MiniMaxAI/MiniMax-M1-80k",
       "mistral-code-agent-latest",
       "mistral-code-latest",
-      "mistral-small-31-24b-instruct",
-      "mistral/mistral-medium-3.5",
-      "mistral/mistral-medium-3.5:thinking",
       "mistralai/codestral-2508",
       "mistralai/devstral-2-123b-instruct-2512",
-      "mistralai/Devstral-Small-2505",
+      "mistralai/devstral-small-2505",
       "mistralai/ministral-14b-2512",
       "mistralai/ministral-14b-instruct-2512",
       "mistralai/ministral-3b-2512",
       "mistralai/ministral-8b-2512",
       "mistralai/mistral-large",
-      "mistralai/mistral-large-3-675b-instruct-2512",
+      "mistralai/mistral-large-4",
       "mistralai/mistral-medium-3",
       "mistralai/mistral-medium-3.1",
-      "mistralai/Mistral-Nemo-Instruct-2407",
+      "mistralai/mistral-medium-3.5",
+      "mistralai/mistral-medium-3.5:thinking",
+      "mistralai/mistral-nemo-instruct-2407",
       "mistralai/mistral-saba",
+      "mistralai/mistral-small-24b-instruct-2501",
+      "mistralai/mistral-small-3.1-24b-instruct",
+      "mistralai/mistral-small-3.2-24b-instruct",
       "mistralai/mistral-small-4-119b-2603",
       "mistralai/mistral-small-4-119b-2603:thinking",
       "mistralai/mixtral-8x22b-instruct-v0.1",
       "mlabonne/NeuralDaredevil-8B-abliterated",
+      "moondream/moondream3-preview",
+      "moondream/moondream3.1-9b-a2b",
       "moonshotai/kimi-k2-instruct",
       "moonshotai/kimi-k2-instruct-0711",
       "moonshotai/Kimi-K2-Instruct-0905",
@@ -4449,6 +4882,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshotai/kimi-k2.7-code",
       "moonshotai/kimi-k2.7-code-highspeed",
       "moonshotai/kimi-k3",
+      "moonshotai/kimi-k3.1-pro",
+      "moonshotai/kimi-k3.1-pro-highspeed",
       "moonshotai/kimi-latest",
       "nano-gpt-help",
       "nanogpt/coding-router",
@@ -4457,6 +4892,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "nanogpt/coding-router:max",
       "nanogpt/coding-router:medium",
       "NeverSleep/Lumimaid-v0.2-70B",
+      "nex-agi/nex-n2.5-mini",
+      "nex-agi/nex-n2.5-pro",
       "nothingiisreal/L3.1-70B-Celeste-V0.1-BF16",
       "NousResearch/hermes-3-llama-3.1-70b",
       "NousResearch/hermes-4-405b",
@@ -4468,9 +4905,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "nvidia/nemotron-3-super-120b-a12b:thinking",
       "nvidia/nemotron-3-ultra-550b-a55b",
       "nvidia/nemotron-3-ultra-550b-a55b:thinking",
+      "nvidia/nemotron-3.5-content-safety",
       "nvidia/nemotron-3.5-lightning",
       "nvidia/nemotron-3.5-lightning:thinking",
-      "openai/gpt-3.5-turbo",
+      "nvidia/nemotron-3.5-super-vl",
       "openai/gpt-4-turbo",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
@@ -4503,11 +4941,23 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-terra-pro",
       "openai/gpt-6-astra",
       "openai/gpt-6-astra-pro",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-luna-pro",
+      "openai/gpt-6-sol",
+      "openai/gpt-6-sol-pro",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-sol-pro",
+      "openai/gpt-6.1-terra",
+      "openai/gpt-6.1-terra-pro",
+      "openai/gpt-astra-latest",
       "openai/gpt-chat-latest",
       "openai/gpt-latest",
+      "openai/gpt-luna-latest",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "openai/gpt-oss-safeguard-20b",
+      "openai/gpt-sol-latest",
+      "openai/gpt-terra-latest",
       "openai/o1",
       "openai/o1-pro",
       "openai/o3",
@@ -4517,86 +4967,105 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/o3-pro-2025-06-10",
       "openai/o4-mini",
       "openai/o4-mini-high",
+      "orca/orcacyber-zero-1.5",
+      "ornith-ai/ornith-1.5-122b",
       "ornith-ai/ornith-1.5-35b-a3b",
       "ornith-ai/ornith-1.5-35b-a3b:thinking",
       "pamanseau/OpenReasoning-Nemotron-32B",
+      "particle-ai/particle-1",
       "perceptron/perceptron-mk1",
-      "perplexity-academic-researcher",
+      "perceptron/perceptron-mk1.5",
       "phi-4-mini-instruct",
       "phi-4-multimodal-instruct",
       "pokee-isaac",
       "poolside/laguna-s-2.1",
       "poolside/laguna-s-2.1:thinking",
-      "qvq-max",
-      "qwen-3.6-plus",
-      "qwen-long",
-      "qwen-max",
-      "qwen-plus",
-      "qwen-turbo",
+      "prism-ml/ternary-bonsai-2-27b",
+      "prism-ml/ternary-bonsai-2-9b",
       "qwen/qwen-2.5-72b-instruct",
-      "qwen/Qwen2.5-Coder-32B-Instruct",
+      "qwen/qwen-long",
+      "qwen/qwen-max",
+      "qwen/qwen-plus",
+      "qwen/qwen-turbo",
+      "qwen/qwen2.5-coder-32b-instruct",
+      "qwen/qwen2.5-vl-72b-instruct",
       "qwen/qwen3-14b",
       "qwen/qwen3-235b-a22b",
-      "qwen/Qwen3-235B-A22B-Instruct-2507",
-      "qwen/Qwen3-235B-A22B-Thinking-2507",
+      "qwen/qwen3-235b-a22b-instruct-2507",
+      "qwen/qwen3-235b-a22b-thinking-2507",
       "qwen/qwen3-30b-a3b",
+      "qwen/qwen3-30b-a3b-instruct-2507",
       "qwen/qwen3-32b",
-      "qwen/Qwen3-8B",
+      "qwen/qwen3-8b",
       "qwen/qwen3-coder",
+      "qwen/qwen3-coder-30b-a3b-instruct",
       "qwen/qwen3-coder-flash",
       "qwen/qwen3-coder-next",
-      "qwen/qwen3-coder-plus",
-      "qwen/qwen3-max",
-      "qwen/Qwen3-Next-80B-A3B-Instruct",
+      "qwen/qwen3-next-80b-a3b-instruct",
       "qwen/qwen3-next-80b-a3b-thinking",
-      "qwen/Qwen3-VL-235B-A22B-Instruct",
+      "qwen/qwen3-vl-235b-a22b-instruct",
+      "qwen/qwen3-vl-235b-a22b-thinking",
+      "qwen/qwen3.5-122b-a10b",
+      "qwen/qwen3.5-122b-a10b:thinking",
+      "qwen/qwen3.5-27b",
+      "qwen/qwen3.5-27b:thinking",
+      "qwen/qwen3.5-35b-a3b",
+      "qwen/qwen3.5-35b-a3b:thinking",
       "qwen/qwen3.5-397b-a17b",
-      "qwen/qwen3.5-397b-a17b-thinking",
+      "qwen/qwen3.5-397b-a17b:thinking",
       "qwen/qwen3.5-9b",
+      "qwen/qwen3.5-flash",
+      "qwen/qwen3.5-flash:thinking",
+      "qwen/qwen3.5-omni-flash",
+      "qwen/qwen3.5-omni-plus",
       "qwen/qwen3.5-plus",
-      "qwen/qwen3.5-plus-thinking",
-      "qwen/Qwen3.6-35B-A3B",
-      "qwen/Qwen3.6-35B-A3B:thinking",
-      "qwen/qwen3.8-2.4t-a95b",
+      "qwen/qwen3.5-plus:thinking",
+      "qwen/qwen3.6-27b",
+      "qwen/qwen3.6-27b:thinking",
+      "qwen/qwen3.6-35b-a3b",
+      "qwen/qwen3.6-35b-a3b:thinking",
+      "qwen/qwen3.6-flash",
+      "qwen/qwen3.6-max-preview",
+      "qwen/qwen3.6-plus",
+      "qwen/qwen3.7-flash",
+      "qwen/qwen3.7-flash:thinking",
+      "qwen/qwen3.7-max",
+      "qwen/qwen3.7-max:thinking",
+      "qwen/qwen3.7-plus",
+      "qwen/qwen3.7-plus:thinking",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.8-27b-antislop",
+      "qwen/qwen3.8-27b-cybersecurity",
+      "qwen/qwen3.8-27b-darkidol",
       "qwen/qwen3.8-27b-fable",
-      "qwen/qwen3.8-27b-obliterated",
-      "qwen/qwen3.8-27b-obliterated:thinking",
+      "qwen/qwen3.8-27b-fimi",
+      "qwen/qwen3.8-27b-hemmingway",
+      "qwen/qwen3.8-27b-kimiko",
+      "qwen/qwen3.8-27b-kiwen",
+      "qwen/qwen3.8-27b-novelist",
       "qwen/qwen3.8-27b-queen",
+      "qwen/qwen3.8-27b-swift",
+      "qwen/qwen3.8-27b-synthia",
       "qwen/qwen3.8-27b-uncensored",
       "qwen/qwen3.8-27b-uncensored:thinking",
-      "qwen25-vl-72b-instruct",
-      "qwen3-30b-a3b-instruct-2507",
-      "qwen3-coder-30b-a3b-instruct",
-      "qwen3-max-2026-01-23",
+      "qwen/qwen3.8-27b:thinking",
+      "qwen/qwen3.8-flash",
+      "qwen/qwen3.8-max",
+      "qwen/qwen3.8-max-0902",
+      "qwen/qwen3.8-max-prime",
+      "qwen/qwen3.8-max:thinking",
+      "qwen/qwen3.8-omni-flash",
       "qwen3-vl-235b-a22b-instruct-original",
-      "qwen3-vl-235b-a22b-thinking",
-      "qwen3.5-0.8b",
-      "qwen3.5-122b-a10b",
-      "qwen3.5-122b-a10b:thinking",
-      "qwen3.5-27b",
+      "Qwen3.5-27B-Blossom-V6.4-Derestricted",
       "Qwen3.5-27B-BlueStar-v3-Derestricted",
+      "Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-Derestricted",
+      "Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-Derestricted-Lite",
       "Qwen3.5-27B-Queen-Derestricted",
-      "qwen3.5-27b:thinking",
-      "qwen3.5-2b",
-      "qwen3.5-35b-a3b",
-      "qwen3.5-35b-a3b:thinking",
-      "qwen3.5-4b",
-      "qwen3.5-flash",
-      "qwen3.5-flash:thinking",
-      "qwen3.5-omni-flash",
-      "qwen3.5-omni-plus",
-      "qwen3.6-max-preview",
-      "qwen3.7-flash",
-      "qwen3.7-flash:thinking",
-      "qwen3.7-max",
-      "qwen3.7-max:thinking",
-      "qwen3.7-plus",
-      "qwen3.7-plus:thinking",
-      "qwen3.8-27b",
-      "qwen3.8-27b:thinking",
-      "qwen3.8-max",
-      "qwen3.8-max:thinking",
       "ReadyArt/MS3.2-The-Omega-Directive-24B-Unslop-v2.0",
+      "reflection/beam-1.0",
+      "reka/reka-edge-2603",
+      "reka/reka-flash-3",
+      "sakana/fugu-max",
       "sakana/fugu-ultra",
       "sakana/fugu-ultra-v1.1",
       "Salesforce/Llama-xLAM-2-70b-fc-r",
@@ -4607,13 +5076,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "sarvam-105b",
       "shisa-ai/shisa-v2-llama3.3-70b",
       "shisa-ai/shisa-v2.1-llama3.3-70b",
-      "sonar",
-      "sonar-deep-research",
-      "sonar-pro",
-      "sonar-reasoning-pro",
       "soob3123/amoral-gemma3-27B-v2",
-      "soob3123/GrayLine-Qwen3-8B",
       "soob3123/Veiled-Calla-12B",
+      "speakleash/bielik-11b-v3.0-instruct",
       "Steelskull/L3.3-Cu-Mai-R1-70b",
       "Steelskull/L3.3-Electra-R1-70b",
       "Steelskull/L3.3-MS-Nevoria-70b",
@@ -4621,8 +5086,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "stepfun-ai/step-3.5-flash",
       "stepfun-ai/step-3.5-flash-2603",
       "stepfun/step-3.7-flash:thinking",
+      "stepfun/step-5-preview",
+      "synth-2.5-flash",
+      "synth-2.5-pro",
       "TEE/deepseek-v3.2",
-      "TEE/deepseek-v4-flash",
+      "TEE/deepseek-v4.1-flash",
       "TEE/gemma-4-26b-a4b-uncensored",
       "TEE/gemma-4-31b-it",
       "TEE/gemma4-31b",
@@ -4634,19 +5102,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "TEE/glm-5.3",
       "TEE/glm-5.3-flash",
       "TEE/gpt-oss-120b",
-      "TEE/gpt-oss-20b",
       "TEE/kimi-k2.6",
       "TEE/kimi-k2.7-code",
       "TEE/kimi-k3",
       "TEE/llama3-3-70b",
-      "TEE/muse-glimmer-30b",
+      "TEE/nemotron-3.5-lightning",
       "TEE/qwen2.5-vl-72b-instruct",
-      "TEE/qwen3-8b",
       "TEE/qwen3.5-27b",
       "TEE/qwen3.5-397b-a17b",
       "TEE/qwen3.6-27b",
       "TEE/qwen3.6-35b-a3b",
-      "TEE/qwen3.6-35b-a3b-uncensored",
       "TEE/qwen3.8-27b",
       "tencent/hy3",
       "tencent/hy4-preview",
@@ -4665,14 +5130,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "thinkingmachines/Inkling-Small",
       "thinkingmachines/Inkling-Small:thinking",
       "thinkingmachines/inkling:thinking",
-      "THUDM/GLM-4-32B-0414",
-      "THUDM/GLM-4-9B-0414",
-      "THUDM/GLM-Z1-9B-0414",
+      "unbiased/pareto-26.10",
+      "unbiased/pareto-26.9",
       "undi95/remm-slerp-l2-13b",
       "universal-summarizer",
       "unsloth/gemma-3-12b-it",
       "unsloth/gemma-3-27b-it",
       "unsloth/gemma-3-4b-it",
+      "upstage/solar-mini4",
+      "upstage/solar-mini4:thinking",
       "upstage/solar-pro-3",
       "upstage/solar-pro4",
       "upstage/solar-pro4:thinking",
@@ -4683,14 +5149,20 @@ export const MASTRA_PROVIDER_CATALOG = [
       "x-ai/grok-4.3",
       "x-ai/grok-4.5",
       "x-ai/grok-4.6",
+      "x-ai/grok-4.7",
       "x-ai/grok-build-0.1",
       "x-ai/grok-latest",
       "xiaomi/mimo-v2.5",
       "xiaomi/mimo-v2.5-pro",
-      "xiaomi/mimo-v2.5-pro-crof",
-      "xiaomi/mimo-v2.5-pro-crof:thinking",
       "xiaomi/mimo-v2.5-pro:thinking",
       "xiaomi/mimo-v2.5:thinking",
+      "xiaomi/mimo-v2.6-flash",
+      "xiaomi/mimo-v2.6-flash-abliterated",
+      "xiaomi/mimo-v2.6-flash-uncensored",
+      "xiaomi/mimo-v2.6-flash-uncensored:thinking",
+      "xiaomi/mimo-v2.6-pro",
+      "xiaomi/mimo-v2.6-pro-ultraspeed",
+      "xingchen-agi/xing4.0-29b-a4b",
       "z-ai/glm-4.5",
       "z-ai/GLM-4.5-Air",
       "z-ai/GLM-4.5-Air:thinking",
@@ -4706,8 +5178,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "z-ai/glm-4.6v-original",
       "z-ai/glm-4.7",
       "z-ai/glm-4.7-flash",
-      "z-ai/glm-4.7-flash-original",
-      "z-ai/glm-4.7-flash-original:thinking",
       "z-ai/glm-4.7-flash:thinking",
       "z-ai/glm-4.7-original",
       "z-ai/glm-4.7-original:thinking",
@@ -4723,7 +5193,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "z-ai/glm-5.2:thinking",
       "z-ai/glm-5.3",
       "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3-flash-apex",
+      "z-ai/glm-5.3-flash-apex-abliterated",
+      "z-ai/glm-5.3-flash-cybersecurity",
       "z-ai/glm-5.3-flash-uncensored",
+      "z-ai/glm-5.3-uncensored",
       "z-ai/glm-5.3:thinking",
       "z-ai/glm-5v-turbo",
       "z-ai/glm-5v-turbo:thinking",
@@ -4735,20 +5209,35 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "NEAR AI Cloud",
     apiKeyEnvVars: ["NEARAI_API_KEY"],
     models: [
+      "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5-1",
       "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-5-5",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-opus-4-7",
+      "anthropic/claude-opus-4-8",
+      "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5-5",
       "anthropic/claude-sonnet-4-5",
       "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5-5",
       "black-forest-labs/FLUX.2-klein-4B",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017-abliterated",
+      "deepseek/deepseek-v3.2",
+      "deepseek/deepseek-v4.1-flash-1017",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-lite",
       "google/gemini-2.5-pro",
       "google/gemini-3.1-flash-lite",
       "google/gemini-3.5-flash",
+      "google/gemini-3.8-flash",
+      "moonshotai/kimi-k2.6",
+      "moonshotai/kimi-k3",
+      "moonshotai/kimi-k3.1-pro",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
-      "openai/gpt-4.1-nano",
       "openai/gpt-5",
       "openai/gpt-5-mini",
       "openai/gpt-5-nano",
@@ -4758,6 +5247,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.4-mini",
       "openai/gpt-5.4-nano",
       "openai/gpt-5.5",
+      "openai/gpt-5.6-luna",
+      "openai/gpt-5.6-sol",
+      "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
       "openai/o3",
       "openai/o3-mini",
       "openai/o4-mini",
@@ -4765,8 +5260,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Qwen/Qwen3-Embedding-0.6B",
       "Qwen/Qwen3-Reranker-0.6B",
       "Qwen/Qwen3-VL-30B-A3B-Instruct",
+      "qwen/qwen3.5-397b-a17b",
       "Qwen/Qwen3.6-35B-A3B-FP8",
-      "zai-org/GLM-5.1-FP8"
+      "qwen/qwen3.7-max",
+      "Qwen/Qwen3.8-27B",
+      "Qwen/Qwen3.8-27B-abliterated",
+      "x-ai/grok-4.6",
+      "x-ai/grok-4.7",
+      "z-ai/glm-5.3",
+      "z-ai/glm-5.3-flash"
     ]
   },
   {
@@ -4776,20 +5278,29 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-ai/DeepSeek-V4-Flash-0731",
       "deepseek-ai/DeepSeek-V4-Pro",
+      "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "deepseek-ai/DeepSeek-V4.1-Flash",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017",
       "google/gemma-3-27b-it",
+      "meta-models/muse-spark-open",
       "MiniMaxAI/MiniMax-M3",
+      "MiniMaxAI/MiniMax-M3.1-Flash",
       "moonshotai/Kimi-K2.7-Code",
       "moonshotai/Kimi-K3",
       "NousResearch/Hermes-4-405B",
       "nvidia/Nemotron-3_5-Lightning",
       "nvidia/nemotron-3-super-120b-a12b",
       "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "nvidia/Nemotron-3.5-Super-VL",
       "openai/gpt-oss-120b",
       "Qwen/Qwen3-235B-A22B-Instruct-2507",
       "Qwen/Qwen3-30B-A3B-Instruct-2507",
       "Qwen/Qwen3-Embedding-8B",
       "Qwen/Qwen3.5-397B-A17B",
+      "Qwen/Qwen3.8-27B",
+      "reflection/beam",
       "zai-org/GLM-5.2",
+      "zai-org/GLM-5.3",
       "zai-org/GLM-5.3-Flash"
     ]
   },
@@ -4801,23 +5312,30 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-fable-5",
       "claude-fable-5-1",
       "claude-haiku-4-5",
+      "claude-haiku-5-5",
       "claude-opus-4-1",
       "claude-opus-4-5",
       "claude-opus-4-6",
       "claude-opus-4-7",
       "claude-opus-4-8",
       "claude-opus-5",
+      "claude-opus-5-5",
       "claude-sonnet-4-5",
       "claude-sonnet-4-6",
       "claude-sonnet-5",
+      "claude-sonnet-5-5",
       "gemini-3-1-flash-lite",
       "gemini-3-1-pro",
       "gemini-3-5-flash",
       "gemini-3-5-flash-lite",
       "gemini-3-6-flash",
+      "gemini-3-7-flash",
+      "gemini-3-8-flash",
       "gemini-3-flash",
+      "gemini-4-argon",
       "gemma-3-12b",
       "glm-5-2",
+      "glm-5-3",
       "glm-5-3-flash",
       "gpt-5",
       "gpt-5-1",
@@ -4833,11 +5351,14 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5-6-terra",
       "gpt-5-mini",
       "gpt-5-nano",
+      "gpt-6-1-sol",
       "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
       "gpt-oss-120b",
       "gpt-oss-20b",
       "grok-4-6",
-      "inkling",
+      "grok-4-7",
       "kimi-k3",
       "llama-4-maverick",
       "meta-llama-3-1-8b-instruct",
@@ -4866,20 +5387,20 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-fable-5-1",
       "anthropic/claude-haiku-4-5",
       "anthropic/claude-haiku-4-5-20251001",
+      "anthropic/claude-haiku-5-5",
       "anthropic/claude-opus-4-5",
       "anthropic/claude-opus-4-5-20251101",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-opus-4-7",
       "anthropic/claude-opus-4-8",
       "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5-5",
       "anthropic/claude-sonnet-4-5",
       "anthropic/claude-sonnet-4-5-20250929",
       "anthropic/claude-sonnet-4-6",
       "anthropic/claude-sonnet-5",
-      "gemini/gemini-2.5-flash",
+      "anthropic/claude-sonnet-5-5",
       "gemini/gemini-2.5-flash-image",
-      "gemini/gemini-2.5-flash-lite",
-      "gemini/gemini-2.5-pro",
       "gemini/gemini-3-flash-preview",
       "gemini/gemini-3-pro-image",
       "gemini/gemini-3.1-flash-image",
@@ -4892,12 +5413,17 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini/gemini-3.6-flash",
       "gemini/gemini-3.7-flash",
       "gemini/gemini-3.8-flash",
+      "gemini/gemini-4-argon",
       "gemini/gemini-flash-latest",
       "gemini/gemini-flash-lite-latest",
+      "gemini/gemini-nano-banana-2.1",
+      "meta/muse-spark-1.1",
+      "meta/muse-spark-1.2",
+      "meta/muse-spark-1.3",
+      "meta/muse-wonder-1.0",
       "openai/chat-latest",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
-      "openai/gpt-4.1-nano",
       "openai/gpt-4o",
       "openai/gpt-4o-mini",
       "openai/gpt-5",
@@ -4929,7 +5455,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
       "openai/gpt-6-astra",
-      "openai/gpt-image-1",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-terra",
       "openai/gpt-image-1.5",
       "openai/gpt-image-2",
       "openai/gpt-image-2-2026-04-21",
@@ -4938,15 +5467,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-image-2.5-sunburst",
       "openai/gpt-image-2.5-sunburst-2026-09-08",
       "openai/o3",
-      "openai/o3-mini",
-      "openai/o4-mini",
+      "openrouter/~deepseek/deepseek-flash-latest",
+      "openrouter/~deepseek/deepseek-pro-latest",
       "openrouter/~deepseek/deepseek-v4-flash-latest",
       "openrouter/~moonshotai/kimi-latest",
+      "openrouter/~unbiased/pareto-latest",
       "openrouter/~x-ai/grok-latest",
       "openrouter/~z-ai/glm-flash-latest",
       "openrouter/~z-ai/glm-latest",
       "openrouter/anthracite-org/magnum-v4-72b",
-      "openrouter/baidu/ernie-4.5-vl-424b-a47b",
       "openrouter/bytedance-seed/seed-1.6",
       "openrouter/bytedance-seed/seed-1.6-flash",
       "openrouter/bytedance-seed/seed-2-1-turbo",
@@ -4955,21 +5484,20 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/bytedance-seed/seed-2.0-mini",
       "openrouter/bytedance/ui-tars-1.5-7b",
       "openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition",
+      "openrouter/cohere/command-a-plus",
       "openrouter/deepseek/deepseek-chat",
-      "openrouter/deepseek/deepseek-chat-v3-0324",
       "openrouter/deepseek/deepseek-chat-v3.1",
-      "openrouter/deepseek/deepseek-r1",
       "openrouter/deepseek/deepseek-r1-0528",
-      "openrouter/deepseek/deepseek-r1-distill-llama-70b",
-      "openrouter/deepseek/deepseek-v3.1-terminus",
       "openrouter/deepseek/deepseek-v3.2",
-      "openrouter/deepseek/deepseek-v3.2-exp",
       "openrouter/deepseek/deepseek-v4-flash",
       "openrouter/deepseek/deepseek-v4-flash-0731",
       "openrouter/deepseek/deepseek-v4-flash-vision-exp",
       "openrouter/deepseek/deepseek-v4-pro",
       "openrouter/deepseek/deepseek-v4-pro-0813",
       "openrouter/deepseek/deepseek-v4.1-flash",
+      "openrouter/deepseek/deepseek-v4.1-flash-1017",
+      "openrouter/elorian/glimpse",
+      "openrouter/fireworks/ember-1",
       "openrouter/google/gemma-2-27b-it",
       "openrouter/google/gemma-3-12b-it",
       "openrouter/google/gemma-3-27b-it",
@@ -4980,33 +5508,39 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/ibm-granite/granite-4.2-8b",
       "openrouter/inception/mercury-2",
       "openrouter/inception/mercury-2.5",
+      "openrouter/inception/mercury-3",
       "openrouter/inclusionai/ling-3.0-flash",
-      "openrouter/inclusionai/ling-3.0-flash-fin",
-      "openrouter/inclusionai/ling-3.0-flash-fin:free",
-      "openrouter/inclusionai/ling-3.0-flash-sante:free",
+      "openrouter/inclusionai/ling-3.0-flash-vl",
+      "openrouter/inclusionai/ling-3.1-flash",
+      "openrouter/inference-net/schematron-v2-small",
+      "openrouter/inference-net/schematron-v2-turbo",
+      "openrouter/liquid/lfm-2.5-24b-a2b",
       "openrouter/mancer/weaver",
       "openrouter/meta-llama/llama-3.1-70b-instruct",
       "openrouter/meta-llama/llama-3.1-8b-instruct",
+      "openrouter/meta-llama/llama-3.2-1b-instruct",
       "openrouter/meta-llama/llama-3.2-3b-instruct",
       "openrouter/meta-llama/llama-3.3-70b-instruct",
       "openrouter/meta-llama/llama-4-maverick",
       "openrouter/meta-llama/llama-4-scout",
       "openrouter/meta-llama/llama-guard-4-12b",
       "openrouter/meta/muse-glimmer-30b",
+      "openrouter/meta/muse-spark-open",
       "openrouter/microsoft/phi-4",
-      "openrouter/microsoft/wizardlm-2-8x22b",
       "openrouter/minimax/minimax-m1",
       "openrouter/minimax/minimax-m2",
       "openrouter/minimax/minimax-m2.1",
       "openrouter/minimax/minimax-m2.5",
       "openrouter/minimax/minimax-m2.7",
       "openrouter/minimax/minimax-m3",
+      "openrouter/minimax/minimax-m3.1-flash",
       "openrouter/mistralai/devstral-2512",
       "openrouter/mistralai/ministral-14b-2512",
       "openrouter/mistralai/ministral-3b-2512",
       "openrouter/mistralai/ministral-8b-2512",
       "openrouter/mistralai/mistral-large-2407",
       "openrouter/mistralai/mistral-large-2512",
+      "openrouter/mistralai/mistral-large-4-0",
       "openrouter/mistralai/mistral-medium-3",
       "openrouter/mistralai/mistral-medium-3-5",
       "openrouter/mistralai/mistral-medium-3.1",
@@ -5014,9 +5548,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/mistralai/mistral-saba",
       "openrouter/mistralai/mistral-small-24b-instruct-2501",
       "openrouter/mistralai/mistral-small-2603",
+      "openrouter/mistralai/mistral-small-3.1-24b-instruct",
       "openrouter/mistralai/mistral-small-3.2-24b-instruct",
       "openrouter/mistralai/mixtral-8x22b-instruct",
       "openrouter/mistralai/voxtral-small-24b-2507",
+      "openrouter/moondream/moondream3-preview",
+      "openrouter/moondream/moondream3.1-9b-a2b",
       "openrouter/moonshotai/kimi-k2",
       "openrouter/moonshotai/kimi-k2-0905",
       "openrouter/moonshotai/kimi-k2-thinking",
@@ -5034,6 +5571,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/nvidia/nemotron-3-ultra-550b-a55b",
       "openrouter/nvidia/nemotron-3.5-content-safety",
       "openrouter/nvidia/nemotron-3.5-lightning",
+      "openrouter/nvidia/nemotron-3.5-super-vl",
+      "openrouter/nvidia/switchyard",
       "openrouter/openai/gpt-oss-120b",
       "openrouter/openai/gpt-oss-20b",
       "openrouter/openai/gpt-oss-safeguard-20b",
@@ -5041,7 +5580,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/openrouter/auto-beta",
       "openrouter/openrouter/free",
       "openrouter/openrouter/pareto-code",
+      "openrouter/particle-ai/particle-1",
       "openrouter/perceptron/perceptron-mk1",
+      "openrouter/perceptron/perceptron-mk1.5",
       "openrouter/perplexity/sonar",
       "openrouter/perplexity/sonar-deep-research",
       "openrouter/perplexity/sonar-pro",
@@ -5049,6 +5590,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/perplexity/sonar-reasoning-pro",
       "openrouter/qwen/qwen-2.5-72b-instruct",
       "openrouter/qwen/qwen-2.5-7b-instruct",
+      "openrouter/qwen/qwen-2.5-coder-32b-instruct",
       "openrouter/qwen/qwen2.5-vl-72b-instruct",
       "openrouter/qwen/qwen3-14b",
       "openrouter/qwen/qwen3-235b-a22b-2507",
@@ -5057,11 +5599,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/qwen/qwen3-30b-a3b-instruct-2507",
       "openrouter/qwen/qwen3-32b",
       "openrouter/qwen/qwen3-coder",
-      "openrouter/qwen/qwen3-coder-30b-a3b-instruct",
       "openrouter/qwen/qwen3-coder-next",
       "openrouter/qwen/qwen3-next-80b-a3b-instruct",
       "openrouter/qwen/qwen3-vl-235b-a22b-instruct",
-      "openrouter/qwen/qwen3-vl-235b-a22b-thinking",
       "openrouter/qwen/qwen3-vl-30b-a3b-instruct",
       "openrouter/qwen/qwen3-vl-8b-instruct",
       "openrouter/qwen/qwen3.5-122b-a10b",
@@ -5073,15 +5613,17 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/qwen/qwen3.6-35b-a3b",
       "openrouter/qwen/qwen3.8-2.4t-a95b",
       "openrouter/qwen/qwen3.8-27b",
-      "openrouter/qwen/qwen3.8-flash",
+      "openrouter/reflection/beam-1.0-501b-a23b",
       "openrouter/rekaai/reka-edge",
       "openrouter/rekaai/reka-flash-3",
       "openrouter/relace/relace-apply-3",
       "openrouter/relace/relace-search",
       "openrouter/sao10k/l3-lunaris-8b",
       "openrouter/sao10k/l3.1-euryale-70b",
-      "openrouter/sao10k/l3.3-euryale-70b",
+      "openrouter/scaledown/extract",
+      "openrouter/scaledown/summarize",
       "openrouter/stepfun/step-3.7-flash",
+      "openrouter/stepfun/step-5-preview",
       "openrouter/tencent/hy-mt2-1.8b",
       "openrouter/tencent/hy-mt2-30b-a3b",
       "openrouter/tencent/hy-mt2-7b",
@@ -5092,16 +5634,23 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/thedrummer/unslopnemo-12b",
       "openrouter/thinkingmachines/inkling",
       "openrouter/thinkingmachines/inkling-small",
+      "openrouter/typesafe/jev-router",
+      "openrouter/unbiased/pareto-26.10",
       "openrouter/undi95/remm-slerp-l2-13b",
+      "openrouter/upstage/solar-mini4",
       "openrouter/upstage/solar-pro4",
       "openrouter/x-ai/grok-4.20",
       "openrouter/x-ai/grok-4.20-multi-agent",
       "openrouter/x-ai/grok-4.3",
       "openrouter/x-ai/grok-4.5",
       "openrouter/x-ai/grok-4.6",
+      "openrouter/x-ai/grok-4.7",
       "openrouter/x-ai/grok-build-0.1",
       "openrouter/xiaomi/mimo-v2.5",
       "openrouter/xiaomi/mimo-v2.5-pro",
+      "openrouter/xiaomi/mimo-v2.6-flash",
+      "openrouter/xiaomi/mimo-v2.6-pro",
+      "openrouter/xingchen-agi/xing4.0-29b-a4b:free",
       "openrouter/z-ai/glm-4.5-air",
       "openrouter/z-ai/glm-4.5v",
       "openrouter/z-ai/glm-4.6",
@@ -5112,7 +5661,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openrouter/z-ai/glm-5.1",
       "openrouter/z-ai/glm-5.2",
       "openrouter/z-ai/glm-5.3",
-      "openrouter/z-ai/glm-5.3-flash"
+      "openrouter/z-ai/glm-5.3-flash",
+      "typesafe/jev-1.13.0",
+      "typesafe/jev-1.14.0",
+      "typesafe/jev-latest",
+      "typesafe/jev-preview"
     ]
   },
   {
@@ -5122,25 +5675,24 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-v4-flash",
       "deepseek-v4-flash-flex",
-      "deepseek-v4-pro",
+      "deepseek-v4-flash-speed",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-flex",
       "gemma-4-31b",
-      "glm-5.2",
-      "glm-5.2-fast",
-      "glm-5.2-flex",
-      "glm-5.2-short",
-      "glm-5.2-short-fast",
-      "glm-5.2-short-fast-flex",
-      "glm-5.2-short-flex",
       "glm-5.3",
-      "kimi-k2.7-code",
-      "kimi-k2.7-code-fast",
-      "kimi-k2.7-code-flex",
+      "glm-5.3-flash",
+      "glm-5.3-flash-flex",
+      "glm-5.3-flex",
       "kimi-k3",
       "kimi-k3-fast",
       "kimi-k3-flex",
+      "mimo-v2.6-pro",
+      "mimo-v2.6-pro-flex",
       "qwen-3.8-27b",
+      "qwen-3.8-27b-flex",
       "qwen3.6-35b",
-      "qwen3.6-35b-fast"
+      "qwen3.6-35b-fast",
+      "qwen3.6-35b-flex"
     ]
   },
   {
@@ -5151,58 +5703,49 @@ export const MASTRA_PROVIDER_CATALOG = [
   },
   {
     id: "novita-ai",
-    name: "NovitaAI",
+    name: "Novita AI",
     apiKeyEnvVars: ["NOVITA_API_KEY"],
     models: [
+      "apodex/apodex-1.1-mini",
+      "baai/bge-m3",
+      "baai/bge-reranker-v2-m3",
       "baichuan/baichuan-m2-32b",
+      "baidu/cobuddy",
       "baidu/ernie-4.5-21B-a3b",
-      "baidu/ernie-4.5-21B-a3b-thinking",
-      "baidu/ernie-4.5-300b-a47b-paddle",
-      "baidu/ernie-4.5-vl-28b-a3b",
-      "baidu/ernie-4.5-vl-28b-a3b-thinking",
-      "baidu/ernie-4.5-vl-424b-a47b",
-      "deepseek/deepseek-ocr",
+      "deepseek/deepseek_v3",
       "deepseek/deepseek-ocr-2",
-      "deepseek/deepseek-prover-v2-671b",
       "deepseek/deepseek-r1-0528",
       "deepseek/deepseek-r1-0528-qwen3-8b",
-      "deepseek/deepseek-r1-distill-llama-70b",
-      "deepseek/deepseek-r1-distill-qwen-14b",
-      "deepseek/deepseek-r1-distill-qwen-32b",
       "deepseek/deepseek-r1-turbo",
-      "deepseek/deepseek-v3-0324",
-      "deepseek/deepseek-v3-turbo",
-      "deepseek/deepseek-v3.1",
-      "deepseek/deepseek-v3.1-terminus",
-      "deepseek/deepseek-v3.2",
-      "deepseek/deepseek-v3.2-exp",
-      "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-0731",
       "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
       "google/gemma-3-12b-it",
       "google/gemma-3-27b-it",
       "google/gemma-4-26b-a4b-it",
       "google/gemma-4-31b-it",
       "gryphe/mythomax-l2-13b",
-      "inclusionai/ling-2.6-1t",
-      "inclusionai/ling-2.6-flash",
-      "inclusionai/ring-2.6-1t",
-      "kwaipilot/kat-coder-pro",
-      "meta-llama/llama-3-70b-instruct",
-      "meta-llama/llama-3-8b-instruct",
+      "inclusionai/ling-3.0-flash",
+      "inclusionai/ling-3.0-flash-fin",
+      "inclusionai/ling-3.0-flash-sante",
+      "inclusionai/ling-3.0-flash-vl",
+      "inclusionai/ling-3.1-flash",
       "meta-llama/llama-3.1-8b-instruct",
-      "meta-llama/llama-3.2-3b-instruct",
+      "meta-llama/llama-3.2-1b-instruct",
       "meta-llama/llama-3.3-70b-instruct",
       "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
       "meta-llama/llama-4-scout-17b-16e-instruct",
       "microsoft/wizardlm-2-8x22b",
-      "minimax/minimax-m2",
-      "minimax/minimax-m2.1",
+      "mindai/macaron-v1-tall",
+      "mindai/macaron-v1-venti",
       "minimax/minimax-m2.5",
-      "minimax/minimax-m2.5-highspeed",
       "minimax/minimax-m2.7",
       "minimax/minimax-m2.7-highspeed",
+      "minimax/minimax-m3",
+      "minimax/minimax-m3.1-flash",
       "minimaxai/minimax-m1-80k",
-      "mistralai/mistral-nemo",
       "moonshotai/kimi-k2-0905",
       "moonshotai/kimi-k2-instruct",
       "moonshotai/kimi-k2-thinking",
@@ -5210,48 +5753,37 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshotai/kimi-k2.6",
       "moonshotai/kimi-k2.7-code",
       "moonshotai/kimi-k3",
+      "moonshotai/kimi-k3.1-pro",
+      "moonshotai/kimi-k3.1-pro-highspeed",
       "nousresearch/hermes-2-pro-llama-3-8b",
+      "nvidia/nemotron-3-nano-30b-a3b",
       "openai/gpt-oss-120b",
-      "openai/gpt-oss-20b",
       "paddlepaddle/paddleocr-vl",
-      "qwen/qwen-2.5-72b-instruct",
       "qwen/qwen-mt-plus",
-      "qwen/qwen2.5-7b-instruct",
-      "qwen/qwen2.5-vl-72b-instruct",
-      "qwen/qwen3-235b-a22b-fp8",
-      "qwen/qwen3-235b-a22b-instruct-2507",
-      "qwen/qwen3-235b-a22b-thinking-2507",
-      "qwen/qwen3-30b-a3b-fp8",
-      "qwen/qwen3-32b-fp8",
-      "qwen/qwen3-4b-fp8",
-      "qwen/qwen3-8b-fp8",
-      "qwen/qwen3-coder-30b-a3b-instruct",
-      "qwen/qwen3-coder-480b-a35b-instruct",
-      "qwen/qwen3-coder-next",
-      "qwen/qwen3-max",
-      "qwen/qwen3-next-80b-a3b-instruct",
-      "qwen/qwen3-next-80b-a3b-thinking",
-      "qwen/qwen3-omni-30b-a3b-instruct",
+      "qwen/qwen3-embedding-8b",
       "qwen/qwen3-omni-30b-a3b-thinking",
-      "qwen/qwen3-vl-235b-a22b-instruct",
-      "qwen/qwen3-vl-235b-a22b-thinking",
+      "qwen/qwen3-reranker-8b",
       "qwen/qwen3-vl-30b-a3b-instruct",
-      "qwen/qwen3-vl-30b-a3b-thinking",
-      "qwen/qwen3-vl-8b-instruct",
       "qwen/qwen3.5-122b-a10b",
       "qwen/qwen3.5-27b",
       "qwen/qwen3.5-35b-a3b",
       "qwen/qwen3.5-397b-a17b",
+      "qwen/qwen3.6-27b",
+      "qwen/qwen3.6-35b-a3b",
       "qwen/qwen3.7-max",
-      "sao10K/l3-70b-euryale-v2.1",
-      "sao10K/l3-8b-lunaris",
-      "sao10K/L3-8B-stheno-v3.2",
-      "sao10K/l31-70b-euryale-v2.2",
-      "xiaomimimo/mimo-v2-flash",
-      "xiaomimimo/mimo-v2-pro",
+      "qwen/qwen3.8-2.4t-a95b",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.8-flash",
+      "qwen/qwen3.8-max",
+      "stepfun/step-3.7-flash",
+      "stepfun/step-5-preview",
+      "tencent/hy3",
+      "tencent/hy4-preview",
+      "xiaomimimo/mimo-v2.5",
       "xiaomimimo/mimo-v2.5-pro",
+      "xiaomimimo/mimo-v2.6-flash",
+      "xiaomimimo/mimo-v2.6-pro",
       "zai-org/autoglm-phone-9b-multilingual",
-      "zai-org/glm-4.5",
       "zai-org/glm-4.5-air",
       "zai-org/glm-4.5v",
       "zai-org/glm-4.6",
@@ -5260,7 +5792,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "zai-org/glm-4.7-flash",
       "zai-org/glm-5",
       "zai-org/glm-5.1",
-      "zai-org/glm-5.2"
+      "zai-org/glm-5.2",
+      "zai-org/glm-5.3",
+      "zai-org/glm-5.3-flash"
     ]
   },
   {
@@ -5268,109 +5802,58 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Nvidia",
     apiKeyEnvVars: ["NVIDIA_API_KEY"],
     models: [
-      "abacusai/dracarys-llama-3.1-70b-instruct",
-      "baai/bge-m3",
       "black-forest-labs/flux_1-kontext-dev",
       "black-forest-labs/flux_1-schnell",
       "black-forest-labs/flux_2-klein-4b",
       "black-forest-labs/flux.1-dev",
-      "bytedance/seed-oss-36b-instruct",
-      "deepseek-ai/deepseek-v4-flash",
-      "deepseek-ai/deepseek-v4-flash-0731",
-      "deepseek-ai/deepseek-v4-pro",
-      "deepseek-ai/deepseek-v4-pro-0813",
-      "google/gemma-2-2b-it",
-      "google/gemma-3-12b-it",
-      "google/gemma-3-4b-it",
-      "google/gemma-3n-e2b-it",
-      "google/gemma-3n-e4b-it",
+      "deepseek-ai/deepseek-v4.1-flash",
+      "google/diffusiongemma-26b-a4b-it",
       "google/gemma-4-31b-it",
       "google/google-paligemma",
-      "meta/esm2-650m",
-      "meta/esmfold",
-      "meta/llama-3.1-70b-instruct",
-      "meta/llama-3.1-8b-instruct",
       "meta/llama-3.2-11b-vision-instruct",
-      "meta/llama-3.2-1b-instruct",
-      "meta/llama-3.2-3b-instruct",
       "meta/llama-3.2-90b-vision-instruct",
-      "meta/llama-3.3-70b-instruct",
-      "meta/llama-4-maverick-17b-128e-instruct",
       "meta/llama-guard-4-12b",
       "meta/muse-glimmer-30b",
-      "microsoft/phi-4-mini-instruct",
-      "microsoft/phi-4-multimodal-instruct",
-      "minimaxai/minimax-m2.7",
-      "minimaxai/minimax-m3",
-      "mistralai/magistral-small-2506",
-      "mistralai/ministral-14b-instruct-2512",
-      "mistralai/mistral-7b-instruct-v0.3",
-      "mistralai/mistral-large-3-675b-instruct-2512",
-      "mistralai/mistral-medium-3-instruct",
-      "mistralai/mistral-medium-3.5-128b",
-      "mistralai/mistral-nemotron",
-      "mistralai/mistral-small-4-119b-2603",
-      "mistralai/mixtral-8x22b-instruct",
-      "mistralai/mixtral-8x7b-instruct",
-      "moonshotai/kimi-k2-instruct-0905",
-      "moonshotai/kimi-k2.6",
-      "moonshotai/kimi-k3",
+      "minimaxai/minimax-m3.1-flash",
       "nvidia/active-speaker-detection",
       "nvidia/bevformer",
-      "nvidia/cosmos-predict1-5b",
-      "nvidia/cosmos-reason2-8b",
-      "nvidia/cosmos-transfer1-7b",
       "nvidia/cosmos-transfer2_5-2b",
-      "nvidia/gliner-pii",
-      "nvidia/llama-3_2-nemoretriever-300m-embed-v1",
-      "nvidia/llama-3.1-nemotron-70b-instruct",
-      "nvidia/llama-3.1-nemotron-nano-8b-v1",
-      "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
       "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
-      "nvidia/llama-3.1-nemotron-ultra-253b-v1",
-      "nvidia/llama-3.3-nemotron-super-49b-v1",
-      "nvidia/llama-3.3-nemotron-super-49b-v1.5",
       "nvidia/llama-nemotron-embed-vl-1b-v2",
       "nvidia/llama-nemotron-rerank-vl-1b-v2",
       "nvidia/magpie-tts-zeroshot",
-      "nvidia/nemotron-3-content-safety",
-      "nvidia/nemotron-3-nano-30b-a3b",
       "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-      "nvidia/nemotron-3-super-120b-a12b",
       "nvidia/nemotron-3-ultra-550b-a55b",
+      "nvidia/nemotron-3.5-content-safety",
       "nvidia/nemotron-3.5-lightning-30b-a3b",
-      "nvidia/nemotron-content-safety-reasoning-4b",
-      "nvidia/nemotron-mini-4b-instruct",
-      "nvidia/nemotron-nano-12b-v2-vl",
+      "nvidia/nemotron-3.5-super-vl-120b-a12b",
       "nvidia/nemotron-voicechat",
-      "nvidia/nv-embed-v1",
-      "nvidia/nv-embedcode-7b-v1",
-      "nvidia/nvidia-nemotron-nano-9b-v2",
-      "nvidia/rerank-qa-mistral-4b",
-      "nvidia/riva-translate-4b-instruct-v1.1",
       "nvidia/sparsedrive",
       "nvidia/streampetr",
       "nvidia/studiovoice",
       "nvidia/synthetic-video-detector",
-      "nvidia/usdcode",
-      "nvidia/usdvalidate",
-      "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "openai/whisper-large-v3",
       "poolside/laguna-xs-2.1",
       "qwen/qwen-image",
       "qwen/qwen-image-edit",
-      "qwen/qwen2.5-coder-32b-instruct",
-      "qwen/qwen3-coder-480b-a35b-instruct",
-      "qwen/qwen3-next-80b-a3b-instruct",
-      "qwen/qwen3.5-122b-a10b",
-      "qwen/qwen3.5-397b-a17b",
-      "sarvamai/sarvam-m",
-      "stepfun-ai/step-3.5-flash",
-      "stepfun-ai/step-3.7-flash",
-      "thinkingmachines/inkling",
-      "upstage/solar-10.7b-instruct",
-      "z-ai/glm-5.2"
+      "stepfun-ai/step-5-preview",
+      "z-ai/glm-5.3-flash"
+    ]
+  },
+  {
+    id: "oci",
+    name: "OCI Generative AI",
+    apiKeyEnvVars: ["OCI_GENAI_API_KEY"],
+    models: [
+      "meta.llama-4-maverick-17b-128e-instruct-fp8",
+      "meta.llama-4-scout-17b-16e-instruct",
+      "openai.gpt-oss-120b",
+      "openai.gpt-oss-20b",
+      "xai.grok-4.20-non-reasoning",
+      "xai.grok-4.20-reasoning",
+      "xai.grok-4.3",
+      "xai.grok-4.6"
     ]
   },
   {
@@ -5381,14 +5864,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5.1",
       "anthropic/claude-haiku-4.5",
-      "anthropic/claude-opus-4.5",
+      "anthropic/claude-haiku-5.5",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-opus-4.7",
       "anthropic/claude-opus-4.8",
       "anthropic/claude-opus-5",
-      "anthropic/claude-sonnet-4.5",
+      "anthropic/claude-opus-5.5",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5.5",
       "bailian/qwen-flash",
       "bailian/qwen-max",
       "bailian/qwen-plus",
@@ -5411,15 +5895,18 @@ export const MASTRA_PROVIDER_CATALOG = [
       "bailian/qwen3.7-max",
       "bailian/qwen3.7-plus",
       "bailian/qwen3.8-27b",
+      "bailian/qwen3.8-flash",
       "bailian/qwen3.8-max",
       "bailian/qwen3.8-max-0902",
       "deepseek/deepseek-v3.2",
       "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-0423",
       "deepseek/deepseek-v4-flash-0731",
-      "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0423",
       "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-lite",
       "google/gemini-2.5-pro",
@@ -5430,6 +5917,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.5-flash-lite",
       "google/gemini-3.6-flash",
       "google/gemini-3.7-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
       "minimax/m2-her",
       "minimax/minimax-m2",
       "minimax/minimax-m2.1",
@@ -5439,11 +5928,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.7",
       "minimax/minimax-m2.7-highspeed",
       "minimax/minimax-m3",
-      "moonshotai/kimi-k2.5",
       "moonshotai/kimi-k2.6",
       "moonshotai/kimi-k2.7-code",
       "moonshotai/kimi-k2.7-code-highspeed",
       "moonshotai/kimi-k3",
+      "moonshotai/kimi-k3.1-pro",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
       "openai/gpt-4o",
@@ -5466,10 +5955,35 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
       "openai/gpt-6-astra",
-      "volcengine/doubao-seed-1-6",
-      "volcengine/doubao-seed-1-6-flash",
-      "volcengine/doubao-seed-1-6-vision",
-      "volcengine/doubao-seed-1-8",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-terra",
+      "qwen/qwen-flash",
+      "qwen/qwen-max",
+      "qwen/qwen-plus",
+      "qwen/qwen-turbo",
+      "qwen/qwen-vl-max",
+      "qwen/qwen3-coder-flash",
+      "qwen/qwen3-coder-next",
+      "qwen/qwen3-coder-plus",
+      "qwen/qwen3-max",
+      "qwen/qwen3.5-122b-a10b",
+      "qwen/qwen3.5-27b",
+      "qwen/qwen3.5-35b-a3b",
+      "qwen/qwen3.5-397b-a17b",
+      "qwen/qwen3.5-flash",
+      "qwen/qwen3.5-plus",
+      "qwen/qwen3.6-27b",
+      "qwen/qwen3.6-flash",
+      "qwen/qwen3.6-max-preview",
+      "qwen/qwen3.6-plus",
+      "qwen/qwen3.7-max",
+      "qwen/qwen3.7-plus",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.8-flash",
+      "qwen/qwen3.8-max",
+      "qwen/qwen3.8-max-0902",
       "volcengine/doubao-seed-2.0-code",
       "volcengine/doubao-seed-2.0-lite",
       "volcengine/doubao-seed-2.0-mini",
@@ -5483,6 +5997,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "x-ai/grok-4.3",
       "x-ai/grok-4.5",
       "x-ai/grok-4.6",
+      "x-ai/grok-4.7",
       "z-ai/glm-4.6",
       "z-ai/glm-4.7",
       "z-ai/glm-4.7-flashx",
@@ -5492,6 +6007,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "z-ai/glm-5.2",
       "z-ai/glm-5.3",
       "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3-flashx",
       "z-ai/glm-5v-turbo"
     ]
   },
@@ -5500,28 +6016,29 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Ollama Cloud",
     apiKeyEnvVars: ["OLLAMA_API_KEY"],
     models: [
-      "deepseek-v4-flash",
-      "deepseek-v4-flash:0731",
+      "beam",
       "deepseek-v4-pro",
+      "deepseek-v4-pro:0813",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash:1017",
       "gemma4:31b",
-      "glm-5.1",
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
       "gpt-oss:120b",
       "gpt-oss:20b",
-      "kimi-k2.5",
       "kimi-k2.6",
       "kimi-k2.7-code",
       "kimi-k3",
-      "minimax-m2.5",
       "minimax-m2.7",
       "minimax-m3",
+      "minimax-m3.1-flash",
       "mistral-large-3:675b",
+      "mistral-large-4",
+      "muse-spark-open",
       "nemotron-3-nano:30b",
       "nemotron-3-super",
-      "nemotron-3-ultra",
-      "qwen3.5:397b"
+      "nemotron-3-ultra"
     ]
   },
   {
@@ -5529,15 +6046,9 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "OpenAI",
     apiKeyEnvVars: ["OPENAI_API_KEY"],
     models: [
-      "chatgpt-image-latest",
-      "gpt-3.5-turbo",
-      "gpt-4",
-      "gpt-4-turbo",
       "gpt-4.1",
       "gpt-4.1-mini",
-      "gpt-4.1-nano",
       "gpt-4o",
-      "gpt-4o-2024-05-13",
       "gpt-4o-2024-08-06",
       "gpt-4o-2024-11-20",
       "gpt-4o-mini",
@@ -5547,9 +6058,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5-pro",
       "gpt-5.1",
       "gpt-5.2",
-      "gpt-5.2-chat-latest",
       "gpt-5.2-pro",
-      "gpt-5.3-chat-latest",
       "gpt-5.3-codex",
       "gpt-5.3-codex-spark",
       "gpt-5.4",
@@ -5563,106 +6072,60 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-sol",
       "gpt-5.6-terra",
       "gpt-6-astra",
-      "gpt-image-1",
-      "gpt-image-1-mini",
-      "gpt-image-1.5",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-6.1-terra",
+      "gpt-daybreak-blue-latest",
+      "gpt-daybreak-red-latest",
       "gpt-image-2",
       "gpt-realtime-2.1",
-      "o1",
-      "o1-pro",
       "o3",
-      "o3-mini",
       "o3-pro",
-      "o4-mini",
       "text-embedding-3-large",
       "text-embedding-3-small",
       "text-embedding-ada-002"
     ]
   },
   {
-    id: "opencode-go",
-    name: "OpenCode Go",
-    apiKeyEnvVars: ["OPENCODE_API_KEY"],
-    models: [
-      "deepseek-flash",
-      "deepseek-v4-flash",
-      "deepseek-v4-flash-vision-exp",
-      "deepseek-v4-pro",
-      "glm-5",
-      "glm-5.1",
-      "glm-5.2",
-      "glm-5.3",
-      "glm-5.3-flash",
-      "gpt-5.6-luna",
-      "grok-4.5",
-      "grok-4.6",
-      "hy3",
-      "hy4-preview",
-      "kimi-k2.5",
-      "kimi-k2.6",
-      "kimi-k2.7-code",
-      "kimi-k3",
-      "longcat-2.0",
-      "mimo-v2-omni",
-      "mimo-v2-pro",
-      "mimo-v2.5",
-      "mimo-v2.5-pro",
-      "minimax-m2.5",
-      "minimax-m2.7",
-      "minimax-m3",
-      "muse-spark-1.2-contributor",
-      "muse-spark-1.3-contributor",
-      "omen-alpha",
-      "ox-alpha-free",
-      "qwen3.5-plus",
-      "qwen3.6-plus",
-      "qwen3.7-max",
-      "qwen3.7-plus",
-      "qwen3.8-flash",
-      "qwen3.8-max"
-    ]
-  },
-  {
     id: "opencode",
-    name: "OpenCode Zen",
+    name: "OpenCode",
     apiKeyEnvVars: ["OPENCODE_API_KEY"],
     models: [
+      "beam-free",
       "big-pickle",
-      "claude-3-5-haiku",
       "claude-fable-5",
       "claude-fable-5-1",
       "claude-haiku-4-5",
-      "claude-opus-4-1",
+      "claude-haiku-5-5",
       "claude-opus-4-5",
       "claude-opus-4-6",
       "claude-opus-4-7",
       "claude-opus-4-8",
       "claude-opus-5",
-      "claude-sonnet-4",
+      "claude-opus-5-5",
       "claude-sonnet-4-5",
       "claude-sonnet-4-6",
       "claude-sonnet-5",
-      "deepseek-v4-flash",
-      "deepseek-v4-flash-free",
-      "deepseek-v4-flash-vision-exp",
+      "claude-sonnet-5-5",
       "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-free",
+      "flint-40b-free",
       "gemini-3-flash",
-      "gemini-3-pro",
       "gemini-3.1-pro",
       "gemini-3.5-flash",
       "gemini-3.5-flash-lite",
       "gemini-3.6-flash",
       "gemini-3.7-flash",
       "gemini-3.8-flash",
-      "glm-4.6",
-      "glm-4.7",
-      "glm-4.7-free",
+      "gemini-4-argon",
       "glm-5",
-      "glm-5-free",
       "glm-5.1",
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
+      "glm-5.3-flash-free",
       "gpt-5",
       "gpt-5-codex",
       "gpt-5-nano",
@@ -5684,51 +6147,68 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-sol",
       "gpt-5.6-terra",
       "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
       "grok-4.5",
       "grok-4.6",
+      "grok-4.7",
       "grok-build-0.1",
-      "grok-code",
-      "hy3-free",
-      "hy3-preview-free",
-      "kimi-k2",
-      "kimi-k2-thinking",
       "kimi-k2.5",
-      "kimi-k2.5-free",
       "kimi-k2.6",
       "kimi-k2.7-code",
       "kimi-k3",
-      "laguna-s-2.1-free",
-      "ling-2.6-flash-free",
-      "ling-3.0-flash-fin-free",
-      "ling-3.0-flash-free",
-      "ling-3.0-tiny-free",
-      "longcat-2.0-free",
-      "mimo-v2-flash-free",
-      "mimo-v2-omni-free",
-      "mimo-v2-pro-free",
-      "mimo-v2.5-free",
-      "minimax-m2.1",
-      "minimax-m2.1-free",
+      "mimo-v2.6-flash-free",
       "minimax-m2.5",
-      "minimax-m2.5-free",
       "minimax-m2.7",
       "minimax-m3",
-      "minimax-m3-free",
+      "mistral-large-4",
       "muse-spark-1.2",
-      "muse-spark-1.2-contributor-free",
       "muse-spark-1.3",
-      "muse-spark-1.3-contributor-free",
-      "nemotron-3-super-free",
-      "nemotron-3-ultra-free",
+      "muse-wonder-1.0",
       "nemotron-3.5-lightning-free",
-      "north-mini-code-free",
-      "qwen3-coder",
+      "nemotron-3.5-super-vl-free",
       "qwen3.5-plus",
       "qwen3.6-plus",
-      "qwen3.6-plus-free",
-      "ring-2.6-1t-free",
-      "trinity-large-preview-free",
-      "x-preview-f-free"
+      "qwen3.8-flash",
+      "qwen3.8-max"
+    ]
+  },
+  {
+    id: "opencode-go",
+    name: "OpenCode Go",
+    apiKeyEnvVars: ["OPENCODE_API_KEY"],
+    models: [
+      "beam-free",
+      "claude-haiku-5-5",
+      "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
+      "gemini-4-argon",
+      "glm-5.2",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "gpt-5.6-luna",
+      "gpt-6-luna",
+      "grok-4.7",
+      "hy3",
+      "hy4-preview",
+      "iceman-contributor-free",
+      "kimi-k2.7-code",
+      "kimi-k3",
+      "kimi-k3.1-pro",
+      "longcat-2.0",
+      "mimo-v2.5",
+      "mimo-v2.5-pro",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro",
+      "minimax-m3",
+      "minimax-m3.1-flash",
+      "muse-spark-1.2-contributor",
+      "muse-spark-1.3-contributor",
+      "qwen3.7-plus",
+      "qwen3.8-flash",
+      "qwen3.8-max",
+      "step-5-preview"
     ]
   },
   {
@@ -5750,51 +6230,54 @@ export const MASTRA_PROVIDER_CATALOG = [
       "~anthropic/claude-haiku-latest",
       "~anthropic/claude-opus-latest",
       "~anthropic/claude-sonnet-latest",
+      "~deepseek/deepseek-flash-latest",
+      "~deepseek/deepseek-pro-latest",
       "~deepseek/deepseek-v4-flash-latest",
       "~google/gemini-flash-latest",
       "~google/gemini-pro-latest",
       "~moonshotai/kimi-latest",
-      "~openai/gpt-latest",
+      "~openai/gpt-astra-latest",
+      "~openai/gpt-luna-latest",
       "~openai/gpt-mini-latest",
+      "~openai/gpt-sol-latest",
+      "~openai/gpt-terra-latest",
+      "~unbiased/pareto-latest",
       "~x-ai/grok-latest",
       "~z-ai/glm-flash-latest",
       "~z-ai/glm-latest",
       "aion-labs/aion-2.0",
       "aion-labs/aion-3.0",
       "aion-labs/aion-3.0-mini",
+      "aion-labs/aion-3.5",
+      "aion-labs/aion-3.5-mini",
       "aion-labs/aion-rp-llama-3.1-8b",
       "amazon/nova-2-lite-v1",
       "amazon/nova-lite-v1",
       "amazon/nova-micro-v1",
-      "amazon/nova-premier-v1",
       "amazon/nova-pro-v1",
       "anthracite-org/magnum-v4-72b",
-      "anthropic/claude-3-haiku",
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5.1",
       "anthropic/claude-haiku-4.5",
-      "anthropic/claude-opus-4",
+      "anthropic/claude-haiku-5.5",
       "anthropic/claude-opus-4.1",
       "anthropic/claude-opus-4.5",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-opus-4.7",
       "anthropic/claude-opus-4.8",
       "anthropic/claude-opus-5",
-      "anthropic/claude-sonnet-4",
+      "anthropic/claude-opus-5.5",
       "anthropic/claude-sonnet-4.5",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-5",
-      "arcee-ai/trinity-large-thinking",
-      "baidu/ernie-4.5-vl-424b-a47b",
-      "bytedance-seed/seed-1.6",
-      "bytedance-seed/seed-1.6-flash",
+      "anthropic/claude-sonnet-5.5",
       "bytedance-seed/seed-2-1-turbo",
-      "bytedance-seed/seed-2.0-code",
       "bytedance-seed/seed-2.0-lite",
       "bytedance-seed/seed-2.0-mini",
       "bytedance/ui-tars-1.5-7b",
       "cognitivecomputations/dolphin-mistral-24b-venice-edition",
       "cohere/command-a",
+      "cohere/command-a-plus",
       "cohere/command-r-08-2024",
       "cohere/command-r-plus-08-2024",
       "cohere/command-r7b-12-2024",
@@ -5802,9 +6285,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-chat",
       "deepseek/deepseek-chat-v3-0324",
       "deepseek/deepseek-chat-v3.1",
-      "deepseek/deepseek-r1",
       "deepseek/deepseek-r1-0528",
-      "deepseek/deepseek-r1-distill-llama-70b",
       "deepseek/deepseek-v3.1-terminus",
       "deepseek/deepseek-v3.2",
       "deepseek/deepseek-v3.2-exp",
@@ -5814,13 +6295,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
       "deepseek/deepseek-v4.1-flash",
-      "dots-studio/dots-3-note-preview:free",
-      "google/gemini-2.5-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
+      "elorian/glimpse",
+      "fireworks/ember-1",
       "google/gemini-2.5-flash-image",
-      "google/gemini-2.5-flash-lite",
-      "google/gemini-2.5-pro",
       "google/gemini-2.5-pro-preview",
-      "google/gemini-2.5-pro-preview-05-06",
       "google/gemini-3-flash-preview",
       "google/gemini-3-pro-image",
       "google/gemini-3-pro-image-preview",
@@ -5836,6 +6315,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.6-flash",
       "google/gemini-3.7-flash",
       "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
+      "google/gemini-nano-banana-2.1",
       "google/gemma-2-27b-it",
       "google/gemma-3-12b-it",
       "google/gemma-3-27b-it",
@@ -5847,17 +6328,18 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/lyria-3-clip-preview",
       "google/lyria-3-pro-preview",
       "gryphe/mythomax-l2-13b",
-      "ibm-granite/granite-4.0-h-micro",
       "ibm-granite/granite-4.2-8b",
       "inception/mercury-2",
       "inception/mercury-2.5",
+      "inception/mercury-3",
       "inclusionai/ling-3.0-flash",
-      "inclusionai/ling-3.0-flash-fin",
-      "inclusionai/ling-3.0-flash-fin:free",
-      "inclusionai/ling-3.0-flash-sante:free",
-      "kwaipilot/kat-coder-pro-v2",
-      "kwaipilot/kat-coder-pro-v2.5",
+      "inclusionai/ling-3.0-flash-vl",
+      "inclusionai/ling-3.1-flash",
+      "inference-net/schematron-v2-small",
+      "inference-net/schematron-v2-turbo",
+      "liquid/lfm-2.5-2.6b",
       "liquid/lfm-2.5-2.6b:free",
+      "liquid/lfm-2.5-24b-a2b",
       "mancer/weaver",
       "meituan/longcat-2.0",
       "meta-llama/llama-3.1-70b-instruct",
@@ -5874,8 +6356,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "meta/muse-spark-1.2-contributor",
       "meta/muse-spark-1.3",
       "meta/muse-spark-1.3-contributor",
+      "meta/muse-spark-open",
+      "meta/muse-wonder",
       "microsoft/phi-4",
-      "microsoft/wizardlm-2-8x22b",
       "minimax/minimax-01",
       "minimax/minimax-m1",
       "minimax/minimax-m2",
@@ -5884,6 +6367,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.5",
       "minimax/minimax-m2.7",
       "minimax/minimax-m3",
+      "minimax/minimax-m3.1-flash",
       "mistralai/codestral-2508",
       "mistralai/devstral-2512",
       "mistralai/ministral-14b-2512",
@@ -5892,6 +6376,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "mistralai/mistral-large",
       "mistralai/mistral-large-2407",
       "mistralai/mistral-large-2512",
+      "mistralai/mistral-large-4-0",
       "mistralai/mistral-medium-3",
       "mistralai/mistral-medium-3-5",
       "mistralai/mistral-medium-3.1",
@@ -5903,6 +6388,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "mistralai/mistral-small-3.2-24b-instruct",
       "mistralai/mixtral-8x22b-instruct",
       "mistralai/voxtral-small-24b-2507",
+      "moondream/moondream3-preview",
+      "moondream/moondream3.1-9b-a2b",
       "moonshotai/kimi-k2",
       "moonshotai/kimi-k2-0905",
       "moonshotai/kimi-k2-thinking",
@@ -5910,30 +6397,26 @@ export const MASTRA_PROVIDER_CATALOG = [
       "moonshotai/kimi-k2.6",
       "moonshotai/kimi-k2.7-code",
       "moonshotai/kimi-k3",
+      "moonshotai/kimi-k3.1-pro",
       "morph/morph-v3-fast",
       "morph/morph-v3-large",
-      "nex-agi/nex-n2.5-mini:free",
-      "nex-agi/nex-n2.5-pro:free",
-      "nousresearch/hermes-3-llama-3.1-405b",
-      "nousresearch/hermes-3-llama-3.1-70b",
+      "nex-agi/nex-n2.5-mini",
+      "nex-agi/nex-n2.5-pro",
       "nousresearch/hermes-4-405b",
       "nvidia/nemotron-3-nano-30b-a3b",
       "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       "nvidia/nemotron-3-super-120b-a12b",
-      "nvidia/nemotron-3-super-120b-a12b:free",
       "nvidia/nemotron-3-ultra-550b-a55b",
       "nvidia/nemotron-3-ultra-550b-a55b:free",
       "nvidia/nemotron-3.5-content-safety",
       "nvidia/nemotron-3.5-content-safety:free",
       "nvidia/nemotron-3.5-lightning",
       "nvidia/nemotron-3.5-lightning:free",
-      "openai/gpt-3.5-turbo",
+      "nvidia/nemotron-3.5-super-vl",
+      "nvidia/nemotron-3.5-super-vl:free",
       "openai/gpt-3.5-turbo-0613",
       "openai/gpt-3.5-turbo-16k",
-      "openai/gpt-3.5-turbo-instruct",
       "openai/gpt-4",
-      "openai/gpt-4-turbo",
-      "openai/gpt-4-turbo-preview",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
       "openai/gpt-4.1-nano",
@@ -5954,7 +6437,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.1-codex-max",
       "openai/gpt-5.1-codex-mini",
       "openai/gpt-5.2",
-      "openai/gpt-5.2-chat",
       "openai/gpt-5.2-codex",
       "openai/gpt-5.2-pro",
       "openai/gpt-5.3-codex",
@@ -5973,78 +6455,67 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-terra-pro",
       "openai/gpt-6-astra",
       "openai/gpt-6-astra-pro",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-luna-pro",
+      "openai/gpt-6-sol",
+      "openai/gpt-6-sol-pro",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-sol-pro",
+      "openai/gpt-6.1-terra",
+      "openai/gpt-6.1-terra-pro",
       "openai/gpt-audio",
       "openai/gpt-audio-mini",
       "openai/gpt-chat-latest",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "openai/gpt-oss-safeguard-20b",
-      "openai/o1",
-      "openai/o1-pro",
       "openai/o3",
-      "openai/o3-mini",
-      "openai/o3-mini-high",
       "openai/o3-pro",
-      "openai/o4-mini",
-      "openai/o4-mini-high",
       "openrouter/auto",
       "openrouter/bodybuilder",
       "openrouter/free",
       "openrouter/fusion",
       "openrouter/pareto-code",
+      "particle-ai/particle-1",
       "perceptron/perceptron-mk1",
+      "perceptron/perceptron-mk1.5",
       "perplexity/sonar",
       "perplexity/sonar-deep-research",
       "perplexity/sonar-pro",
       "perplexity/sonar-pro-search",
       "perplexity/sonar-reasoning-pro",
-      "poolside/laguna-s-2.1",
-      "poolside/laguna-s-2.1:free",
-      "poolside/laguna-xs-2.1",
-      "poolside/laguna-xs-2.1:free",
+      "prism-ml/ternary-bonsai-2-27b",
+      "prism-ml/ternary-bonsai-2-9b",
       "qwen/qwen-2.5-72b-instruct",
       "qwen/qwen-2.5-7b-instruct",
       "qwen/qwen-2.5-coder-32b-instruct",
       "qwen/qwen-plus",
-      "qwen/qwen-plus-2025-07-28",
       "qwen/qwen2.5-vl-72b-instruct",
       "qwen/qwen3-14b",
-      "qwen/qwen3-235b-a22b",
       "qwen/qwen3-235b-a22b-2507",
       "qwen/qwen3-235b-a22b-thinking-2507",
       "qwen/qwen3-30b-a3b",
       "qwen/qwen3-30b-a3b-instruct-2507",
-      "qwen/qwen3-30b-a3b-thinking-2507",
       "qwen/qwen3-32b",
-      "qwen/qwen3-8b",
       "qwen/qwen3-coder",
       "qwen/qwen3-coder-30b-a3b-instruct",
       "qwen/qwen3-coder-flash",
       "qwen/qwen3-coder-next",
-      "qwen/qwen3-coder-plus",
-      "qwen/qwen3-max",
-      "qwen/qwen3-max-thinking",
       "qwen/qwen3-next-80b-a3b-instruct",
-      "qwen/qwen3-next-80b-a3b-thinking",
       "qwen/qwen3-vl-235b-a22b-instruct",
-      "qwen/qwen3-vl-235b-a22b-thinking",
       "qwen/qwen3-vl-30b-a3b-instruct",
       "qwen/qwen3-vl-30b-a3b-thinking",
-      "qwen/qwen3-vl-32b-instruct",
       "qwen/qwen3-vl-8b-instruct",
-      "qwen/qwen3-vl-8b-thinking",
       "qwen/qwen3.5-122b-a10b",
       "qwen/qwen3.5-27b",
       "qwen/qwen3.5-35b-a3b",
       "qwen/qwen3.5-397b-a17b",
-      "qwen/qwen3.5-9b",
       "qwen/qwen3.5-flash-02-23",
       "qwen/qwen3.5-plus-02-15",
       "qwen/qwen3.5-plus-20260420",
       "qwen/qwen3.6-27b",
       "qwen/qwen3.6-35b-a3b",
       "qwen/qwen3.6-flash",
-      "qwen/qwen3.6-max-preview",
       "qwen/qwen3.6-plus",
       "qwen/qwen3.7-flash",
       "qwen/qwen3.7-max",
@@ -6053,17 +6524,25 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen/qwen3.8-27b",
       "qwen/qwen3.8-flash",
       "qwen/qwen3.8-max-0902",
+      "qwen/qwen3.8-max-prime",
+      "qwen/qwen3.8-omni-flash",
+      "recursive/flint-v1.0:free",
+      "reflection/beam-1.0-501b-a23b",
       "rekaai/reka-edge",
       "rekaai/reka-flash-3",
       "relace/relace-apply-3",
       "relace/relace-search",
+      "sakana/fugu-max",
       "sakana/fugu-ultra",
+      "sakana/fugu-ultra-v2",
       "sakana/sakana-namazu",
       "sao10k/l3-lunaris-8b",
       "sao10k/l3.1-euryale-70b",
-      "sao10k/l3.3-euryale-70b",
+      "scaledown/extract",
+      "scaledown/summarize",
       "stepfun/step-3.5-flash",
       "stepfun/step-3.7-flash",
+      "stepfun/step-5-preview",
       "tencent/hunyuan-a13b-instruct",
       "tencent/hy-mt2-1.8b",
       "tencent/hy-mt2-30b-a3b",
@@ -6078,8 +6557,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "thinkingmachines/inkling-small",
       "thinkingmachines/inkling-small:free",
       "thinkingmachines/inkling:free",
+      "unbiased/pareto-26.10",
+      "unbiased/pareto-26.9",
       "undi95/remm-slerp-l2-13b",
-      "upstage/solar-pro-3",
+      "upstage/solar-mini4",
       "upstage/solar-pro4",
       "writer/palmyra-x5",
       "x-ai/grok-4.20",
@@ -6087,10 +6568,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "x-ai/grok-4.3",
       "x-ai/grok-4.5",
       "x-ai/grok-4.6",
+      "x-ai/grok-4.7",
       "x-ai/grok-build-0.1",
-      "xiaomi/mimo-v2.5",
-      "xiaomi/mimo-v2.5-pro",
-      "z-ai/glm-4.5",
+      "xiaomi/mimo-v2.6-flash",
+      "xiaomi/mimo-v2.6-pro",
+      "xiaomi/mimo-v2.6-pro-ultraspeed",
+      "xingchen-agi/xing4.0-29b-a4b:free",
       "z-ai/glm-4.5-air",
       "z-ai/glm-4.5v",
       "z-ai/glm-4.6",
@@ -6103,6 +6586,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "z-ai/glm-5.2",
       "z-ai/glm-5.3",
       "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3-flashx",
+      "z-ai/glm-5.3-prime",
       "z-ai/glm-5v-turbo"
     ]
   },
@@ -6111,46 +6596,59 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Opper",
     apiKeyEnvVars: ["OPPER_API_KEY"],
     models: [
-      "anthropic/claude-fable-5",
-      "anthropic/claude-haiku-4-5",
-      "anthropic/claude-opus-4-5",
-      "anthropic/claude-opus-4-6",
-      "anthropic/claude-opus-4-7",
-      "anthropic/claude-opus-4-8",
-      "anthropic/claude-opus-5",
-      "anthropic/claude-sonnet-4-5",
-      "anthropic/claude-sonnet-4-6",
-      "anthropic/claude-sonnet-5",
-      "gemini/gemini-3-flash-preview",
-      "gemini/gemini-3.1-pro-preview",
-      "gemini/gemini-3.5-flash",
-      "gemini/gemini-3.5-flash-lite",
-      "meta/muse-spark-1.2",
-      "minimax/m3",
-      "mistral/devstral-2512",
-      "mistral/mistral-large-2512",
-      "mistral/mistral-small-2603",
-      "moonshot/kimi-k3",
-      "openai/gpt-5.3-chat-latest",
-      "openai/gpt-5.3-codex",
-      "openai/gpt-5.4",
-      "openai/gpt-5.4-mini",
-      "openai/gpt-5.4-nano",
-      "openai/gpt-5.4-pro",
-      "openai/gpt-5.5",
-      "openai/gpt-5.5-pro",
-      "openai/gpt-5.6-luna",
-      "openai/gpt-5.6-sol",
-      "openai/gpt-5.6-terra",
-      "perplexity/sonar",
-      "perplexity/sonar-pro",
-      "perplexity/sonar-reasoning-pro",
-      "vertexai/gemini-3.7-flash",
-      "vertexai/gemini-3.7-flash-eu",
-      "xai/grok-4.3",
-      "xai/grok-4.5",
-      "xai/grok-4.6",
-      "xai/grok-build-0.1"
+      "claude-fable-5",
+      "claude-fable-5-1",
+      "claude-haiku-4-5",
+      "claude-opus-4-5",
+      "claude-opus-4-6",
+      "claude-opus-4-7",
+      "claude-opus-4-8",
+      "claude-opus-5",
+      "claude-sonnet-4-5",
+      "claude-sonnet-4-6",
+      "claude-sonnet-5",
+      "deepseek-v4-flash",
+      "deepseek-v4-pro",
+      "gemini-3-flash-preview",
+      "gemini-3.1-pro-preview",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+      "gemma-4-31b-it",
+      "glm-5.2",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "gpt-5.3-codex",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.4-nano",
+      "gpt-5.4-pro",
+      "gpt-5.5",
+      "gpt-5.5-pro",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-oss-120b",
+      "gpt-oss-20b",
+      "grok-4.3",
+      "grok-4.5",
+      "grok-4.6",
+      "grok-build-0.1",
+      "kimi-k3",
+      "minimax-m2.7",
+      "minimax-m3",
+      "mistral-large-2512",
+      "mistral-small-2603",
+      "muse-spark-1.2",
+      "muse-spark-1.3",
+      "qwen3.6-35b-a3b",
+      "qwen3.8-2.4t-a95b",
+      "qwen3.8-27b",
+      "qwen3.8-max",
+      "sonar",
+      "sonar-pro",
+      "sonar-reasoning-pro"
     ]
   },
   {
@@ -6165,7 +6663,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-opus-4.7",
       "anthropic/claude-opus-4.8",
       "anthropic/claude-opus-5",
-      "anthropic/claude-sonnet-4.5",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-5",
       "deepseek/deepseek-chat",
@@ -6240,7 +6737,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-luna",
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
-      "openai/gpt-oss-120b",
       "orcarouter/auto",
       "orcarouter/free",
       "orcarouter/fusion",
@@ -6285,12 +6781,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-oss-120b",
       "gpt-oss-20b",
       "meta-llama-3_3-70b-instruct",
-      "mistral-7b-instruct-v0.3",
       "mistral-nemo-instruct-2407",
       "mistral-small-3.2-24b-instruct-2506",
       "qwen2.5-vl-72b-instruct",
-      "qwen3-32b",
-      "qwen3-coder-30b-a3b-instruct",
       "qwen3.5-397b-a17b",
       "qwen3.5-9b",
       "qwen3.6-27b",
@@ -6298,6 +6791,12 @@ export const MASTRA_PROVIDER_CATALOG = [
       "qwen3guard-gen-0.6b",
       "qwen3guard-gen-8b"
     ]
+  },
+  {
+    id: "pareto",
+    name: "Pareto Inference",
+    apiKeyEnvVars: ["PARETO_API_KEY"],
+    models: ["z-ai/glm-5.3-flash"]
   },
   {
     id: "pendra",
@@ -6316,35 +6815,49 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "perplexity",
     name: "Perplexity",
     apiKeyEnvVars: ["PERPLEXITY_API_KEY"],
-    models: ["sonar", "sonar-deep-research", "sonar-pro", "sonar-reasoning-pro"]
+    models: []
   },
   {
     id: "perplexity-agent",
     name: "Perplexity Agent",
     apiKeyEnvVars: ["PERPLEXITY_API_KEY"],
     models: [
+      "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5-1",
       "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-5-5",
       "anthropic/claude-opus-4-5",
       "anthropic/claude-opus-4-6",
       "anthropic/claude-opus-4-7",
+      "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5-5",
       "anthropic/claude-sonnet-4-5",
       "anthropic/claude-sonnet-4-6",
-      "deepseek/deepseek-v4-flash-0731",
-      "google/gemini-2.5-flash",
-      "google/gemini-2.5-pro",
+      "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5-5",
       "google/gemini-3-flash-preview",
       "google/gemini-3.1-pro-preview",
-      "moonshot-ai/kimi-k2.7-code",
-      "moonshot-ai/kimi-k3",
-      "nvidia/nemotron-3-super-120b-a12b",
-      "openai/gpt-5-mini",
-      "openai/gpt-5.1",
-      "openai/gpt-5.2",
-      "openai/gpt-5.4",
+      "google/gemini-3.6-flash",
+      "google/gemini-3.7-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
       "openai/gpt-5.5",
+      "openai/gpt-5.6-luna",
+      "openai/gpt-5.6-sol",
+      "openai/gpt-5.6-terra",
+      "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "perplexity/deepseek-v4-pro-0813",
+      "perplexity/glm-5.3",
+      "perplexity/glm-5.3-flash",
+      "perplexity/kimi-k3",
+      "perplexity/nemotron-3.5-super-120b-a12b",
       "perplexity/sonar",
-      "xai/grok-4-1-fast-non-reasoning",
-      "xai/grok-4.6"
+      "xai/grok-4.5",
+      "xai/grok-4.6",
+      "xai/grok-4.7"
     ]
   },
   {
@@ -6352,109 +6865,18 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Pioneer",
     apiKeyEnvVars: ["PIONEER_API_KEY"],
     models: [
-      "claude-3-7-sonnet-latest",
-      "claude-fable-5",
-      "claude-haiku-4-5",
-      "claude-opus-4-1",
-      "claude-opus-4-5",
-      "claude-opus-4-6",
-      "claude-opus-4-7",
-      "claude-opus-4-8",
-      "claude-opus-5",
-      "claude-sonnet-4-5",
-      "claude-sonnet-4-6",
-      "claude-sonnet-5",
-      "deepseek-ai/DeepSeek-V3",
-      "deepseek-ai/DeepSeek-V3.1",
-      "deepseek-ai/DeepSeek-V4-Flash",
-      "deepseek-ai/DeepSeek-V4-Pro",
-      "devstral-2",
       "fastino/gliguard-LLMGuardrails-300M",
+      "fastino/gliguard-PII-multi",
+      "fastino/GLiNER-2.5-Decide",
       "fastino/gliner2-base-v1",
       "fastino/gliner2-large-v1",
       "fastino/gliner2-multi-large-v1",
       "fastino/gliner2-multi-v1",
       "fastino/gliner2-privacy-filter-PII-multi",
-      "gemini-3-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-3.1-pro",
-      "gemini-3.5-flash",
-      "gemini-3.5-flash-lite",
-      "gemini-3.6-flash",
-      "google/diffusiongemma-26B-A4B-it",
-      "google/gemma-3-4b-pt",
-      "google/gemma-4-12B-it",
-      "google/gemma-4-31B-it",
-      "google/gemma-4-E2B-it",
-      "google/gemma-4-E4B-it",
-      "gpt-4.1",
-      "gpt-4.1-mini",
-      "gpt-4.1-nano",
-      "gpt-4o",
-      "gpt-4o-mini",
-      "gpt-5-mini",
-      "gpt-5-nano",
-      "gpt-5.1",
-      "gpt-5.3-codex",
-      "gpt-5.4",
-      "gpt-5.4-mini",
-      "gpt-5.4-nano",
-      "gpt-5.5",
-      "gpt-5.6-luna",
-      "gpt-5.6-sol",
-      "gpt-5.6-terra",
-      "grok-4.5",
-      "HuggingFaceTB/SmolLM3-3B-Base",
-      "LiquidAI/LFM2-24B-A2B",
-      "meta-llama/Llama-3.1-8B-Instruct",
-      "meta-llama/Llama-3.2-1B",
-      "meta-llama/Llama-3.2-1B-Instruct",
-      "meta-llama/Llama-3.2-3B",
-      "meta-llama/Llama-3.2-3B-Instruct",
-      "meta-llama/Llama-3.3-70B-Instruct",
-      "meta/muse-spark-1.1",
-      "MiniMaxAI/MiniMax-M2.7",
-      "MiniMaxAI/MiniMax-M3",
-      "mistral-large-3",
-      "mistral-medium-3.5",
-      "mistralai/Codestral-22B-v0.1",
-      "mistralai/Magistral-Small-2506",
-      "mistralai/Ministral-8B-Instruct-2410",
-      "mistralai/Mistral-7B-Instruct-v0.3",
-      "mistralai/Mistral-Nemo-Instruct-2407",
-      "mistralai/Mistral-Small-4-119B-2603",
-      "mistralai/Pixtral-12B-2409",
-      "moonshotai/Kimi-K2.6",
-      "moonshotai/Kimi-K2.7-Code",
-      "moonshotai/Kimi-K3",
-      "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
-      "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8",
-      "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16",
+      "fastino/gliner2.5-base-v1",
+      "fastino/gliner2.5-multi-v1",
       "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
-      "openai/gpt-oss-120b",
-      "openai/gpt-oss-20b",
-      "pioneer/auto",
-      "poolside/laguna-s-2.1",
-      "Qwen/Qwen2.5-Coder-0.5B",
-      "Qwen/Qwen3-1.7B-Base",
-      "Qwen/Qwen3-235B-A22B-Instruct-2507",
-      "Qwen/Qwen3-32B",
-      "Qwen/Qwen3-4B-Base",
-      "Qwen/Qwen3-4B-Instruct-2507",
-      "Qwen/Qwen3-8B",
-      "Qwen/Qwen3.5-9B",
-      "Qwen/Qwen3.6-27B",
-      "Qwen/Qwen3.6-35B-A3B",
-      "qwen3.6-flash",
-      "qwen3.6-max-preview",
-      "qwen3.6-plus",
-      "qwen3.7-max",
-      "qwen3.7-plus",
-      "sakana/fugu-ultra",
-      "XiaomiMiMo/MiMo-V2.5",
-      "XiaomiMiMo/MiMo-V2.5-Pro",
-      "zai-org/GLM-5.1",
-      "zai-org/GLM-5.2"
+      "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4"
     ]
   },
   {
@@ -6462,55 +6884,34 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Poe",
     apiKeyEnvVars: ["POE_API_KEY"],
     models: [
-      "anthropic/claude-haiku-3",
-      "anthropic/claude-haiku-3.5",
       "anthropic/claude-haiku-4.5",
-      "anthropic/claude-opus-4",
-      "anthropic/claude-opus-4.1",
       "anthropic/claude-opus-4.5",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-opus-4.7",
       "anthropic/claude-opus-4.8",
-      "anthropic/claude-sonnet-3.5",
-      "anthropic/claude-sonnet-3.5-june",
-      "anthropic/claude-sonnet-3.7",
-      "anthropic/claude-sonnet-4",
       "anthropic/claude-sonnet-4.5",
       "anthropic/claude-sonnet-4.6",
       "cerebras/gpt-oss-120b-cs",
       "cerebras/llama-3.1-8b-cs",
-      "cerebras/llama-3.3-70b-cs",
-      "cerebras/qwen3-235b-2507-cs",
-      "cerebras/qwen3-32b-cs",
       "elevenlabs/elevenlabs-music",
       "elevenlabs/elevenlabs-v2.5-turbo",
       "elevenlabs/elevenlabs-v3",
       "empiriolabs/deepseek-v4-flash-el",
       "empiriolabs/deepseek-v4-pro-el",
-      "fireworks-ai/kimi-k2.5-fw",
-      "google/gemini-2.0-flash",
-      "google/gemini-2.0-flash-lite",
-      "google/gemini-2.5-flash",
-      "google/gemini-2.5-flash-lite",
-      "google/gemini-2.5-pro",
       "google/gemini-3-flash",
-      "google/gemini-3-pro",
       "google/gemini-3.1-flash-lite",
       "google/gemini-3.1-pro",
       "google/gemini-3.5-flash",
-      "google/gemini-deep-research",
+      "google/gemini-3.5-flash-lite",
+      "google/gemini-3.6-flash",
+      "google/gemini-3.7-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-omni-1.1-flash",
       "google/gemma-4-31b",
-      "google/imagen-3",
-      "google/imagen-3-fast",
       "google/imagen-4",
       "google/imagen-4-fast",
-      "google/imagen-4-ultra",
       "google/lyria",
-      "google/nano-banana",
       "google/nano-banana-pro",
-      "google/veo-2",
-      "google/veo-3",
-      "google/veo-3-fast",
       "google/veo-3.1",
       "google/veo-3.1-fast",
       "ideogramai/ideogram",
@@ -6521,82 +6922,43 @@ export const MASTRA_PROVIDER_CATALOG = [
       "novita/deepseek-v3.2",
       "novita/glm-4.6",
       "novita/glm-4.6v",
-      "novita/glm-4.7",
       "novita/glm-4.7-flash",
       "novita/glm-4.7-n",
       "novita/glm-5",
-      "novita/kimi-k2-thinking",
-      "novita/kimi-k2.5",
       "novita/kimi-k2.6",
       "novita/minimax-m2.1",
-      "openai/chatgpt-4o-latest",
-      "openai/dall-e-3",
-      "openai/gpt-3.5-turbo",
-      "openai/gpt-3.5-turbo-instruct",
-      "openai/gpt-3.5-turbo-raw",
-      "openai/gpt-4-classic",
-      "openai/gpt-4-classic-0314",
-      "openai/gpt-4-turbo",
       "openai/gpt-4.1",
       "openai/gpt-4.1-mini",
-      "openai/gpt-4.1-nano",
       "openai/gpt-4o",
       "openai/gpt-4o-aug",
       "openai/gpt-4o-mini",
-      "openai/gpt-4o-mini-search",
       "openai/gpt-4o-search",
       "openai/gpt-5",
-      "openai/gpt-5-chat",
-      "openai/gpt-5-codex",
       "openai/gpt-5-mini",
       "openai/gpt-5-nano",
       "openai/gpt-5-pro",
       "openai/gpt-5.1",
-      "openai/gpt-5.1-codex",
-      "openai/gpt-5.1-codex-max",
-      "openai/gpt-5.1-codex-mini",
-      "openai/gpt-5.1-instant",
       "openai/gpt-5.2",
-      "openai/gpt-5.2-codex",
-      "openai/gpt-5.2-instant",
       "openai/gpt-5.2-pro",
       "openai/gpt-5.3-codex",
       "openai/gpt-5.3-codex-spark",
-      "openai/gpt-5.3-instant",
       "openai/gpt-5.4",
       "openai/gpt-5.4-mini",
       "openai/gpt-5.4-nano",
       "openai/gpt-5.4-pro",
       "openai/gpt-5.5",
       "openai/gpt-5.5-pro",
-      "openai/gpt-image-1",
       "openai/gpt-image-1-mini",
       "openai/gpt-image-1.5",
       "openai/gpt-image-2",
-      "openai/o1",
-      "openai/o1-pro",
       "openai/o3",
-      "openai/o3-deep-research",
-      "openai/o3-mini",
-      "openai/o3-mini-high",
       "openai/o3-pro",
-      "openai/o4-mini",
-      "openai/o4-mini-deep-research",
-      "openai/sora-2",
-      "openai/sora-2-pro",
       "poetools/claude-code",
-      "runwayml/runway",
-      "runwayml/runway-gen-4-turbo",
       "stabilityai/stablediffusionxl",
       "topazlabs-co/topazlabs",
       "trytako/tako",
       "xai/grok-3",
       "xai/grok-3-mini",
-      "xai/grok-4",
-      "xai/grok-4-fast-non-reasoning",
-      "xai/grok-4-fast-reasoning",
-      "xai/grok-4.1-fast-non-reasoning",
-      "xai/grok-4.1-fast-reasoning",
       "xai/grok-4.20-multi-agent",
       "xai/grok-code-fast-1"
     ]
@@ -6608,16 +6970,93 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: ["poolside/laguna-m.1", "poolside/laguna-s-2.1", "poolside/laguna-xs-2.1"]
   },
   {
+    id: "prime",
+    name: "Prime Inference",
+    apiKeyEnvVars: ["PRIME_API_KEY"],
+    models: [
+      "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5.1",
+      "anthropic/claude-opus-4.6",
+      "anthropic/claude-opus-4.7",
+      "anthropic/claude-opus-4.8",
+      "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5.5",
+      "anthropic/claude-sonnet-4.6",
+      "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5.5",
+      "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-0731",
+      "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
+      "google/gemini-3-flash-preview",
+      "google/gemini-3.1-pro-preview",
+      "google/gemini-3.5-flash",
+      "google/gemini-3.6-flash",
+      "google/gemini-3.7-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-4-argon",
+      "google/gemma-3-27b-it",
+      "meta-llama/llama-3.3-70b-instruct",
+      "meta/muse-spark-open",
+      "mistralai/mistral-large-2512",
+      "mistralai/mistral-nemo",
+      "mistralai/mistral-small-2603",
+      "mistralai/mixtral-8x22b-instruct",
+      "moonshotai/kimi-k2-0905",
+      "moonshotai/kimi-k3",
+      "moonshotai/kimi-k3.1-pro",
+      "openai/gpt-4.1",
+      "openai/gpt-4.1-mini",
+      "openai/gpt-4.1-nano",
+      "openai/gpt-4o",
+      "openai/gpt-4o-mini",
+      "openai/gpt-5",
+      "openai/gpt-5-mini",
+      "openai/gpt-5-nano",
+      "openai/gpt-5.1",
+      "openai/gpt-5.2",
+      "openai/gpt-5.3-codex",
+      "openai/gpt-5.4",
+      "openai/gpt-5.4-mini",
+      "openai/gpt-5.4-nano",
+      "openai/gpt-5.4-pro",
+      "openai/gpt-5.5",
+      "openai/gpt-5.6-luna",
+      "openai/gpt-5.6-luna-pro",
+      "openai/gpt-5.6-sol",
+      "openai/gpt-5.6-sol-pro",
+      "openai/gpt-5.6-terra",
+      "openai/gpt-5.6-terra-pro",
+      "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-sol",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "qwen/qwen3-30b-a3b-instruct-2507",
+      "qwen/qwen3-coder-next",
+      "qwen/qwen3-vl-235b-a22b-instruct",
+      "qwen/qwen3-vl-30b-a3b-instruct",
+      "qwen/qwen3.8-27b",
+      "x-ai/grok-4.6",
+      "x-ai/grok-4.7",
+      "z-ai/glm-5.2",
+      "z-ai/glm-5.3",
+      "z-ai/glm-5.3-flash"
+    ]
+  },
+  {
     id: "privatemode-ai",
     name: "Privatemode AI",
     apiKeyEnvVars: ["PRIVATEMODE_API_KEY"],
     models: [
       "deepseek-ocr-2",
       "glm-5.3",
+      "glm-5.3-flash",
+      "glm-flash-latest",
       "glm-latest",
       "gpt-oss-120b",
-      "kimi-k2.6",
-      "kimi-latest",
       "qwen3-embedding-4b",
       "voxtral-mini-3b",
       "whisper-large-v3"
@@ -6629,14 +7068,10 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["QIHANG_API_KEY"],
     models: [
       "claude-haiku-4-5-20251001",
-      "claude-opus-4-5-20251101",
-      "claude-sonnet-4-5-20250929",
       "gemini-2.5-flash",
       "gemini-3-flash-preview",
       "gemini-3-pro-preview",
-      "gpt-5-mini",
-      "gpt-5.2",
-      "gpt-5.2-codex"
+      "gpt-5-mini"
     ]
   },
   {
@@ -6644,98 +7079,19 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Qiniu",
     apiKeyEnvVars: ["QINIU_API_KEY"],
     models: [
-      "claude-3.5-haiku",
-      "claude-3.5-sonnet",
-      "claude-3.7-sonnet",
-      "claude-4.0-opus",
-      "claude-4.0-sonnet",
-      "claude-4.1-opus",
-      "claude-4.5-haiku",
-      "claude-4.5-opus",
-      "claude-4.5-sonnet",
-      "deepseek-r1",
-      "deepseek-r1-0528",
-      "deepseek-v3",
-      "deepseek-v3-0324",
-      "deepseek-v3.1",
-      "deepseek/deepseek-math-v2",
-      "deepseek/deepseek-v3.1-terminus",
-      "deepseek/deepseek-v3.1-terminus-thinking",
-      "deepseek/deepseek-v3.2-251201",
-      "deepseek/deepseek-v3.2-exp",
-      "deepseek/deepseek-v3.2-exp-thinking",
-      "doubao-1.5-pro-32k",
-      "doubao-1.5-thinking-pro",
-      "doubao-1.5-vision-pro",
-      "doubao-seed-1.6",
-      "doubao-seed-1.6-flash",
-      "doubao-seed-1.6-thinking",
-      "doubao-seed-2.0-code",
       "doubao-seed-2.0-lite",
       "doubao-seed-2.0-mini",
-      "doubao-seed-2.0-pro",
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-lite",
-      "gemini-2.5-flash",
-      "gemini-2.5-flash-image",
-      "gemini-2.5-flash-lite",
-      "gemini-2.5-pro",
-      "gemini-3.0-flash-preview",
-      "gemini-3.0-pro-image-preview",
-      "gemini-3.0-pro-preview",
-      "glm-4.5",
-      "glm-4.5-air",
-      "gpt-oss-120b",
-      "gpt-oss-20b",
-      "kimi-k2",
       "kling-v2-6",
-      "meituan/longcat-flash-chat",
-      "meituan/longcat-flash-lite",
-      "mimo-v2-flash",
-      "MiniMax-M1",
-      "minimax/minimax-m2",
-      "minimax/minimax-m2.1",
       "minimax/minimax-m2.5",
-      "minimax/minimax-m2.5-highspeed",
-      "moonshotai/kimi-k2-0905",
-      "moonshotai/kimi-k2-thinking",
-      "moonshotai/kimi-k2.5",
-      "openai/gpt-5",
-      "openai/gpt-5.2",
-      "qwen-max-2025-01-25",
-      "qwen-turbo",
-      "qwen-vl-max-2025-01-25",
-      "qwen2.5-vl-72b-instruct",
-      "qwen2.5-vl-7b-instruct",
-      "qwen3-235b-a22b",
-      "qwen3-235b-a22b-instruct-2507",
-      "qwen3-235b-a22b-thinking-2507",
-      "qwen3-30b-a3b",
-      "qwen3-30b-a3b-instruct-2507",
-      "qwen3-30b-a3b-thinking-2507",
-      "qwen3-32b",
-      "qwen3-coder-480b-a35b-instruct",
-      "qwen3-max",
-      "qwen3-max-preview",
-      "qwen3-next-80b-a3b-instruct",
-      "qwen3-next-80b-a3b-thinking",
-      "qwen3-vl-30b-a3b-thinking",
       "qwen3.5-397b-a17b",
-      "stepfun-ai/gelab-zero-4b-preview",
-      "stepfun/step-3.5-flash",
-      "x-ai/grok-4-fast",
-      "x-ai/grok-4-fast-non-reasoning",
-      "x-ai/grok-4-fast-reasoning",
-      "x-ai/grok-4.1-fast",
-      "x-ai/grok-4.1-fast-non-reasoning",
-      "x-ai/grok-4.1-fast-reasoning",
-      "x-ai/grok-code-fast-1",
-      "xiaomi/mimo-v2-flash",
-      "z-ai/autoglm-phone-9b",
-      "z-ai/glm-4.6",
-      "z-ai/glm-4.7",
       "z-ai/glm-5"
     ]
+  },
+  {
+    id: "reflection",
+    name: "Reflection",
+    apiKeyEnvVars: ["REFLECTION_API_KEY"],
+    models: ["Beam-1.0-501B-A23B"]
   },
   {
     id: "regolo-ai",
@@ -6751,10 +7107,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "glm5.2",
       "gpt-oss-120b",
       "gpt-oss-20b",
-      "llama-3.3-70b-instruct",
       "mistral-small-4-119b",
       "qwen-image",
-      "qwen3-coder-next",
       "qwen3-embedding-8b",
       "qwen3-reranker-4b",
       "qwen3.5-122b",
@@ -6773,6 +7127,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-fable-5@eu",
       "claude-haiku-4-5",
       "claude-haiku-4-5@eu",
+      "claude-haiku-5-5",
+      "claude-haiku-5-5@eu",
       "claude-opus-4-1",
       "claude-opus-4-5",
       "claude-opus-4-5@eu",
@@ -6783,13 +7139,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "claude-opus-4-8",
       "claude-opus-4-8@eu",
       "claude-opus-5",
+      "claude-opus-5-5",
+      "claude-opus-5-5@eu",
       "claude-opus-5@eu",
       "claude-sonnet-4-5",
       "claude-sonnet-4-5@eu",
       "claude-sonnet-4-6",
       "claude-sonnet-4-6@eu",
-      "claude-sonnet-4@eu",
       "claude-sonnet-5",
+      "claude-sonnet-5-5",
+      "claude-sonnet-5-5@eu",
       "claude-sonnet-5@eu",
       "deepseek-v4-flash",
       "deepseek-v4-flash-0731",
@@ -6798,6 +7157,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek-v4-pro-0813",
       "deepseek-v4-pro-0813@eu",
       "deepseek-v4-pro@eu",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
+      "deepseek-v4.1-flash-1017@eu",
+      "deepseek-v4.1-flash@eu",
       "devstral-latest",
       "devstral-latest@eu",
       "fugu-ultra",
@@ -6818,13 +7181,14 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gemini-3.7-flash@eu",
       "gemini-3.8-flash",
       "gemini-3.8-flash@eu",
+      "gemini-4-argon",
+      "gemini-4-argon@eu",
       "gemma-4-26b-a4b-it",
       "gemma-4-31b-it",
       "glm-5.1",
       "glm-5.1@eu",
       "glm-5.2",
       "glm-5.2-fast",
-      "glm-5.2@eu",
       "glm-5.3",
       "glm-5.3-flash",
       "glm-5.3-flash@eu",
@@ -6853,23 +7217,33 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6-terra@eu",
       "gpt-5@eu",
       "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-luna@eu",
+      "gpt-6-sol",
+      "gpt-6-sol@eu",
+      "gpt-6.1-sol",
+      "gpt-6.1-sol@eu",
+      "gpt-6.1-terra",
+      "gpt-6.1-terra@eu",
       "grok-4.2-beta",
       "grok-4.3",
       "grok-4.5",
       "grok-4.6",
+      "grok-4.7",
       "grok-build-0.1",
       "hy3",
       "inkling",
       "inkling-256k",
       "kat-coder-pro",
+      "kimi-k2.5@eu",
       "kimi-k2.6",
       "kimi-k2.6@eu",
       "kimi-k2.7-code",
       "kimi-k2.7-code@eu",
       "kimi-k3",
+      "kimi-k3.1-pro",
+      "kimi-k3.1-pro-highspeed",
       "kimi-k3@eu",
-      "laguna-m.1",
-      "laguna-xs.2",
       "leanstral-1-5",
       "leanstral-1-5@eu",
       "ling-2.6-1t",
@@ -6877,10 +7251,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "ling-3.0-tiny",
       "mimo-v2.5",
       "mimo-v2.5-pro",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro",
       "minimax-m2.7",
       "minimax-m2.7-highspeed",
       "minimax-m3",
+      "minimax-m3.1-flash",
+      "minimax-m3.1-flash@eu",
       "minimax-m3@eu",
+      "mistral-large-4",
+      "mistral-large-4@eu",
       "mistral-medium-3-5",
       "mistral-medium-3-5@eu",
       "mistral-medium-latest",
@@ -6888,6 +7268,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "mistral-small-2603",
       "mistral-small-2603@eu",
       "muse-glimmer-30b",
+      "muse-spark-1.3",
+      "muse-spark-open",
+      "muse-wonder-1.0",
       "nemotron-3-nano-omni",
       "nemotron-3-nano-omni-30b-a3b-reasoning",
       "nemotron-3-nano-omni@eu",
@@ -6918,8 +7301,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "seed-2.0-mini",
       "seed-2.0-pro",
       "step-3.7-flash",
-      "thinkingcap-qwen3.6-27b",
-      "thinkingcap-qwen3.6-27b@eu"
+      "step-5-preview"
     ]
   },
   {
@@ -6949,12 +7331,10 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "RunInfra",
     apiKeyEnvVars: ["RUNINFRA_GATEWAY_KEY"],
     models: [
-      "deepseek-ai/DeepSeek-V4-Flash-0731",
-      "deepseek-ai/DeepSeek-V4-Pro-0813",
-      "Inferact/Qwen3.8-2.4T-A95B-NVFP4",
       "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
       "ornith-ai/Ornith-1.5-35B-A3B",
       "Qwen/Qwen3.8-27B",
+      "zai-org/GLM-5.3",
       "zai-org/GLM-5.3-Flash"
     ]
   },
@@ -6965,10 +7345,23 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: ["fugu", "fugu-ultra", "fugu-ultra-20260615", "sakana-namazu"]
   },
   {
+    id: "sambanova",
+    name: "SambaNova",
+    apiKeyEnvVars: ["SAMBANOVA_API_KEY"],
+    models: [
+      "DeepSeek-V3.1",
+      "DeepSeek-V3.2",
+      "gemma-4-31B-it",
+      "gpt-oss-120b",
+      "Meta-Llama-3.3-70B-Instruct",
+      "MiniMax-M3"
+    ]
+  },
+  {
     id: "sarvam",
     name: "Sarvam AI",
     apiKeyEnvVars: ["SARVAM_API_KEY"],
-    models: ["sarvam-105b", "sarvam-30b"]
+    models: ["sarvam-105b"]
   },
   {
     id: "scaleway",
@@ -6977,18 +7370,20 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "bge-multilingual-gemma2",
       "deepseek-v4-flash-0731",
+      "deepseek-v4.1-flash-1017",
       "gemma-4-26b-a4b-it",
       "glm-5.2",
+      "glm-5.3",
       "gpt-oss-120b",
+      "lightonocr-3-0.8b",
       "llama-3.3-70b-instruct",
       "mistral-medium-3.5-128b",
       "mistral-small-3.2-24b-instruct-2506",
-      "pixtral-12b-2409",
       "qwen3-235b-a22b-instruct-2507",
-      "qwen3-coder-30b-a3b-instruct",
       "qwen3-embedding-8b",
       "qwen3.5-397b-a17b",
       "qwen3.6-35b-a3b",
+      "qwen3.8-27b",
       "whisper-large-v3"
     ]
   },
@@ -6997,11 +7392,11 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "SCNet Token Plan",
     apiKeyEnvVars: ["SCNET_API_KEY"],
     models: [
-      "DeepSeek-V3.2",
       "DeepSeek-V4-Flash",
       "DeepSeek-V4-Flash-0731",
       "DeepSeek-V4-Pro",
       "DeepSeek-V4-Pro-0813",
+      "DeepSeek-V4.1-Flash",
       "GLM-5",
       "GLM-5.1",
       "GLM-5.2",
@@ -7011,7 +7406,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Kimi-K2.6",
       "Kimi-K2.7-Code",
       "Kimi-K3",
-      "MiMo-V2.5-Pro",
       "MiniMax-M2.5",
       "MiniMax-M2.7",
       "MiniMax-M3",
@@ -7032,6 +7426,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-v4-flash",
       "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
       "glm-5.2",
       "kimi-k3",
       "sensenova-6.8-flash-lite"
@@ -7042,7 +7437,6 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "SiliconFlow",
     apiKeyEnvVars: ["SILICONFLOW_API_KEY"],
     models: [
-      "baidu/ERNIE-4.5-300B-A47B",
       "ByteDance-Seed/Seed-OSS-36B-Instruct",
       "deepseek-ai/DeepSeek-R1",
       "deepseek-ai/DeepSeek-V3",
@@ -7051,26 +7445,30 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek-ai/DeepSeek-V3.2",
       "deepseek-ai/DeepSeek-V3.2-Exp",
       "deepseek-ai/DeepSeek-V4-Flash",
+      "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
       "deepseek-ai/DeepSeek-V4-Pro",
+      "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "google/gemma-4-12B-it",
       "google/gemma-4-26B-A4B-it",
       "google/gemma-4-31B-it",
       "inclusionAI/Ling-flash-2.0",
-      "MiniMaxAI/MiniMax-M2.5",
+      "meituan-longcat/LongCat-2.0",
+      "MiniMaxAI/MiniMax-M3",
       "moonshotai/Kimi-K2.5",
       "moonshotai/Kimi-K2.6",
+      "moonshotai/Kimi-K2.7-Code",
+      "moonshotai/Kimi-K3",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "Qwen/Qwen2.5-72B-Instruct",
       "Qwen/Qwen2.5-7B-Instruct",
       "Qwen/Qwen3-14B",
-      "Qwen/Qwen3-235B-A22B-Thinking-2507",
       "Qwen/Qwen3-30B-A3B-Instruct-2507",
       "Qwen/Qwen3-32B",
       "Qwen/Qwen3-8B",
       "Qwen/Qwen3-Coder-30B-A3B-Instruct",
       "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-      "Qwen/Qwen3-VL-235B-A22B-Instruct",
-      "Qwen/Qwen3-VL-235B-A22B-Thinking",
       "Qwen/Qwen3-VL-30B-A3B-Instruct",
       "Qwen/Qwen3-VL-30B-A3B-Thinking",
       "Qwen/Qwen3-VL-32B-Instruct",
@@ -7079,17 +7477,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Qwen/Qwen3.5-122B-A10B",
       "Qwen/Qwen3.5-27B",
       "Qwen/Qwen3.5-35B-A3B",
-      "Qwen/Qwen3.5-397B-A17B",
       "Qwen/Qwen3.5-9B",
       "Qwen/Qwen3.6-27B",
       "Qwen/Qwen3.6-35B-A3B",
+      "Qwen/Qwen3.8-2.4T-A95B",
       "stepfun-ai/Step-3.5-Flash",
       "tencent/Hunyuan-A13B-Instruct",
-      "tencent/Hy3-preview",
+      "tencent/Hy3",
       "zai-org/GLM-4.5-Air",
       "zai-org/GLM-5",
       "zai-org/GLM-5.1",
       "zai-org/GLM-5.2",
+      "zai-org/GLM-5.3",
+      "zai-org/GLM-5.3-Flash",
       "zai-org/GLM-5V-Turbo"
     ]
   },
@@ -7098,7 +7498,6 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "SiliconFlow (China)",
     apiKeyEnvVars: ["SILICONFLOW_CN_API_KEY"],
     models: [
-      "baidu/ERNIE-4.5-300B-A47B",
       "ByteDance-Seed/Seed-OSS-36B-Instruct",
       "deepseek-ai/DeepSeek-OCR",
       "deepseek-ai/DeepSeek-R1",
@@ -7113,22 +7512,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Pro/deepseek-ai/DeepSeek-V3",
       "Pro/deepseek-ai/DeepSeek-V3.1-Terminus",
       "Pro/deepseek-ai/DeepSeek-V3.2",
-      "Pro/MiniMaxAI/MiniMax-M2.5",
-      "Pro/moonshotai/Kimi-K2.5",
       "Pro/moonshotai/Kimi-K2.6",
-      "Pro/zai-org/GLM-5",
       "Pro/zai-org/GLM-5.1",
       "Qwen/Qwen2.5-72B-Instruct",
       "Qwen/Qwen2.5-7B-Instruct",
       "Qwen/Qwen3-14B",
-      "Qwen/Qwen3-235B-A22B-Thinking-2507",
       "Qwen/Qwen3-30B-A3B-Instruct-2507",
       "Qwen/Qwen3-32B",
       "Qwen/Qwen3-8B",
       "Qwen/Qwen3-Coder-30B-A3B-Instruct",
-      "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-      "Qwen/Qwen3-VL-235B-A22B-Instruct",
-      "Qwen/Qwen3-VL-235B-A22B-Thinking",
       "Qwen/Qwen3-VL-30B-A3B-Instruct",
       "Qwen/Qwen3-VL-30B-A3B-Thinking",
       "Qwen/Qwen3-VL-32B-Instruct",
@@ -7137,7 +7529,6 @@ export const MASTRA_PROVIDER_CATALOG = [
       "Qwen/Qwen3.5-122B-A10B",
       "Qwen/Qwen3.5-27B",
       "Qwen/Qwen3.5-35B-A3B",
-      "Qwen/Qwen3.5-397B-A17B",
       "Qwen/Qwen3.5-4B",
       "Qwen/Qwen3.5-9B",
       "Qwen/Qwen3.6-35B-A3B",
@@ -7185,31 +7576,69 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["STACKIT_API_KEY"],
     models: [
       "cortecs/Llama-3.3-70B-Instruct-FP8-Dynamic",
-      "google/gemma-3-27b-it",
       "intfloat/e5-mistral-7b-instruct",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8",
-      "Qwen/Qwen3-VL-Embedding-8B",
-      "Qwen/Qwen3.6-27B"
+      "Qwen/Qwen3-VL-Embedding-8B"
     ]
   },
   {
     id: "standardcompute",
     name: "Standard Compute",
     apiKeyEnvVars: ["STANDARDCOMPUTE_API_KEY"],
-    models: ["standardcompute"]
+    models: [
+      "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5.1",
+      "anthropic/claude-haiku-5.5",
+      "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5.5",
+      "anthropic/claude-sonnet-5",
+      "anthropic/claude-sonnet-5.5",
+      "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-flash-0731",
+      "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
+      "google/gemini-2.5-flash",
+      "google/gemini-2.5-pro",
+      "google/gemini-3.1-pro-preview",
+      "google/gemini-3.5-flash-lite",
+      "google/gemini-3.8-flash",
+      "minimax/minimax-m3",
+      "mistralai/mistral-large-4-0",
+      "moonshotai/kimi-k3",
+      "openai/gpt-5.6-luna",
+      "openai/gpt-5.6-sol",
+      "openai/gpt-5.6-terra",
+      "openai/gpt-6-astra",
+      "openai/gpt-6-luna",
+      "qwen/qwen3.7-flash",
+      "qwen/qwen3.7-max",
+      "qwen/qwen3.7-plus",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.8-flash",
+      "qwen/qwen3.8-max-0902",
+      "standardcompute",
+      "x-ai/grok-4.3",
+      "xiaomi/mimo-v2.5",
+      "xiaomi/mimo-v2.5-pro",
+      "xiaomi/mimo-v2.6-flash",
+      "xiaomi/mimo-v2.6-pro",
+      "z-ai/glm-5.2",
+      "z-ai/glm-5.3",
+      "z-ai/glm-5.3-flash"
+    ]
   },
   {
     id: "stepfun",
     name: "StepFun (China)",
     apiKeyEnvVars: ["STEPFUN_API_KEY"],
     models: [
-      "step-1-32k",
-      "step-2-16k",
       "step-3.5-flash",
       "step-3.5-flash-2603",
       "step-3.7-flash",
+      "step-5-preview",
       "step-tts-2",
       "stepaudio-2.5-asr",
       "stepaudio-2.5-tts"
@@ -7220,11 +7649,10 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "StepFun (Global)",
     apiKeyEnvVars: ["STEPFUN_API_KEY"],
     models: [
-      "step-1-32k",
-      "step-2-16k",
       "step-3.5-flash",
       "step-3.5-flash-2603",
       "step-3.7-flash",
+      "step-5-preview",
       "step-tts-2",
       "stepaudio-2.5-asr",
       "stepaudio-2.5-tts"
@@ -7234,19 +7662,25 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "stepfun-step-plan",
     name: "StepFun Step Plan (China)",
     apiKeyEnvVars: ["STEPFUN_API_KEY"],
-    models: ["step-3.5-flash", "step-3.5-flash-2603", "step-3.7-flash", "step-router-v1"]
+    models: [
+      "step-3.5-flash",
+      "step-3.5-flash-2603",
+      "step-3.7-flash",
+      "step-5-preview",
+      "step-router-v1"
+    ]
   },
   {
     id: "stepfun-ai-step-plan",
     name: "StepFun Step Plan (Global)",
     apiKeyEnvVars: ["STEPFUN_API_KEY"],
-    models: ["step-3.5-flash", "step-3.5-flash-2603", "step-3.7-flash"]
+    models: ["step-3.5-flash", "step-3.5-flash-2603", "step-3.7-flash", "step-5-preview"]
   },
   {
     id: "subconscious",
     name: "Subconscious",
     apiKeyEnvVars: ["SUBCONSCIOUS_API_KEY"],
-    models: ["subconscious/glm-5.2", "subconscious/tim-qwen3.6-27b"]
+    models: ["subconscious/deepseek-v4.1-flash-marathon", "subconscious/glm-5.3-marathon"]
   },
   {
     id: "submodel",
@@ -7269,31 +7703,107 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Synthetic",
     apiKeyEnvVars: ["SYNTHETIC_API_KEY"],
     models: [
-      "hf:MiniMaxAI/MiniMax-M3",
-      "hf:moonshotai/Kimi-K2.7-Code",
+      "hf:deepseek-ai/DeepSeek-V4.1-Flash",
+      "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017",
       "hf:moonshotai/Kimi-K3",
       "hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4",
       "hf:openai/gpt-oss-120b",
-      "hf:Qwen/Qwen3.6-27B",
       "hf:zai-org/GLM-4.7-Flash",
-      "hf:zai-org/GLM-5.2",
+      "hf:zai-org/GLM-5.3",
       "hf:zai-org/GLM-5.3-Flash"
+    ]
+  },
+  {
+    id: "tempr",
+    name: "Tempr Gateway",
+    apiKeyEnvVars: ["TEMPR_API_KEY"],
+    models: [
+      "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5-1",
+      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-4-5-20251001",
+      "anthropic/claude-opus-4-5",
+      "anthropic/claude-opus-4-5-20251101",
+      "anthropic/claude-opus-4-6",
+      "anthropic/claude-opus-4-7",
+      "anthropic/claude-opus-4-8",
+      "anthropic/claude-opus-5",
+      "anthropic/claude-sonnet-4-5",
+      "anthropic/claude-sonnet-4-5-20250929",
+      "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-sonnet-5",
+      "cerebras/gpt-oss-120b",
+      "cerebras/qwen-3.8-27b",
+      "deepseek/deepseek-flash",
+      "deepseek/deepseek-v4-pro",
+      "google/gemini-3-flash-preview",
+      "google/gemini-3.1-flash-lite",
+      "google/gemini-3.1-pro-preview",
+      "google/gemini-3.1-pro-preview-customtools",
+      "google/gemini-3.5-flash",
+      "google/gemini-3.5-flash-lite",
+      "google/gemini-3.6-flash",
+      "google/gemini-3.7-flash",
+      "google/gemini-3.8-flash",
+      "google/gemini-embedding-001",
+      "google/gemini-embedding-2",
+      "google/gemini-flash-latest",
+      "google/gemini-flash-lite-latest",
+      "google/gemma-4-26b-a4b-it",
+      "google/gemma-4-31b-it",
+      "groq/allam-2-7b",
+      "groq/openai/gpt-oss-120b",
+      "groq/openai/gpt-oss-20b",
+      "groq/qwen/qwen3.8-27b",
+      "minimax/MiniMax-M3",
+      "mistral/mistral-embed",
+      "mistral/mistral-large-2512",
+      "mistral/mistral-large-latest",
+      "mistral/mistral-medium-2604",
+      "mistral/mistral-medium-latest",
+      "mistral/mistral-small-2603",
+      "mistral/mistral-small-latest",
+      "mistral/voxtral-small-latest",
+      "mistral/zai-glm-5-3",
+      "moonshot/kimi-k2.6",
+      "moonshot/kimi-k2.7-code",
+      "moonshot/kimi-k2.7-code-highspeed",
+      "moonshot/kimi-k3",
+      "xai/grok-4.20-0309-non-reasoning",
+      "xai/grok-4.20-0309-reasoning",
+      "xai/grok-4.3",
+      "xai/grok-4.5",
+      "xai/grok-4.6",
+      "xai/grok-4.7",
+      "xai/grok-build-0.1",
+      "xiaomi-mimo/mimo-v2.6-flash",
+      "xiaomi-mimo/mimo-v2.6-pro",
+      "xiaomi-mimo/mimo-v2.6-pro-ultraspeed",
+      "zai/glm-4.5",
+      "zai/glm-4.5-air",
+      "zai/glm-4.5-flash",
+      "zai/glm-4.5v",
+      "zai/glm-4.6",
+      "zai/glm-4.6v",
+      "zai/glm-4.6v-flash",
+      "zai/glm-4.7",
+      "zai/glm-4.7-flash",
+      "zai/glm-4.7-flashx",
+      "zai/glm-5",
+      "zai/glm-5-turbo",
+      "zai/glm-5.1",
+      "zai/glm-5.2",
+      "zai/glm-5.3",
+      "zai/glm-5.3-flash",
+      "zai/glm-5.3-flashx",
+      "zai/glm-5v-turbo"
     ]
   },
   {
     id: "tencent-coding-plan",
     name: "Tencent Coding Plan (China)",
     apiKeyEnvVars: ["TENCENT_CODING_PLAN_API_KEY"],
-    models: [
-      "glm-5",
-      "hunyuan-2.0-instruct",
-      "hunyuan-2.0-thinking",
-      "hunyuan-t1",
-      "hunyuan-turbos",
-      "kimi-k2.5",
-      "minimax-m2.5",
-      "tc-code-latest"
-    ]
+    models: ["tc-code-latest"]
   },
   {
     id: "tencent-token-plan",
@@ -7312,31 +7822,18 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "TensorX",
     apiKeyEnvVars: ["TENSORX_API_KEY"],
     models: [
-      "deepseek/deepseek-chat-v3.1",
-      "deepseek/deepseek-r1-0528",
-      "deepseek/deepseek-v3.2",
-      "deepseek/deepseek-v4-flash",
       "deepseek/deepseek-v4-flash-0731",
-      "deepseek/deepseek-v4-pro",
-      "minimax/minimax-m2.5",
+      "deepseek/deepseek-v4-pro-0813",
+      "deepseek/deepseek-v4.1-flash",
       "minimax/minimax-m3",
-      "moonshotai/kimi-k2.5",
-      "moonshotai/kimi-k2.6",
       "moonshotai/kimi-k2.7-code",
       "moonshotai/kimi-k3",
-      "nvidia/nemotron-3-super-120b-a12b",
-      "openai/gpt-oss-120b",
-      "qwen/qwen3-235b-a22b-2507",
-      "qwen/qwen3-coder-30b-a3b-instruct",
-      "qwen/qwen3-vl-235b-a22b-instruct",
-      "qwen/qwen3.5-122b-a10b",
-      "qwen/qwen3.5-9b",
-      "z-ai/glm-4.7",
-      "z-ai/glm-5",
-      "z-ai/glm-5-turbo",
-      "z-ai/glm-5.1",
+      "qwen/qwen3.8-2.4t-a95b",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.8-flash-next",
       "z-ai/glm-5.2",
-      "z-ai/glm-5v-turbo"
+      "z-ai/glm-5.3",
+      "z-ai/glm-5.3-flash"
     ]
   },
   {
@@ -7347,9 +7844,17 @@ export const MASTRA_PROVIDER_CATALOG = [
       "agent-max",
       "agent-prime",
       "agent-standard",
+      "bytedance-pro-latest",
+      "claude-opus-latest",
       "code-max",
       "code-prime",
       "code-standard",
+      "deepseek-pro-latest",
+      "gemini-pro-latest",
+      "glm-latest",
+      "gpt-sol-latest",
+      "kimi-latest",
+      "minimax-latest",
       "text-max",
       "text-prime",
       "text-standard"
@@ -7359,16 +7864,55 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "thinkingmachines",
     name: "Thinking Machines",
     apiKeyEnvVars: ["TINKER_API_KEY"],
-    models: ["thinkingmachines/Inkling", "thinkingmachines/Inkling:peft:262144"]
+    models: [
+      "deepseek-ai/DeepSeek-V3.1",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017:peft:262144",
+      "deepseek-ai/DeepSeek-V4.1-Flash:peft:262144",
+      "moonshotai/Kimi-K2.6",
+      "moonshotai/Kimi-K2.6:peft:131072",
+      "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
+      "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16",
+      "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16:peft:262144",
+      "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16",
+      "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16:peft:262144",
+      "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16:peft:262144",
+      "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16",
+      "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16:peft:262144",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-120b:peft:131072",
+      "openai/gpt-oss-20b",
+      "Qwen/Qwen3-8B",
+      "Qwen/Qwen3.5-35B-A3B-Base",
+      "Qwen/Qwen3.5-397B-A17B",
+      "Qwen/Qwen3.5-397B-A17B:peft:262144",
+      "Qwen/Qwen3.5-4B",
+      "Qwen/Qwen3.5-4B:peft:262144",
+      "Qwen/Qwen3.5-9B",
+      "Qwen/Qwen3.5-9B-Base",
+      "Qwen/Qwen3.6-27B",
+      "Qwen/Qwen3.6-35B-A3B",
+      "Qwen/Qwen3.6-35B-A3B:peft:262144",
+      "Qwen/Qwen3.8-27B",
+      "Qwen/Qwen3.8-27B:peft:262144",
+      "thinkingmachines/Inkling",
+      "thinkingmachines/Inkling-Small",
+      "thinkingmachines/Inkling-Small:peft:262144",
+      "thinkingmachines/Inkling-Small:peft:262144:sampling-nvfp4",
+      "thinkingmachines/Inkling:peft:262144",
+      "thinkingmachines/Inkling:peft:262144:sampling-nvfp4",
+      "zai-org/GLM-5.3-Flash:peft:262144",
+      "zai-org/GLM-5.3:peft:262144"
+    ]
   },
   {
     id: "tinfoil",
     name: "Tinfoil",
     apiKeyEnvVars: ["TINFOIL_API_KEY"],
     models: [
-      "deepseek-v4-flash",
+      "deepseek-v4-1-flash",
       "gemma4-31b",
-      "glm-5-3-flash",
+      "glm-5-3",
       "gpt-oss-120b",
       "gpt-oss-safeguard-120b",
       "kimi-k3",
@@ -7381,41 +7925,18 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Together AI",
     apiKeyEnvVars: ["TOGETHER_API_KEY"],
     models: [
-      "deepcogito/cogito-v2-1-671b",
-      "deepseek-ai/DeepSeek-R1",
-      "deepseek-ai/DeepSeek-V3",
-      "deepseek-ai/DeepSeek-V3-1",
-      "deepseek-ai/DeepSeek-V4-Flash-0731",
-      "deepseek-ai/DeepSeek-V4-Pro",
       "deepseek-ai/DeepSeek-V4-Pro-0813",
-      "essentialai/Rnj-1-Instruct",
-      "google/gemma-3n-E4B-it",
-      "google/gemma-4-31B-it",
-      "LiquidAI/LFM2-24B-A2B",
-      "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "meta-llama/Meta-Llama-3-8B-Instruct-Lite",
-      "MiniMaxAI/MiniMax-M2.5",
-      "MiniMaxAI/MiniMax-M2.7",
+      "deepseek-ai/DeepSeek-V4.1-Flash",
+      "meta-models/Muse-Spark-Open-816B-A42B",
       "MiniMaxAI/MiniMax-M3",
-      "moonshotai/Kimi-K2.5",
-      "moonshotai/Kimi-K2.6",
-      "moonshotai/Kimi-K2.7-Code",
       "moonshotai/Kimi-K3",
-      "nvidia/nemotron-3-ultra-550b-a55b",
+      "nvidia/NVIDIA-Nemotron-3.5-Super-VL",
       "openai/gpt-oss-120b",
-      "openai/gpt-oss-20b",
-      "pearl-ai/gemma-4-31b-it",
-      "Qwen/Qwen2.5-7B-Instruct-Turbo",
-      "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
-      "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8",
-      "Qwen/Qwen3-Coder-Next-FP8",
-      "Qwen/Qwen3.5-397B-A17B",
       "Qwen/Qwen3.5-9B",
       "Qwen/Qwen3.6-Plus",
       "Qwen/Qwen3.7-Max",
+      "reflection/Beam-1.0-501B-A23B",
       "thinkingmachines/Inkling",
-      "zai-org/GLM-5",
-      "zai-org/GLM-5.1",
       "zai-org/GLM-5.2",
       "zai-org/GLM-5.3",
       "zai-org/GLM-5.3-Flash"
@@ -7468,10 +7989,11 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "umans-coder",
       "umans-deepseek-v4-flash-0731",
-      "umans-deepseek-v4-pro-0813",
+      "umans-deepseek-v4.1-flash",
+      "umans-deepseek-v4.1-flash-1017",
       "umans-flash",
-      "umans-glm-5.2",
-      "umans-kimi-k2.7",
+      "umans-glm-5.3",
+      "umans-glm-5.3-flash",
       "umans-kimi-k3"
     ]
   },
@@ -7482,10 +8004,11 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "umans-coder",
       "umans-deepseek-v4-flash-0731",
-      "umans-deepseek-v4-pro-0813",
+      "umans-deepseek-v4.1-flash",
+      "umans-deepseek-v4.1-flash-1017",
       "umans-flash",
-      "umans-glm-5.2",
-      "umans-kimi-k2.7",
+      "umans-glm-5.3",
+      "umans-glm-5.3-flash",
       "umans-kimi-k3",
       "umans-qwen3.6-35b-a3b"
     ]
@@ -7496,49 +8019,33 @@ export const MASTRA_PROVIDER_CATALOG = [
     apiKeyEnvVars: ["UNOROUTER_API_KEY"],
     models: [
       "claude-haiku-4-5-20251001",
-      "claude-opus-4-8",
       "claude-sonnet-5",
-      "deepseek-v4-flash",
-      "deepseek-v4-flash:free",
       "deepseek-v4-pro",
-      "deepseek-v4-pro:free",
       "gemini-3.5-flash",
       "gemma-4-31b-it:free",
       "glm-4.5-flash:free",
-      "glm-5.2",
-      "glm-5.2:free",
-      "gpt-5.2",
-      "gpt-5.4",
-      "gpt-5.4:free",
       "gpt-5.5",
-      "gpt-5.5:free",
       "kimi-k2.6",
-      "minimax-m2.7",
       "minimax-m2.7:free",
-      "nemotron-3-ultra-550b-a55b:free",
-      "qwen3.5-397b-a17b:free",
-      "step-3.7-flash:free"
+      "nemotron-3-ultra-550b-a55b:free"
     ]
   },
   {
     id: "upstage",
     name: "Upstage",
     apiKeyEnvVars: ["UPSTAGE_API_KEY"],
-    models: ["solar-mini", "solar-pro2", "solar-pro3", "solar-pro4"]
+    models: ["solar-mini", "solar-mini4", "solar-pro2", "solar-pro3", "solar-pro4"]
   },
   {
     id: "vancine",
     name: "Vancine",
     apiKeyEnvVars: ["VANCINE_API_KEY"],
     models: [
-      "deepseek-v4-flash",
-      "deepseek-v4-flash-vision-exp",
-      "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
       "glm-5.3",
       "glm-5.3-flash",
       "hy4-preview",
       "kimi-k3",
-      "MiniMax-M3",
       "qwen3.8-flash",
       "qwen3.8-max"
     ]
@@ -7552,23 +8059,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "alibaba/qwen-3-235b",
       "alibaba/qwen-3-30b",
       "alibaba/qwen-3-32b",
-      "alibaba/qwen-3.6-max-preview",
-      "alibaba/qwen3-235b-a22b-thinking",
       "alibaba/qwen3-coder",
       "alibaba/qwen3-coder-30b-a3b",
       "alibaba/qwen3-coder-next",
-      "alibaba/qwen3-coder-plus",
       "alibaba/qwen3-embedding-0.6b",
       "alibaba/qwen3-embedding-4b",
       "alibaba/qwen3-embedding-8b",
-      "alibaba/qwen3-max",
-      "alibaba/qwen3-max-preview",
       "alibaba/qwen3-max-thinking",
       "alibaba/qwen3-next-80b-a3b-instruct",
       "alibaba/qwen3-next-80b-a3b-thinking",
-      "alibaba/qwen3-vl-235b-a22b-instruct",
       "alibaba/qwen3-vl-instruct",
-      "alibaba/qwen3-vl-thinking",
       "alibaba/qwen3.5-flash",
       "alibaba/qwen3.5-plus",
       "alibaba/qwen3.6-27b",
@@ -7579,9 +8079,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "alibaba/qwen3.8-2.4t-a95b",
       "alibaba/qwen3.8-27b",
       "alibaba/qwen3.8-flash",
-      "alibaba/qwen3.8-flash-next",
       "alibaba/qwen3.8-max",
       "alibaba/qwen3.8-max-0902",
+      "alibaba/qwen3.8-max-prime",
+      "alibaba/qwen3.8-omni-flash",
       "alibaba/wan-v2.5-t2v-preview",
       "alibaba/wan-v2.6-i2v",
       "alibaba/wan-v2.6-i2v-flash",
@@ -7597,11 +8098,10 @@ export const MASTRA_PROVIDER_CATALOG = [
       "amazon/nova-micro",
       "amazon/nova-pro",
       "amazon/titan-embed-text-v2",
-      "anthropic/claude-3-haiku",
       "anthropic/claude-fable-5",
       "anthropic/claude-fable-5.1",
       "anthropic/claude-haiku-4.5",
-      "anthropic/claude-opus-4",
+      "anthropic/claude-haiku-5.5",
       "anthropic/claude-opus-4.5",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-opus-4.7",
@@ -7609,16 +8109,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "anthropic/claude-opus-4.8-fast",
       "anthropic/claude-opus-5",
       "anthropic/claude-opus-5-fast",
-      "anthropic/claude-sonnet-4",
+      "anthropic/claude-opus-5.5",
+      "anthropic/claude-opus-5.5-fast",
       "anthropic/claude-sonnet-4.5",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-5",
-      "arcee-ai/trinity-large-thinking",
+      "anthropic/claude-sonnet-5.5",
       "bfl/flux-2-flex",
       "bfl/flux-2-klein-4b",
       "bfl/flux-2-klein-9b",
       "bfl/flux-2-max",
       "bfl/flux-2-pro",
+      "bfl/flux-3-image",
+      "bfl/flux-3-image-klein",
       "bfl/flux-3-video",
       "bfl/flux-kontext-max",
       "bfl/flux-kontext-pro",
@@ -7627,6 +8130,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "bfl/flux-pro-1.1-ultra",
       "bytedance/seed-1.6",
       "bytedance/seed-1.8",
+      "bytedance/seed-2.1-turbo",
       "bytedance/seedance-2.0",
       "bytedance/seedance-2.0-fast",
       "bytedance/seedance-2.0-mini",
@@ -7638,14 +8142,17 @@ export const MASTRA_PROVIDER_CATALOG = [
       "bytedance/seedream-4.5",
       "bytedance/seedream-5.0-lite",
       "bytedance/seedream-5.0-pro",
+      "callstack/apex",
       "cohere/command-a",
       "cohere/embed-v4.0",
+      "cohere/embed-v5.0-fast",
+      "cohere/embed-v5.0-pro",
       "cohere/rerank-v3.5",
       "cohere/rerank-v4-fast",
       "cohere/rerank-v4-pro",
-      "deepseek/deepseek-r1",
+      "cohere/rerank-v5-fast",
+      "cohere/rerank-v5-pro",
       "deepseek/deepseek-v3.1",
-      "deepseek/deepseek-v3.1-terminus",
       "deepseek/deepseek-v3.2",
       "deepseek/deepseek-v3.2-thinking",
       "deepseek/deepseek-v4-flash",
@@ -7653,15 +8160,17 @@ export const MASTRA_PROVIDER_CATALOG = [
       "deepseek/deepseek-v4-flash-vision-exp",
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-pro-0813",
-      "deepseek/deepseek-v4.1-flash-beta",
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4.1-flash-1017",
+      "deepseek/deepseek-v4.1-flash-1017-fast",
+      "deepseek/deepseek-v4.1-flash-fast",
+      "elorian/glimpse",
+      "fireworks/ember-1",
+      "fish-audio/drama-3",
       "fish-audio/s1",
-      "fish-audio/s1-free",
       "fish-audio/s2-pro",
-      "fish-audio/s2-pro-free",
       "fish-audio/s2.1-pro",
-      "fish-audio/s2.1-pro-free",
       "fish-audio/transcribe-1",
-      "fish-audio/transcribe-1-free",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-image",
       "google/gemini-2.5-flash-lite",
@@ -7680,8 +8189,14 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/gemini-3.6-flash",
       "google/gemini-3.7-flash",
       "google/gemini-3.8-flash",
+      "google/gemini-3.8-flash-lite-tts",
+      "google/gemini-3.8-flash-tts",
+      "google/gemini-3.8-live",
+      "google/gemini-3.8-live-extended-thinking",
+      "google/gemini-4-argon",
       "google/gemini-embedding-001",
       "google/gemini-embedding-2",
+      "google/gemini-nano-banana-2.1",
       "google/gemini-omni-flash-preview",
       "google/gemma-4-26b-a4b-it",
       "google/gemma-4-31b-it",
@@ -7692,14 +8207,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "google/veo-3.1-fast-generate-001",
       "google/veo-3.1-generate-001",
       "google/veo-3.1-lite-generate-001",
+      "heygen/heygen-video-1",
       "inception/mercury-2",
       "inception/mercury-2.5",
+      "inception/mercury-3",
       "inception/mercury-coder-small",
       "inclusionai/ling-3.0-flash",
       "inclusionai/ling-3.0-flash-fin",
-      "inclusionai/ling-3.0-flash-fin-free",
       "inclusionai/ling-3.0-flash-sante",
-      "inclusionai/ling-3.0-flash-sante-free",
+      "inclusionai/ling-3.0-flash-vl",
+      "inclusionai/ling-3.1-flash",
+      "inclusionai/ling-3.1-flash-1019",
+      "inference-net/schematron-v2-small",
+      "inference-net/schematron-v2-turbo",
       "interfaze/interfaze-beta",
       "klingai/kling-v2.5-turbo-i2v",
       "klingai/kling-v2.5-turbo-t2v",
@@ -7709,10 +8229,8 @@ export const MASTRA_PROVIDER_CATALOG = [
       "klingai/kling-v3.0-i2v",
       "klingai/kling-v3.0-motion-control",
       "klingai/kling-v3.0-t2v",
-      "kwaipilot/kat-coder-air-v2.5",
-      "kwaipilot/kat-coder-pro-v1",
-      "kwaipilot/kat-coder-pro-v2",
-      "kwaipilot/kat-coder-pro-v2.5",
+      "liquid/lfm2.5-24b-a2b",
+      "meituan/longcat-2.5-preview",
       "meta/llama-3.1-70b",
       "meta/llama-3.1-8b",
       "meta/llama-3.3-70b",
@@ -7725,6 +8243,16 @@ export const MASTRA_PROVIDER_CATALOG = [
       "meta/muse-spark-1.2-contributor",
       "meta/muse-spark-1.3",
       "meta/muse-spark-1.3-contributor",
+      "meta/muse-spark-open",
+      "meta/muse-wonder-1.0",
+      "microsoft/mai-image-2.6",
+      "microsoft/mai-image-2.6-flash",
+      "microsoft/mai-transcribe-2",
+      "microsoft/mai-transcribe-2-streaming",
+      "microsoft/mai-voice-2",
+      "microsoft/mai-voice-2-flash",
+      "microsoft/mai-voice-2.1",
+      "microsoft/mai-voice-2.1-flash",
       "minimax/minimax-h3",
       "minimax/minimax-h3-max",
       "minimax/minimax-m2",
@@ -7735,44 +8263,45 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.7",
       "minimax/minimax-m2.7-highspeed",
       "minimax/minimax-m3",
+      "minimax/minimax-m3.1-flash",
       "mistral/codestral",
       "mistral/codestral-embed",
-      "mistral/devstral-2",
-      "mistral/devstral-small-2",
       "mistral/ministral-14b",
       "mistral/ministral-3b",
       "mistral/ministral-8b",
       "mistral/mistral-embed",
       "mistral/mistral-large-3",
-      "mistral/mistral-medium",
+      "mistral/mistral-large-4",
       "mistral/mistral-medium-3.5",
       "mistral/mistral-nemo",
       "mistral/mistral-small",
-      "mistral/pixtral-12b",
+      "mistral/voxtral-mini-transcribe-3",
+      "mistral/voxtral-mini-tts-3",
+      "mistral/voxtral-small-transcribe-3",
+      "mixedbread/toast-1",
       "moonshotai/kimi-k2",
-      "moonshotai/kimi-k2-thinking",
       "moonshotai/kimi-k2.5",
       "moonshotai/kimi-k2.6",
       "moonshotai/kimi-k2.7-code",
       "moonshotai/kimi-k2.7-code-highspeed",
       "moonshotai/kimi-k3",
       "moonshotai/kimi-k3-fast",
+      "moonshotai/kimi-k3.1-pro",
+      "moonshotai/kimi-k3.1-pro-highspeed",
       "morph/morph-v3-fast",
       "morph/morph-v3-large",
       "nvidia/nemotron-3-nano-30b-a3b",
       "nvidia/nemotron-3-super-120b-a12b",
       "nvidia/nemotron-3-ultra-550b-a55b",
       "nvidia/nemotron-3.5-lightning",
+      "nvidia/nemotron-3.5-lightning-free",
+      "nvidia/nemotron-3.5-super-vl",
       "nvidia/nemotron-nano-12b-v2-vl",
       "nvidia/nemotron-nano-9b-v2",
-      "openai/gpt-3.5-turbo",
-      "openai/gpt-4-turbo",
       "openai/gpt-4.1",
       "openai/gpt-4.1-fast",
       "openai/gpt-4.1-mini",
       "openai/gpt-4.1-mini-fast",
-      "openai/gpt-4.1-nano",
-      "openai/gpt-4.1-nano-fast",
       "openai/gpt-4o",
       "openai/gpt-4o-fast",
       "openai/gpt-4o-mini",
@@ -7814,12 +8343,20 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-5.6-terra-fast",
       "openai/gpt-6-astra",
       "openai/gpt-6-astra-fast",
-      "openai/gpt-image-1",
+      "openai/gpt-6-luna",
+      "openai/gpt-6-luna-fast",
+      "openai/gpt-6-sol",
+      "openai/gpt-6-sol-fast",
+      "openai/gpt-6.1-sol",
+      "openai/gpt-6.1-sol-fast",
+      "openai/gpt-6.1-terra",
+      "openai/gpt-6.1-terra-fast",
       "openai/gpt-image-1-mini",
       "openai/gpt-image-1.5",
       "openai/gpt-image-2",
       "openai/gpt-image-2.5-flare",
       "openai/gpt-image-2.5-sunburst",
+      "openai/gpt-live-1",
       "openai/gpt-oss-120b",
       "openai/gpt-oss-20b",
       "openai/gpt-oss-safeguard-120b",
@@ -7829,40 +8366,40 @@ export const MASTRA_PROVIDER_CATALOG = [
       "openai/gpt-realtime-2.1",
       "openai/gpt-realtime-mini",
       "openai/gpt-realtime-whisper",
-      "openai/o1",
       "openai/o3",
       "openai/o3-fast",
-      "openai/o3-mini",
       "openai/o3-pro",
-      "openai/o4-mini",
-      "openai/o4-mini-fast",
       "openai/text-embedding-3-large",
       "openai/text-embedding-3-small",
       "openai/text-embedding-ada-002",
       "openai/tts-1",
       "openai/tts-1-hd",
       "openai/whisper-1",
+      "particle/particle-1",
       "perplexity/pplx-embed-v1-0.6b",
       "perplexity/pplx-embed-v1-4b",
       "perplexity/sonar",
-      "perplexity/sonar-pro",
-      "perplexity/sonar-reasoning-pro",
       "poolside/laguna-s-2.1",
       "poolside/laguna-s-2.1-free",
-      "prodia/flux-fast-schnell",
-      "quiverai/arrow-1.1",
+      "quiverai/arrow-2",
+      "quiverai/arrow-2-telos",
       "recraft/recraft-v2",
       "recraft/recraft-v3",
       "recraft/recraft-v4",
       "recraft/recraft-v4-pro",
       "recraft/recraft-v4.1",
+      "recraft/recraft-v4.1-flash",
       "recraft/recraft-v4.1-pro",
       "recraft/recraft-v4.1-utility",
       "recraft/recraft-v4.1-utility-pro",
+      "reflection/beam",
+      "reflection/beam-free",
+      "sakana/fugu-max",
       "sakana/fugu-ultra",
+      "sakana/fugu-ultra-v2",
       "sakana/namazu",
-      "spacexai/grok-4.1-fast-non-reasoning",
-      "spacexai/grok-4.1-fast-reasoning",
+      "scaledown/scaledown-extract-1",
+      "scaledown/scaledown-summarize-1",
       "spacexai/grok-4.20-multi-agent",
       "spacexai/grok-4.20-multi-agent-beta",
       "spacexai/grok-4.20-non-reasoning",
@@ -7872,17 +8409,19 @@ export const MASTRA_PROVIDER_CATALOG = [
       "spacexai/grok-4.3",
       "spacexai/grok-4.5",
       "spacexai/grok-4.6",
+      "spacexai/grok-4.7",
       "spacexai/grok-build-0.1",
       "spacexai/grok-imagine-image",
       "spacexai/grok-imagine-image-2.0",
       "spacexai/grok-imagine-video",
       "spacexai/grok-imagine-video-1.5",
+      "spacexai/grok-imagine-video-1.5-lite",
       "spacexai/grok-stt",
       "spacexai/grok-tts",
-      "spacexai/grok-voice-think-fast-1.0",
       "spacexai/grok-voice-think-fast-2.0",
-      "stepfun/step-3.5-flash",
+      "stealth/glyph-cluster",
       "stepfun/step-3.7-flash",
+      "stepfun/step-5-preview",
       "tencent/hy-mt2-lite",
       "tencent/hy-mt2-plus",
       "tencent/hy-mt2-pro",
@@ -7890,8 +8429,13 @@ export const MASTRA_PROVIDER_CATALOG = [
       "tencent/hy4-preview",
       "thinkingmachines/inkling",
       "thinkingmachines/inkling-small",
+      "topaz/proteus",
+      "topaz/starlight-precise-2.6",
+      "topaz/wonder-3.5",
       "voyage/rerank-2.5",
       "voyage/rerank-2.5-lite",
+      "voyage/rerank-3",
+      "voyage/rerank-3-lite",
       "voyage/voyage-3-large",
       "voyage/voyage-3.5",
       "voyage/voyage-3.5-lite",
@@ -7904,6 +8448,9 @@ export const MASTRA_PROVIDER_CATALOG = [
       "voyage/voyage-law-2",
       "xiaomi/mimo-v2.5",
       "xiaomi/mimo-v2.5-pro",
+      "xiaomi/mimo-v2.6-flash",
+      "xiaomi/mimo-v2.6-pro",
+      "xiaomi/mimo-v2.6-pro-ultraspeed",
       "zai/glm-4.5",
       "zai/glm-4.5-air",
       "zai/glm-4.5v",
@@ -7919,8 +8466,15 @@ export const MASTRA_PROVIDER_CATALOG = [
       "zai/glm-5.3",
       "zai/glm-5.3-fast",
       "zai/glm-5.3-flash",
+      "zai/glm-5.3-flashx",
       "zai/glm-5v-turbo"
     ]
+  },
+  {
+    id: "vispark",
+    name: "Vispark",
+    apiKeyEnvVars: ["VISPARK_LAB_API_KEY"],
+    models: ["vispark/vision-large", "vispark/vision-medium", "vispark/vision-small"]
   },
   {
     id: "vivgrid",
@@ -7929,31 +8483,29 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "claude-fable-5",
       "claude-fable-5-1",
-      "deepseek-v3.2",
+      "claude-haiku-5-5",
+      "claude-opus-5",
+      "claude-opus-5-5",
+      "claude-sonnet-5",
+      "claude-sonnet-5-5",
       "deepseek-v4-flash",
       "deepseek-v4-pro",
       "deepseek-v4-pro-0813",
-      "gemini-3.1-flash-lite-preview",
-      "gemini-3.1-pro-preview",
+      "deepseek-v4.1-flash",
       "gemini-3.7-flash",
       "gemini-3.8-flash",
-      "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
-      "gpt-5-mini",
-      "gpt-5.1-codex",
-      "gpt-5.1-codex-max",
-      "gpt-5.2-codex",
-      "gpt-5.3-codex",
-      "gpt-5.4",
-      "gpt-5.4-mini",
-      "gpt-5.4-nano",
-      "gpt-5.5",
       "gpt-5.6-luna",
       "gpt-5.6-sol",
       "gpt-5.6-terra",
       "gpt-6-astra",
-      "kimi-k3"
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-6.1-terra",
+      "kimi-k3",
+      "viv-fast"
     ]
   },
   {
@@ -7963,19 +8515,14 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-v4-flash-ga-260731",
       "deepseek-v4-pro-ga-260813",
-      "doubao-seed-1-6-251015",
-      "doubao-seed-1-6-flash-250828",
-      "doubao-seed-1-6-vision-250815",
-      "doubao-seed-1-8-251228",
-      "doubao-seed-2-0-code-preview-260215",
       "doubao-seed-2-0-lite-260428",
       "doubao-seed-2-0-mini-260428",
-      "doubao-seed-2-0-pro-260215",
       "doubao-seed-2-1-pro-260628",
       "doubao-seed-2-1-turbo-260628",
       "doubao-seed-character-260628",
       "doubao-seed-evolving",
-      "glm-5-2-260617"
+      "glm-5-2-260617",
+      "glm-5-3-flash-260828"
     ]
   },
   {
@@ -7985,12 +8532,10 @@ export const MASTRA_PROVIDER_CATALOG = [
     models: [
       "deepseek-v4-flash",
       "deepseek-v4-pro",
-      "doubao-seed-2.0-lite",
-      "doubao-seed-2.1-turbo",
       "doubao-seed-evolving",
       "glm-5.3",
-      "kimi-k2.7-code",
-      "minimax-m3"
+      "glm-5.3-flash",
+      "kimi-k3"
     ]
   },
   {
@@ -7998,57 +8543,32 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Vultr",
     apiKeyEnvVars: ["VULTR_API_KEY"],
     models: [
-      "deepseek-ai/DeepSeek-V4-Flash",
-      "MiniMaxAI/MiniMax-M2.7",
-      "moonshotai/Kimi-K2.6",
-      "nvidia/DeepSeek-V3.2-NVFP4",
-      "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16",
-      "nvidia/Nemotron-Cascade-2-30B-A3B",
-      "Qwen/Qwen3.5-397B-A17B",
-      "Qwen/Qwen3.6-27B",
-      "XiaomiMiMo/MiMo-V2.5-Pro",
-      "zai-org/GLM-5.2-FP8"
+      "deepseek-v4.1-flash",
+      "glm-5.2",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "glm-5.x-menthol",
+      "mimo-v2.6-flash-rl",
+      "mimo-v2.6-pro-rl",
+      "minimax-m3",
+      "muse-glimmer-30b",
+      "nemotron-3-nano-omni-30b-a3b-reasoning",
+      "nemotron-3.5-content-safety",
+      "qwen3.8-27b",
+      "qwen3.8-flash-next"
     ]
   },
   {
     id: "wafer.ai",
     name: "Wafer",
     apiKeyEnvVars: ["WAFER_API_KEY"],
-    models: ["GLM-5.1", "GLM-5.2", "glm5.2-fast", "Kimi-K2.6", "MiniMax-M3"]
+    models: ["GLM-5.2"]
   },
   {
-    id: "wandb",
-    name: "Weights & Biases",
-    apiKeyEnvVars: ["WANDB_API_KEY"],
-    models: [
-      "deepseek-ai/DeepSeek-V3.1",
-      "deepseek-ai/DeepSeek-V4-Flash",
-      "deepseek-ai/DeepSeek-V4-Flash-0731",
-      "deepseek-ai/DeepSeek-V4-Pro",
-      "deepseek-ai/DeepSeek-V4-Pro-0813",
-      "google/gemma-4-31B-it",
-      "ibm-granite/granite-4.1-8b",
-      "ibm-granite/granite-4.2-8b",
-      "JetBrains/Mellum2-12B-A2.5B-Instruct",
-      "meta-llama/Llama-3.1-70B-Instruct",
-      "meta-llama/Llama-3.1-8B-Instruct",
-      "meta-llama/Llama-3.3-70B-Instruct",
-      "MiniMaxAI/MiniMax-M3",
-      "moonshotai/Kimi-K2.6",
-      "moonshotai/Kimi-K2.7-Code",
-      "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
-      "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B",
-      "openai/gpt-oss-120b",
-      "openai/gpt-oss-20b",
-      "OpenPipe/Qwen3-14B-Instruct",
-      "Qwen/Qwen3-30B-A3B-Instruct-2507",
-      "Qwen/Qwen3.5-35B-A3B",
-      "Qwen/Qwen3.6-27B",
-      "Qwen/Qwen3.6-35B-A3B",
-      "Qwen/Qwen3.8-27B",
-      "zai-org/GLM-5.2",
-      "zai-org/GLM-5.3-Flash"
-    ]
+    id: "wallaby",
+    name: "Wallaby",
+    apiKeyEnvVars: ["WALLABY_API_KEY"],
+    models: ["moonshotai/kimi-k3"]
   },
   {
     id: "xai",
@@ -8061,39 +8581,30 @@ export const MASTRA_PROVIDER_CATALOG = [
       "grok-4.3",
       "grok-4.5",
       "grok-4.6",
+      "grok-4.7",
       "grok-build-0.1",
       "grok-imagine-image",
-      "grok-imagine-image-2.0",
-      "grok-imagine-image-quality",
       "grok-imagine-video",
-      "grok-imagine-video-1.5"
+      "grok-imagine-video-1.5",
+      "grok-imagine-video-1.5-lite"
     ]
   },
   {
     id: "xiaomi",
     name: "Xiaomi",
     apiKeyEnvVars: ["XIAOMI_API_KEY"],
-    models: [
-      "mimo-v2-flash",
-      "mimo-v2-omni",
-      "mimo-v2-pro",
-      "mimo-v2.5",
-      "mimo-v2.5-pro",
-      "mimo-v2.5-pro-ultraspeed"
-    ]
+    models: ["mimo-v2.6-flash", "mimo-v2.6-pro", "mimo-v2.6-pro-ultraspeed"]
   },
   {
     id: "xiaomi-token-plan-cn",
     name: "Xiaomi Token Plan (China)",
     apiKeyEnvVars: ["XIAOMI_API_KEY"],
     models: [
-      "mimo-v2-pro",
-      "mimo-v2-tts",
-      "mimo-v2.5",
-      "mimo-v2.5-pro",
       "mimo-v2.5-tts",
       "mimo-v2.5-tts-voiceclone",
-      "mimo-v2.5-tts-voicedesign"
+      "mimo-v2.5-tts-voicedesign",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro"
     ]
   },
   {
@@ -8101,13 +8612,11 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Xiaomi Token Plan (Europe)",
     apiKeyEnvVars: ["XIAOMI_API_KEY"],
     models: [
-      "mimo-v2-pro",
-      "mimo-v2-tts",
-      "mimo-v2.5",
-      "mimo-v2.5-pro",
       "mimo-v2.5-tts",
       "mimo-v2.5-tts-voiceclone",
-      "mimo-v2.5-tts-voicedesign"
+      "mimo-v2.5-tts-voicedesign",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro"
     ]
   },
   {
@@ -8115,13 +8624,11 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "Xiaomi Token Plan (Singapore)",
     apiKeyEnvVars: ["XIAOMI_API_KEY"],
     models: [
-      "mimo-v2-pro",
-      "mimo-v2-tts",
-      "mimo-v2.5",
-      "mimo-v2.5-pro",
       "mimo-v2.5-tts",
       "mimo-v2.5-tts-voiceclone",
-      "mimo-v2.5-tts-voicedesign"
+      "mimo-v2.5-tts-voicedesign",
+      "mimo-v2.6-flash",
+      "mimo-v2.6-pro"
     ]
   },
   {
@@ -8140,8 +8647,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "gpt-5.6",
       "gpt-5.6-sol",
       "gpt-5.6-terra",
-      "xpersona-frieren-coder",
-      "xpersona-gpt-5.5"
+      "xpersona-frieren-coder"
     ]
   },
   {
@@ -8155,6 +8661,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "glm-4.5v",
       "glm-4.6",
       "glm-4.6v",
+      "glm-4.6v-flash",
       "glm-4.7",
       "glm-4.7-flash",
       "glm-4.7-flashx",
@@ -8164,6 +8671,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
+      "glm-5.3-flashx",
       "glm-5v-turbo"
     ]
   },
@@ -8171,15 +8679,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "zai-coding-plan",
     name: "Z.AI Coding Plan",
     apiKeyEnvVars: ["ZHIPU_API_KEY"],
-    models: [
-      "glm-4.7",
-      "glm-5-turbo",
-      "glm-5.2",
-      "glm-5.2-highspeed",
-      "glm-5.3",
-      "glm-5.3-flash",
-      "glm-5.3-highspeed"
-    ]
+    models: ["glm-5.3", "glm-5.3-flash", "glm-5.3-highspeed"]
   },
   {
     id: "zeldoc",
@@ -8198,39 +8698,37 @@ export const MASTRA_PROVIDER_CATALOG = [
     name: "ZenMux",
     apiKeyEnvVars: ["ZENMUX_API_KEY"],
     models: [
-      "anthropic/claude-3.5-haiku",
-      "anthropic/claude-3.7-sonnet",
       "anthropic/claude-fable-5",
+      "anthropic/claude-fable-5.1",
       "anthropic/claude-haiku-4.5",
-      "anthropic/claude-opus-4",
       "anthropic/claude-opus-4.1",
       "anthropic/claude-opus-4.5",
       "anthropic/claude-opus-4.6",
       "anthropic/claude-opus-4.7",
       "anthropic/claude-opus-4.8",
-      "anthropic/claude-sonnet-4",
+      "anthropic/claude-opus-5.5",
       "anthropic/claude-sonnet-4.5",
       "anthropic/claude-sonnet-4.6",
       "anthropic/claude-sonnet-5",
-      "anthropic/claude-sonnet-5-free",
       "baidu/ernie-5.0-thinking-preview",
-      "deepseek/deepseek-chat",
+      "bytedance/doubao-seed-1.8",
+      "bytedance/doubao-seed-2.0-code",
+      "bytedance/doubao-seed-2.0-lite",
+      "bytedance/doubao-seed-2.0-mini",
+      "bytedance/doubao-seed-2.0-pro",
+      "bytedance/doubao-seed-code",
       "deepseek/deepseek-v3.2",
-      "deepseek/deepseek-v3.2-exp",
       "deepseek/deepseek-v4-flash",
       "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4.1-flash",
       "google/gemini-2.5-flash",
       "google/gemini-2.5-flash-lite",
       "google/gemini-2.5-pro",
       "google/gemini-3-flash-preview",
       "google/gemini-3.1-flash-lite",
-      "google/gemini-3.1-flash-lite-preview",
       "google/gemini-3.1-pro-preview",
       "google/gemini-3.5-flash",
-      "inclusionai/ling-1t",
-      "inclusionai/ring-1t",
       "inclusionai/ring-2.6-1t",
-      "kuaishou/kat-coder-pro-v2",
       "minimax/minimax-m2",
       "minimax/minimax-m2.1",
       "minimax/minimax-m2.5",
@@ -8238,71 +8736,49 @@ export const MASTRA_PROVIDER_CATALOG = [
       "minimax/minimax-m2.7",
       "minimax/minimax-m2.7-highspeed",
       "minimax/minimax-m3",
-      "moonshotai/kimi-k2-0905",
-      "moonshotai/kimi-k2-thinking",
-      "moonshotai/kimi-k2-thinking-turbo",
-      "moonshotai/kimi-k2.5",
+      "minimax/minimax-m3.1-flash",
       "moonshotai/kimi-k2.6",
       "moonshotai/kimi-k2.7-code",
-      "moonshotai/kimi-k2.7-code-free",
+      "moonshotai/kimi-k2.7-code-highspeed",
       "moonshotai/kimi-k3",
-      "moonshotai/kimi-k3-free",
+      "openai/chat-latest",
       "openai/gpt-5",
       "openai/gpt-5-codex",
       "openai/gpt-5.1",
-      "openai/gpt-5.1-chat",
       "openai/gpt-5.1-codex",
       "openai/gpt-5.1-codex-mini",
       "openai/gpt-5.2",
       "openai/gpt-5.2-codex",
       "openai/gpt-5.2-pro",
-      "openai/gpt-5.3-chat",
       "openai/gpt-5.3-codex",
       "openai/gpt-5.4",
       "openai/gpt-5.4-mini",
       "openai/gpt-5.4-nano",
       "openai/gpt-5.4-pro",
       "openai/gpt-5.5",
-      "openai/gpt-5.5-instant",
       "openai/gpt-5.5-pro",
       "openai/gpt-5.6-luna",
       "openai/gpt-5.6-sol",
       "openai/gpt-5.6-terra",
-      "qwen/qwen3-coder-plus",
-      "qwen/qwen3-max",
+      "openai/gpt-6-astra",
+      "openai/gpt-6-sol",
       "qwen/qwen3.5-flash",
       "qwen/qwen3.5-plus",
       "qwen/qwen3.6-plus",
       "qwen/qwen3.7-max",
       "qwen/qwen3.7-plus",
-      "sapiens-ai/agnes-1.5-lite",
-      "sapiens-ai/agnes-1.5-pro",
-      "stepfun/step-3",
       "stepfun/step-3.5-flash",
       "stepfun/step-3.7-flash",
-      "stepfun/step-3.7-flash-free",
-      "tencent/hy3-preview",
-      "volcengine/doubao-seed-1.8",
-      "volcengine/doubao-seed-2.0-code",
-      "volcengine/doubao-seed-2.0-lite",
-      "volcengine/doubao-seed-2.0-mini",
-      "volcengine/doubao-seed-2.0-pro",
-      "volcengine/doubao-seed-code",
-      "x-ai/grok-4",
-      "x-ai/grok-4-fast",
-      "x-ai/grok-4.1-fast",
-      "x-ai/grok-4.1-fast-non-reasoning",
       "x-ai/grok-4.2-fast",
       "x-ai/grok-4.2-fast-non-reasoning",
       "x-ai/grok-4.3",
       "x-ai/grok-4.5",
+      "x-ai/grok-4.6",
       "x-ai/grok-build-0.1",
-      "x-ai/grok-code-fast-1",
-      "xiaomi/mimo-v2-flash",
-      "xiaomi/mimo-v2-omni",
-      "xiaomi/mimo-v2-pro",
-      "xiaomi/mimo-v2.5",
-      "xiaomi/mimo-v2.5-pro",
+      "x-ai/grok-imagine-image-2.0",
+      "x-ai/grok-voice-stt-1.0",
+      "x-ai/grok-voice-tts-1.0",
+      "xiaomi/mimo-v2.6-pro",
       "z-ai/glm-4.5",
       "z-ai/glm-4.5-air",
       "z-ai/glm-4.6",
@@ -8316,8 +8792,11 @@ export const MASTRA_PROVIDER_CATALOG = [
       "z-ai/glm-5-turbo",
       "z-ai/glm-5.1",
       "z-ai/glm-5.2",
-      "z-ai/glm-5.2-free",
-      "z-ai/glm-5v-turbo"
+      "z-ai/glm-5.3",
+      "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3-flashx",
+      "z-ai/glm-5v-turbo",
+      "z-ai/glm-image"
     ]
   },
   {
@@ -8331,6 +8810,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "glm-4.5v",
       "glm-4.6",
       "glm-4.6v",
+      "glm-4.6v-flash",
       "glm-4.7",
       "glm-4.7-flash",
       "glm-4.7-flashx",
@@ -8339,6 +8819,7 @@ export const MASTRA_PROVIDER_CATALOG = [
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
+      "glm-5.3-flashx",
       "glm-5v-turbo"
     ]
   },
@@ -8346,18 +8827,7 @@ export const MASTRA_PROVIDER_CATALOG = [
     id: "zhipuai-coding-plan",
     name: "Zhipu AI Coding Plan",
     apiKeyEnvVars: ["ZHIPU_API_KEY"],
-    models: [
-      "glm-4.6v",
-      "glm-4.7",
-      "glm-5-turbo",
-      "glm-5.1",
-      "glm-5.2",
-      "glm-5.2-highspeed",
-      "glm-5.3",
-      "glm-5.3-flash",
-      "glm-5.3-highspeed",
-      "glm-5v-turbo"
-    ]
+    models: ["glm-5.3", "glm-5.3-flash", "glm-5.3-highspeed"]
   }
 ] as const satisfies readonly MastraProviderCatalogEntry[];
 
@@ -8375,6 +8845,774 @@ export function getMastraProvider(id: string): MastraProviderCatalogEntry | unde
 
 export function isMastraProviderId(id: string): id is MastraProviderId {
   return byId.has(id as MastraProviderId);
+}
+
+/** `provider/model` ids Mastra marks deprecated (gateway no longer serves them). */
+export const MASTRA_DEPRECATED_MODELS = [
+  "abacus/Qwen/QwQ-32B",
+  "abacus/Qwen/Qwen2.5-72B-Instruct",
+  "abacus/Qwen/Qwen3-235B-A22B-Instruct-2507",
+  "abacus/claude-3-7-sonnet-20250219",
+  "abacus/claude-opus-4-1-20250805",
+  "abacus/claude-opus-4-20250514",
+  "abacus/claude-sonnet-4-20250514",
+  "abacus/deepseek-ai/DeepSeek-R1",
+  "abacus/deepseek-ai/DeepSeek-V3.1-Terminus",
+  "abacus/deepseek-ai/DeepSeek-V3.2",
+  "abacus/deepseek-ai/DeepSeek-V4-Flash",
+  "abacus/deepseek-ai/DeepSeek-V4-Pro",
+  "abacus/deepseek/deepseek-v3.1",
+  "abacus/gemini-3-pro-image-preview",
+  "abacus/gemini-3.1-flash-image",
+  "abacus/gemini-3.1-flash-image-preview",
+  "abacus/gemini-3.1-flash-lite-preview",
+  "abacus/gpt-4o-2024-11-20",
+  "abacus/gpt-5-codex",
+  "abacus/gpt-5.1-chat-latest",
+  "abacus/gpt-5.1-codex",
+  "abacus/gpt-5.1-codex-max",
+  "abacus/gpt-5.2-chat-latest",
+  "abacus/gpt-5.2-codex",
+  "abacus/gpt-5.3-chat-latest",
+  "abacus/gpt-5.3-codex-xhigh",
+  "abacus/grok-4-0709",
+  "abacus/grok-4-1-fast-non-reasoning",
+  "abacus/grok-4-fast-non-reasoning",
+  "abacus/grok-code-fast-1",
+  "abacus/kimi-k2-turbo-preview",
+  "abacus/kimi-k2.5",
+  "abacus/llama-3.3-70b-versatile",
+  "abacus/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+  "abacus/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+  "abacus/meta-llama/Meta-Llama-3.1-8B-Instruct",
+  "abacus/meta-llama/Meta-Llama-3.3-70B-Instruct",
+  "abacus/qwen-2.5-coder-32b",
+  "abacus/qwen3-max",
+  "abacus/zai-org/GLM-4.5",
+  "above/deepseek-v4-flash",
+  "agnes/agnes-2.0-flash",
+  "aki-io/qwen3.6-35b",
+  "alibaba-cn/deepseek-r1",
+  "alibaba-cn/deepseek-r1-0528",
+  "alibaba-cn/deepseek-r1-distill-llama-8b",
+  "alibaba-cn/deepseek-r1-distill-qwen-14b",
+  "alibaba-cn/deepseek-r1-distill-qwen-32b",
+  "alibaba-cn/deepseek-r1-distill-qwen-7b",
+  "alibaba-cn/deepseek-v3",
+  "alibaba-cn/deepseek-v3-1",
+  "alibaba-cn/deepseek-v3-2-exp",
+  "alibaba-cn/deepseek-v4-flash",
+  "alibaba-cn/kimi-k2-thinking",
+  "alibaba-cn/moonshot-kimi-k2-instruct",
+  "alibaba-cn/qvq-max",
+  "alibaba-cn/qwen-math-plus",
+  "alibaba-cn/qwen-math-turbo",
+  "alibaba-cn/qwen-mt-turbo",
+  "alibaba-cn/qwen-omni-turbo",
+  "alibaba-cn/qwen-omni-turbo-realtime",
+  "alibaba-cn/qwen-turbo",
+  "alibaba-cn/qwen-vl-max",
+  "alibaba-cn/qwen-vl-plus",
+  "alibaba-cn/qwen2-5-omni-7b",
+  "alibaba-cn/qwen3-14b",
+  "alibaba-cn/qwen3-235b-a22b",
+  "alibaba-cn/qwen3-32b",
+  "alibaba-cn/qwen3-8b",
+  "alibaba-cn/qwen3-coder-30b-a3b-instruct",
+  "alibaba-cn/qwen3-coder-480b-a35b-instruct",
+  "alibaba-cn/qwen3-coder-plus",
+  "alibaba-cn/qwen3-max",
+  "alibaba-cn/qwen3-next-80b-a3b-instruct",
+  "alibaba-cn/qwen3-next-80b-a3b-thinking",
+  "alibaba-cn/qwen3-omni-flash-realtime",
+  "alibaba-cn/qwen3-vl-235b-a22b",
+  "alibaba-cn/qwen3-vl-30b-a3b",
+  "alibaba-cn/qwen3.6-max-preview",
+  "alibaba-cn/qwq-plus",
+  "alibaba-coding-plan-cn/glm-4.7",
+  "alibaba-coding-plan-cn/qwen3-coder-next",
+  "alibaba-coding-plan-cn/qwen3-coder-plus",
+  "alibaba-coding-plan-cn/qwen3-max-2026-01-23",
+  "alibaba-coding-plan/glm-4.7",
+  "alibaba-coding-plan/qwen3-coder-next",
+  "alibaba-coding-plan/qwen3-coder-plus",
+  "alibaba-coding-plan/qwen3-max-2026-01-23",
+  "alibaba-token-plan-cn/deepseek-v3.2",
+  "alibaba-token-plan-cn/deepseek-v4-flash",
+  "alibaba-token-plan-cn/qwen3.8-max-preview",
+  "alibaba-token-plan/deepseek-v3.2",
+  "alibaba-token-plan/deepseek-v4-flash",
+  "alibaba-token-plan/qwen3.8-max-preview",
+  "alibaba/qvq-max",
+  "alibaba/qwen-mt-turbo",
+  "alibaba/qwen-omni-turbo",
+  "alibaba/qwen-omni-turbo-realtime",
+  "alibaba/qwen-turbo",
+  "alibaba/qwen-vl-max",
+  "alibaba/qwen-vl-plus",
+  "alibaba/qwen2-5-omni-7b",
+  "alibaba/qwen3-14b",
+  "alibaba/qwen3-235b-a22b",
+  "alibaba/qwen3-32b",
+  "alibaba/qwen3-8b",
+  "alibaba/qwen3-coder-30b-a3b-instruct",
+  "alibaba/qwen3-coder-480b-a35b-instruct",
+  "alibaba/qwen3-coder-plus",
+  "alibaba/qwen3-livetranslate-flash-realtime",
+  "alibaba/qwen3-max",
+  "alibaba/qwen3-next-80b-a3b-instruct",
+  "alibaba/qwen3-next-80b-a3b-thinking",
+  "alibaba/qwen3-omni-flash-realtime",
+  "alibaba/qwen3-vl-235b-a22b",
+  "alibaba/qwen3.6-max-preview",
+  "alibaba/qwq-plus",
+  "ambient/zai-org/GLM-5.2-FP8",
+  "amd/DeepSeek-V4-Flash-Vision-Exp",
+  "anyapi/mistralai/devstral-2512",
+  "arcee/deepseek/deepseek-v4-pro",
+  "arcee/thinkingmachines/inkling-small",
+  "berget/zai-org/GLM-5.2",
+  "boundless/claude-opus-5",
+  "boundless/glm-5.2",
+  "boundless/gpt-5.6-luna",
+  "boundless/gpt-5.6-sol",
+  "cline-pass/cline-pass/deepseek-v4-flash",
+  "cline-pass/cline-pass/glm-5.2",
+  "cline-pass/cline-pass/kimi-k2.6",
+  "cline-pass/cline-pass/kimi-k2.7-code",
+  "commandcode/inclusionai/ling-3.1-flash:free",
+  "crossmodel/deepseek/deepseek-v4-flash",
+  "crossmodel/deepseek/deepseek-v4-flash-vision-exp",
+  "crusoe/Qwen/Qwen3-235B-A22B-Instruct-2507",
+  "crusoe/deepseek-ai/DeepSeek-V3-0324",
+  "crusoe/meta-llama/Llama-3.3-70B-Instruct",
+  "crusoe/moonshotai/Kimi-K2.6",
+  "crusoe/zai/GLM-5.1",
+  "crusoe/zai/GLM-5.2",
+  "databricks/databricks-claude-sonnet-4",
+  "databricks/databricks-gemini-2-5-flash",
+  "databricks/databricks-gemini-2-5-pro",
+  "databricks/databricks-gemini-3-pro",
+  "databricks/databricks-kimi-k2-7-code",
+  "deepinfra/MiniMaxAI/MiniMax-M2.5",
+  "deepinfra/MiniMaxAI/MiniMax-M2.7",
+  "deepinfra/Qwen/Qwen3-Max",
+  "deepinfra/Qwen/Qwen3.5-122B-A10B",
+  "deepinfra/Qwen/Qwen3.8-2.4T-A95B",
+  "deepinfra/XiaomiMiMo/MiMo-V2.5",
+  "deepinfra/XiaomiMiMo/MiMo-V2.5-Pro",
+  "deepinfra/deepseek-ai/DeepSeek-V3-0324",
+  "deepinfra/google/gemma-4-E4B-it",
+  "deepinfra/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+  "deepinfra/moonshotai/Kimi-K2.5",
+  "deepinfra/moonshotai/Kimi-K2.7-Code",
+  "deepinfra/nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
+  "deepinfra/nvidia/Nemotron-3-Nano-30B-A3B",
+  "deepinfra/nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning",
+  "deepinfra/stepfun-ai/Step-3.7-Flash",
+  "deepinfra/stepfun-ai/Step-5-Preview",
+  "deepinfra/tencent/Hy3",
+  "deepinfra/thinkingmachines/Inkling",
+  "deepinfra/zai-org/GLM-4.7-Flash",
+  "deepinfra/zai-org/GLM-5",
+  "deepinfra/zai-org/GLM-5.1",
+  "deepseek/deepseek-v4-flash",
+  "deepseek/deepseek-v4-flash-vision-exp",
+  "dinference/glm-5.1",
+  "dinference/glm-5.2",
+  "dinference/minimax-m2.5",
+  "empiriolabs/minimax-m2-7",
+  "empiriolabs/minimax-m2-7-highspeed",
+  "empiriolabs/qwen3-5-397b-a17b",
+  "empiriolabs/qwen3-5-plus",
+  "fastrouter/x-ai/grok-4",
+  "fireworks-ai/accounts/fireworks/models/gpt-oss-120b",
+  "fireworks-ai/accounts/fireworks/models/inkling",
+  "fireworks-ai/accounts/fireworks/models/nemotron-3-ultra-nvfp4",
+  "fireworks-ai/accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b",
+  "frogbot/kimi-k2.5",
+  "frogbot/minimax-m2-5",
+  "frogbot/minimax-m2-7",
+  "frogbot/qwen-3-6-plus",
+  "frogbot/zai-glm-5-1",
+  "google/gemini-2.5-flash-image",
+  "google/gemini-3.1-flash-lite-preview",
+  "greenpt/devstral-2-123b-instruct-2512",
+  "greenpt/gemma-3-27b-it",
+  "greenpt/glm-5.1",
+  "greenpt/holo2-30b-a3b",
+  "greenpt/kimi-k2.6-fast",
+  "greenpt/pixtral-12b-2409",
+  "greenpt/qwen3-coder-30b-a3b-instruct",
+  "greenpt/voxtral-small-24b-2507",
+  "groq/llama-3.1-8b-instant",
+  "groq/llama-3.3-70b-versatile",
+  "groq/qwen/qwen3.6-27b",
+  "impossibl/cerebras/gpt-oss-120b",
+  "impossibl/fireworks/glm-5.2",
+  "impossibl/fireworks/gpt-oss-120b",
+  "impossibl/fireworks/gpt-oss-20b",
+  "impossibl/groq/gpt-oss-120b",
+  "impossibl/groq/gpt-oss-20b",
+  "impossibl/qwen/qwen3.8-max-preview",
+  "inference/meta/llama-3.1-8b-instruct",
+  "inference/meta/llama-3.2-11b-vision-instruct",
+  "inference/mistral/mistral-nemo-12b-instruct",
+  "inference/osmosis/osmosis-structure-0.6b",
+  "inference/qwen/qwen-2.5-7b-vision-instruct",
+  "inference/qwen/qwen3-embedding-4b",
+  "infomaniak/Qwen/Qwen3.5-122B-A10B-FP8",
+  "infomaniak/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "io-net/Qwen/Qwen2.5-VL-32B-Instruct",
+  "io-net/Qwen/Qwen3-235B-A22B-Thinking-2507",
+  "io-net/meta-llama/Llama-3.2-90B-Vision-Instruct",
+  "io-net/mistralai/Devstral-Small-2505",
+  "io-net/mistralai/Magistral-Small-2506",
+  "io-net/mistralai/Mistral-Large-Instruct-2411",
+  "jalapeno/Hy3",
+  "jalapeno/Qwen3-Next-80B-A3B-Instruct",
+  "jalapeno/Qwen3-Next-80B-A3B-Thinking",
+  "jalapeno/Qwen3-VL-235B-A22B-Instruct",
+  "jalapeno/Qwen3-VL-235B-A22B-Thinking",
+  "jiekou/claude-opus-4-1-20250805",
+  "jiekou/claude-opus-4-20250514",
+  "jiekou/claude-sonnet-4-20250514",
+  "jiekou/gemini-2.5-flash-lite-preview-06-17",
+  "jiekou/gemini-2.5-flash-lite-preview-09-2025",
+  "jiekou/gemini-3-pro-preview",
+  "jiekou/gpt-5-chat-latest",
+  "jiekou/grok-4-fast-non-reasoning",
+  "jiekou/grok-4-fast-reasoning",
+  "jiekou/o4-mini",
+  "kenari/deepseek-v4-flash:free",
+  "kenari/gemini-2-5-flash",
+  "kenari/gemini-2-5-flash-lite",
+  "kenari/gemini-3-5-flash",
+  "kenari/gemini-3-6-flash",
+  "kenari/gemini-3-7-flash",
+  "kenari/glm-5-1",
+  "kenari/gpt-5-4-mini",
+  "kenari/gpt-5-6-terra",
+  "kenari/grok-build-0-1",
+  "kenari/kimi-k2-6:free",
+  "kenari/kimi-k2-7-code:free",
+  "kenari/mimo-v2-5",
+  "kenari/mimo-v2-5-pro",
+  "kenari/mimo-v2-5:free",
+  "kenari/mistral-large:free",
+  "kenari/mistral-medium-3-5:free",
+  "kenari/nemotron-3-nano-30b-a3b",
+  "kenari/step-3-7-flash:free",
+  "kilo/amazon/nova-premier-v1",
+  "kilo/bytedance-seed/seed-1.6",
+  "kilo/bytedance-seed/seed-1.6-flash",
+  "kilo/bytedance-seed/seed-2.0-code",
+  "kilo/google/gemini-2.5-flash",
+  "kilo/google/gemini-2.5-flash-lite",
+  "kilo/google/gemini-2.5-pro",
+  "kilo/nousresearch/hermes-3-llama-3.1-405b",
+  "kilo/nousresearch/hermes-3-llama-3.1-70b",
+  "kilo/poolside/laguna-s-2.1",
+  "kilo/poolside/laguna-xs-2.1",
+  "kilo/qwen/qwen3.5-9b",
+  "kilo/xiaomi/mimo-v2.5",
+  "kilo/xiaomi/mimo-v2.5-pro",
+  "lilac/google/gemma-4-31b-it",
+  "lilac/minimaxai/minimax-m3",
+  "lilac/moonshotai/kimi-k2.6",
+  "lilac/zai-org/glm-5.2",
+  "llmgateway-providers/aws-bedrock/llama-3.1-70b-instruct",
+  "llmgateway-providers/aws-bedrock/llama-4-maverick-17b-instruct",
+  "llmgateway-providers/aws-bedrock/llama-4-scout-17b-instruct",
+  "llmgateway/devstral-2512",
+  "llmtr/google/gemini-2.5-flash-lite",
+  "llmtr/medgemma-4b",
+  "llmtr/mimo/mimo-v2.5",
+  "llmtr/mimo/mimo-v2.5-pro",
+  "llmtr/qwen/qwen3-coder-plus",
+  "llmtr/qwen/qwen3-max",
+  "meganova/XiaomiMiMo/MiMo-V2-Flash",
+  "merge-gateway/mistral/devstral-medium-latest",
+  "minimax-cn-coding-plan/MiniMax-M2",
+  "minimax-cn-coding-plan/MiniMax-M2.1",
+  "minimax-cn-coding-plan/MiniMax-M2.5",
+  "minimax-cn-coding-plan/MiniMax-M2.5-highspeed",
+  "minimax-cn-coding-plan/MiniMax-M2.7",
+  "minimax-cn-coding-plan/MiniMax-M2.7-highspeed",
+  "minimax-cn-coding-plan/MiniMax-M3.1-Flash-Preview",
+  "minimax-cn/MiniMax-M2",
+  "minimax-cn/MiniMax-M2.1",
+  "minimax-cn/MiniMax-M2.5",
+  "minimax-cn/MiniMax-M2.5-highspeed",
+  "minimax-cn/MiniMax-M2.7",
+  "minimax-cn/MiniMax-M2.7-highspeed",
+  "minimax-coding-plan/MiniMax-M2",
+  "minimax-coding-plan/MiniMax-M2.1",
+  "minimax-coding-plan/MiniMax-M2.5",
+  "minimax-coding-plan/MiniMax-M2.5-highspeed",
+  "minimax-coding-plan/MiniMax-M2.7",
+  "minimax-coding-plan/MiniMax-M2.7-highspeed",
+  "minimax-coding-plan/MiniMax-M3.1-Flash-Preview",
+  "minimax/MiniMax-M2",
+  "minimax/MiniMax-M2.1",
+  "minimax/MiniMax-M2.5",
+  "minimax/MiniMax-M2.5-highspeed",
+  "minimax/MiniMax-M2.7",
+  "minimax/MiniMax-M2.7-highspeed",
+  "mistral/devstral-2512",
+  "mistral/devstral-latest",
+  "mistral/devstral-medium-latest",
+  "mistral/glm-5-2",
+  "mistral/labs-devstral-small-2512",
+  "mistral/labs-leanstral-1-5-1",
+  "mistral/magistral-medium-latest",
+  "mistral/mistral-medium-2505",
+  "mistral/mistral-medium-2508",
+  "mistral/mistral-small-2506",
+  "mistral/open-mistral-nemo",
+  "mistral/pixtral-12b",
+  "mistral/zai-glm-5-2",
+  "moark/GLM-4.7",
+  "moark/MiniMax-M2.1",
+  "nano-gpt/baseten/Kimi-K2-Instruct-FP4",
+  "nano-gpt/gemini-2.5-flash-lite-preview-09-2025",
+  "nano-gpt/gemini-2.5-flash-lite-preview-09-2025-thinking",
+  "nano-gpt/gemini-2.5-flash-preview-04-17",
+  "nano-gpt/gemini-2.5-flash-preview-04-17:thinking",
+  "nano-gpt/gemini-2.5-flash-preview-05-20",
+  "nano-gpt/gemini-2.5-flash-preview-05-20:thinking",
+  "nano-gpt/kimi-k2-instruct-fast",
+  "neon/deepseek-v4-1-flash",
+  "neon/inkling",
+  "neuralwatt/kimi-k2.7-code",
+  "neuralwatt/kimi-k2.7-code-fast",
+  "neuralwatt/kimi-k2.7-code-flex",
+  "nvidia/google/gemma-3-12b-it",
+  "nvidia/google/gemma-3-4b-it",
+  "nvidia/mistralai/magistral-small-2506",
+  "nvidia/mistralai/mistral-7b-instruct-v0.3",
+  "nvidia/mistralai/mistral-medium-3-instruct",
+  "nvidia/moonshotai/kimi-k2.6",
+  "nvidia/moonshotai/kimi-k3",
+  "nvidia/nvidia/cosmos-reason2-8b",
+  "nvidia/nvidia/llama-3.1-nemotron-70b-instruct",
+  "nvidia/nvidia/llama-3.1-nemotron-ultra-253b-v1",
+  "nvidia/nvidia/rerank-qa-mistral-4b",
+  "nvidia/nvidia/riva-translate-4b-instruct-v1.1",
+  "nvidia/nvidia/usdcode",
+  "nvidia/nvidia/usdvalidate",
+  "nvidia/z-ai/glm-5.3",
+  "oci/meta.llama-3.3-70b-instruct",
+  "ofox/anthropic/claude-opus-4.5",
+  "ofox/anthropic/claude-sonnet-4.5",
+  "openai/chatgpt-image-latest",
+  "openai/gpt-3.5-turbo",
+  "openai/gpt-4",
+  "openai/gpt-4-turbo",
+  "openai/gpt-4.1-nano",
+  "openai/gpt-4o-2024-05-13",
+  "openai/gpt-image-1-mini",
+  "openai/gpt-image-1.5",
+  "openai/o1",
+  "openai/o1-pro",
+  "openai/o3-mini",
+  "openai/o4-mini",
+  "opencode-go/cat-jam-free",
+  "opencode-go/gemini-4-argon-contributor",
+  "opencode-go/longcat-2.5-preview-free",
+  "opencode-go/minimax-m2.7",
+  "opencode-go/minimax-m3.1-flash-free",
+  "opencode-go/space-bunny",
+  "opencode-go/step-5-preview-free",
+  "opencode/cat-jam-free",
+  "opencode/claude-3-5-haiku",
+  "opencode/claude-opus-4-1",
+  "opencode/claude-sonnet-4",
+  "opencode/deepseek-v4-flash",
+  "opencode/deepseek-v4-flash-free",
+  "opencode/deepseek-v4-flash-vision-exp",
+  "opencode/exo-free",
+  "opencode/fledge-alpha-free",
+  "opencode/gemini-3-pro",
+  "opencode/glm-4.6",
+  "opencode/glm-4.7",
+  "opencode/glm-4.7-free",
+  "opencode/glm-5-free",
+  "opencode/grok-code",
+  "opencode/hy3-free",
+  "opencode/hy3-preview-free",
+  "opencode/kimi-k2",
+  "opencode/kimi-k2-thinking",
+  "opencode/kimi-k2.5-free",
+  "opencode/laguna-s-2.1-free",
+  "opencode/ling-2.6-flash-free",
+  "opencode/ling-3.0-flash-fin-free",
+  "opencode/ling-3.0-flash-free",
+  "opencode/ling-3.0-tiny-free",
+  "opencode/ling-3.1-flash-free",
+  "opencode/ll-alpha-free",
+  "opencode/longcat-2.0-free",
+  "opencode/longcat-2.5-preview-free",
+  "opencode/mimo-v2-flash-free",
+  "opencode/mimo-v2-omni-free",
+  "opencode/mimo-v2-pro-free",
+  "opencode/mimo-v2.5-free",
+  "opencode/minimax-m2.1",
+  "opencode/minimax-m2.1-free",
+  "opencode/minimax-m2.5-free",
+  "opencode/minimax-m3-free",
+  "opencode/minimax-m3.1-flash-free",
+  "opencode/muse-spark-1.2-contributor-free",
+  "opencode/muse-spark-1.3-contributor-free",
+  "opencode/nemotron-3-super-free",
+  "opencode/nemotron-3-ultra-free",
+  "opencode/north-mini-code-free",
+  "opencode/qwen3-coder",
+  "opencode/qwen3.6-plus-free",
+  "opencode/ring-2.6-1t-free",
+  "opencode/space-bunny-free",
+  "opencode/step-5-preview-free",
+  "opencode/trinity-large-preview-free",
+  "opencode/x-preview-f-free",
+  "openrouter/amazon/nova-premier-v1",
+  "openrouter/bytedance-seed/seed-1.6",
+  "openrouter/bytedance-seed/seed-1.6-flash",
+  "openrouter/bytedance-seed/seed-2.0-code",
+  "openrouter/dots-studio/dots-3-note-preview:free",
+  "openrouter/google/gemini-2.5-flash",
+  "openrouter/google/gemini-2.5-flash-lite",
+  "openrouter/google/gemini-2.5-pro",
+  "openrouter/nousresearch/hermes-3-llama-3.1-405b",
+  "openrouter/nousresearch/hermes-3-llama-3.1-70b",
+  "openrouter/poolside/laguna-s-2.1",
+  "openrouter/poolside/laguna-s-2.1:free",
+  "openrouter/poolside/laguna-xs-2.1",
+  "openrouter/poolside/laguna-xs-2.1:free",
+  "openrouter/qwen/qwen3.5-9b",
+  "openrouter/xiaomi/mimo-v2.5",
+  "openrouter/xiaomi/mimo-v2.5-pro",
+  "openrouter/z-ai/glm-4.5",
+  "opper/gemini-3.7-flash",
+  "opper/qwen3-coder-next",
+  "orcarouter/anthropic/claude-sonnet-4.5",
+  "orcarouter/openai/gpt-oss-120b",
+  "perplexity-agent/deepseek/deepseek-v4-flash-0731",
+  "perplexity-agent/moonshot-ai/kimi-k2.7-code",
+  "perplexity-agent/moonshot-ai/kimi-k3",
+  "perplexity-agent/nvidia/nemotron-3-super-120b-a12b",
+  "perplexity-agent/openai/gpt-5-mini",
+  "perplexity-agent/openai/gpt-5.1",
+  "perplexity-agent/openai/gpt-5.2",
+  "perplexity-agent/openai/gpt-5.4",
+  "perplexity-agent/xai/grok-4-1-fast-non-reasoning",
+  "perplexity/sonar",
+  "perplexity/sonar-deep-research",
+  "perplexity/sonar-pro",
+  "perplexity/sonar-reasoning-pro",
+  "pioneer/claude-fable-5",
+  "pioneer/claude-haiku-4-5",
+  "pioneer/claude-opus-5",
+  "pioneer/claude-opus-5-fast",
+  "pioneer/claude-sonnet-5",
+  "pioneer/deepseek-ai/DeepSeek-V4-Flash",
+  "pioneer/gpt-5.5",
+  "pioneer/gpt-5.6-luna",
+  "pioneer/gpt-5.6-sol",
+  "pioneer/gpt-5.6-terra",
+  "pioneer/moonshotai/Kimi-K3",
+  "pioneer/moonshotai/Kimi-K3-Fast",
+  "pioneer/zai-org/GLM-5.2",
+  "poe/anthropic/claude-haiku-3",
+  "poe/anthropic/claude-haiku-3.5",
+  "poe/anthropic/claude-opus-4",
+  "poe/anthropic/claude-opus-4.1",
+  "poe/anthropic/claude-sonnet-3.5",
+  "poe/anthropic/claude-sonnet-3.5-june",
+  "poe/anthropic/claude-sonnet-3.7",
+  "poe/anthropic/claude-sonnet-4",
+  "poe/cerebras/llama-3.3-70b-cs",
+  "poe/cerebras/qwen3-235b-2507-cs",
+  "poe/cerebras/qwen3-32b-cs",
+  "poe/fireworks-ai/kimi-k2.5-fw",
+  "poe/google/gemini-2.0-flash",
+  "poe/google/gemini-2.0-flash-lite",
+  "poe/google/gemini-2.5-flash",
+  "poe/google/gemini-2.5-flash-lite",
+  "poe/google/gemini-2.5-pro",
+  "poe/google/gemini-deep-research",
+  "poe/google/imagen-3",
+  "poe/google/imagen-3-fast",
+  "poe/google/imagen-4-ultra",
+  "poe/google/nano-banana",
+  "poe/google/veo-2",
+  "poe/google/veo-3",
+  "poe/google/veo-3-fast",
+  "poe/novita/glm-4.7",
+  "poe/novita/kimi-k2-thinking",
+  "poe/novita/kimi-k2.5",
+  "poe/openai/chatgpt-4o-latest",
+  "poe/openai/dall-e-3",
+  "poe/openai/gpt-3.5-turbo",
+  "poe/openai/gpt-3.5-turbo-instruct",
+  "poe/openai/gpt-3.5-turbo-raw",
+  "poe/openai/gpt-4-turbo",
+  "poe/openai/gpt-4.1-nano",
+  "poe/openai/gpt-4o-mini-search",
+  "poe/openai/gpt-5-chat",
+  "poe/openai/gpt-5-codex",
+  "poe/openai/gpt-5.1-codex",
+  "poe/openai/gpt-5.1-codex-max",
+  "poe/openai/gpt-5.1-codex-mini",
+  "poe/openai/gpt-5.1-instant",
+  "poe/openai/gpt-5.2-codex",
+  "poe/openai/gpt-5.2-instant",
+  "poe/openai/gpt-5.3-instant",
+  "poe/openai/gpt-image-1",
+  "poe/openai/o1",
+  "poe/openai/o1-pro",
+  "poe/openai/o3-deep-research",
+  "poe/openai/o3-mini",
+  "poe/openai/o3-mini-high",
+  "poe/openai/o4-mini",
+  "poe/openai/o4-mini-deep-research",
+  "poe/openai/sora-2",
+  "poe/openai/sora-2-pro",
+  "poe/runwayml/runway",
+  "poe/runwayml/runway-gen-4-turbo",
+  "poe/xai/grok-4",
+  "poe/xai/grok-4-fast-non-reasoning",
+  "poe/xai/grok-4-fast-reasoning",
+  "poe/xai/grok-4.1-fast-non-reasoning",
+  "poe/xai/grok-4.1-fast-reasoning",
+  "privatemode-ai/kimi-k2.6",
+  "privatemode-ai/kimi-latest",
+  "qihang-ai/claude-opus-4-5-20251101",
+  "qihang-ai/claude-sonnet-4-5-20250929",
+  "qihang-ai/gpt-5.2",
+  "qihang-ai/gpt-5.2-codex",
+  "qiniu-ai/MiniMax-M1",
+  "qiniu-ai/claude-3.5-haiku",
+  "qiniu-ai/claude-3.5-sonnet",
+  "qiniu-ai/claude-3.7-sonnet",
+  "qiniu-ai/claude-4.0-opus",
+  "qiniu-ai/claude-4.0-sonnet",
+  "qiniu-ai/claude-4.1-opus",
+  "qiniu-ai/claude-4.5-haiku",
+  "qiniu-ai/claude-4.5-opus",
+  "qiniu-ai/claude-4.5-sonnet",
+  "qiniu-ai/deepseek-r1",
+  "qiniu-ai/deepseek-r1-0528",
+  "qiniu-ai/deepseek-v3",
+  "qiniu-ai/deepseek-v3.1",
+  "qiniu-ai/deepseek/deepseek-math-v2",
+  "qiniu-ai/deepseek/deepseek-v3.1-terminus",
+  "qiniu-ai/deepseek/deepseek-v3.1-terminus-thinking",
+  "qiniu-ai/deepseek/deepseek-v3.2-251201",
+  "qiniu-ai/deepseek/deepseek-v3.2-exp",
+  "qiniu-ai/deepseek/deepseek-v3.2-exp-thinking",
+  "qiniu-ai/doubao-1.5-pro-32k",
+  "qiniu-ai/doubao-1.5-thinking-pro",
+  "qiniu-ai/doubao-1.5-vision-pro",
+  "qiniu-ai/doubao-seed-1.6",
+  "qiniu-ai/doubao-seed-1.6-flash",
+  "qiniu-ai/doubao-seed-1.6-thinking",
+  "qiniu-ai/doubao-seed-2.0-code",
+  "qiniu-ai/doubao-seed-2.0-pro",
+  "qiniu-ai/gemini-2.0-flash",
+  "qiniu-ai/gemini-2.0-flash-lite",
+  "qiniu-ai/gemini-2.5-flash",
+  "qiniu-ai/gemini-2.5-flash-image",
+  "qiniu-ai/gemini-2.5-flash-lite",
+  "qiniu-ai/gemini-2.5-pro",
+  "qiniu-ai/gemini-3.0-flash-preview",
+  "qiniu-ai/gemini-3.0-pro-image-preview",
+  "qiniu-ai/gemini-3.0-pro-preview",
+  "qiniu-ai/glm-4.5",
+  "qiniu-ai/glm-4.5-air",
+  "qiniu-ai/gpt-oss-20b",
+  "qiniu-ai/kimi-k2",
+  "qiniu-ai/meituan/longcat-flash-chat",
+  "qiniu-ai/meituan/longcat-flash-lite",
+  "qiniu-ai/mimo-v2-flash",
+  "qiniu-ai/minimax/minimax-m2",
+  "qiniu-ai/minimax/minimax-m2.1",
+  "qiniu-ai/minimax/minimax-m2.5-highspeed",
+  "qiniu-ai/moonshotai/kimi-k2-0905",
+  "qiniu-ai/moonshotai/kimi-k2-thinking",
+  "qiniu-ai/moonshotai/kimi-k2.5",
+  "qiniu-ai/openai/gpt-5",
+  "qiniu-ai/openai/gpt-5.2",
+  "qiniu-ai/qwen-max-2025-01-25",
+  "qiniu-ai/qwen-turbo",
+  "qiniu-ai/qwen-vl-max-2025-01-25",
+  "qiniu-ai/qwen2.5-vl-72b-instruct",
+  "qiniu-ai/qwen3-235b-a22b",
+  "qiniu-ai/qwen3-235b-a22b-instruct-2507",
+  "qiniu-ai/qwen3-235b-a22b-thinking-2507",
+  "qiniu-ai/qwen3-30b-a3b",
+  "qiniu-ai/qwen3-30b-a3b-instruct-2507",
+  "qiniu-ai/qwen3-30b-a3b-thinking-2507",
+  "qiniu-ai/qwen3-32b",
+  "qiniu-ai/qwen3-coder-480b-a35b-instruct",
+  "qiniu-ai/qwen3-max",
+  "qiniu-ai/qwen3-max-preview",
+  "qiniu-ai/qwen3-next-80b-a3b-instruct",
+  "qiniu-ai/qwen3-next-80b-a3b-thinking",
+  "qiniu-ai/qwen3-vl-30b-a3b-thinking",
+  "qiniu-ai/stepfun-ai/gelab-zero-4b-preview",
+  "qiniu-ai/stepfun/step-3.5-flash",
+  "qiniu-ai/x-ai/grok-4-fast",
+  "qiniu-ai/x-ai/grok-4-fast-non-reasoning",
+  "qiniu-ai/x-ai/grok-4-fast-reasoning",
+  "qiniu-ai/x-ai/grok-4.1-fast",
+  "qiniu-ai/x-ai/grok-4.1-fast-non-reasoning",
+  "qiniu-ai/x-ai/grok-4.1-fast-reasoning",
+  "qiniu-ai/x-ai/grok-code-fast-1",
+  "qiniu-ai/z-ai/autoglm-phone-9b",
+  "qiniu-ai/z-ai/glm-4.6",
+  "qiniu-ai/z-ai/glm-4.7",
+  "regolo-ai/llama-3.3-70b-instruct",
+  "regolo-ai/qwen3-coder-next",
+  "requesty/claude-sonnet-4@eu",
+  "requesty/glm-5.2@eu",
+  "requesty/laguna-m.1",
+  "requesty/laguna-xs.2",
+  "runinfra/Inferact/Qwen3.8-2.4T-A95B-NVFP4",
+  "runinfra/deepseek-ai/DeepSeek-V4-Flash-0731",
+  "runinfra/deepseek-ai/DeepSeek-V4-Pro-0813",
+  "sarvam/sarvam-30b",
+  "siliconflow-cn/Pro/moonshotai/Kimi-K2.5",
+  "siliconflow-cn/Pro/zai-org/GLM-5",
+  "siliconflow/MiniMaxAI/MiniMax-M2.5",
+  "siliconflow/Qwen/Qwen3.5-397B-A17B",
+  "siliconflow/nex-agi/Nex-N2-Pro",
+  "stackit/Qwen/Qwen3.6-27B",
+  "stackit/google/gemma-3-27b-it",
+  "synthetic/hf:MiniMaxAI/MiniMax-M3",
+  "synthetic/hf:Qwen/Qwen3.6-27B",
+  "synthetic/hf:moonshotai/Kimi-K2.7-Code",
+  "synthetic/hf:zai-org/GLM-5.2",
+  "tempr/minimax/MiniMax-M2.7",
+  "tempr/minimax/MiniMax-M2.7-highspeed",
+  "tempr/mistral/zai-glm-5-2",
+  "tencent-coding-plan/glm-5",
+  "tencent-coding-plan/hunyuan-2.0-instruct",
+  "tencent-coding-plan/hunyuan-2.0-thinking",
+  "tencent-coding-plan/hunyuan-t1",
+  "tencent-coding-plan/hunyuan-turbos",
+  "tencent-coding-plan/kimi-k2.5",
+  "tencent-coding-plan/minimax-m2.5",
+  "tensorx/deepseek/deepseek-r1-0528",
+  "tensorx/deepseek/deepseek-v3.2",
+  "tensorx/deepseek/deepseek-v4-pro",
+  "tensorx/minimax/minimax-m2.5",
+  "tensorx/moonshotai/kimi-k2.5",
+  "tensorx/moonshotai/kimi-k2.6",
+  "tensorx/qwen/qwen3-235b-a22b-2507",
+  "tensorx/qwen/qwen3.5-122b-a10b",
+  "tensorx/qwen/qwen3.5-9b",
+  "tensorx/z-ai/glm-5",
+  "tensorx/z-ai/glm-5-turbo",
+  "tensorx/z-ai/glm-5.1",
+  "tensorx/z-ai/glm-5v-turbo",
+  "togetherai/LiquidAI/LFM2-24B-A2B",
+  "togetherai/MiniMaxAI/MiniMax-M2.5",
+  "togetherai/MiniMaxAI/MiniMax-M2.7",
+  "togetherai/Qwen/Qwen2.5-7B-Instruct-Turbo",
+  "togetherai/Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+  "togetherai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8",
+  "togetherai/Qwen/Qwen3-Coder-Next-FP8",
+  "togetherai/Qwen/Qwen3.5-397B-A17B",
+  "togetherai/deepseek-ai/DeepSeek-R1",
+  "togetherai/deepseek-ai/DeepSeek-V3",
+  "togetherai/deepseek-ai/DeepSeek-V3-1",
+  "togetherai/deepseek-ai/DeepSeek-V4-Flash-0731",
+  "togetherai/essentialai/Rnj-1-Instruct",
+  "togetherai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "togetherai/nvidia/nemotron-3-ultra-550b-a55b",
+  "togetherai/zai-org/GLM-5",
+  "togetherai/zai-org/GLM-5.1",
+  "unorouter/claude-opus-4-8",
+  "unorouter/deepseek-v4-flash",
+  "unorouter/deepseek-v4-flash:free",
+  "unorouter/deepseek-v4-pro:free",
+  "unorouter/glm-5.2",
+  "unorouter/glm-5.2:free",
+  "unorouter/gpt-5.2",
+  "unorouter/gpt-5.4",
+  "unorouter/gpt-5.4:free",
+  "unorouter/gpt-5.5:free",
+  "unorouter/minimax-m2.7",
+  "unorouter/qwen3.5-397b-a17b:free",
+  "unorouter/step-3.7-flash:free",
+  "vancine/MiniMax-M3",
+  "vercel/deepseek/deepseek-r1",
+  "vercel/openai/gpt-4.1-nano",
+  "vercel/openai/o1",
+  "vercel/openai/o3-mini",
+  "vercel/openai/o4-mini",
+  "vivgrid/deepseek-v3.2",
+  "vivgrid/gemini-3.1-flash-lite-preview",
+  "vivgrid/gemini-3.1-pro-preview",
+  "vivgrid/glm-5.2",
+  "vivgrid/gpt-5-mini",
+  "vivgrid/gpt-5.1-codex",
+  "vivgrid/gpt-5.1-codex-max",
+  "vivgrid/gpt-5.2-codex",
+  "vivgrid/gpt-5.3-codex",
+  "vivgrid/gpt-5.4",
+  "vivgrid/gpt-5.4-mini",
+  "vivgrid/gpt-5.4-nano",
+  "vivgrid/gpt-5.5",
+  "volcengine-coding-plan/doubao-seed-2.0-lite",
+  "volcengine-coding-plan/doubao-seed-2.1-turbo",
+  "volcengine-coding-plan/kimi-k2.7-code",
+  "volcengine-coding-plan/minimax-m3",
+  "volcengine/doubao-seed-1-6-251015",
+  "volcengine/doubao-seed-1-6-flash-250828",
+  "volcengine/doubao-seed-1-6-vision-250815",
+  "volcengine/doubao-seed-1-8-251228",
+  "volcengine/doubao-seed-2-0-code-preview-260215",
+  "volcengine/doubao-seed-2-0-pro-260215",
+  "vultr/deepseek-v4-flash-0731",
+  "vultr/laguna-s-2.1",
+  "wafer.ai/GLM-5.1",
+  "wafer.ai/Kimi-K2.6",
+  "wafer.ai/MiniMax-M3",
+  "wafer.ai/glm5.2-fast",
+  "xai/grok-imagine-image-quality",
+  "xiaomi-token-plan-ams/mimo-v2.5",
+  "xiaomi-token-plan-ams/mimo-v2.5-pro",
+  "xiaomi-token-plan-cn/mimo-v2.5",
+  "xiaomi-token-plan-cn/mimo-v2.5-pro",
+  "xiaomi-token-plan-sgp/mimo-v2.5",
+  "xiaomi-token-plan-sgp/mimo-v2.5-pro",
+  "xiaomi/mimo-v2.5",
+  "xiaomi/mimo-v2.5-pro",
+  "xiaomi/mimo-v2.5-pro-ultraspeed",
+  "xpersona/xpersona-gpt-5.5",
+  "zai-coding-plan/glm-4.7",
+  "zai-coding-plan/glm-5-turbo",
+  "zai-coding-plan/glm-5.2",
+  "zai-coding-plan/glm-5.2-highspeed",
+  "zenmux/deepseek/deepseek-v3.2-exp",
+  "zenmux/qwen/qwen3-coder-plus",
+  "zenmux/qwen/qwen3-max",
+  "zenmux/volcengine/doubao-seed-1.8",
+  "zenmux/volcengine/doubao-seed-2.0-code",
+  "zenmux/volcengine/doubao-seed-2.0-lite",
+  "zenmux/volcengine/doubao-seed-2.0-mini",
+  "zenmux/volcengine/doubao-seed-2.0-pro",
+  "zenmux/volcengine/doubao-seed-code",
+  "zenmux/xiaomi/mimo-v2.5",
+  "zenmux/xiaomi/mimo-v2.5-pro",
+  "zhipuai-coding-plan/glm-4.6v"
+] as const;
+
+const deprecatedSet = new Set<string>(MASTRA_DEPRECATED_MODELS);
+
+export function isMastraModelDeprecated(modelId: string): boolean {
+  return deprecatedSet.has(modelId);
 }
 
 /** Capability flags for a model. null = unknown (not in models.dev, custom, free-typed). */
@@ -8399,6 +9637,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "302ai/claude-haiku-4-5-20251001": {
     toolCall: true,
     structuredOutput: null
+  },
+  "302ai/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "302ai/claude-opus-4-1-20250805": {
     toolCall: true,
@@ -8428,6 +9670,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "302ai/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "302ai/claude-opus-5-thinking": {
     toolCall: true,
     structuredOutput: null
@@ -8451,6 +9697,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "302ai/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: null
+  },
+  "302ai/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "302ai/deepseek-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "302ai/deepseek-v3.2": {
     toolCall: true,
@@ -8549,6 +9803,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "302ai/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gemini-4-argon": {
     toolCall: true,
     structuredOutput: true
   },
@@ -8696,6 +9954,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "302ai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "302ai/grok-4-1-fast-reasoning": {
     toolCall: true,
     structuredOutput: null
@@ -8728,6 +9998,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "302ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "302ai/kimi-k2-0905-preview": {
     toolCall: true,
     structuredOutput: null
@@ -8749,6 +10023,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "302ai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "302ai/kimi-k3.1-pro": {
     toolCall: true,
     structuredOutput: true
   },
@@ -8848,23 +10126,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "abacus/claude-3-7-sonnet-20250219": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "abacus/claude-fable-5": {
     toolCall: true,
     structuredOutput: null
   },
   "abacus/claude-haiku-4-5-20251001": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/claude-opus-4-1-20250805": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/claude-opus-4-20250514": {
     toolCall: true,
     structuredOutput: null
   },
@@ -8888,10 +10154,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "abacus/claude-sonnet-4-20250514": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "abacus/claude-sonnet-4-5-20250929": {
     toolCall: true,
     structuredOutput: null
@@ -8901,30 +10163,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "abacus/claude-sonnet-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/deepseek-ai/DeepSeek-R1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/deepseek-ai/DeepSeek-V3.1-Terminus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/deepseek-ai/DeepSeek-V3.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/deepseek-ai/DeepSeek-V4-Flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/deepseek-ai/DeepSeek-V4-Pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/deepseek/deepseek-v3.1": {
     toolCall: true,
     structuredOutput: null
   },
@@ -8948,23 +10186,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "abacus/gemini-3-pro-image-preview": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "abacus/gemini-3.1-flash-image": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "abacus/gemini-3.1-flash-image-preview": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "abacus/gemini-3.1-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/gemini-3.1-flash-lite-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9008,19 +10230,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "abacus/gpt-4o-2024-11-20": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "abacus/gpt-4o-mini": {
     toolCall: true,
     structuredOutput: true
   },
   "abacus/gpt-5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/gpt-5-codex": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9036,39 +10250,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "abacus/gpt-5.1-chat-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/gpt-5.1-codex": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/gpt-5.1-codex-max": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "abacus/gpt-5.2": {
     toolCall: true,
     structuredOutput: true
   },
-  "abacus/gpt-5.2-chat-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/gpt-5.2-codex": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/gpt-5.3-chat-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "abacus/gpt-5.3-codex": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/gpt-5.3-codex-xhigh": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9100,18 +10286,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "abacus/grok-4-0709": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/grok-4-1-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/grok-4-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "abacus/grok-4.3": {
     toolCall: true,
     structuredOutput: true
@@ -9123,38 +10297,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "abacus/grok-4.6": {
     toolCall: true,
     structuredOutput: true
-  },
-  "abacus/grok-code-fast-1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/kimi-k2-turbo-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "abacus/llama-3.3-70b-versatile": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/meta-llama/Meta-Llama-3.1-8B-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/meta-llama/Meta-Llama-3.3-70B-Instruct": {
-    toolCall: true,
-    structuredOutput: null
   },
   "abacus/mimo-v2-pro": {
     toolCall: true,
@@ -9208,18 +10350,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "abacus/qwen-2.5-coder-32b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/Qwen/Qwen2.5-72B-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/Qwen/Qwen3-235B-A22B-Instruct-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "abacus/Qwen/Qwen3-32B": {
     toolCall: true,
     structuredOutput: null
@@ -9231,14 +10361,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "abacus/Qwen/Qwen3.6-27B": {
     toolCall: true,
     structuredOutput: true
-  },
-  "abacus/Qwen/QwQ-32B": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/qwen3-max": {
-    toolCall: true,
-    structuredOutput: null
   },
   "abacus/qwen3.7-max": {
     toolCall: true,
@@ -9253,10 +10375,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "abacus/thinkingmachines/Inkling": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "abacus/zai-org/GLM-4.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -9292,15 +10410,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "above/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "above/deepseek-v4-flash-vision-exp": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "above/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "above/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9316,12 +10430,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "above/mimo-v2.5-pro": {
+  "above/mimo-v2.6-flash": {
     toolCall: true,
     structuredOutput: null
   },
-  "above/mimo-v2.5-pro-ultraspeed": {
-    toolCall: null,
+  "above/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "above/mimo-v2.6-pro-ultraspeed": {
+    toolCall: true,
     structuredOutput: null
   },
   "above/qwen3.8-max": {
@@ -9336,11 +10454,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "agentrouter/gpt-5.6-sol": {
+  "agentrouter/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "agnes/agnes-2.0-flash": {
+  "agentrouter/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "agentrouter/gpt-5.6-sol": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9349,6 +10471,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "agnes/agnes-2.5-pro-alpha": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "agnes/agnes-3.0-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9372,7 +10498,691 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "aiand/deepseek-ai/deepseek-v4-flash": {
+  "aimlapi/aion-labs/aion-rp-llama-3.1-8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aimlapi/alibaba/qwen-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/alibaba/qwen-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/alibaba/qwen3-coder-480b-a35b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/alibaba/qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/alibaba/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/alibaba/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/alibaba/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/alibaba/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/alibaba/qwen3.8-max-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/amazon/nova-lite-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/amazon/nova-micro-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/amazon/nova-pro-v1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/anthracite-org/magnum-v4-72b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-haiku-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-opus-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/anthropic/claude-sonnet-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/bytedance-seed/seed-1.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/bytedance-seed/seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/bytedance-seed/seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/bytedance-seed/seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/cognitivecomputations/dolphin-mistral-24b-venice-edition": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aimlapi/cohere/command-a": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/cohere/command-r-08-2024": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/cohere/command-r-plus-08-2024": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/cohere/command-r7b-12-2024": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/deepseek/deepseek-chat": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/deepseek/deepseek-chat-v3-0324": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-3-8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-3.1-flash-lite-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemma-2-27b-it": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/google/gemma-3-4b-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/gryphe/mythomax-l2-13b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "aimlapi/ibm-granite/granite-4.0-h-micro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/inception/mercury-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/inception/mercury-2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/inference-net/schematron-v2-small": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/inference-net/schematron-v2-turbo": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/mancer/weaver": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aimlapi/meta-llama/Llama-3.3-70B-Instruct-Turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/meta/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/codestral-2508": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/devstral-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/mistralai/ministral-14b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/ministral-3b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/ministral-8b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-large-2407": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-medium-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-medium-3-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-medium-3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-nemo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/mistralai/mistral-saba": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-small-24b-instruct-2501": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/mistralai/mistral-small-3.1-24b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aimlapi/mistralai/mistral-small-3.2-24b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/mixtral-8x22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/mistralai/voxtral-small-24b-2507": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/moonshot/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/moonshotai/kimi-k2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/moonshotai/kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/morph/morph-v3-fast": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aimlapi/morph/morph-v3-large": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/nousresearch/hermes-3-llama-3.1-405b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/nousresearch/hermes-3-llama-3.1-70b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-4o-2024-05-13": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-4o-2024-08-06": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-4o-2024-11-20": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.1-codex-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.2-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.4-image-2": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/openai/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-5.6-terra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/openai/o3-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/perceptron/perceptron-mk1.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/perplexity/sonar": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "aimlapi/perplexity/sonar-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "aimlapi/rekaai/reka-edge": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/relace/relace-apply-3": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aimlapi/relace/relace-search": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/sakana/fugu-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/sakana/fugu-ultra-v2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/sao10k/l3-lunaris-8b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/sao10k/l3.1-euryale-70b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/sao10k/l3.3-euryale-70b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/stepfun/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/tencent/hy-mt2-1.8b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "aimlapi/tencent/hy-mt2-30b-a3b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/tencent/hy-mt2-7b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/thedrummer/cydonia-24b-v4.1": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/thedrummer/skyfall-36b-v2": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/thedrummer/unslopnemo-12b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/unbiased/pareto": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/undi95/remm-slerp-l2-13b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "aimlapi/upstage/solar-pro-3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/upstage/solar-pro4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/x-ai/grok-4-20-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/x-ai/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "aimlapi/xiaomi/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/xiaomi/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/z-ai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/z-ai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/z-ai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/z-ai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/z-ai/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aimlapi/zhipu/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aimlapi/zhipu/glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9380,20 +11190,28 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "aiand/deepseek-ai/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aiand/deepseek-ai/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "aiand/google/gemma-4-31b-it": {
     toolCall: true,
     structuredOutput: true
   },
-  "aiand/moonshotai/kimi-k2.7-code": {
+  "aiand/meta/muse-spark-open": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "aiand/moonshotai/kimi-k3": {
     toolCall: true,
     structuredOutput: true
   },
   "aiand/motif-technologies/motif-3": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: false
   },
   "aiand/openai/gpt-oss-120b": {
@@ -9408,19 +11226,79 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "aiand/zai-org/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "aiand/zai-org/glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
-  "aixy/openai/gpt-4.1-mini": {
+  "aiand/zai-org/glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "aki-io/deepseek-v4-flash-0731-284b": {
+  "ai21/jamba-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ai21/jamba-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ainetcafe/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/anthropic/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/anthropic/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/anthropic/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/gemini/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aixy/gemini/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "aixy/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aixy/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "aki-io/deepseek-v4.1-flash-552b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9428,21 +11306,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "aki-io/gpt-oss-120b": {
+  "aki-io/glm5.3-754b": {
     toolCall: true,
     structuredOutput: true
   },
-  "aki-io/kimi-k2.7-code-1100b": {
+  "aki-io/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
   },
   "aki-io/mistral4-119b": {
     toolCall: true,
     structuredOutput: null
-  },
-  "aki-io/qwen3.6-35b": {
-    toolCall: true,
-    structuredOutput: true
   },
   "aki-io/qwen3.8-27b": {
     toolCall: true,
@@ -9456,147 +11330,43 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba/qvq-max": {
+  "alibaba/kimi-k3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen-mt-plus": {
     toolCall: false,
     structuredOutput: null
   },
-  "alibaba/qwen-mt-turbo": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "alibaba/qwen-omni-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen-omni-turbo-realtime": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba/qwen-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen-plus-character-ja": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen-vl-max": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: null
   },
   "alibaba/qwen-vl-ocr": {
     toolCall: false,
     structuredOutput: null
   },
-  "alibaba/qwen-vl-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen2-5-14b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen2-5-32b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen2-5-72b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen2-5-7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen2-5-omni-7b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen2-5-vl-72b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen2-5-vl-7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-14b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-235b-a22b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-32b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-8b": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba/qwen3-asr-flash": {
     toolCall: false,
     structuredOutput: null
   },
-  "alibaba/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba/qwen3-coder-flash": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-livetranslate-flash-realtime": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen3-omni-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-omni-flash-realtime": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba/qwen3-vl-235b-a22b": {
     toolCall: true,
     structuredOutput: null
   },
@@ -9606,7 +11376,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "alibaba/qwen3-vl-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen3.5-122b-a10b": {
     toolCall: true,
@@ -9624,9 +11394,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "alibaba/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "alibaba/qwen3.5-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen3.6-27b": {
     toolCall: true,
@@ -9640,21 +11414,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba/qwen3.6-max-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba/qwen3.6-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "alibaba/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "alibaba/qwen3.7-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen3.7-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba/qwen3.8-flash": {
     toolCall: true,
@@ -9664,59 +11438,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba/qwq-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1-0528": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1-distill-llama-70b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1-distill-llama-8b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1-distill-qwen-1-5b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1-distill-qwen-14b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1-distill-qwen-32b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-r1-distill-qwen-7b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-v3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-v3-1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-v3-2-exp": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/deepseek-v4-flash": {
+  "alibaba/qwen3.8-omni-flash": {
     toolCall: true,
     structuredOutput: true
   },
+  "alibaba-cn/deepseek-r1-distill-llama-70b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "alibaba-cn/deepseek-r1-distill-qwen-1-5b": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "alibaba-cn/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-cn/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9732,7 +11470,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba-cn/kimi-k2-thinking": {
+  "alibaba-cn/glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -9743,6 +11481,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "alibaba-cn/kimi-k2.6": {
     toolCall: true,
     structuredOutput: false
+  },
+  "alibaba-cn/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
   },
   "alibaba-cn/kimi/kimi-k2.5": {
     toolCall: true,
@@ -9756,14 +11498,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "alibaba-cn/moonshot-kimi-k2-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "alibaba-cn/qvq-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-cn/qwen-deep-research": {
     toolCall: true,
     structuredOutput: null
@@ -9774,179 +11508,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "alibaba-cn/qwen-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen-long": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen-math-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen-math-turbo": {
-    toolCall: true,
-    structuredOutput: null
+    toolCall: false,
+    structuredOutput: true
   },
   "alibaba-cn/qwen-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen-mt-plus": {
     toolCall: false,
     structuredOutput: null
   },
-  "alibaba-cn/qwen-mt-turbo": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen-omni-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen-omni-turbo-realtime": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-cn/qwen-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen-plus-character": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen-vl-max": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: null
   },
   "alibaba-cn/qwen-vl-ocr": {
     toolCall: false,
     structuredOutput: null
   },
-  "alibaba-cn/qwen-vl-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-14b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-32b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-72b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-coder-32b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-coder-7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-math-72b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-math-7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-omni-7b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-vl-72b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen2-5-vl-7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-14b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-235b-a22b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-32b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-8b": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-cn/qwen3-asr-flash": {
     toolCall: false,
     structuredOutput: null
   },
-  "alibaba-cn/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-cn/qwen3-coder-flash": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen3-omni-flash": {
     toolCall: true,
     structuredOutput: null
   },
-  "alibaba-cn/qwen3-omni-flash-realtime": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-vl-235b-a22b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwen3-vl-30b-a3b": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-cn/qwen3-vl-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen3.5-397b-a17b": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen3.5-flash": {
     toolCall: true,
@@ -9954,19 +11560,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "alibaba-cn/qwen3.5-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen3.6-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba-cn/qwen3.6-max-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "alibaba-cn/qwen3.6-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen3.7-flash": {
     toolCall: true,
@@ -9974,11 +11576,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "alibaba-cn/qwen3.7-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen3.7-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/qwen3.8-flash": {
     toolCall: true,
@@ -9988,13 +11590,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba-cn/qwq-32b": {
+  "alibaba-cn/qwen3.8-omni-flash": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-cn/qwq-plus": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "alibaba-cn/siliconflow/deepseek-r1-0528": {
     toolCall: true,
@@ -10016,10 +11614,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "alibaba-coding-plan/glm-4.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-coding-plan/glm-5": {
     toolCall: true,
     structuredOutput: null
@@ -10032,39 +11626,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "alibaba-coding-plan/qwen3-coder-next": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "alibaba-coding-plan/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-coding-plan/qwen3-max-2026-01-23": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-coding-plan/qwen3.5-plus": {
     toolCall: true,
     structuredOutput: null
-  },
-  "alibaba-coding-plan/qwen3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
   },
   "alibaba-coding-plan/qwen3.6-plus": {
     toolCall: true,
     structuredOutput: null
   },
-  "alibaba-coding-plan/qwen3.7-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-coding-plan/qwen3.7-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-coding-plan-cn/glm-4.7": {
     toolCall: true,
     structuredOutput: null
   },
@@ -10080,45 +11650,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "alibaba-coding-plan-cn/qwen3-coder-next": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "alibaba-coding-plan-cn/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-coding-plan-cn/qwen3-max-2026-01-23": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "alibaba-coding-plan-cn/qwen3.5-plus": {
     toolCall: true,
     structuredOutput: null
   },
-  "alibaba-coding-plan-cn/qwen3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "alibaba-coding-plan-cn/qwen3.6-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "alibaba-coding-plan-cn/qwen3.7-max": {
     toolCall: true,
     structuredOutput: null
   },
   "alibaba-coding-plan-cn/qwen3.7-plus": {
     toolCall: true,
     structuredOutput: null
-  },
-  "alibaba-token-plan/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "alibaba-token-plan/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
   },
   "alibaba-token-plan/deepseek-v4-flash-0731": {
     toolCall: true,
@@ -10132,6 +11674,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "alibaba-token-plan/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "alibaba-token-plan/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "alibaba-token-plan/glm-5": {
     toolCall: true,
     structuredOutput: true
@@ -10141,6 +11691,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "alibaba-token-plan/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan/glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10204,10 +11758,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba-token-plan/qwen3.8-max-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "alibaba-token-plan/wan2.7-image": {
     toolCall: false,
     structuredOutput: null
@@ -10215,14 +11765,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "alibaba-token-plan/wan2.7-image-pro": {
     toolCall: false,
     structuredOutput: null
-  },
-  "alibaba-token-plan-cn/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "alibaba-token-plan-cn/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
   },
   "alibaba-token-plan-cn/deepseek-v4-flash-0731": {
     toolCall: true,
@@ -10236,6 +11778,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "alibaba-token-plan-cn/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "alibaba-token-plan-cn/glm-5": {
     toolCall: true,
     structuredOutput: true
@@ -10245,6 +11795,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "alibaba-token-plan-cn/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "alibaba-token-plan-cn/glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10308,10 +11862,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "alibaba-token-plan-cn/qwen3.8-max-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "alibaba-token-plan-cn/wan2.7-image": {
     toolCall: false,
     structuredOutput: null
@@ -10324,39 +11874,35 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "ambient/deepseek/deepseek-v4-flash": {
+  "ambient/ambient/small": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "ambient/minimax/minimax-m3": {
     toolCall: true,
     structuredOutput: true
   },
-  "ambient/deepseek/deepseek-v4-flash-0731": {
+  "ambient/qwen/qwen3-30b-a3b-instruct-2507": {
     toolCall: true,
     structuredOutput: true
   },
-  "ambient/moonshotai/kimi-k2.6": {
+  "ambient/qwen/qwen3.6-27b": {
     toolCall: true,
     structuredOutput: true
   },
-  "ambient/moonshotai/kimi-k2.7-code": {
+  "ambient/qwen/qwen3.6-35b-a3b": {
     toolCall: true,
     structuredOutput: true
   },
-  "ambient/stepfun/step-3.7-flash": {
+  "ambient/qwen/qwen3.8-27b": {
     toolCall: true,
     structuredOutput: true
   },
-  "ambient/xiaomi/mimo-v2.5": {
+  "ambient/unsloth/qwen3.8-27b-gguf": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "ambient/z-ai/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "ambient/zai-org/GLM-5.1-FP8": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "ambient/zai-org/GLM-5.2-FP8": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10364,13 +11910,37 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "amd/DeepSeek-V4-Flash-Vision-Exp": {
+  "amd/DeepSeek-V4.1-Flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "amd/MiniCPM5-1B": {
+  "amd/Gemma-4-31B-IT": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/MiMo-V2.6-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/MiniCPM-V-4.7-1B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/MiniCPM-V-4.7-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "amd/MiniCPM5-2B": {
     toolCall: true,
     structuredOutput: null
+  },
+  "amd/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
   },
   "amd/Qwen3.8-Flash-Next": {
     toolCall: true,
@@ -10389,6 +11959,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "anthropic/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-haiku-5-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10416,6 +11990,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "anthropic/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "anthropic/claude-sonnet-4-5": {
     toolCall: true,
     structuredOutput: true
@@ -10429,6 +12007,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "anthropic/claude-sonnet-5-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10492,10 +12074,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "anyapi/mistralai/devstral-2512": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "anyapi/mistralai/mistral-large-2512": {
     toolCall: true,
     structuredOutput: null
@@ -10556,11 +12134,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "arcee/deepseek/deepseek-v4-pro": {
+  "arcee/deepseek/deepseek-v4-pro-0813": {
     toolCall: true,
     structuredOutput: true
   },
-  "arcee/deepseek/deepseek-v4-pro-0813": {
+  "arcee/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/deepseek/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10568,15 +12150,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "arcee/thinkingmachines/inkling-small": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "arcee/trinity-large-thinking": {
     toolCall: true,
     structuredOutput: null
   },
   "arcee/zai-org/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/zai-org/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "arcee/zai-org/glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10668,15 +12254,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "baseten/deepseek-ai/DeepSeek-V3.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "baseten/deepseek-ai/DeepSeek-V4-Flash-0731": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "baseten/deepseek-ai/DeepSeek-V4-Pro": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10684,27 +12262,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "baseten/MiniMaxAI/MiniMax-M2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "baseten/moonshotai/Kimi-K2.5": {
+  "baseten/deepseek-ai/DeepSeek-V4.1-Flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "baseten/moonshotai/Kimi-K2.6": {
+  "baseten/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
-  "baseten/moonshotai/Kimi-K2.7-Code": {
+  "baseten/deepseek-ai/DeepSeek-V4.1-Flash-1017-Fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "baseten/deepseek-ai/DeepSeek-V4.1-Flash-Fast": {
     toolCall: true,
     structuredOutput: true
   },
   "baseten/moonshotai/Kimi-K3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "baseten/nvidia/Nemotron-120B-A12B": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10713,26 +12287,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "baseten/openai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "baseten/thinkingmachines/inkling": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "baseten/thinkingmachines/inkling-small": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "baseten/zai-org/GLM-4.7": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "baseten/zai-org/GLM-5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "baseten/zai-org/GLM-5.1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10756,6 +12310,30 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "bee/bee-brood": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "bee/bee-buzz": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bee/bee-cell": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "bee/bee-comb": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bee/bee-hive": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bee/bee-swarm": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "berget/google/gemma-4-31B-it": {
     toolCall: true,
     structuredOutput: true
@@ -10772,19 +12350,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "berget/zai-org/GLM-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "berget/zai-org/GLM-5.3-Flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "blueclaw/Qwen/Qwen3.6-35B-A3B-FP8": {
+  "blueclaw/Qwen3.8-27B": {
     toolCall: true,
     structuredOutput: true
   },
-  "blueclaw/Qwen3.6-27B": {
+  "bothub/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bothub/deepseek-v4-pro-0813": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10792,9 +12370,89 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "bothub/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bothub/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bothub/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "bothub/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "bothub/nemotron-3-ultra-550b-a55b:free": {
     toolCall: true,
     structuredOutput: null
+  },
+  "boundless/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "boundless/claude-opus-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "boundless/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/dsv4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "boundless/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "boundless/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "boundless/nemotron3-super": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "boundless/qwen3.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "boundless/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "cerebras/gpt-oss-120b": {
     toolCall: true,
@@ -10804,15 +12462,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "hyper/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "hyper/deepseek-v4-flash-0731": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "hyper/deepseek-v4-pro": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10820,15 +12470,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "hyper/gemma-4-26b-a4b-it": {
+  "hyper/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "hyper/glm-5": {
+  "hyper/deepseek-v4.1-flash-1017": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "hyper/glm-5.1": {
+  "hyper/gemma-4-26b-a4b-it": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10856,14 +12506,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "hyper/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "hyper/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "hyper/kimi-k2.7-code": {
     toolCall: true,
     structuredOutput: true
@@ -10871,14 +12513,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "hyper/kimi-k3": {
     toolCall: true,
     structuredOutput: true
-  },
-  "hyper/llama-3.3-70b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "hyper/llama-4-maverick-17b-128e-instruct-fp8": {
-    toolCall: true,
-    structuredOutput: null
   },
   "hyper/minimax-m2.7": {
     toolCall: true,
@@ -10888,23 +12522,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "hyper/qwen3-coder-480b-a35b-instruct-int4-mixed-ar": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "hyper/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "hyper/qwen3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "hyper/qwen3.6-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "hyper/qwen3.6-plus": {
+  "hyper/prism": {
     toolCall: true,
     structuredOutput: null
   },
@@ -10944,6 +12562,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "chutes/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "chutes/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "chutes/google/gemma-4-31B-turbo-TEE": {
     toolCall: true,
     structuredOutput: true
@@ -10952,19 +12578,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "chutes/moonshotai/Kimi-K3-TEE": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "chutes/Nemotron-3-Nano-Omni-30B-TEE": {
+  "chutes/moonshotai/Kimi-K2.7-Code": {
     toolCall: false,
     structuredOutput: null
   },
-  "chutes/Qwen/Qwen3-235B-A22B-Thinking-2507-TEE": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "chutes/Qwen/Qwen3-32B-TEE": {
+  "chutes/moonshotai/Kimi-K3-TEE": {
     toolCall: true,
     structuredOutput: true
   },
@@ -10976,11 +12594,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "chutes/Qwen/Qwen3.8-2.4T-A95B": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "chutes/Qwen/Qwen3.8-27B-TEE": {
     toolCall: true,
     structuredOutput: true
   },
-  "chutes/unsloth/Mistral-Nemo-Instruct-2407-TEE": {
+  "chutes/Qwen/Qwen3.8-Max-0902": {
     toolCall: false,
     structuredOutput: null
   },
@@ -10988,9 +12610,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "chutes/zai-org/GLM-5.2-Fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "chutes/zai-org/GLM-5.2-TEE": {
     toolCall: true,
     structuredOutput: true
+  },
+  "chutes/zai-org/GLM-5.3": {
+    toolCall: false,
+    structuredOutput: null
   },
   "clarifai/arcee_ai/AFM/models/trinity-mini": {
     toolCall: true,
@@ -11048,15 +12678,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "cline-pass/cline-pass/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "cline-pass/cline-pass/deepseek-v4-pro": {
     toolCall: true,
     structuredOutput: true
   },
-  "cline-pass/cline-pass/glm-5.2": {
+  "cline-pass/cline-pass/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11065,14 +12691,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "cline-pass/cline-pass/glm-5.3-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "cline-pass/cline-pass/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "cline-pass/cline-pass/kimi-k2.7-code": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11088,9 +12706,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "cline-pass/cline-pass/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "cline-pass/cline-pass/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "cline-pass/cline-pass/minimax-m3": {
     toolCall: true,
     structuredOutput: null
+  },
+  "cline-pass/cline-pass/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
   },
   "cline-pass/cline-pass/qwen3.7-max": {
     toolCall: true,
@@ -11116,11 +12746,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cloudferro-sherlock/speakleash/Bielik-11B-v2.6-Instruct": {
+  "cloudferro-sherlock/speakleash/Bielik-11B-v3.0-Instruct": {
     toolCall: true,
     structuredOutput: true
   },
-  "cloudferro-sherlock/speakleash/Bielik-11B-v3.0-Instruct": {
+  "cloudferro-sherlock/zai-org/GLM-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11137,6 +12767,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cloudflare-workers-ai/@cf/deepseek-ai/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11232,21 +12866,389 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "coralbricks/glm-5.3-fp4": {
+  "commandcode/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-haiku-5-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "coralbricks/gpt-oss-120b": {
+  "commandcode/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/deepseek/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "coralbricks/kimi-k3": {
+  "commandcode/deepseek/deepseek-v4-flash-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/deepseek/deepseek-v4-flash-vision-exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/deepseek/deepseek-v4.1-flash-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/meta/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/meta/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/meta/muse-wonder-1.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/MiniMaxAI/MiniMax-M2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/MiniMaxAI/MiniMax-M2.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/mistral/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/moonshotai/Kimi-K2.7-Code-Highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/Qwen/Qwen3.8-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/Qwen/Qwen3.8-Max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/Qwen/Qwen3.8-Max-0902": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/Qwen/Qwen3.8-Omni-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/stepfun/Step-3.5-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/stepfun/Step-3.7-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/stepfun/Step-5-Preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/tencent/hy3-paid": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/thinkingmachines/inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/thinkingmachines/inkling-small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "commandcode/xai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/xai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/z-ai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/zai-org/GLM-5.2-Fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "commandcode/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "coralbricks/deepseek-v4.1-flash-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/google/gemma-4-26B-A4B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/google/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/ibm-granite/granite-4.2-8b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/meta-llama/Llama-3.1-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/moonshotai/Kimi-K2.7-Code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/reflection/Beam-1.0-501B-A23B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "wandb/zai-org/GLM-5.3-Flash": {
     toolCall: true,
     structuredOutput: true
   },
   "cortecs/apertus-70b": {
-    toolCall: true,
-    structuredOutput: false
+    toolCall: null,
+    structuredOutput: null
   },
   "cortecs/claude-4-5-sonnet": {
     toolCall: true,
@@ -11260,7 +13262,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "cortecs/claude-haiku-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "cortecs/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/claude-opus-5.5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11280,19 +13290,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/claude-sonnet-4": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "cortecs/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/codestral-2508": {
+  "cortecs/claude-sonnet-5.5": {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/deepseek-r1-0528": {
+  "cortecs/codestral-2508": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11309,6 +13315,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "cortecs/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11348,6 +13362,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "cortecs/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "cortecs/gemma-3-27b-it": {
     toolCall: false,
     structuredOutput: true
@@ -11364,14 +13382,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/glm-5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "cortecs/glm-5-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "cortecs/glm-5.1": {
     toolCall: true,
     structuredOutput: true
@@ -11385,10 +13395,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "cortecs/glm-5.3-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "cortecs/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11444,6 +13450,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "cortecs/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "cortecs/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
@@ -11460,10 +13486,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "cortecs/kimi-k2.6": {
     toolCall: true,
     structuredOutput: true
@@ -11476,11 +13498,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/llama-3.1-405b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "cortecs/llama-3.1-8b-instruct": {
+  "cortecs/kolibri-1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11504,11 +13522,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/minimax-m2.7": {
+  "cortecs/minimax-m3": {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/minimax-m3": {
+  "cortecs/minimax-m3.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11528,15 +13546,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "cortecs/mistral-7b-instruct-v0.3": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "cortecs/mistral-large-2402": {
     toolCall: true,
     structuredOutput: true
   },
   "cortecs/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "cortecs/mistral-large-4-0": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11588,10 +13606,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/pixtral-12b-2409": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "cortecs/pixtral-large-2502": {
     toolCall: true,
     structuredOutput: true
@@ -11624,10 +13638,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "cortecs/qwen3.5-122b-a10b": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "cortecs/qwen3.5-397b-a17b": {
     toolCall: true,
     structuredOutput: null
@@ -11653,8 +13663,8 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "cortecs/qwen3.8-flash-next": {
-    toolCall: true,
-    structuredOutput: true
+    toolCall: null,
+    structuredOutput: null
   },
   "cortecs/qwen3guard-gen-0.6b": {
     toolCall: false,
@@ -11668,111 +13678,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "crof/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "crof/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/deepseek-v4-flash-0731": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/deepseek-v4-flash-vision-exp": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/deepseek-v4-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/deepseek-v4-pro-0813": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/gemma-4-31b-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/glm-5.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/glm-5.3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/glm-5.3-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/greg-1-mini": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "crof/greg-2-super": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "crof/greg-2-ultra": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "crof/greg-rp": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "crof/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/kimi-k2.7-code": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/kimi-k3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/kimi-k3-eco": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "crof/qwen3.5-397b-a17b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/qwen3.5-9b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/qwen3.6-27b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crof/qwen3.8-27b": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "crossmodel/anthropic/claude-fable-5": {
     toolCall: true,
     structuredOutput: true
   },
   "crossmodel/anthropic/claude-fable-5-1": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "crossmodel/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/anthropic/claude-haiku-5-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11788,6 +13706,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "crossmodel/anthropic/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "crossmodel/anthropic/claude-sonnet-4-6": {
     toolCall: true,
     structuredOutput: true
@@ -11796,11 +13718,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "crossmodel/deepseek/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crossmodel/deepseek/deepseek-v4-flash-vision-exp": {
+  "crossmodel/anthropic/claude-sonnet-5-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11849,6 +13767,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "crossmodel/gemini/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/gemini/gemini-4-argon": {
     toolCall: true,
     structuredOutput: true
   },
@@ -11912,6 +13834,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "crossmodel/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "crossmodel/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "crossmodel/qwen/qwen3.6-flash": {
     toolCall: true,
     structuredOutput: true
@@ -11940,6 +13874,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "crossmodel/qwen/qwen3.8-omni-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "crossmodel/tencent/hy3": {
     toolCall: true,
     structuredOutput: true
@@ -11960,17 +13898,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "crossmodel/x-ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "crossmodel/x-ai/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
   },
-  "crossmodel/xiaomi/mimo-v2.5": {
+  "crossmodel/xiaomi/mimo-v2.6-flash": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
-  "crossmodel/xiaomi/mimo-v2.5-pro": {
+  "crossmodel/xiaomi/mimo-v2.6-pro": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
   "crossmodel/z-ai/glm-4.7": {
     toolCall: true,
@@ -12000,19 +13942,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "crusoe/deepseek-ai/DeepSeek-V3-0324": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "crusoe/google/gemma-4-31b-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crusoe/meta-llama/Llama-3.3-70B-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "crusoe/moonshotai/Kimi-K2.6": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12029,18 +13959,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "crusoe/openai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crusoe/Qwen/Qwen3-235B-A22B-Instruct-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "crusoe/zai/GLM-5.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "crusoe/zai/GLM-5.2": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12094,41 +14012,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "databricks/databricks-claude-haiku-4-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "databricks/databricks-claude-opus-4-1": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "databricks/databricks-claude-opus-4-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "databricks/databricks-claude-opus-4-6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "databricks/databricks-claude-opus-4-7": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "databricks/databricks-claude-sonnet-4": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "databricks/databricks-claude-sonnet-4-5": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "databricks/databricks-claude-sonnet-4-6": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "databricks/databricks-gemini-2-5-flash": {
-    toolCall: true,
     structuredOutput: true
   },
-  "databricks/databricks-gemini-2-5-pro": {
+  "databricks/databricks-claude-sonnet-4-6": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12140,11 +14046,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "databricks/databricks-gemini-3-flash": {
+  "databricks/databricks-gemini-3-5-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "databricks/databricks-gemini-3-pro": {
+  "databricks/databricks-gemini-3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12208,7 +14114,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "databricks/databricks-kimi-k2-7-code": {
+  "deepinfra/anthropic/claude-fable-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12229,10 +14135,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "deepinfra/deepseek-ai/DeepSeek-V3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "deepinfra/deepseek-ai/DeepSeek-V3-0324": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12264,6 +14166,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/google/gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "deepinfra/google/gemma-3-4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "deepinfra/google/gemma-4-26B-A4B-it": {
     toolCall: true,
     structuredOutput: true
@@ -12272,59 +14194,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/google/gemma-4-E4B-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "deepinfra/meta-llama/Llama-3.3-70B-Instruct-Turbo": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "deepinfra/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
-    toolCall: false,
     structuredOutput: true
   },
   "deepinfra/meta-llama/Llama-4-Scout-17B-16E-Instruct": {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/MiniMaxAI/MiniMax-M2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "deepinfra/MiniMaxAI/MiniMax-M2.7": {
-    toolCall: true,
+  "deepinfra/meta-llama/Llama-Guard-4-12B": {
+    toolCall: false,
     structuredOutput: null
   },
   "deepinfra/MiniMaxAI/MiniMax-M3": {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/moonshotai/Kimi-K2.5": {
-    toolCall: true,
+  "deepinfra/mistralai/Mistral-Small-24B-Instruct-2501": {
+    toolCall: false,
     structuredOutput: true
   },
   "deepinfra/moonshotai/Kimi-K2.6": {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/moonshotai/Kimi-K2.7-Code": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "deepinfra/moonshotai/Kimi-K3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "deepinfra/nvidia/Llama-3.3-Nemotron-Super-49B-v1.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "deepinfra/nvidia/Nemotron-3-Nano-30B-A3B": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "deepinfra/nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12352,10 +14246,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/Qwen/Qwen3-Max": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "deepinfra/Qwen/Qwen3-Next-80B-A3B-Instruct": {
     toolCall: true,
     structuredOutput: true
@@ -12364,7 +14254,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/Qwen/Qwen3.5-122B-A10B": {
+  "deepinfra/Qwen/Qwen3-VL-30B-A3B-Instruct": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12396,11 +14286,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/Qwen/Qwen3.8-2.4T-A95B": {
+  "deepinfra/Qwen/Qwen3.8-27B": {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/Qwen/Qwen3.8-27B": {
+  "deepinfra/Qwen/Qwen3.8-Flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12408,27 +14298,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/stepfun-ai/Step-3.7-Flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "deepinfra/tencent/Hy3": {
+  "deepinfra/tencent/Hy4-preview": {
     toolCall: true,
     structuredOutput: true
-  },
-  "deepinfra/thinkingmachines/Inkling": {
-    toolCall: true,
-    structuredOutput: null
   },
   "deepinfra/thinkingmachines/Inkling-Small": {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/XiaomiMiMo/MiMo-V2.5": {
+  "deepinfra/XiaomiMiMo/MiMo-V2.6-Flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "deepinfra/XiaomiMiMo/MiMo-V2.5-Pro": {
+  "deepinfra/XiaomiMiMo/MiMo-V2.6-Pro": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12437,18 +14319,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "deepinfra/zai-org/GLM-4.7": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "deepinfra/zai-org/GLM-4.7-Flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "deepinfra/zai-org/GLM-5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "deepinfra/zai-org/GLM-5.1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12464,11 +14334,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "deepseek/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "deepseek/deepseek-v4-flash-vision-exp": {
+  "deepseek/deepseek-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12482,23 +14348,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/claude-fable-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/claude-fable-5-1": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/claude-haiku-4-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/claude-haiku-4-5-20251001": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "llmgateway/claude-opus-4-1-20250805": {
+  "llmgateway/claude-haiku-5-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/claude-opus-4-5-20251101": {
     toolCall: true,
@@ -12506,19 +14372,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/claude-opus-4-6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/claude-opus-4-7": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/claude-opus-4-8": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/claude-opus-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "llmgateway/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/claude-sonnet-4-5": {
     toolCall: true,
@@ -12534,6 +14404,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/claude-sonnet-5": {
     toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/claude-sonnet-5-5": {
+    toolCall: true,
     structuredOutput: true
   },
   "llmgateway/codestral-2508": {
@@ -12560,27 +14434,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/devstral-2512": {
+  "llmgateway/deepseek-v4.1-flash-1017": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/ernie-4.5-vl-424b-a47b": {
-    toolCall: false,
     structuredOutput: false
+  },
+  "llmgateway/deepseek-v4.1-flash-cyber": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/fugu-max": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/fugu-ultra": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway/gemini-2.5-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/gemini-2.5-pro": {
+  "llmgateway/fugu-ultra-v2.0": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12616,6 +14486,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway/gemini-pro-latest": {
     toolCall: true,
     structuredOutput: true
@@ -12634,11 +14508,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/glm-4.5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/glm-4.5-air": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/glm-4.5-airx": {
     toolCall: true,
@@ -12650,15 +14524,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/glm-4.5v": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/glm-4.6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/glm-4.6v": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/glm-4.6v-flashx": {
     toolCall: true,
@@ -12666,19 +14540,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/glm-4.7": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/glm-4.7-flash": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/glm-4.7-flashx": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/glm-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "llmgateway/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/glm-5.1": {
     toolCall: true,
@@ -12696,19 +14570,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/glm-5.3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway/glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/gpt-3.5-turbo": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "llmgateway/gpt-4": {
+  "llmgateway/glm-5.3-flashx": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
-  "llmgateway/gpt-4-turbo": {
+  "llmgateway/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: false
   },
@@ -12717,10 +14591,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "llmgateway/gpt-4.1-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/gpt-4.1-nano": {
     toolCall: true,
     structuredOutput: true
   },
@@ -12824,6 +14694,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/gpt-live-transcribe": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "llmgateway/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
@@ -12832,11 +14722,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/grok-4": {
+  "llmgateway/gpt-transcribe": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway/granite-4.2-8b": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway/grok-4-1-fast-non-reasoning": {
+  "llmgateway/grok-4": {
     toolCall: true,
     structuredOutput: false
   },
@@ -12872,21 +14766,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/grok-4-7": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "llmgateway/grok-build-0-1": {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/hy-mt2-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "llmgateway/hy3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "llmgateway/hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/kimi-k2": {
     toolCall: true,
     structuredOutput: true
-  },
-  "llmgateway/kimi-k2-thinking": {
-    toolCall: true,
-    structuredOutput: null
   },
   "llmgateway/kimi-k2.5": {
     toolCall: true,
@@ -12904,6 +14806,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/kimi-k2.8-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "llmgateway/kimi-k3": {
     toolCall: true,
     structuredOutput: true
@@ -12912,12 +14818,20 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "llmgateway/kimi-k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway/ling-3.0-flash": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway/llama-3-70b-instruct": {
-    toolCall: false,
+  "llmgateway/ling-3.0-flash-vl": {
+    toolCall: true,
     structuredOutput: true
   },
   "llmgateway/llama-3.1-70b-instruct": {
@@ -12928,13 +14842,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: true
   },
-  "llmgateway/llama-3.2-3b-instruct": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "llmgateway/llama-3.3-70b-instruct": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/llama-4-maverick-17b-instruct": {
     toolCall: false,
@@ -12944,21 +14854,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "llmgateway/mimo-v2.5": {
+  "llmgateway/mimo-v2.6-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "llmgateway/mimo-v2.5-pro": {
+  "llmgateway/mimo-v2.6-pro": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "llmgateway/minimax-m2": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/minimax-m2.1": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/minimax-m2.1-lightning": {
     toolCall: false,
@@ -12966,23 +14876,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/minimax-m2.5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/minimax-m2.5-highspeed": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/minimax-m2.7": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/minimax-m2.7-highspeed": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/minimax-m3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "llmgateway/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: false
   },
   "llmgateway/minimax-text-01": {
     toolCall: false,
@@ -13002,15 +14916,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/mistral-large-2512": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "llmgateway/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/mistral-large-latest": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "llmgateway/mistral-medium-3-5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/mistral-small-2506": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "llmgateway/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/muse-spark-1.1": {
     toolCall: true,
@@ -13032,103 +14962,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/nemotron-3-ultra-550b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/o1": {
+  "llmgateway/muse-wonder-1.0": {
     toolCall: true,
     structuredOutput: true
+  },
+  "llmgateway/nemotron-3-ultra-550b": {
+    toolCall: true,
+    structuredOutput: false
   },
   "llmgateway/o3": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/o3-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/o4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/qwen-coder-plus": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "llmgateway/qwen-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/qwen-max": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/qwen-omni-turbo": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/qwen-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/qwen-plus-latest": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/qwen3-235b-a22b-fp8": {
+  "llmgateway/qwen3-14b": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/qwen3-235b-a22b-instruct-2507": {
+  "llmgateway/qwen3-30b-a3b": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/qwen3-235b-a22b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
   "llmgateway/qwen3-32b": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/qwen3-coder-flash": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/qwen3-coder-next": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/qwen3-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmgateway/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/qwen3-vl-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway/qwen3-vl-235b-a22b-thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13136,17 +15014,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/qwen3-vl-flash": {
+  "llmgateway/qwen3-vl-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/qwen3.5-122b-a10b": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/qwen3-vl-plus": {
+  "llmgateway/qwen3.5-27b": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "llmgateway/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/qwen3.5-9b": {
     toolCall: true,
     structuredOutput: true
+  },
+  "llmgateway/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: null
   },
   "llmgateway/qwen3.6-35b-a3b": {
     toolCall: true,
@@ -13156,13 +15046,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/qwen3.6-max-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "llmgateway/qwen3.6-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/qwen3.7-flash": {
     toolCall: true,
@@ -13170,11 +15056,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/qwen3.7-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "llmgateway/qwen3.7-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "llmgateway/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway/Qwen3.8-27B": {
     toolCall: true,
@@ -13186,9 +15076,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway/qwen3.8-max": {
     toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/qwen3.8-omni-flash": {
+    toolCall: true,
     structuredOutput: null
   },
   "llmgateway/qwen35-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/reka-edge-2603": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13208,48 +15106,36 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway/sonar": {
-    toolCall: false,
-    structuredOutput: null
+  "llmgateway/seed-2-0-code-preview-260328": {
+    toolCall: true,
+    structuredOutput: false
   },
-  "llmgateway/sonar-pro": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "llmgateway/sonar-reasoning-pro": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "digitalocean/alibaba-qwen3-32b": {
+  "llmgateway/seed-2-0-lite-260428": {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway/seed-2-0-mini-260428": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/seed-2-0-pro-260328": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway/sonar": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway/step-5-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "digitalocean/all-mini-lm-l6-v2": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "digitalocean/anthropic-claude-3-opus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/anthropic-claude-3.5-haiku": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/anthropic-claude-3.5-sonnet": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/anthropic-claude-3.7-sonnet": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/anthropic-claude-4.1-opus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/anthropic-claude-4.5-haiku": {
-    toolCall: true,
     structuredOutput: null
   },
   "digitalocean/anthropic-claude-4.5-sonnet": {
@@ -13264,6 +15150,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "digitalocean/anthropic-claude-5.5-haiku": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "digitalocean/anthropic-claude-fable-5": {
     toolCall: true,
     structuredOutput: null
@@ -13273,10 +15163,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "digitalocean/anthropic-claude-haiku-4.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/anthropic-claude-opus-4": {
     toolCall: true,
     structuredOutput: null
   },
@@ -13300,7 +15186,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "digitalocean/anthropic-claude-sonnet-4": {
+  "digitalocean/anthropic-claude-opus-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/anthropic-claude-sonnet-5.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -13324,14 +15214,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "digitalocean/deepseek-r1-distill-llama-70b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "digitalocean/deepseek-v3": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "digitalocean/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: true
@@ -13343,6 +15225,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "digitalocean/deepseek-v4-pro-0813": {
     toolCall: true,
     structuredOutput: true
+  },
+  "digitalocean/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: null
   },
   "digitalocean/e5-large-v2": {
     toolCall: false,
@@ -13368,14 +15258,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "digitalocean/glm-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/glm-5.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "digitalocean/glm-5.2": {
     toolCall: true,
     structuredOutput: true
@@ -13392,10 +15274,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "digitalocean/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "digitalocean/kimi-k2.6": {
     toolCall: true,
     structuredOutput: true
@@ -13408,14 +15286,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "digitalocean/llama3-8b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/llama3.3-70b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "digitalocean/mimo-v2.5-pro": {
     toolCall: true,
     structuredOutput: null
@@ -13424,7 +15294,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "digitalocean/ministral-3-8b-instruct-2512": {
+  "digitalocean/minimax-m3.1-flash": {
     toolCall: true,
     structuredOutput: null
   },
@@ -13432,20 +15302,8 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "digitalocean/mistral-7b-instruct-v0.3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/mistral-nemo-instruct-2407": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "digitalocean/multi-qa-mpnet-base-dot-v1": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "digitalocean/nemotron-3-nano-30b": {
-    toolCall: true,
     structuredOutput: null
   },
   "digitalocean/nemotron-3-nano-omni": {
@@ -13456,13 +15314,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "digitalocean/nemotron-nano-12b-v2-vl": {
+  "digitalocean/nemotron-3.5-super-vl": {
     toolCall: true,
     structuredOutput: null
   },
-  "digitalocean/nvidia-nemotron-3-super-120b": {
+  "digitalocean/nemotron-nano-12b-v2-vl": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
   "digitalocean/openai-gpt-4.1": {
     toolCall: true,
@@ -13485,10 +15343,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "digitalocean/openai-gpt-5-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "digitalocean/openai-gpt-5.1-codex-max": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13536,7 +15390,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "digitalocean/openai-gpt-6-1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "digitalocean/openai-gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "digitalocean/openai-gpt-6-sol": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13572,14 +15438,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "digitalocean/qwen-2.5-14b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "digitalocean/qwen3-coder-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "digitalocean/qwen3-embedding-0.6b": {
     toolCall: false,
     structuredOutput: null
@@ -13593,6 +15451,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "digitalocean/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "digitalocean/reflection-beam": {
     toolCall: true,
     structuredOutput: null
   },
@@ -13612,19 +15474,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "dinference/glm-5.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "dinference/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "dinference/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "dinference/minimax-m2.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -13672,6 +15522,30 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/amazon/google.gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/amazon/google.gemma-3-12b-it@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/amazon/google.gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/amazon/google.gemma-3-27b-it@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/amazon/google.gemma-3-4b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/amazon/google.gemma-3-4b-it@us": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "edenai/amazon/mistral.pixtral-large-2502-v1:0": {
     toolCall: true,
     structuredOutput: false
@@ -13680,21 +15554,49 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "edenai/amazon/moonshot.kimi-k2-thinking": {
+  "edenai/amazon/mistral.voxtral-mini-3b-2507": {
     toolCall: false,
     structuredOutput: false
   },
+  "edenai/amazon/mistral.voxtral-mini-3b-2507@us": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/amazon/mistral.voxtral-small-24b-2507": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/amazon/mistral.voxtral-small-24b-2507@us": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/amazon/moonshot.kimi-k2-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/amazon/moonshotai.kimi-k2.5": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
+  },
+  "edenai/amazon/openai.gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/amazon/openai.gpt-oss-safeguard-20b@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/amazon/qwen.qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/amazon/zai.glm-4.7-flash": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "edenai/amazon/zai.glm-4.7-flash@us": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "edenai/anthropic/claude-fable-5": {
     toolCall: true,
@@ -13705,6 +15607,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "edenai/anthropic/claude-fable-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/anthropic/claude-haiku-latest": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13732,6 +15642,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/anthropic/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/anthropic/claude-opus-latest": {
     toolCall: true,
     structuredOutput: true
@@ -13744,7 +15658,67 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/anthropic/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/anthropic/claude-sonnet-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/arkanecloud/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/meta-llama/Llama-3.1-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/meta-llama/Llama-3.1-8B-Instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/meta-llama/Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/ministral-14b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/nvidia/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/nvidia/nemotron-3-ultra-550b-a55b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/arkanecloud/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/azure/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/azure/gpt-4.1-nano@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13780,9 +15754,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/cloudflare/@cf/deepseek-ai/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/cloudflare/@cf/meta/llama-3.2-1b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/cloudflare/@cf/meta/llama-3.2-3b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "edenai/cloudflare/@cf/meta/llama-guard-3-8b": {
     toolCall: false,
     structuredOutput: false
+  },
+  "edenai/cloudflare/@cf/mistralai/mistral-small-3.1-24b-instruct": {
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/cloudflare/@cf/openai/gpt-oss-120b": {
     toolCall: true,
@@ -13794,11 +15784,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "edenai/cloudflare/@cf/qwen/qwen2.5-coder-32b-instruct": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: true
   },
   "edenai/cloudflare/@cf/zai-org/glm-4.7-flash": {
     toolCall: true,
     structuredOutput: true
+  },
+  "edenai/cohere/c4ai-aya-expanse-32b": {
+    toolCall: false,
+    structuredOutput: false
   },
   "edenai/cohere/command-a-03-2025": {
     toolCall: true,
@@ -13821,8 +15815,8 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "edenai/databricks/databricks-deepseek-v4-pro-0813": {
-    toolCall: true,
-    structuredOutput: false
+    toolCall: null,
+    structuredOutput: null
   },
   "edenai/databricks/databricks-gpt-oss-120b": {
     toolCall: true,
@@ -13841,12 +15835,20 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "edenai/databricks/databricks-inkling": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "edenai/databricks/databricks-qwen3-next-80b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/databricks/databricks-qwen3-next-80b-a3b-instruct@eu": {
     toolCall: true,
     structuredOutput: false
   },
   "edenai/deepinfra/ByteDance/Seed-2.0-code": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "edenai/deepinfra/ByteDance/Seed-2.0-mini": {
     toolCall: true,
@@ -13856,9 +15858,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-R1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/deepinfra/deepseek-ai/DeepSeek-V3": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "edenai/deepinfra/deepseek-ai/DeepSeek-V3-0324": {
     toolCall: true,
@@ -13872,9 +15878,41 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/google/gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/google/gemma-3-4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/Gryphe/MythoMax-L2-13b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/ibm-granite/granite-4.2-8b": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "edenai/deepinfra/meta-llama/Llama-3.2-11B-Vision-Instruct": {
     toolCall: false,
     structuredOutput: true
+  },
+  "edenai/deepinfra/meta-llama/Llama-3.2-3B-Instruct": {
+    toolCall: true,
+    structuredOutput: false
   },
   "edenai/deepinfra/meta-llama/Llama-3.3-70B-Instruct": {
     toolCall: true,
@@ -13884,16 +15922,48 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "edenai/deepinfra/meta-llama/Llama-Guard-4-12B": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "edenai/deepinfra/meta-models/Muse-Glimmer-30B": {
     toolCall: true,
     structuredOutput: true
+  },
+  "edenai/deepinfra/microsoft/WizardLM-2-8x22B": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/mistralai/Mistral-Small-24B-Instruct-2501": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/mistralai/Mixtral-8x7B-Instruct-v0.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/moonshotai/Kimi-K2-Instruct": {
+    toolCall: true,
+    structuredOutput: false
   },
   "edenai/deepinfra/moonshotai/Kimi-K2.5": {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/deepinfra/nemotron-3-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/deepinfra/nemotron-3-ultra-550b-a55b": {
     toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/NousResearch/Hermes-3-Llama-3.1-405B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/NousResearch/Hermes-3-Llama-3.1-70B": {
+    toolCall: false,
     structuredOutput: true
   },
   "edenai/deepinfra/nvidia/Llama-3.1-Nemotron-70B-Instruct": {
@@ -13912,6 +15982,38 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/deepinfra/Qwen/Qwen2.5-7B-Instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/deepinfra/Qwen/Qwen3-Max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/Qwen/Qwen3-Next-80B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/Qwen/Qwen3-VL-235B-A22B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/Qwen/Qwen3-VL-30B-A3B-Instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/deepinfra/stepfun-ai/Step-3.5-Flash": {
     toolCall: true,
     structuredOutput: true
@@ -13920,7 +16022,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/deepinfra/stepfun-ai/Step-5-Preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/deepinfra/tencent/Hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepinfra/tencent/Hy4-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13933,6 +16043,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "edenai/deepinfra/zai-org/GLM-4.7-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/deepseek-v4-flash-vision-exp": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13952,11 +16066,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/fireworks_ai/accounts/fireworks/models/deepseek-v4-flash-0731": {
+  "edenai/fireworks_ai/accounts/fireworks/models/ember-1": {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/fireworks_ai/accounts/fireworks/models/deepseek-v4-pro-0813": {
+  "edenai/fireworks_ai/accounts/fireworks/models/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13964,7 +16078,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/fireworks_ai/accounts/fireworks/models/muse-glimmer-30b": {
+  "edenai/fireworks_ai/accounts/fireworks/models/muse-spark-open": {
     toolCall: true,
     structuredOutput: true
   },
@@ -13973,26 +16087,38 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "edenai/flexai/DeepSeek-V4-Flash-0731": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/flexai/DeepSeek-V4-Flash-0731@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/flexai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/flexai/gpt-oss-120b": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/flexai/gpt-oss-20b": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/flexai/Muse-Glimmer-30B": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "edenai/flexai/Nemotron-3-Super-120B-A12B": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/flexai/Step-3.7-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/deep-research-max-preview-04-2026": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/google/deep-research-preview-04-2026": {
     toolCall: false,
     structuredOutput: false
   },
@@ -14060,13 +16186,57 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/google/gemini-nano-banana-2.1": {
     toolCall: true,
     structuredOutput: true
   },
   "edenai/google/gemini-pro-latest": {
     toolCall: true,
     structuredOutput: true
+  },
+  "edenai/google/gemini-robotics-er-2-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/greenference/gpt-oss-20b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "edenai/greenpt/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/greenpt/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/greenpt/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/greenpt/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/greenpt/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/groq/meta-llama/llama-prompt-guard-2-22m": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/groq/meta-llama/llama-prompt-guard-2-86m": {
+    toolCall: false,
+    structuredOutput: false
   },
   "edenai/groq/openai/gpt-oss-120b": {
     toolCall: true,
@@ -14076,13 +16246,49 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/groq/openai/gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/infomaniak/mistralai/Ministral-3-14B-Instruct-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/ionos/meta-llama/Llama-3.3-70B-Instruct": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/ionos/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/ionos/Qwen/Qwen3-Coder-Next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/meta/muse-spark-1.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/meta/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/meta/muse-wonder-1.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/microsoft/gpt-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/microsoft/o3-mini": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: true
   },
   "edenai/minimax/MiniMax-M2": {
     toolCall: true,
@@ -14104,7 +16310,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/minimax/MiniMax-M3.1-Flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/mistral/codestral-2508": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/codestral-2508@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/mistral/codestral-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/codestral-latest@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14112,7 +16334,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/mistral/devstral-2512@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/mistral/devstral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/devstral-medium-latest@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14120,7 +16350,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/mistral/magistral-medium-latest@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/ministral-14b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/ministral-14b-2512@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/ministral-3b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/ministral-3b-2512@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/ministral-8b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/ministral-8b-2512@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-large-2407": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-large-2407@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/mistral/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-large-2512@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-large-4@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14128,7 +16402,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/mistral/mistral-large-latest@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/mistral/mistral-medium-2505": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-2505@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14136,7 +16418,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/mistral/mistral-medium-2604@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-3-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-3-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-3@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/mistral/mistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/mistral-medium-latest@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14144,11 +16450,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/mistral/mistral-small-2603@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/mistral/mistral-small-latest": {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/mistral/mistral-small-latest@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/mistral/voxtral-small-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/mistral/voxtral-small-latest@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14168,39 +16486,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/moonshot/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/nebius/deepseek-ai/DeepSeek-V4-Flash-0731": {
     toolCall: true,
     structuredOutput: true
   },
   "edenai/nebius/deepseek-ai/DeepSeek-V4-Pro-0813": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "edenai/nebius/meta-llama/Llama-3.3-70B-Instruct": {
+  "edenai/nebius/deepseek-ai/DeepSeek-V4.1-Flash": {
     toolCall: true,
     structuredOutput: true
+  },
+  "edenai/nebius/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/nebius/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/nebius/meta-models/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: false
   },
   "edenai/nebius/nvidia/nemotron-3-super-120b-a12b": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "edenai/nebius/nvidia/Nemotron-3-Ultra-550b-a55b": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "edenai/nebius/openai/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/openai/gpt-3.5-turbo": {
+  "edenai/nebius/Qwen/Qwen3-235B-A22B-Instruct-2507": {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/openai/gpt-4": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/openai/gpt-4-turbo": {
+  "edenai/nebius/Qwen/Qwen3-30B-A3B-Instruct-2507": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14209,10 +16539,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "edenai/openai/gpt-4.1-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/openai/gpt-4.1-nano": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14245,6 +16571,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "edenai/openai/gpt-5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-5-search-api": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14304,6 +16634,22 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/openai/gpt-latest": {
     toolCall: true,
     structuredOutput: true
@@ -14316,19 +16662,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/openai/o1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/openai/o1-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "edenai/openai/o3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/openai/o3-mini": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14336,16 +16670,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/openai/o4-mini": {
+  "edenai/ovhcloud/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/ovhcloud/gpt-oss-120b": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "edenai/ovhcloud/gpt-oss-20b": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: true
   },
   "edenai/perplexityai/sonar": {
@@ -14372,69 +16702,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/qwen/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/qwen/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/qwen/qwen-max": {
     toolCall: false,
     structuredOutput: true
   },
-  "edenai/qwen/qwen-vl-max": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen-vl-plus": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "edenai/qwen/qwen3-235b-a22b-instruct-2507": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-coder-480b-a35b-instruct": {
+  "edenai/qwen/qwen-mt-plus": {
     toolCall: false,
     structuredOutput: false
   },
   "edenai/qwen/qwen3-coder-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-coder-next": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-coder-next@eu": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-max": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-max@eu": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-vl-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "edenai/qwen/qwen3-vl-235b-a22b-thinking": {
-    toolCall: true,
-    structuredOutput: true
+    toolCall: false,
+    structuredOutput: false
   },
   "edenai/qwen/qwen3.8-2.4t-a95b": {
     toolCall: true,
@@ -14456,12 +16742,24 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/qwen/qwq-plus": {
-    toolCall: false,
-    structuredOutput: false
+  "edenai/qwen/qwen3.8-omni-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "edenai/scaleway/deepseek-v4-flash-0731": {
     toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/scaleway/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/scaleway/deepseek-v4.1-flash-1017": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "edenai/scaleway/gemma-3-27b-it": {
+    toolCall: false,
     structuredOutput: false
   },
   "edenai/scaleway/gpt-oss-120b": {
@@ -14472,6 +16770,50 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "edenai/scaleway/qwen3-235b-a22b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/scaleway/qwen3-coder-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/sference/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/sference/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/tencent/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/tencent/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/tencent/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/tencent/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/tensorx/deepseek/deepseek-r1-0528": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/tensorx/deepseek/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: false
@@ -14480,15 +16822,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "edenai/tensorx/moonshotai/kimi-k2.5": {
+  "edenai/tensorx/deepseek/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: false
   },
-  "edenai/together_ai/deepseek-ai/DeepSeek-V4-Flash-0731": {
+  "edenai/tensorx/deepseek/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "edenai/tensorx/moonshotai/kimi-k2.5": {
     toolCall: true,
     structuredOutput: true
   },
   "edenai/together_ai/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/together_ai/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14500,17 +16854,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "edenai/together_ai/openai/gpt-oss-20b": {
+  "edenai/together_ai/reflection/Beam-1.0-501B-A23B": {
     toolCall: true,
     structuredOutput: true
   },
   "edenai/together_ai/thinkingmachines/Inkling": {
     toolCall: true,
     structuredOutput: true
-  },
-  "edenai/together_ai/thinkingmachines/Inkling-Small": {
-    toolCall: true,
-    structuredOutput: false
   },
   "edenai/vertex/gemini-2.5-flash-image": {
     toolCall: false,
@@ -14608,13 +16958,33 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/vertex/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-4-argon@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/vertex/gemini-4-argon@us": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "edenai/vertex/gemini-flash-latest": {
     toolCall: true,
     structuredOutput: true
   },
+  "edenai/vertex/gemini-nano-banana-2.1": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "edenai/vertex/gemini-pro-latest": {
     toolCall: true,
     structuredOutput: true
+  },
+  "edenai/xai/grok-4-fast-non-reasoning": {
+    toolCall: true,
+    structuredOutput: false
   },
   "edenai/xai/grok-4.20-0309-non-reasoning": {
     toolCall: true,
@@ -14633,6 +17003,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "edenai/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "edenai/xai/grok-4.7": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14684,11 +17058,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "empiriolabs/deepseek-v3-2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "empiriolabs/deepseek-v4-flash": {
+  "empiriolabs/deepseek-v4-1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14704,6 +17074,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "empiriolabs/fugu-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "empiriolabs/fugu-ultra-v1-0": {
     toolCall: true,
     structuredOutput: true
@@ -14711,6 +17085,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "empiriolabs/fugu-ultra-v1-1": {
     toolCall: true,
     structuredOutput: true
+  },
+  "empiriolabs/fugu-ultra-v2-0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/gemma-3-27b": {
+    toolCall: false,
+    structuredOutput: false
   },
   "empiriolabs/gemma-4-26b-a4b": {
     toolCall: true,
@@ -14725,6 +17107,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "empiriolabs/glm-4-7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/glm-4-7-flashx": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14760,25 +17146,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "empiriolabs/mimo-v2-5": {
+  "empiriolabs/mimo-v2-6-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "empiriolabs/mimo-v2-5-pro": {
+  "empiriolabs/mimo-v2-6-pro": {
     toolCall: true,
     structuredOutput: true
   },
-  "empiriolabs/minimax-m2-7": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "empiriolabs/minimax-m2-7-highspeed": {
+  "empiriolabs/mimo-v2-6-pro-ultraspeed": {
     toolCall: true,
     structuredOutput: true
   },
   "empiriolabs/minimax-m3": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
+  },
+  "empiriolabs/minimax-m3-1-flash": {
+    toolCall: true,
+    structuredOutput: false
   },
   "empiriolabs/mistral-small-4": {
     toolCall: true,
@@ -14812,10 +17198,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "empiriolabs/qwen3-5-397b-a17b": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "empiriolabs/qwen3-5-4b": {
     toolCall: true,
     structuredOutput: true
@@ -14828,10 +17210,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "empiriolabs/qwen3-5-plus": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "empiriolabs/qwen3-6-27b": {
     toolCall: true,
     structuredOutput: true
@@ -14841,10 +17219,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "empiriolabs/qwen3-6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "empiriolabs/qwen3-6-max-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14880,13 +17254,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "empiriolabs/qwen3-max": {
+  "empiriolabs/qwen3-8-omni-flash": {
     toolCall: true,
     structuredOutput: true
   },
   "empiriolabs/seed-2-0-code": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "empiriolabs/seed-2-0-lite": {
     toolCall: true,
@@ -14906,13 +17280,53 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "empiriolabs/step-3-5-flash": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "empiriolabs/step-3-5-flash-2603": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "empiriolabs/step-3-7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "empiriolabs/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "engy/qwen3.8-27b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -14988,19 +17402,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "fastrouter/anthropic/claude-sonnet-4": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "fastrouter/anthropic/claude-sonnet-4.6": {
     toolCall: true,
     structuredOutput: null
   },
   "fastrouter/bytedance/seedance-2": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "fastrouter/deepseek-ai/deepseek-r1-distill-llama-70b": {
     toolCall: false,
     structuredOutput: null
   },
@@ -15036,14 +17442,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "fastrouter/google/imagen-4.0-fast": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "fastrouter/google/imagen-4.0-ultra": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "fastrouter/google/veo3.1": {
     toolCall: false,
     structuredOutput: null
@@ -15069,10 +17467,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "fastrouter/minimax/minimax-m2.7-highspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "fastrouter/moonshotai/kimi-k2": {
     toolCall: true,
     structuredOutput: null
   },
@@ -15128,28 +17522,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "fastrouter/openai/gpt-realtime-1.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "fastrouter/qwen/qwen3-coder": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "fastrouter/sarvam/sarvam-105b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "fastrouter/sarvam/sarvam-30b": {
     toolCall: true,
     structuredOutput: null
   },
   "fastrouter/wanx/wan-v2-6": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "fastrouter/x-ai/grok-4": {
-    toolCall: true,
     structuredOutput: null
   },
   "fastrouter/x-ai/grok-4.3": {
@@ -15168,21 +17546,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "fireworks-ai/accounts/fireworks/models/deepseek-v4-flash-0731": {
+  "fireworks-ai/accounts/fireworks/models/deepseek-v4p1-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "fireworks-ai/accounts/fireworks/models/deepseek-v4-flash-vision-exp": {
+  "fireworks-ai/accounts/fireworks/models/deepseek-v4p1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
-  "fireworks-ai/accounts/fireworks/models/deepseek-v4-pro-0813": {
+  "fireworks-ai/accounts/fireworks/models/ember-1": {
     toolCall: true,
     structuredOutput: true
-  },
-  "fireworks-ai/accounts/fireworks/models/glm-5p2": {
-    toolCall: true,
-    structuredOutput: null
   },
   "fireworks-ai/accounts/fireworks/models/glm-5p3": {
     toolCall: true,
@@ -15192,45 +17566,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "fireworks-ai/accounts/fireworks/models/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "fireworks-ai/accounts/fireworks/models/inkling": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "fireworks-ai/accounts/fireworks/models/kimi-k2p6": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "fireworks-ai/accounts/fireworks/models/kimi-k2p7-code": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "fireworks-ai/accounts/fireworks/models/kimi-k3": {
     toolCall: true,
     structuredOutput: true
   },
   "fireworks-ai/accounts/fireworks/models/minimax-m3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "fireworks-ai/accounts/fireworks/models/muse-glimmer-30b": {
+  "fireworks-ai/accounts/fireworks/models/minimax-m3p1-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "fireworks-ai/accounts/fireworks/models/nemotron-3-ultra-nvfp4": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "fireworks-ai/accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b": {
+  "fireworks-ai/accounts/fireworks/models/muse-spark-open": {
     toolCall: true,
     structuredOutput: true
-  },
-  "fireworks-ai/accounts/fireworks/models/qwen3p7-plus": {
-    toolCall: true,
-    structuredOutput: null
   },
   "fireworks-ai/accounts/fireworks/models/qwen3p8-2p4t-a95b": {
     toolCall: true,
@@ -15238,17 +17588,61 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "fireworks-ai/accounts/fireworks/models/qwen3p8-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "fireworks-ai/accounts/fireworks/routers/glm-5p2-fast": {
+  "fireworks-ai/accounts/fireworks/routers/deepseek-flash-latest": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/deepseek-v4p1-flash-1017-spot": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/deepseek-v4p1-flash-spot": {
+    toolCall: true,
+    structuredOutput: true
   },
   "fireworks-ai/accounts/fireworks/routers/glm-5p3-fast": {
     toolCall: true,
     structuredOutput: true
   },
+  "fireworks-ai/accounts/fireworks/routers/glm-5p3-spot": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/glm-fast-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/glm-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/glm-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/kimi-fast-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "fireworks-ai/accounts/fireworks/routers/kimi-k3-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/kimi-k3-spot": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/kimi-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/minimax-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "fireworks-ai/accounts/fireworks/routers/qwen-max-latest": {
     toolCall: true,
     structuredOutput: true
   },
@@ -15292,15 +17686,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "friendli/deepseek-ai/DeepSeek-V3.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "friendli/google/gemma-4-31B-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "friendli/MiniMaxAI/MiniMax-M2.5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -15313,6 +17699,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "friendli/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "friendli/zai-org/GLM-5.3-Flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -15400,26 +17790,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "frogbot/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "frogbot/minimax-m2-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "frogbot/minimax-m2-7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "frogbot/qwen-3-6-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "frogbot/zai-glm-5-1": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "gmicloud/anthropic/claude-opus-4.6": {
     toolCall: true,
     structuredOutput: null
@@ -15468,6 +17838,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "gmicloud/Qwen/Qwen3.8-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "gmicloud/Qwen/Qwen3.8-Max": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "gmicloud/zai-org/GLM-5-FP8": {
     toolCall: true,
     structuredOutput: null
@@ -15496,10 +17874,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "google/gemini-2.5-flash-image": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "google/gemini-2.5-flash-lite": {
     toolCall: true,
     structuredOutput: true
@@ -15524,15 +17898,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "google/gemini-3-pro-image-preview": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "google/gemini-3.1-flash-image": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "google/gemini-3.1-flash-image-preview": {
     toolCall: false,
     structuredOutput: null
   },
@@ -15543,10 +17909,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "google/gemini-3.1-flash-lite-image": {
     toolCall: true,
     structuredOutput: false
-  },
-  "google/gemini-3.1-flash-lite-preview": {
-    toolCall: true,
-    structuredOutput: true
   },
   "google/gemini-3.1-flash-live-preview": {
     toolCall: true,
@@ -15588,6 +17950,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "google/gemini-embedding-001": {
     toolCall: false,
     structuredOutput: null
@@ -15608,6 +17974,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "google/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "google/gemma-4-26b-a4b-it": {
     toolCall: true,
     structuredOutput: true
@@ -15624,35 +17994,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "google/veo-3.1-fast-generate-preview": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "google/veo-3.1-generate-preview": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "google/veo-3.1-lite-generate-preview": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "greenpt/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: true
   },
-  "greenpt/devstral-2-123b-instruct-2512": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "greenpt/gemma-3-27b-it": {
+  "greenpt/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
   "greenpt/gemma4": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "greenpt/glm-5.1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -15732,15 +18082,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "greenpt/holo2-30b-a3b": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "greenpt/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "greenpt/kimi-k2.6-fast": {
     toolCall: true,
     structuredOutput: true
   },
@@ -15768,17 +18110,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "greenpt/pixtral-12b-2409": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "greenpt/qwen3-235b-a22b-instruct-2507": {
     toolCall: true,
     structuredOutput: true
-  },
-  "greenpt/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
   },
   "greenpt/qwen3.5-397b-a17b": {
     toolCall: true,
@@ -15787,10 +18121,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "greenpt/qwen3.6-35b-a3b": {
     toolCall: true,
     structuredOutput: true
-  },
-  "greenpt/voxtral-small-24b-2507": {
-    toolCall: true,
-    structuredOutput: false
   },
   "groq/allam-2-7b": {
     toolCall: false,
@@ -15802,22 +18132,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "groq/canopylabs/orpheus-v1-english": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "groq/groq/compound": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "groq/groq/compound-mini": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "groq/llama-3.1-8b-instant": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "groq/llama-3.3-70b-versatile": {
-    toolCall: true,
     structuredOutput: null
   },
   "groq/meta-llama/llama-prompt-guard-2-22m": {
@@ -15837,10 +18151,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "groq/openai/gpt-oss-safeguard-20b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "groq/qwen/qwen3.6-27b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -16013,7 +18323,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "helicone/gpt-5-pro": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: null
   },
   "helicone/gpt-5.1": {
@@ -16224,6 +18534,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "hopper/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "hopper/deepseek-v4.1-flash-1017-abliterated": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "hpc-ai/anthropic/claude-opus-4.7": {
     toolCall: true,
     structuredOutput: null
@@ -16304,6 +18622,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "huggingface/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/google/gemma-3-12b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/google/gemma-3-4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "huggingface/google/gemma-4-26B-A4B-it": {
     toolCall: true,
     structuredOutput: true
@@ -16319,6 +18657,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "huggingface/meta-llama/Llama-3.3-70B-Instruct": {
     toolCall: true,
     structuredOutput: true
+  },
+  "huggingface/meta-llama/Llama-Guard-4-12B": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "huggingface/MiniMaxAI/MiniMax-M1-80k": {
+    toolCall: true,
+    structuredOutput: null
   },
   "huggingface/MiniMaxAI/MiniMax-M2": {
     toolCall: true,
@@ -16339,6 +18685,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "huggingface/MiniMaxAI/MiniMax-M3": {
     toolCall: true,
     structuredOutput: true
+  },
+  "huggingface/MiniMaxAI/MiniMax-M3.1-Flash": {
+    toolCall: true,
+    structuredOutput: null
   },
   "huggingface/moonshotai/Kimi-K2-Instruct": {
     toolCall: true,
@@ -16400,6 +18750,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "huggingface/Qwen/Qwen3-8B": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "huggingface/Qwen/Qwen3-Coder-30B-A3B-Instruct": {
     toolCall: true,
     structuredOutput: true
@@ -16424,15 +18778,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "huggingface/Qwen/Qwen3-Next-80B-A3B-Thinking": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "huggingface/Qwen/Qwen3-VL-235B-A22B-Instruct": {
     toolCall: true,
     structuredOutput: true
   },
   "huggingface/Qwen/Qwen3-VL-235B-A22B-Thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "huggingface/Qwen/Qwen3-VL-30B-A3B-Instruct": {
     toolCall: true,
     structuredOutput: true
   },
@@ -16484,15 +18838,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "huggingface/tencent/Hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "huggingface/thinkingmachines/Inkling": {
     toolCall: true,
     structuredOutput: true
   },
   "huggingface/thinkingmachines/Inkling-Small": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "huggingface/XiaomiMiMo/MiMo-V2-Flash": {
     toolCall: true,
     structuredOutput: null
   },
@@ -16504,8 +18858,8 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "huggingface/zai-org/GLM-4.5": {
-    toolCall: true,
+  "huggingface/zai-org/AutoGLM-Phone-9B-Multilingual": {
+    toolCall: false,
     structuredOutput: null
   },
   "huggingface/zai-org/GLM-4.5-Air": {
@@ -16552,62 +18906,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "iflowcn/deepseek-r1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/deepseek-v3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/glm-4.6": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/kimi-k2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/kimi-k2-0905": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-235b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-235b-a22b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-32b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-max-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "iflowcn/qwen3-vl-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "impossibl/anthropic/claude-fable-5": {
     toolCall: true,
     structuredOutput: null
@@ -16644,27 +18942,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "impossibl/cerebras/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "impossibl/deepseek/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
   },
   "impossibl/deepseek/deepseek-v4-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "impossibl/fireworks/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "impossibl/fireworks/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "impossibl/fireworks/gpt-oss-20b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -16697,14 +18979,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "impossibl/google/gemini-3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "impossibl/groq/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "impossibl/groq/gpt-oss-20b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -16848,10 +19122,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "impossibl/qwen/qwen3.8-max-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "impossibl/thinkingmachines/inkling": {
     toolCall: true,
     structuredOutput: null
@@ -16916,9 +19186,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "inception/mercury-2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inception/mercury-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "inception/mercury-edit-2": {
     toolCall: false,
-    structuredOutput: null
+    structuredOutput: false
   },
   "inceptron/deepseek-ai/DeepSeek-V4-Flash-0731": {
     toolCall: true,
@@ -16936,15 +19214,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "inceptron/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inceptron/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inco/deepseek-v4.1-flash:fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inco/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inco/glm-5.3-flash:fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inco/glm-5.3:fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inco/kimi-k3:fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "inco/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "inco/minimax-m3:fast": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "infer/infer/gpt-5.6-sol:official": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "infer/infer/gpt-6-astra:official": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "inference/google/gemma-3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "inference/meta/llama-3.1-8b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "inference/meta/llama-3.2-11b-vision-instruct": {
     toolCall: true,
     structuredOutput: null
   },
@@ -16954,22 +19268,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "inference/meta/llama-3.2-3b-instruct": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "inference/mistral/mistral-nemo-12b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "inference/osmosis/osmosis-structure-0.6b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "inference/qwen/qwen-2.5-7b-vision-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "inference/qwen/qwen3-embedding-4b": {
-    toolCall: false,
     structuredOutput: null
   },
   "inferx/Agents-A1": {
@@ -17044,14 +19342,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "infomaniak/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "infomaniak/Qwen/Qwen3.5-122B-A10B-FP8": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "infomaniak/Qwen/Qwen3.5-397B-A17B-FP8": {
     toolCall: true,
     structuredOutput: true
@@ -17068,27 +19358,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "io-net/meta-llama/Llama-3.2-90B-Vision-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "io-net/meta-llama/Llama-3.3-70B-Instruct": {
     toolCall: true,
     structuredOutput: null
   },
   "io-net/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "io-net/mistralai/Devstral-Small-2505": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "io-net/mistralai/Magistral-Small-2506": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "io-net/mistralai/Mistral-Large-Instruct-2411": {
     toolCall: true,
     structuredOutput: null
   },
@@ -17112,14 +19386,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "io-net/Qwen/Qwen2.5-VL-32B-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "io-net/Qwen/Qwen3-235B-A22B-Thinking-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "io-net/Qwen/Qwen3-Next-80B-A3B-Instruct": {
     toolCall: true,
     structuredOutput: null
@@ -17128,13 +19394,45 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "iteracompute/iteracompute/ornith-1.5-35b-a3b": {
+  "iteracompute/deepseek/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: true
   },
-  "iteracompute/iteracompute/qwen3.8-27b": {
+  "iteracompute/deepseek/deepseek-v4-pro-0813": {
     toolCall: true,
     structuredOutput: true
+  },
+  "iteracompute/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "iteracompute/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "iteracompute/moonshotai/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "iteracompute/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "iteracompute/qwen/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "iteracompute/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "iteracompute/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "iteracompute/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
   },
   "jalapeno/DeepSeek-V4-Flash": {
     toolCall: true,
@@ -17152,10 +19450,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "jalapeno/Hy3": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "jalapeno/Kimi-K2.5": {
     toolCall: true,
     structuredOutput: true
@@ -17169,22 +19463,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "jalapeno/MiniMax-M3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jalapeno/Qwen3-Next-80B-A3B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jalapeno/Qwen3-Next-80B-A3B-Thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jalapeno/Qwen3-VL-235B-A22B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jalapeno/Qwen3-VL-235B-A22B-Thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17216,23 +19494,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "jiekou/claude-opus-4-1-20250805": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jiekou/claude-opus-4-20250514": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "jiekou/claude-opus-4-5-20251101": {
     toolCall: true,
     structuredOutput: true
   },
   "jiekou/claude-opus-4-6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jiekou/claude-sonnet-4-20250514": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17260,14 +19526,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "jiekou/gemini-2.5-flash-lite-preview-06-17": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jiekou/gemini-2.5-flash-lite-preview-09-2025": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "jiekou/gemini-2.5-flash-preview-05-20": {
     toolCall: true,
     structuredOutput: true
@@ -17281,14 +19539,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "jiekou/gemini-3-flash-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jiekou/gemini-3-pro-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jiekou/gpt-5-chat-latest": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17348,14 +19598,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "jiekou/grok-4-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jiekou/grok-4-fast-reasoning": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "jiekou/grok-code-fast-1": {
     toolCall: true,
     structuredOutput: true
@@ -17385,10 +19627,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "jiekou/o3-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "jiekou/o4-mini": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17472,23 +19710,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "kenari/deepseek-v4-1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kenari/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "kenari/deepseek-v4-flash:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kenari/deepseek-v4-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kenari/gemini-2-5-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kenari/gemini-2-5-flash-lite": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17504,18 +19734,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kenari/gemini-3-5-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kenari/gemini-3-6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kenari/gemini-3-7-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kenari/gemma-4-31b-it": {
     toolCall: true,
     structuredOutput: true
@@ -17523,10 +19741,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "kenari/glm-4-7-flash:free": {
     toolCall: true,
     structuredOutput: null
-  },
-  "kenari/glm-5-1": {
-    toolCall: true,
-    structuredOutput: true
   },
   "kenari/glm-5-2": {
     toolCall: true,
@@ -17540,10 +19754,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kenari/gpt-5-4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kenari/gpt-5-5": {
     toolCall: true,
     structuredOutput: true
@@ -17553,10 +19763,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "kenari/gpt-5-6-sol": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kenari/gpt-5-6-terra": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17580,9 +19786,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kenari/grok-build-0-1": {
-    toolCall: true,
-    structuredOutput: true
+  "kenari/grok-imagine-image": {
+    toolCall: false,
+    structuredOutput: null
   },
   "kenari/grok-imagine-image-2-0": {
     toolCall: false,
@@ -17600,33 +19806,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kenari/kimi-k2-6:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kenari/kimi-k2-7-code": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kenari/kimi-k2-7-code:free": {
     toolCall: true,
     structuredOutput: true
   },
   "kenari/kimi-k3": {
     toolCall: true,
     structuredOutput: true
-  },
-  "kenari/mimo-v2-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "kenari/mimo-v2-5-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "kenari/mimo-v2-5:free": {
-    toolCall: true,
-    structuredOutput: null
   },
   "kenari/minimax-m2-7": {
     toolCall: true,
@@ -17640,16 +19826,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "kenari/mistral-large:free": {
-    toolCall: true,
+  "kenari/nano-banana-2": {
+    toolCall: false,
     structuredOutput: null
   },
-  "kenari/mistral-medium-3-5:free": {
+  "kenari/nano-banana-2-lite": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "kenari/nemotron-3-nano-30b-a3b": {
-    toolCall: true,
+  "kenari/nano-banana-pro": {
+    toolCall: false,
     structuredOutput: null
   },
   "kenari/nemotron-3-super-120b-a12b": {
@@ -17676,10 +19862,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "kenari/step-3-7-flash:free": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "kenari/whisper-large-v3-turbo": {
     toolCall: false,
     structuredOutput: null
@@ -17700,6 +19882,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/~deepseek/deepseek-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~deepseek/deepseek-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/~deepseek/deepseek-v4-flash-latest": {
     toolCall: true,
     structuredOutput: true
@@ -17716,13 +19906,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/~openai/gpt-latest": {
+  "kilo/~openai/gpt-astra-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~openai/gpt-luna-latest": {
     toolCall: true,
     structuredOutput: true
   },
   "kilo/~openai/gpt-mini-latest": {
     toolCall: true,
     structuredOutput: true
+  },
+  "kilo/~openai/gpt-sol-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~openai/gpt-terra-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/~unbiased/pareto-latest": {
+    toolCall: true,
+    structuredOutput: false
   },
   "kilo/~x-ai/grok-latest": {
     toolCall: true,
@@ -17748,6 +19954,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "kilo/aion-labs/aion-3.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/aion-labs/aion-3.5-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "kilo/aion-labs/aion-rp-llama-3.1-8b": {
     toolCall: false,
     structuredOutput: false
@@ -17764,10 +19978,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "kilo/amazon/nova-premier-v1": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "kilo/amazon/nova-pro-v1": {
     toolCall: true,
     structuredOutput: false
@@ -17775,10 +19985,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "kilo/anthracite-org/magnum-v4-72b": {
     toolCall: false,
     structuredOutput: true
-  },
-  "kilo/anthropic/claude-3-haiku": {
-    toolCall: true,
-    structuredOutput: false
   },
   "kilo/anthropic/claude-fable-5": {
     toolCall: true,
@@ -17792,9 +19998,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/anthropic/claude-opus-4": {
+  "kilo/anthropic/claude-haiku-5.5": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "kilo/anthropic/claude-opus-4.1": {
     toolCall: true,
@@ -17820,9 +20026,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/anthropic/claude-sonnet-4": {
+  "kilo/anthropic/claude-opus-5.5": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "kilo/anthropic/claude-sonnet-4.5": {
     toolCall: true,
@@ -17836,27 +20042,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/arcee-ai/trinity-large-thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "kilo/baidu/ernie-4.5-vl-424b-a47b": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "kilo/bytedance-seed/seed-1.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/bytedance-seed/seed-1.6-flash": {
+  "kilo/anthropic/claude-sonnet-5.5": {
     toolCall: true,
     structuredOutput: true
   },
   "kilo/bytedance-seed/seed-2-1-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/bytedance-seed/seed-2.0-code": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17878,6 +20068,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "kilo/cohere/command-a": {
     toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/cohere/command-a-plus": {
+    toolCall: true,
     structuredOutput: true
   },
   "kilo/cohere/command-r-08-2024": {
@@ -17908,17 +20102,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/deepseek/deepseek-r1": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/deepseek/deepseek-r1-0528": {
     toolCall: true,
     structuredOutput: true
-  },
-  "kilo/deepseek/deepseek-r1-distill-llama-70b": {
-    toolCall: false,
-    structuredOutput: false
   },
   "kilo/deepseek/deepseek-v3.1-terminus": {
     toolCall: true,
@@ -17956,11 +20142,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/deepseek/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/dots-studio/dots-3-note-preview:free": {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/google/gemini-2.5-flash": {
+  "kilo/elorian/glimpse": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/fireworks/ember-1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -17968,19 +20162,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: true
   },
-  "kilo/google/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/google/gemini-2.5-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/google/gemini-2.5-pro-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/google/gemini-2.5-pro-preview-05-06": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18044,6 +20226,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/google/gemini-nano-banana-2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/google/gemma-2-27b-it": {
     toolCall: false,
     structuredOutput: true
@@ -18080,10 +20270,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: true
   },
-  "kilo/ibm-granite/granite-4.0-h-micro": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "kilo/ibm-granite/granite-4.2-8b": {
     toolCall: true,
     structuredOutput: true
@@ -18096,21 +20282,33 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/inception/mercury-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/inclusionai/ling-3.0-flash": {
     toolCall: true,
     structuredOutput: false
   },
-  "kilo/inclusionai/ling-3.0-flash-fin": {
+  "kilo/inclusionai/ling-3.0-flash-vl": {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/inclusionai/ling-3.0-flash-fin:free": {
+  "kilo/inclusionai/ling-3.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/inclusionai/ling-3.1-flash-1019-free": {
     toolCall: true,
     structuredOutput: false
   },
-  "kilo/inclusionai/ling-3.0-flash-sante:free": {
-    toolCall: true,
-    structuredOutput: false
+  "kilo/inference-net/schematron-v2-small": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/inference-net/schematron-v2-turbo": {
+    toolCall: false,
+    structuredOutput: true
   },
   "kilo/kilo-auto/balanced": {
     toolCall: true,
@@ -18132,15 +20330,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "kilo/kwaipilot/kat-coder-pro-v2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/kwaipilot/kat-coder-pro-v2.5": {
+  "kilo/liquid/lfm-2.5-2.6b": {
     toolCall: true,
     structuredOutput: true
   },
   "kilo/liquid/lfm-2.5-2.6b:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/liquid/lfm-2.5-24b-a2b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18208,13 +20406,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/meta/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/meta/muse-wonder": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/microsoft/phi-4": {
     toolCall: false,
     structuredOutput: true
-  },
-  "kilo/microsoft/wizardlm-2-8x22b": {
-    toolCall: false,
-    structuredOutput: false
   },
   "kilo/minimax/minimax-01": {
     toolCall: false,
@@ -18226,7 +20428,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "kilo/minimax/minimax-m2": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "kilo/minimax/minimax-m2-her": {
     toolCall: false,
@@ -18242,9 +20444,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "kilo/minimax/minimax-m2.7": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "kilo/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/minimax/minimax-m3.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18280,6 +20486,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/mistralai/mistral-large-4-0": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/mistralai/mistral-medium-3": {
     toolCall: true,
     structuredOutput: true
@@ -18309,8 +20519,8 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "kilo/mistralai/mistral-small-3.1-24b-instruct": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: true
   },
   "kilo/mistralai/mistral-small-3.2-24b-instruct": {
     toolCall: true,
@@ -18323,6 +20533,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "kilo/mistralai/voxtral-small-24b-2507": {
     toolCall: true,
     structuredOutput: true
+  },
+  "kilo/moondream/moondream3-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "kilo/moondream/moondream3.1-9b-a2b": {
+    toolCall: false,
+    structuredOutput: false
   },
   "kilo/moonshotai/kimi-k2": {
     toolCall: true,
@@ -18352,33 +20570,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/morph/morph-v3-fast": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: true
   },
   "kilo/morph/morph-v3-large": {
     toolCall: false,
     structuredOutput: true
   },
-  "kilo/nex-agi/nex-n2.5-mini:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/nex-agi/nex-n2.5-pro:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/nousresearch/hermes-3-llama-3.1-405b": {
+  "kilo/nex-agi/nex-n2.5-mini": {
     toolCall: false,
     structuredOutput: true
   },
-  "kilo/nousresearch/hermes-3-llama-3.1-70b": {
-    toolCall: false,
+  "kilo/nex-agi/nex-n2.5-pro": {
+    toolCall: true,
     structuredOutput: true
   },
   "kilo/nousresearch/hermes-4-405b": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: true
   },
   "kilo/nvidia/nemotron-3-nano-30b-a3b": {
     toolCall: true,
@@ -18389,10 +20603,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "kilo/nvidia/nemotron-3-super-120b-a12b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "kilo/nvidia/nemotron-3-super-120b-a12b:free": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18420,7 +20630,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "kilo/openai/gpt-3.5-turbo": {
+  "kilo/nvidia/nemotron-3.5-super-vl": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/nvidia/nemotron-3.5-super-vl:free": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18432,21 +20646,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/openai/gpt-3.5-turbo-instruct": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "kilo/openai/gpt-4": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/openai/gpt-4-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/openai/gpt-4-turbo-preview": {
-    toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "kilo/openai/gpt-4.1": {
     toolCall: true,
@@ -18528,10 +20730,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/openai/gpt-5.2-chat": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/openai/gpt-5.2-codex": {
     toolCall: true,
     structuredOutput: true
@@ -18584,10 +20782,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/openai/gpt-5.6-sol-discounted": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "kilo/openai/gpt-5.6-sol-pro": {
     toolCall: true,
     structuredOutput: true
@@ -18605,6 +20799,38 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "kilo/openai/gpt-6-astra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6.1-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/openai/gpt-6.1-terra-pro": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18632,35 +20858,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/openai/o1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/openai/o1-pro": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "kilo/openai/o3": {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/openai/o3-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/openai/o3-mini-high": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/openai/o3-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/openai/o4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/openai/o4-mini-high": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18680,8 +20882,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "kilo/particle-ai/particle-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/perceptron/perceptron-mk1": {
     toolCall: false,
+    structuredOutput: true
+  },
+  "kilo/perceptron/perceptron-mk1.5": {
+    toolCall: true,
     structuredOutput: true
   },
   "kilo/perplexity/sonar": {
@@ -18704,21 +20914,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "kilo/poolside/laguna-s-2.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "kilo/poolside/laguna-s-2.1:free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "kilo/poolside/laguna-xs-2.1": {
-    toolCall: true,
-    structuredOutput: false
+    toolCall: null,
+    structuredOutput: null
   },
   "kilo/poolside/laguna-xs-2.1:free": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "kilo/prism-ml/ternary-bonsai-2-27b": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
+  },
+  "kilo/prism-ml/ternary-bonsai-2-9b": {
+    toolCall: true,
+    structuredOutput: true
   },
   "kilo/qwen/qwen-2.5-72b-instruct": {
     toolCall: true,
@@ -18736,10 +20946,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/qwen/qwen-plus-2025-07-28": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/qwen/qwen2.5-vl-72b-instruct": {
     toolCall: false,
     structuredOutput: true
@@ -18747,10 +20953,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "kilo/qwen/qwen3-14b": {
     toolCall: true,
     structuredOutput: true
-  },
-  "kilo/qwen/qwen3-235b-a22b": {
-    toolCall: true,
-    structuredOutput: false
   },
   "kilo/qwen/qwen3-235b-a22b-2507": {
     toolCall: true,
@@ -18768,17 +20970,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/qwen/qwen3-30b-a3b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "kilo/qwen/qwen3-32b": {
     toolCall: true,
     structuredOutput: true
-  },
-  "kilo/qwen/qwen3-8b": {
-    toolCall: true,
-    structuredOutput: false
   },
   "kilo/qwen/qwen3-coder": {
     toolCall: true,
@@ -18796,31 +20990,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/qwen/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/qwen/qwen3-max": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/qwen/qwen3-max-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/qwen/qwen3-next-80b-a3b-instruct": {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/qwen/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/qwen/qwen3-vl-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/qwen/qwen3-vl-235b-a22b-thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18832,15 +21006,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/qwen/qwen3-vl-32b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "kilo/qwen/qwen3-vl-8b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/qwen/qwen3-vl-8b-thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18857,10 +21023,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "kilo/qwen/qwen3.5-397b-a17b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/qwen/qwen3.5-9b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18885,10 +21047,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "kilo/qwen/qwen3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/qwen/qwen3.6-max-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18924,6 +21082,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/qwen/qwen3.8-max-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/qwen/qwen3.8-omni-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/recursive/flint-v1.0:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/reflection/beam-1.0-501b-a23b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/reflection/beam-free": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "kilo/rekaai/reka-edge": {
     toolCall: true,
     structuredOutput: true
@@ -18940,7 +21118,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "kilo/sakana/fugu-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/sakana/fugu-ultra-v2": {
     toolCall: true,
     structuredOutput: true
   },
@@ -18953,30 +21139,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "kilo/sao10k/l3.1-euryale-70b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "kilo/sao10k/l3.3-euryale-70b": {
     toolCall: false,
     structuredOutput: true
   },
-  "kilo/stealth/claude-opus-4.6": {
-    toolCall: true,
+  "kilo/scaledown/extract": {
+    toolCall: false,
     structuredOutput: false
   },
-  "kilo/stealth/claude-opus-4.7": {
-    toolCall: true,
+  "kilo/scaledown/summarize": {
+    toolCall: false,
     structuredOutput: false
   },
-  "kilo/stealth/claude-opus-4.8": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "kilo/stealth/claude-sonnet-4.6": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "kilo/stealth/qwen3.6-plus": {
+  "kilo/stealth/glyph-cluster": {
     toolCall: true,
     structuredOutput: false
   },
@@ -18988,9 +21162,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/stepfun/step-3.7-flash:free": {
+  "kilo/stepfun/step-5-preview": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "kilo/tencent/hunyuan-a13b-instruct": {
     toolCall: false,
@@ -19029,7 +21203,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "kilo/thedrummer/unslopnemo-12b": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: true
   },
   "kilo/thinkingmachines/inkling": {
@@ -19040,11 +21214,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "kilo/thinkingmachines/inkling-small:free": {
+  "kilo/unbiased/pareto-26.10": {
     toolCall: true,
     structuredOutput: false
   },
-  "kilo/thinkingmachines/inkling:free": {
+  "kilo/unbiased/pareto-26.9": {
     toolCall: true,
     structuredOutput: false
   },
@@ -19052,7 +21226,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: true
   },
-  "kilo/upstage/solar-pro-3": {
+  "kilo/upstage/solar-mini4": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19084,15 +21258,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/x-ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "kilo/x-ai/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/xiaomi/mimo-v2.5": {
+  "kilo/xiaomi/mimo-v2.6-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "kilo/xiaomi/mimo-v2.5-pro": {
+  "kilo/xiaomi/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/xiaomi/mimo-v2.6-pro-ultraspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kilo/xingchen-agi/xing4.0-29b-a4b:free": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19148,23 +21334,63 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "kilo/z-ai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "kilo/z-ai/glm-5.3-prime": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "kilo/z-ai/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: false
   },
-  "kimi-for-coding/k3": {
+  "kimi-code-plan-global/k3": {
     toolCall: true,
     structuredOutput: true
   },
-  "kimi-for-coding/k3-256k": {
+  "kimi-code-plan-global/k3-256k": {
     toolCall: true,
     structuredOutput: true
   },
-  "kimi-for-coding/kimi-for-coding": {
+  "kimi-code-plan-global/k3.1-pro": {
     toolCall: true,
     structuredOutput: true
   },
-  "kimi-for-coding/kimi-for-coding-highspeed": {
+  "kimi-code-plan-global/k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-code-plan-global/kimi-for-coding": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kimi-code-plan-global/kimi-for-coding-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-code-plan-cn/k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-code-plan-cn/k3-256k": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-code-plan-cn/k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-code-plan-cn/k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "kimi-code-plan-cn/kimi-for-coding": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "kimi-code-plan-cn/kimi-for-coding-highspeed": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19188,55 +21414,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "lilac/google/gemma-4-31b-it": {
+  "liquid/liquid.auto": {
     toolCall: true,
     structuredOutput: true
-  },
-  "lilac/minimaxai/minimax-m3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "lilac/moonshotai/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "lilac/zai-org/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llama/cerebras-llama-4-maverick-17b-128e-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llama/cerebras-llama-4-scout-17b-16e-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llama/groq-llama-4-maverick-17b-128e-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llama/llama-3.3-70b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llama/llama-3.3-8b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llama/llama-4-maverick-17b-128e-instruct-fp8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llama/llama-4-scout-17b-16e-instruct-fp8": {
-    toolCall: true,
-    structuredOutput: null
   },
   "llmgateway-providers/alibaba/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: false
   },
   "llmgateway-providers/alibaba/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: false
   },
@@ -19248,13 +21442,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/alibaba/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "llmgateway-providers/alibaba/kimi-k2.5": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/alibaba/qwen-coder-plus": {
+  "llmgateway-providers/alibaba/kimi-k3": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "llmgateway-providers/alibaba/qwen-flash": {
     toolCall: true,
@@ -19262,10 +21460,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway-providers/alibaba/qwen-max": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/alibaba/qwen-omni-turbo": {
-    toolCall: false,
     structuredOutput: false
   },
   "llmgateway-providers/alibaba/qwen-plus": {
@@ -19280,20 +21474,20 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/alibaba/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/alibaba/qwen3-max": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/alibaba/qwen3-vl-flash": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "llmgateway-providers/alibaba/qwen3-vl-plus": {
     toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/alibaba/qwen3.5-35b-a3b": {
+    toolCall: true,
     structuredOutput: false
   },
   "llmgateway-providers/alibaba/qwen3.6-35b-a3b": {
@@ -19301,10 +21495,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "llmgateway-providers/alibaba/qwen3.6-flash": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/alibaba/qwen3.6-max-preview": {
     toolCall: true,
     structuredOutput: false
   },
@@ -19332,6 +21522,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/alibaba/qwen3.8-omni-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/alibaba/qwen35-397b-a17b": {
     toolCall: true,
     structuredOutput: false
@@ -19349,6 +21543,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "llmgateway-providers/anthropic/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/anthropic/claude-haiku-5-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19372,6 +21570,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway-providers/anthropic/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/anthropic/claude-sonnet-4-5": {
     toolCall: true,
     structuredOutput: true
@@ -19388,7 +21590,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway-providers/anthropic/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/aws-bedrock/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/aws-bedrock/claude-fable-5-1": {
     toolCall: true,
     structuredOutput: false
   },
@@ -19400,9 +21610,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/aws-bedrock/claude-opus-4-1-20250805": {
+  "llmgateway-providers/aws-bedrock/claude-haiku-5-5": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "llmgateway-providers/aws-bedrock/claude-opus-4-5-20251101": {
     toolCall: true,
@@ -19424,6 +21634,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/aws-bedrock/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "llmgateway-providers/aws-bedrock/claude-sonnet-4-5": {
     toolCall: true,
     structuredOutput: true
@@ -19440,6 +21654,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/aws-bedrock/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "llmgateway-providers/aws-bedrock/grok-4-3": {
     toolCall: true,
     structuredOutput: true
@@ -19448,17 +21666,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/aws-bedrock/llama-3.1-70b-instruct": {
-    toolCall: false,
-    structuredOutput: false
+  "llmgateway-providers/aws-bedrock/grok-4-7": {
+    toolCall: true,
+    structuredOutput: true
   },
-  "llmgateway-providers/aws-bedrock/llama-4-maverick-17b-instruct": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "llmgateway-providers/aws-bedrock/llama-4-scout-17b-instruct": {
-    toolCall: false,
-    structuredOutput: false
+  "llmgateway-providers/aws-bedrock/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/aws-mantle/gpt-5.6-luna": {
     toolCall: true,
@@ -19472,9 +21686,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/azure-ai-foundry/grok-4-1-fast-non-reasoning": {
+  "llmgateway-providers/aws-mantle/gpt-6-astra": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "llmgateway-providers/azure-ai-foundry/grok-4-1-fast-reasoning": {
     toolCall: true,
@@ -19485,6 +21699,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "llmgateway-providers/azure-anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure-anthropic/claude-fable-5-1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19504,31 +21722,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway-providers/azure-anthropic/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/azure-anthropic/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/azure/gpt-3.5-turbo": {
+  "llmgateway-providers/azure-anthropic/claude-sonnet-5-5": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/azure/gpt-4": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/azure/gpt-4-turbo": {
-    toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "llmgateway-providers/azure/gpt-4.1": {
     toolCall: true,
     structuredOutput: true
   },
   "llmgateway-providers/azure/gpt-4.1-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway-providers/azure/gpt-4.1-nano": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19545,6 +21755,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "llmgateway-providers/azure/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-5-pro": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19565,10 +21779,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "llmgateway-providers/azure/gpt-5.2-codex": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/azure/gpt-5.2-pro": {
     toolCall: true,
     structuredOutput: false
   },
@@ -19612,25 +21822,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway-providers/azure/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/azure/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/azure/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: false
-  },
-  "llmgateway-providers/azure/o1": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "llmgateway-providers/azure/o3": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "llmgateway-providers/azure/o3-mini": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "llmgateway-providers/azure/o4-mini": {
-    toolCall: true,
-    structuredOutput: true
   },
   "llmgateway-providers/baidu/deepseek-v4-flash": {
     toolCall: true,
@@ -19640,9 +21850,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/baidu/glm-5": {
+  "llmgateway-providers/baidu/deepseek-v4.1-flash": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
+  },
+  "llmgateway-providers/baidu/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/baidu/glm-5.1": {
     toolCall: true,
@@ -19656,9 +21870,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/baidu/kimi-k2.6": {
+  "llmgateway-providers/baidu/glm-5.3-flash": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "llmgateway-providers/bytedance/deepseek-v3.2": {
     toolCall: true,
@@ -19700,6 +21914,22 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/bytedance/seed-2-0-code-preview-260328": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/bytedance/seed-2-0-lite-260428": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/bytedance/seed-2-0-mini-260428": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/bytedance/seed-2-0-pro-260328": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/canopywave/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: false
@@ -19720,29 +21950,41 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/cerebras/gemma-4-31b-it": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/cerebras/glm-4.7": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "llmgateway-providers/cerebras/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/cerebras/llama-3.3-70b-instruct": {
+  "llmgateway-providers/cloudflare/deepseek-v4-flash": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
-  "llmgateway-providers/cerebras/qwen3-235b-a22b-instruct-2507": {
+  "llmgateway-providers/cloudflare/deepseek-v4-pro": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
+  },
+  "llmgateway-providers/cloudflare/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/cloudflare/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/cloudflare/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/consensusprotocol/deepseek-v4-flash": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
+  },
+  "llmgateway-providers/consensusprotocol/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/consensusprotocol/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: false
   },
   "llmgateway-providers/consensusprotocol/glm-5.3-flash": {
     toolCall: true,
@@ -19751,6 +21993,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "llmgateway-providers/consensusprotocol/gpt-oss-20b": {
     toolCall: true,
     structuredOutput: false
+  },
+  "llmgateway-providers/consensusprotocol/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/consensusprotocol/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/consensusprotocol/Qwen3.8-27B": {
     toolCall: true,
@@ -19768,6 +22018,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/deepinfra/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/deepinfra/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/deepinfra/gemma-4-26b-a4b-it": {
     toolCall: true,
     structuredOutput: false
@@ -19776,25 +22034,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/deepinfra/glm-5.1": {
+  "llmgateway-providers/deepinfra/granite-4.2-8b": {
     toolCall: true,
     structuredOutput: false
-  },
-  "llmgateway-providers/deepinfra/hy3": {
-    toolCall: true,
-    structuredOutput: true
   },
   "llmgateway-providers/deepinfra/ling-3.0-flash": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/deepinfra/mimo-v2.5": {
+  "llmgateway-providers/deepinfra/ling-3.0-flash-vl": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/deepinfra/mimo-v2.5-pro": {
-    toolCall: false,
-    structuredOutput: false
+  "llmgateway-providers/deepinfra/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/deepinfra/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/deepinfra/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/deepinfra/nemotron-3-ultra-550b": {
     toolCall: true,
@@ -19810,59 +22072,39 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway-providers/deepinfra/qwen3.5-9b": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "llmgateway-providers/deepseek/deepseek-v4-pro": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/deepseek/deepseek-v4.1-flash": {
+  "llmgateway-providers/deepseek/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/embercloud/glm-4.5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/glm-4.5-air": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/glm-4.7": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/glm-4.7-flash": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/glm-5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/glm-5.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/glm-5.2": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/embercloud/qwen3-coder-next": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/fireworks/deepseek-v4-flash": {
+  "llmgateway-providers/entrim/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/fireworks/deepseek-v4-pro": {
+  "llmgateway-providers/entrim/glm-5.3": {
     toolCall: true,
     structuredOutput: true
+  },
+  "llmgateway-providers/entrim/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/fireworks/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/fireworks/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/fireworks/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
   },
   "llmgateway-providers/fireworks/kimi-k3": {
     toolCall: true,
@@ -19871,26 +22113,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "llmgateway-providers/fireworks/kimi-k3-fast": {
     toolCall: true,
     structuredOutput: false
-  },
-  "llmgateway-providers/gonka24/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/gonka24/minimax-m2.7": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/google-ai-studio/gemini-2.5-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway-providers/google-ai-studio/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway-providers/google-ai-studio/gemini-2.5-pro": {
-    toolCall: true,
-    structuredOutput: true
   },
   "llmgateway-providers/google-ai-studio/gemini-3-flash-preview": {
     toolCall: true,
@@ -19904,10 +22126,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/google-ai-studio/gemini-3.5-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "llmgateway-providers/google-ai-studio/gemini-3.5-flash-lite": {
     toolCall: true,
     structuredOutput: true
@@ -19916,27 +22134,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/google-ai-studio/gemini-3.7-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "llmgateway-providers/google-ai-studio/gemini-3.8-flash": {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway-providers/google-ai-studio/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/google-ai-studio/gemini-pro-latest": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway-providers/google-vertex/gemini-2.5-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway-providers/google-vertex/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway-providers/google-vertex/gemini-2.5-pro": {
     toolCall: true,
     structuredOutput: true
   },
@@ -19972,6 +22178,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway-providers/google-vertex/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/greenference/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/greenference/qwen3-14b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/greenference/qwen3-30b-a3b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/greenference/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/groq/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: false
@@ -19980,8 +22206,32 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/inference.net/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/inference.net/deepseek-v4.1-flash-cyber": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/inference.net/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/inference.net/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/inference.net/llama-3.2-11b-instruct": {
     toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/inference.net/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/luminal/deepseek-v4.1-flash": {
+    toolCall: true,
     structuredOutput: false
   },
   "llmgateway-providers/meta-contributor/muse-spark-1.2-contributor": {
@@ -20001,6 +22251,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "llmgateway-providers/meta/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/meta/muse-wonder-1.0": {
     toolCall: true,
     structuredOutput: true
   },
@@ -20036,6 +22290,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/minimax/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "llmgateway-providers/minimax/minimax-text-01": {
     toolCall: true,
     structuredOutput: false
@@ -20047,6 +22305,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "llmgateway-providers/mistral/devstral-2512": {
     toolCall: false,
     structuredOutput: false
+  },
+  "llmgateway-providers/mistral/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/mistral/ministral-14b-2512": {
     toolCall: false,
@@ -20064,13 +22326,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "llmgateway-providers/mistral/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/mistral/mistral-large-latest": {
     toolCall: false,
     structuredOutput: false
   },
+  "llmgateway-providers/mistral/mistral-medium-3-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/mistral/mistral-small-2506": {
     toolCall: false,
     structuredOutput: false
+  },
+  "llmgateway-providers/mistral/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/moonshot/kimi-k2.5": {
     toolCall: true,
@@ -20092,7 +22366,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/novita/deepseek-v3.2": {
+  "llmgateway-providers/moonshot/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/moonshot/kimi-k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/nebius/minimax-m3.1-flash": {
     toolCall: true,
     structuredOutput: false
   },
@@ -20100,8 +22382,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/novita/ernie-4.5-vl-424b-a47b": {
-    toolCall: false,
+  "llmgateway-providers/novita/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/deepseek-v4.1-flash-1017": {
+    toolCall: true,
     structuredOutput: false
   },
   "llmgateway-providers/novita/gemma-4-26b-a4b-it": {
@@ -20172,14 +22458,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/novita/llama-3-70b-instruct": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/llama-3.2-3b-instruct": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "llmgateway-providers/novita/llama-3.3-70b-instruct": {
     toolCall: true,
     structuredOutput: false
@@ -20192,18 +22470,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "llmgateway-providers/novita/mimo-v2.5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/minimax-m2.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "llmgateway-providers/novita/minimax-m2.5": {
     toolCall: true,
     structuredOutput: false
@@ -20212,43 +22478,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/novita/qwen3-235b-a22b-fp8": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-235b-a22b-instruct-2507": {
+  "llmgateway-providers/novita/minimax-m3.1-flash": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-235b-a22b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-max": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-vl-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/novita/qwen3-vl-235b-a22b-thinking": {
-    toolCall: false,
     structuredOutput: false
   },
   "llmgateway-providers/novita/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3.5-122b-a10b": {
     toolCall: true,
     structuredOutput: false
   },
@@ -20259,6 +22497,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "llmgateway-providers/novita/qwen3.7-max": {
     toolCall: true,
     structuredOutput: false
+  },
+  "llmgateway-providers/novita/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/novita/qwen3.8-27b": {
     toolCall: true,
@@ -20276,27 +22518,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/openai/gpt-3.5-turbo": {
+  "llmgateway-providers/novita/step-3.7-flash": {
     toolCall: true,
     structuredOutput: false
-  },
-  "llmgateway-providers/openai/gpt-4": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/openai/gpt-4-turbo": {
-    toolCall: true,
-    structuredOutput: true
   },
   "llmgateway-providers/openai/gpt-4.1": {
     toolCall: true,
     structuredOutput: true
   },
   "llmgateway-providers/openai/gpt-4.1-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "llmgateway-providers/openai/gpt-4.1-nano": {
     toolCall: true,
     structuredOutput: true
   },
@@ -20388,31 +22618,35 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/openai/o1": {
-    toolCall: false,
+  "llmgateway-providers/openai/gpt-6-luna": {
+    toolCall: true,
     structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/openai/gpt-live-transcribe": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/openai/gpt-transcribe": {
+    toolCall: false,
+    structuredOutput: false
   },
   "llmgateway-providers/openai/o3": {
     toolCall: false,
     structuredOutput: true
   },
-  "llmgateway-providers/openai/o3-mini": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "llmgateway-providers/openai/o4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "llmgateway-providers/perplexity/sonar": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "llmgateway-providers/perplexity/sonar-pro": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "llmgateway-providers/perplexity/sonar-reasoning-pro": {
     toolCall: false,
     structuredOutput: true
   },
@@ -20424,11 +22658,43 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "llmgateway-providers/reka-ai/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/reka-ai/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/reka-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/reka-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/reka-ai/reka-edge-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runpod/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "llmgateway-providers/runware/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
   },
   "llmgateway-providers/runware/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runware/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/runware/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -20448,20 +22714,28 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/runware/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/runware/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "llmgateway-providers/runware/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/sakana/fugu-max": {
     toolCall: true,
     structuredOutput: true
   },
   "llmgateway-providers/sakana/fugu-ultra": {
     toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/sakana/fugu-ultra-v2.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/sciforium/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/scx-ai-gp/deepseek-v4.1-flash": {
+    toolCall: false,
     structuredOutput: false
   },
   "llmgateway-providers/scx-ai-gp/glm-5.2": {
@@ -20474,6 +22748,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway-providers/scx-ai-gp/glm-5.3": {
     toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/scx-ai-gp/glm-5.3-fast": {
+    toolCall: false,
     structuredOutput: false
   },
   "llmgateway-providers/scx-ai-gp/glm-5.3-flash": {
@@ -20492,15 +22770,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/scx-ai/gemma-4-31b-it": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "llmgateway-providers/scx-ai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/scx-ai/llama-4-maverick-17b-instruct": {
     toolCall: true,
     structuredOutput: false
   },
@@ -20512,7 +22782,103 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/together-ai/deepseek-v4-flash": {
+  "llmgateway-providers/tencent/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/glm-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/glm-5.1": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/glm-5.2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/glm-5v-turbo": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/hy-mt2-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/kimi-k2.8-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/tencent/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/minimax-m3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/tencent/step-5-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -20520,19 +22886,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/together-ai/gemma-4-31b-it": {
+  "llmgateway-providers/together-ai/deepseek-v4.1-flash": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
+  },
+  "llmgateway-providers/together-ai/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
   },
   "llmgateway-providers/together-ai/glm-4.7": {
     toolCall: false,
     structuredOutput: false
   },
-  "llmgateway-providers/together-ai/gpt-oss-120b": {
+  "llmgateway-providers/together-ai/glm-5.3": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
-  "llmgateway-providers/together-ai/gpt-oss-20b": {
+  "llmgateway-providers/together-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/together-ai/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: false
   },
@@ -20542,6 +22916,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "llmgateway-providers/together-ai/minimax-m3": {
     toolCall: false,
+    structuredOutput: true
+  },
+  "llmgateway-providers/together-ai/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "llmgateway-providers/together-ai/muse-glimmer-30b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "llmgateway-providers/together-ai/qwen3.8-2.4t-a95b": {
+    toolCall: true,
     structuredOutput: true
   },
   "llmgateway-providers/vertex-anthropic/claude-haiku-4-5": {
@@ -20572,18 +22958,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/vertex-openai/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/vertex-openai/glm-4.7": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/vertex-openai/glm-5": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "llmgateway-providers/vertex-openai/grok-4-20-non-reasoning": {
     toolCall: true,
     structuredOutput: false
@@ -20596,25 +22970,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmgateway-providers/vertex-openai/kimi-k2-thinking": {
+  "llmgateway-providers/vertex-openai/grok-4-7": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/vertex-openai/qwen3-235b-a22b-instruct-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/vertex-openai/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/vertex-openai/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "llmgateway-providers/vertex-openai/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "llmgateway-providers/xai/grok-4": {
     toolCall: true,
@@ -20640,15 +22998,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "llmgateway-providers/xai/grok-4-7": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "llmgateway-providers/xai/grok-build-0-1": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/xiaomi/mimo-v2.5": {
+  "llmgateway-providers/xiaomi/mimo-v2.6-flash": {
     toolCall: true,
     structuredOutput: false
   },
-  "llmgateway-providers/xiaomi/mimo-v2.5-pro": {
+  "llmgateway-providers/xiaomi/mimo-v2.6-pro": {
     toolCall: true,
     structuredOutput: false
   },
@@ -20716,7 +23078,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "llmtech/unsloth/Qwen3.8-27B-NVFP4": {
+  "llmtech/nvidia/Qwen3.8-27B-NVFP4": {
     toolCall: true,
     structuredOutput: true
   },
@@ -20724,29 +23086,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "llmtr/google/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "llmtr/magibu-11b-v8": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "llmtr/medgemma-4b": {
     toolCall: false,
     structuredOutput: null
   },
   "llmtr/meta/muse-spark-1.2-contributor": {
     toolCall: true,
     structuredOutput: true
-  },
-  "llmtr/mimo/mimo-v2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmtr/mimo/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
   },
   "llmtr/mistral/voxtral-small-latest": {
     toolCall: true,
@@ -20781,14 +23127,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "llmtr/qwen/qwen3-coder-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmtr/qwen/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "llmtr/qwen/qwen3-max": {
     toolCall: true,
     structuredOutput: null
   },
@@ -20863,6 +23201,138 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "longcat/LongCat-2.0": {
     toolCall: true,
     structuredOutput: null
+  },
+  "longcat/LongCat-2.5-Preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lowrouter/auto/mistralai/codestral-2508": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/mistralai/ministral-14b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/mistralai/ministral-3b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/mistralai/ministral-8b-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/mistralai/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lowrouter/auto/mistralai/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/mistralai/mistral-medium-3.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/mistralai/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "lowrouter/auto/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-oss-safeguard-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/gpt-oss-safeguard-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "lowrouter/auto/openai/o3": {
+    toolCall: true,
+    structuredOutput: true
   },
   "lucidquery/lucidnova-rf1-100b": {
     toolCall: true,
@@ -20944,10 +23414,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "meganova/XiaomiMiMo/MiMo-V2-Flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "meganova/zai-org/GLM-4.6": {
     toolCall: true,
     structuredOutput: null
@@ -20960,7 +23426,35 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "merge-gateway/anthropic/claude-3-7-sonnet-20250219": {
+  "melious/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "melious/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "melious/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "melious/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "melious/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "melious/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "melious/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "melious/kimi-k3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -20976,11 +23470,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "merge-gateway/anthropic/claude-opus-4-1-20250805": {
+  "merge-gateway/anthropic/claude-haiku-5-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "merge-gateway/anthropic/claude-opus-4-20250514": {
+  "merge-gateway/anthropic/claude-opus-4-1-20250805": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21004,9 +23498,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "merge-gateway/anthropic/claude-sonnet-4-20250514": {
+  "merge-gateway/anthropic/claude-opus-5-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "merge-gateway/anthropic/claude-sonnet-4-5-20250929": {
     toolCall: true,
@@ -21017,6 +23511,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "merge-gateway/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/anthropic/claude-sonnet-5-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21060,21 +23558,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "merge-gateway/deepseek/deepseek-r1-0528": {
+    toolCall: false,
+    structuredOutput: true
+  },
   "merge-gateway/deepseek/deepseek-v3": {
     toolCall: true,
     structuredOutput: false
   },
   "merge-gateway/deepseek/deepseek-v3.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "merge-gateway/deepseek/deepseek-v3.2": {
     toolCall: false,
     structuredOutput: false
+  },
+  "merge-gateway/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
   },
   "merge-gateway/deepseek/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v4-flash-0423": {
+    toolCall: false,
+    structuredOutput: false
   },
   "merge-gateway/deepseek/deepseek-v4-flash-0731": {
     toolCall: true,
@@ -21093,6 +23599,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "merge-gateway/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/deepseek/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21124,19 +23638,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "merge-gateway/google/gemini-3-pro-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "merge-gateway/google/gemini-3.1-flash-image": {
     toolCall: false,
     structuredOutput: false
   },
   "merge-gateway/google/gemini-3.1-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "merge-gateway/google/gemini-3.1-flash-lite-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21168,7 +23674,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "merge-gateway/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "merge-gateway/google/gemini-embedding-001": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemini-embedding-2": {
     toolCall: false,
     structuredOutput: false
   },
@@ -21179,6 +23693,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "merge-gateway/google/gemini-flash-lite-latest": {
     toolCall: true,
     structuredOutput: true
+  },
+  "merge-gateway/google/gemma-3-12b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemma-3-27b-it": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/google/gemma-3-4b-it": {
+    toolCall: false,
+    structuredOutput: false
   },
   "merge-gateway/google/gemma-4-26b-a4b-it": {
     toolCall: false,
@@ -21200,11 +23726,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "merge-gateway/meta/muse-spark-1.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "merge-gateway/meta/muse-spark-1.2": {
+  "merge-gateway/meta/muse-spark-open": {
     toolCall: true,
     structuredOutput: false
   },
@@ -21236,6 +23758,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "merge-gateway/minimax/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "merge-gateway/mistral/codestral-latest": {
     toolCall: true,
     structuredOutput: null
@@ -21244,23 +23770,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "merge-gateway/mistral/devstral-medium-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "merge-gateway/mistral/devstral-medium-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "merge-gateway/mistral/devstral-small-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "merge-gateway/mistral/magistral-medium-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "merge-gateway/mistral/mistral-large-2411": {
     toolCall: true,
     structuredOutput: null
   },
@@ -21308,9 +23818,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "merge-gateway/moonshotai/kimi-k2-thinking": {
+  "merge-gateway/moonshot/kimi-k3.1-pro": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "merge-gateway/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: false,
+    structuredOutput: false
   },
   "merge-gateway/nvidia/nemotron-3.5-lightning-30b-a3b": {
     toolCall: true,
@@ -21380,6 +23894,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "merge-gateway/openai/gpt-5-search-api": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "merge-gateway/openai/gpt-5.1": {
     toolCall: true,
     structuredOutput: true
@@ -21432,6 +23950,30 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "merge-gateway/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-audio": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/openai/gpt-audio-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "merge-gateway/openai/gpt-oss-120b": {
     toolCall: false,
     structuredOutput: false
@@ -21441,6 +23983,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "merge-gateway/openai/gpt-oss-safeguard-120b": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "merge-gateway/openai/gpt-oss-safeguard-20b": {
     toolCall: false,
     structuredOutput: false
   },
@@ -21460,6 +24006,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "merge-gateway/openai/whisper-1": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "merge-gateway/qwen/qwen-flash": {
     toolCall: true,
     structuredOutput: true
@@ -21474,7 +24024,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "merge-gateway/qwen/qwen3-235b-a22b-instruct-2507": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "merge-gateway/qwen/qwen3-30b-a3b": {
     toolCall: true,
@@ -21504,6 +24054,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "merge-gateway/qwen/qwen3-max-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "merge-gateway/qwen/qwen3-next-80b-a3b-instruct": {
     toolCall: true,
     structuredOutput: true
@@ -21517,6 +24071,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "merge-gateway/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3-vl-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21539,6 +24101,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "merge-gateway/qwen/qwen3.5-397b-a17b": {
     toolCall: true,
     structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.5-4b": {
+    toolCall: true,
+    structuredOutput: false
   },
   "merge-gateway/qwen/qwen3.5-9b": {
     toolCall: true,
@@ -21584,9 +24150,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "merge-gateway/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "merge-gateway/qwen/qwen3.8-max": {
     toolCall: true,
     structuredOutput: true
+  },
+  "merge-gateway/sakana/fugu-max": {
+    toolCall: true,
+    structuredOutput: false
   },
   "merge-gateway/sakana/fugu-ultra": {
     toolCall: true,
@@ -21625,6 +24203,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "merge-gateway/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "merge-gateway/xai/grok-4.7": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21704,189 +24286,93 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "minimax/MiniMax-M2": {
+  "meta/muse-wonder-1.0": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "minimax/MiniMax-M2.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax/MiniMax-M2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax/MiniMax-M2.5-highspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax/MiniMax-M2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax/MiniMax-M2.7-highspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax/MiniMax-M3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn/MiniMax-M2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn/MiniMax-M2.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn/MiniMax-M2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn/MiniMax-M2.5-highspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn/MiniMax-M2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn/MiniMax-M2.7-highspeed": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "minimax-cn/MiniMax-M3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
-  "minimax-coding-plan/MiniMax-M2": {
+  "minimax-cn/MiniMax-M3.1-Flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
-  "minimax-coding-plan/MiniMax-M2.1": {
+  "minimax/MiniMax-M3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
-  "minimax-coding-plan/MiniMax-M2.5": {
+  "minimax/MiniMax-M3.1-Flash": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-coding-plan/MiniMax-M2.5-highspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-coding-plan/MiniMax-M2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-coding-plan/MiniMax-M2.7-highspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-coding-plan/MiniMax-M3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn-coding-plan/MiniMax-M2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn-coding-plan/MiniMax-M2.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn-coding-plan/MiniMax-M2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn-coding-plan/MiniMax-M2.5-highspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn-coding-plan/MiniMax-M2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "minimax-cn-coding-plan/MiniMax-M2.7-highspeed": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "minimax-cn-coding-plan/MiniMax-M3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "minimax-cn-coding-plan/MiniMax-M3.1-Flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "minimax-coding-plan/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "minimax-coding-plan/MiniMax-M3.1-Flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "mistral/codestral-2508": {
+    toolCall: true,
+    structuredOutput: true
   },
   "mistral/codestral-latest": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "mistral/devstral-2512": {
+  "mistral/deepseek-v4-1-flash-1017": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "mistral/devstral-latest": {
+  "mistral/ministral-14b-2512": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "mistral/devstral-medium-2507": {
+  "mistral/ministral-3b-2512": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/devstral-medium-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/devstral-small-2505": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/devstral-small-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/labs-devstral-small-2512": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/magistral-medium-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/magistral-small": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "mistral/ministral-3b-latest": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "mistral/ministral-8b-2512": {
+    toolCall: true,
+    structuredOutput: true
   },
   "mistral/ministral-8b-latest": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "mistral/mistral-embed": {
     toolCall: false,
     structuredOutput: null
   },
-  "mistral/mistral-large-2411": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "mistral/mistral-large-2512": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "mistral/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "mistral/mistral-large-4-0-8": {
+    toolCall: true,
+    structuredOutput: true
   },
   "mistral/mistral-large-latest": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/mistral-medium-2505": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/mistral-medium-2508": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "mistral/mistral-medium-2604": {
     toolCall: true,
@@ -21896,45 +24382,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "mistral/mistral-nemo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/mistral-small-2506": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "mistral/mistral-small-2603": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "mistral/mistral-small-latest": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/open-mistral-7b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/open-mistral-nemo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/open-mixtral-8x22b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/open-mixtral-8x7b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/pixtral-12b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "mistral/pixtral-large-latest": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "mistral/voxtral-mini-latest": {
     toolCall: false,
@@ -21944,11 +24398,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "mistral/voxtral-small-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "mistral/voxtral-small-latest": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "mistral/zai-glm-5-2": {
+  "mistral/zai-glm-5-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "mistral/zai-glm-5-3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21972,15 +24434,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "moark/GLM-4.7": {
+  "moark/DeepSeek-V4-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moark/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moark/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moark/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moark/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moark/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moark/MiniMax-M2.7": {
     toolCall: true,
     structuredOutput: null
   },
-  "moark/MiniMax-M2.1": {
+  "moark/Qwen3.6-Flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "modal/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modal/meta-models/Muse-Spark-Open-816B-A42B": {
+    toolCall: true,
+    structuredOutput: true
   },
   "modal/moonshotai/Kimi-K3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "modal/nvidia/GLM-5.3-Flash-NVFP4": {
     toolCall: true,
     structuredOutput: true
   },
@@ -21991,6 +24489,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "modal/thinkingmachines/Inkling-NVFP4": {
     toolCall: true,
     structuredOutput: false
+  },
+  "modal/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
   },
   "modal/zai-org/GLM-5.3-Flash": {
     toolCall: true,
@@ -22120,6 +24622,22 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "modular/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modular/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modular/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "modular/MiniMaxAI/MiniMax-M3.1-Flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "moonshotai/kimi-k2.6": {
     toolCall: true,
     structuredOutput: true
@@ -22133,6 +24651,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai/kimi-k3.1-pro-highspeed": {
     toolCall: true,
     structuredOutput: true
   },
@@ -22152,9 +24678,49 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "moonshotai-cn/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "moonshotai-cn/kimi-k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "morph/auto": {
     toolCall: false,
     structuredOutput: null
+  },
+  "morph/morph-dsv41flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/morph-dsv41flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/morph-dsv4flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/morph-glm52-744b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/morph-glm53-744b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/morph-glm53flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/morph-kimik3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "morph/morph-kimik3-fast": {
+    toolCall: true,
+    structuredOutput: true
   },
   "morph/morph-v3-fast": {
     toolCall: false,
@@ -22164,6 +24730,42 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "munito/aleph-alpha/kolibri-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito/deepseek-ai/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito/deepseek-ai/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito/zai-org/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito-eu/aleph-alpha/kolibri-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito-eu/deepseek-ai/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito-eu/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "munito-eu/zai-org/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nan/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
@@ -22172,7 +24774,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nan/glm5.2": {
+  "nan/glm5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -22180,8 +24782,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nan/mimo-v2.5": {
+  "nan/mimo-v2.6-flash": {
     toolCall: true,
+    structuredOutput: null
+  },
+  "nan/qwen-image-2.1": {
+    toolCall: false,
     structuredOutput: null
   },
   "nan/qwen3.6": {
@@ -22201,6 +24807,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "nano-gpt/abliteration-ai/abliterated-model-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/abliteration-ai/abliterated-model-large-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -22224,27 +24834,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/aion-labs/aion-3.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/aion-labs/aion-3.5-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/aion-labs/aion-rp-llama-3.1-8b": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/alibaba/qwen3.6-27b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/alibaba/qwen3.6-27b:thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/alibaba/qwen3.6-flash": {
+  "nano-gpt/aisingapore/gemma-sea-lion-v4-27b-it": {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/alibaba/qwen3.8-flash": {
+  "nano-gpt/aisingapore/qwen-sea-lion-v4-32b-it": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "nano-gpt/alibaba/qwen3.8-max-0902": {
+  "nano-gpt/aleph-alpha/kolibri-1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -22280,7 +24890,47 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/anthropic/claude-haiku-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-haiku-4.5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-haiku-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/anthropic/claude-haiku-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.1:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.1:thinking:1024": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.1:thinking:32768": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.1:thinking:8192": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-opus-4.5:thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -22324,7 +24974,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/anthropic/claude-opus-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/anthropic/claude-opus-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-4.5:thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -22341,6 +25003,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "nano-gpt/anthropic/claude-sonnet-5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/anthropic/claude-sonnet-5.5:thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -22372,29 +25042,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/baseten/Kimi-K2-Instruct-FP4": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/brave": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/brave-pro": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/brave-research": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "nano-gpt/bytedance-seed/seed-2-1-turbo": {
     toolCall: true,
     structuredOutput: true
   },
   "nano-gpt/bytedance-seed/seed-2.0-code": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "nano-gpt/bytedance-seed/seed-2.0-lite": {
     toolCall: false,
@@ -22416,98 +25070,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/chutesai/Mistral-Small-3.2-24B-Instruct-2506": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/claude-haiku-4-5-20251001": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-haiku-4-5-20251001-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-1-20250805": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-1-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-1-thinking:1024": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-1-thinking:32768": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-1-thinking:8192": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-20250514": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-5-20251101": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-5-20251101:thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-thinking:1024": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-thinking:32768": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-opus-4-thinking:8192": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-20250514": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-5-20250929": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-5-20250929-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-thinking:1024": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-thinking:32768": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-thinking:64000": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/claude-sonnet-4-thinking:8192": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "nano-gpt/claw-high": {
     toolCall: true,
     structuredOutput: true
@@ -22525,18 +25087,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "nano-gpt/command-a-reasoning-08-2025": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/crofai/greg-2-super": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/crofai/greg-2-ultra": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/deepclaude": {
     toolCall: false,
     structuredOutput: false
   },
@@ -22580,22 +25130,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/deepseek-r1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/deepseek-r1-sambanova": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/deepseek-reasoner": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/deepseek-reasoner-cheaper": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "nano-gpt/deepseek-v3-0324": {
     toolCall: true,
     structuredOutput: true
@@ -22616,6 +25150,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/deepseek/deepseek-v4-flash-0423": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4-flash-0423:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/deepseek/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: true
@@ -22631,10 +25173,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/deepseek/deepseek-v4-flash-vision-exp": {
     toolCall: true,
     structuredOutput: true
-  },
-  "nano-gpt/deepseek/deepseek-v4-flash-vision-exp-uncensored": {
-    toolCall: null,
-    structuredOutput: null
   },
   "nano-gpt/deepseek/deepseek-v4-flash:thinking": {
     toolCall: true,
@@ -22660,31 +25198,43 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-0910-uncensored": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-0910-uncensored:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-1017-uncensored": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-1017-uncensored:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-1017:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-uncensored": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/deepseek/deepseek-v4.1-flash-uncensored:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/deepseek/deepseek-v4.1-flash:thinking": {
     toolCall: true,
     structuredOutput: true
   },
   "nano-gpt/Doctor-Shotgun/MS3.2-24B-Magnum-Diamond": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/doubao-1.5-pro-256k": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/doubao-1.5-pro-32k": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/doubao-1.5-vision-pro-32k": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/doubao-seed-1-6-250615": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/doubao-seed-1-6-flash-250615": {
     toolCall: false,
     structuredOutput: false
   },
@@ -22703,6 +25253,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/doubao-seed-2-0-pro-260215": {
     toolCall: false,
     structuredOutput: false
+  },
+  "nano-gpt/elorian/glimpse": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/Envoid/Llama-3.05-Nemotron-Tenyxchat-Storybreaker-70B": {
     toolCall: false,
@@ -22724,10 +25278,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/ernie-x1.1-preview": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "nano-gpt/EVA-UNIT-01/EVA-LLaMA-3.33-70B-v0.0": {
     toolCall: false,
     structuredOutput: false
@@ -22744,10 +25294,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/exa-answer": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "nano-gpt/failspy/Meta-Llama-3-70B-Instruct-abliterated-v3.5": {
     toolCall: false,
     structuredOutput: false
@@ -22759,6 +25305,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/featherless-ai/Qwerky-72B": {
     toolCall: false,
     structuredOutput: false
+  },
+  "nano-gpt/fireworks/ember-1": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/GalrionSoftworks/MN-LooseCannon-12B-v1": {
     toolCall: false,
@@ -22784,31 +25334,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/gemini-2.5-flash-lite-preview-09-2025": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/gemini-2.5-flash-lite-preview-09-2025-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "nano-gpt/gemini-2.5-flash-nothinking": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/gemini-2.5-flash-preview-04-17": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/gemini-2.5-flash-preview-04-17:thinking": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/gemini-2.5-flash-preview-05-20": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/gemini-2.5-flash-preview-05-20:thinking": {
     toolCall: false,
     structuredOutput: false
   },
@@ -22856,11 +25382,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/gemma-4-12b-it-starry-ocean": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/gemma-4-12b-it-station-keeper": {
     toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/gemma-4-26b-a4b-it-chimerax": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/gemma-4-26b-a4b-it-chimeraxheretic": {
     toolCall: true,
     structuredOutput: false
   },
@@ -22896,13 +25430,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/gemma-4-26b-a4b-uncensored": {
+  "nano-gpt/Gemma-4-31B-Agares-v1": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "nano-gpt/gemma-4-26b-a4b-uncensored:thinking": {
+  "nano-gpt/Gemma-4-31B-Animus-V14.1": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-AssGuard": {
+    toolCall: true,
+    structuredOutput: false
   },
   "nano-gpt/Gemma-4-31B-Claude-4.6-Opus-Reasoning-Distilled": {
     toolCall: true,
@@ -22912,11 +25450,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/Gemma-4-31B-Dark-Gemistry": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/Gemma-4-31B-DarkIdol": {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/Gemma-4-31B-Fabled": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/Gemma-4-31B-GarnetV2": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-Gembrain-uncensored-heretic": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-Gembrain-X-Core": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-Isometry-RP": {
     toolCall: true,
     structuredOutput: false
   },
@@ -22948,6 +25506,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/gemma-4-31b-it-scarlet": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-K1-v5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Gemma-4-31B-MeroMero": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/Gemma-4-31B-MeroMero-v2": {
     toolCall: true,
     structuredOutput: false
@@ -22956,35 +25526,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/Gemma-4-31B-Novelist": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/Gemma-4-31B-Queen": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/gemma-4-e2b-it": {
+  "nano-gpt/Gemma-4-31B-SDFT-Heretic-RP": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "nano-gpt/gemma-4-e4b-it": {
+  "nano-gpt/Gemma-4-31B-StyleTune": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/glm-4-air-0111": {
-    toolCall: false,
     structuredOutput: false
   },
   "nano-gpt/glm-4-long": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/glm-4-plus-0111": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/glm-4.1v-thinking-flash": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/glm-4.1v-thinking-flashx": {
     toolCall: false,
     structuredOutput: false
   },
@@ -22992,9 +25550,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/glm-z1-airx": {
-    toolCall: true,
-    structuredOutput: true
+  "nano-gpt/google/diffusiongemma": {
+    toolCall: false,
+    structuredOutput: false
   },
   "nano-gpt/google/gemini-3-flash-preview": {
     toolCall: true,
@@ -23048,6 +25606,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/google/gemini-flash-latest": {
     toolCall: true,
     structuredOutput: true
@@ -23064,6 +25626,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/google/gemma-4-26b-a4b-it-cybersecurity": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/google/gemma-4-26b-a4b-it:thinking": {
     toolCall: true,
     structuredOutput: true
@@ -23076,8 +25642,20 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/google/gemma4-31b-splituntied": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/Gryphe/MythoMax-L2-13b": {
     toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/heabsy/cyberheabsy": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/heabsy/qwen3.8-27b-uncensored-fast": {
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/hermes-high": {
@@ -23124,6 +25702,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/inception/mercury-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/inclusionai/ling-3.0-flash": {
     toolCall: true,
     structuredOutput: false
@@ -23136,15 +25718,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/inflatebot/MN-12B-Mag-Mell-R1": {
+  "nano-gpt/inclusionai/ling-3.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/inference-net/schematron-v2-small": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: true
   },
-  "nano-gpt/k2-horizon-7b": {
-    toolCall: null,
-    structuredOutput: null
+  "nano-gpt/inference-net/schematron-v2-turbo": {
+    toolCall: false,
+    structuredOutput: true
   },
-  "nano-gpt/kimi-k2-instruct-fast": {
+  "nano-gpt/inflatebot/MN-12B-Mag-Mell-R1": {
     toolCall: false,
     structuredOutput: false
   },
@@ -23152,7 +25738,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "nano-gpt/lightonai/LightOnOCR-2-1B": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/liquid/lfm-2.5-2.6b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/liquid/lfm-2.5-24b-a2b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -23162,11 +25756,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "nano-gpt/longcat-2.0": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "nano-gpt/longcat-2.0:thinking": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "nano-gpt/MarinaraSpaghetti/NemoMix-Unleashed-12B": {
     toolCall: false,
@@ -23184,6 +25778,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "nano-gpt/meituan/longcat-2.5-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/mercury-2": {
     toolCall: true,
     structuredOutput: true
@@ -23197,7 +25795,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "nano-gpt/meta-llama/llama-3.1-8b-instruct": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/meta-llama/llama-3.2-3b-instruct": {
@@ -23240,15 +25838,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/meta/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/meta/muse-wonder": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/microsoft/wizardlm-2-8x22b": {
     toolCall: false,
     structuredOutput: false
   },
   "nano-gpt/MiniMax-M1": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/MiniMax-M2": {
     toolCall: false,
     structuredOutput: false
   },
@@ -23260,9 +25862,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/minimax/minimax-m2-her": {
+  "nano-gpt/minimax/minimax-m2": {
     toolCall: false,
     structuredOutput: false
+  },
+  "nano-gpt/minimax/minimax-m2-her": {
+    toolCall: null,
+    structuredOutput: null
   },
   "nano-gpt/minimax/minimax-m2.1": {
     toolCall: true,
@@ -23288,6 +25894,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/minimax/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/MiniMaxAI/MiniMax-M1-80k": {
     toolCall: false,
     structuredOutput: false
@@ -23300,18 +25910,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/mistral-small-31-24b-instruct": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/mistral/mistral-medium-3.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/mistral/mistral-medium-3.5:thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "nano-gpt/mistralai/codestral-2508": {
     toolCall: false,
     structuredOutput: false
@@ -23320,7 +25918,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/mistralai/Devstral-Small-2505": {
+  "nano-gpt/mistralai/devstral-small-2505": {
     toolCall: false,
     structuredOutput: false
   },
@@ -23344,9 +25942,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/mistralai/mistral-large-3-675b-instruct-2512": {
-    toolCall: false,
-    structuredOutput: false
+  "nano-gpt/mistralai/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/mistralai/mistral-medium-3": {
     toolCall: false,
@@ -23356,11 +25954,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/mistralai/Mistral-Nemo-Instruct-2407": {
+  "nano-gpt/mistralai/mistral-medium-3.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistralai/mistral-medium-3.5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/mistralai/mistral-nemo-instruct-2407": {
     toolCall: false,
     structuredOutput: false
   },
   "nano-gpt/mistralai/mistral-saba": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-small-24b-instruct-2501": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-small-3.1-24b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/mistralai/mistral-small-3.2-24b-instruct": {
     toolCall: false,
     structuredOutput: false
   },
@@ -23380,13 +25998,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "nano-gpt/moondream/moondream3-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/moondream/moondream3.1-9b-a2b": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "nano-gpt/moonshotai/kimi-k2-instruct": {
     toolCall: true,
     structuredOutput: true
   },
   "nano-gpt/moonshotai/kimi-k2-instruct-0711": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "nano-gpt/moonshotai/Kimi-K2-Instruct-0905": {
     toolCall: true,
@@ -23424,6 +26050,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/moonshotai/kimi-k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/moonshotai/kimi-latest": {
     toolCall: true,
     structuredOutput: true
@@ -23455,6 +26089,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/NeverSleep/Lumimaid-v0.2-70B": {
     toolCall: false,
     structuredOutput: false
+  },
+  "nano-gpt/nex-agi/nex-n2.5-mini": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nano-gpt/nex-agi/nex-n2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/nothingiisreal/L3.1-70B-Celeste-V0.1-BF16": {
     toolCall: false,
@@ -23500,6 +26142,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/nvidia/nemotron-3.5-content-safety": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "nano-gpt/nvidia/nemotron-3.5-lightning": {
     toolCall: true,
     structuredOutput: false
@@ -23508,13 +26154,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/openai/gpt-3.5-turbo": {
-    toolCall: false,
-    structuredOutput: false
+  "nano-gpt/nvidia/nemotron-3.5-super-vl": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/openai/gpt-4-turbo": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: null,
+    structuredOutput: null
   },
   "nano-gpt/openai/gpt-4.1": {
     toolCall: true,
@@ -23640,11 +26286,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6.1-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-6.1-terra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-astra-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/openai/gpt-chat-latest": {
     toolCall: true,
     structuredOutput: true
   },
   "nano-gpt/openai/gpt-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-luna-latest": {
     toolCall: true,
     structuredOutput: true
   },
@@ -23657,8 +26343,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "nano-gpt/openai/gpt-oss-safeguard-20b": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: false
+  },
+  "nano-gpt/openai/gpt-sol-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/openai/gpt-terra-latest": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/openai/o1": {
     toolCall: false,
@@ -23673,12 +26367,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "nano-gpt/openai/o3-mini": {
-    toolCall: true,
-    structuredOutput: true
+    toolCall: null,
+    structuredOutput: null
   },
   "nano-gpt/openai/o3-mini-high": {
-    toolCall: true,
-    structuredOutput: true
+    toolCall: null,
+    structuredOutput: null
   },
   "nano-gpt/openai/o3-mini-low": {
     toolCall: true,
@@ -23689,10 +26383,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "nano-gpt/openai/o4-mini": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "nano-gpt/openai/o4-mini-high": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "nano-gpt/orca/orcacyber-zero-1.5": {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/openai/o4-mini-high": {
+  "nano-gpt/ornith-ai/ornith-1.5-122b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -23708,13 +26410,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "nano-gpt/particle-ai/particle-1": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/perceptron/perceptron-mk1": {
     toolCall: false,
     structuredOutput: true
   },
-  "nano-gpt/perplexity-academic-researcher": {
-    toolCall: false,
-    structuredOutput: false
+  "nano-gpt/perceptron/perceptron-mk1.5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/phi-4-mini-instruct": {
     toolCall: false,
@@ -23729,58 +26435,62 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "nano-gpt/poolside/laguna-s-2.1": {
-    toolCall: true,
-    structuredOutput: false
+    toolCall: null,
+    structuredOutput: null
   },
   "nano-gpt/poolside/laguna-s-2.1:thinking": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "nano-gpt/prism-ml/ternary-bonsai-2-27b": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
-  "nano-gpt/qvq-max": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen-3.6-plus": {
+  "nano-gpt/prism-ml/ternary-bonsai-2-9b": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen-long": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen-max": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen-plus": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen-turbo": {
-    toolCall: false,
     structuredOutput: false
   },
   "nano-gpt/qwen/qwen-2.5-72b-instruct": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen/Qwen2.5-Coder-32B-Instruct": {
+  "nano-gpt/qwen/qwen-long": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen-max": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen-turbo": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen2.5-coder-32b-instruct": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen2.5-vl-72b-instruct": {
     toolCall: false,
     structuredOutput: false
   },
   "nano-gpt/qwen/qwen3-14b": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/qwen/qwen3-235b-a22b": {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/qwen/Qwen3-235B-A22B-Instruct-2507": {
+  "nano-gpt/qwen/qwen3-235b-a22b-instruct-2507": {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/qwen/Qwen3-235B-A22B-Thinking-2507": {
+  "nano-gpt/qwen/qwen3-235b-a22b-thinking-2507": {
     toolCall: true,
     structuredOutput: false
   },
@@ -23788,15 +26498,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "nano-gpt/qwen/qwen3-30b-a3b-instruct-2507": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "nano-gpt/qwen/qwen3-32b": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen/Qwen3-8B": {
-    toolCall: false,
+  "nano-gpt/qwen/qwen3-8b": {
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/qwen/qwen3-coder": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3-coder-30b-a3b-instruct": {
     toolCall: true,
     structuredOutput: true
   },
@@ -23808,15 +26526,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/qwen/qwen3-coder-plus": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen/qwen3-max": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen/Qwen3-Next-80B-A3B-Instruct": {
+  "nano-gpt/qwen/qwen3-next-80b-a3b-instruct": {
     toolCall: true,
     structuredOutput: true
   },
@@ -23824,15 +26534,43 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/qwen/Qwen3-VL-235B-A22B-Instruct": {
+  "nano-gpt/qwen/qwen3-vl-235b-a22b-instruct": {
     toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3-vl-235b-a22b-thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.5-122b-a10b:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-27b:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-35b-a3b:thinking": {
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/qwen/qwen3.5-397b-a17b": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen/qwen3.5-397b-a17b-thinking": {
+  "nano-gpt/qwen/qwen3.5-397b-a17b:thinking": {
     toolCall: true,
     structuredOutput: false
   },
@@ -23840,40 +26578,132 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/qwen/qwen3.5-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-flash:thinking": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-omni-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.5-omni-plus": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "nano-gpt/qwen/qwen3.5-plus": {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/qwen/qwen3.5-plus-thinking": {
+  "nano-gpt/qwen/qwen3.5-plus:thinking": {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/qwen/Qwen3.6-35B-A3B": {
+  "nano-gpt/qwen/qwen3.6-27b": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen/Qwen3.6-35B-A3B:thinking": {
+  "nano-gpt/qwen/qwen3.6-27b:thinking": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen/qwen3.8-2.4t-a95b": {
+  "nano-gpt/qwen/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.6-35b-a3b:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.6-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.6-max-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.7-flash": {
     toolCall: true,
     structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.7-flash:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.7-max:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.7-plus:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-27b-antislop": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-cybersecurity": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-darkidol": {
+    toolCall: true,
+    structuredOutput: false
   },
   "nano-gpt/qwen/qwen3.8-27b-fable": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen/qwen3.8-27b-obliterated": {
+  "nano-gpt/qwen/qwen3.8-27b-fimi": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "nano-gpt/qwen/qwen3.8-27b-obliterated:thinking": {
+  "nano-gpt/qwen/qwen3.8-27b-hemmingway": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-kimiko": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-kiwen": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-novelist": {
+    toolCall: true,
+    structuredOutput: false
   },
   "nano-gpt/qwen/qwen3.8-27b-queen": {
     toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-swift": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/qwen/qwen3.8-27b-synthia": {
+    toolCall: false,
     structuredOutput: false
   },
   "nano-gpt/qwen/qwen3.8-27b-uncensored": {
@@ -23884,43 +26714,39 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/qwen25-vl-72b-instruct": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3-30b-a3b-instruct-2507": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3-coder-30b-a3b-instruct": {
+  "nano-gpt/qwen/qwen3.8-27b:thinking": {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/qwen3-max-2026-01-23": {
-    toolCall: false,
-    structuredOutput: false
+  "nano-gpt/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-max-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-max:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/qwen/qwen3.8-omni-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/qwen3-vl-235b-a22b-instruct-original": {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/qwen3-vl-235b-a22b-thinking": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.5-0.8b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.5-122b-a10b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.5-122b-a10b:thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.5-27b": {
+  "nano-gpt/Qwen3.5-27B-Blossom-V6.4-Derestricted": {
     toolCall: true,
     structuredOutput: false
   },
@@ -23928,93 +26754,37 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "nano-gpt/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-Derestricted": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-Derestricted-Lite": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/Qwen3.5-27B-Queen-Derestricted": {
     toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/qwen3.5-27b:thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.5-2b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.5-35b-a3b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.5-35b-a3b:thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.5-4b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.5-flash": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.5-flash:thinking": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.5-omni-flash": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.5-omni-plus": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.6-max-preview": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.7-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.7-flash:thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.7-max": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.7-max:thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.7-plus": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.7-plus:thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "nano-gpt/qwen3.8-27b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.8-27b:thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.8-max": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/qwen3.8-max:thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "nano-gpt/ReadyArt/MS3.2-The-Omega-Directive-24B-Unslop-v2.0": {
     toolCall: false,
     structuredOutput: false
+  },
+  "nano-gpt/reflection/beam-1.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/reka/reka-edge-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/reka/reka-flash-3": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "nano-gpt/sakana/fugu-max": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/sakana/fugu-ultra": {
     toolCall: true,
@@ -24056,32 +26826,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/sonar": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/sonar-deep-research": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/sonar-pro": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/sonar-reasoning-pro": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "nano-gpt/soob3123/amoral-gemma3-27B-v2": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/soob3123/GrayLine-Qwen3-8B": {
     toolCall: false,
     structuredOutput: false
   },
   "nano-gpt/soob3123/Veiled-Calla-12B": {
     toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/speakleash/bielik-11b-v3.0-instruct": {
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/Steelskull/L3.3-Cu-Mai-R1-70b": {
@@ -24112,11 +26866,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/stepfun/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/synth-2.5-flash": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "nano-gpt/synth-2.5-pro": {
+    toolCall: false,
+    structuredOutput: false
+  },
   "nano-gpt/TEE/deepseek-v3.2": {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/TEE/deepseek-v4-flash": {
+  "nano-gpt/TEE/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24164,10 +26930,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/TEE/gpt-oss-20b": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "nano-gpt/TEE/kimi-k2.6": {
     toolCall: true,
     structuredOutput: false
@@ -24184,17 +26946,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nano-gpt/TEE/muse-glimmer-30b": {
+  "nano-gpt/TEE/nemotron-3.5-lightning": {
     toolCall: true,
     structuredOutput: true
   },
   "nano-gpt/TEE/qwen2.5-vl-72b-instruct": {
     toolCall: false,
     structuredOutput: false
-  },
-  "nano-gpt/TEE/qwen3-8b": {
-    toolCall: true,
-    structuredOutput: true
   },
   "nano-gpt/TEE/qwen3.5-27b": {
     toolCall: false,
@@ -24211,10 +26969,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/TEE/qwen3.6-35b-a3b": {
     toolCall: false,
     structuredOutput: false
-  },
-  "nano-gpt/TEE/qwen3.6-35b-a3b-uncensored": {
-    toolCall: true,
-    structuredOutput: true
   },
   "nano-gpt/TEE/qwen3.8-27b": {
     toolCall: true,
@@ -24249,7 +27003,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "nano-gpt/TheDrummer/Cydonia-24B-v4.1": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/TheDrummer/Cydonia-24B-v4.3": {
@@ -24288,16 +27042,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/THUDM/GLM-4-32B-0414": {
-    toolCall: false,
+  "nano-gpt/unbiased/pareto-26.10": {
+    toolCall: true,
     structuredOutput: false
   },
-  "nano-gpt/THUDM/GLM-4-9B-0414": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nano-gpt/THUDM/GLM-Z1-9B-0414": {
-    toolCall: false,
+  "nano-gpt/unbiased/pareto-26.9": {
+    toolCall: true,
     structuredOutput: false
   },
   "nano-gpt/undi95/remm-slerp-l2-13b": {
@@ -24319,6 +27069,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nano-gpt/unsloth/gemma-3-4b-it": {
     toolCall: false,
     structuredOutput: false
+  },
+  "nano-gpt/upstage/solar-mini4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/upstage/solar-mini4:thinking": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nano-gpt/upstage/solar-pro-3": {
     toolCall: false,
@@ -24360,6 +27118,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/x-ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nano-gpt/x-ai/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
@@ -24376,19 +27138,39 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/xiaomi/mimo-v2.5-pro-crof": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/xiaomi/mimo-v2.5-pro-crof:thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "nano-gpt/xiaomi/mimo-v2.5-pro:thinking": {
     toolCall: true,
     structuredOutput: true
   },
   "nano-gpt/xiaomi/mimo-v2.5:thinking": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.6-flash-abliterated": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/xiaomi/mimo-v2.6-flash-uncensored": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/xiaomi/mimo-v2.6-flash-uncensored:thinking": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/xiaomi/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xiaomi/mimo-v2.6-pro-ultraspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nano-gpt/xingchen-agi/xing4.0-29b-a4b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24452,14 +27234,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nano-gpt/z-ai/glm-4.7-flash-original": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nano-gpt/z-ai/glm-4.7-flash-original:thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "nano-gpt/z-ai/glm-4.7-flash:thinking": {
     toolCall: true,
     structuredOutput: false
@@ -24520,9 +27294,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nano-gpt/z-ai/glm-5.3-flash-apex": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-5.3-flash-apex-abliterated": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nano-gpt/z-ai/glm-5.3-flash-cybersecurity": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "nano-gpt/z-ai/glm-5.3-flash-uncensored": {
     toolCall: true,
     structuredOutput: true
+  },
+  "nano-gpt/z-ai/glm-5.3-uncensored": {
+    toolCall: true,
+    structuredOutput: false
   },
   "nano-gpt/z-ai/glm-5.3:thinking": {
     toolCall: true,
@@ -24540,15 +27330,39 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nearai/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "nearai/anthropic/claude-haiku-4-5": {
     toolCall: true,
     structuredOutput: null
+  },
+  "nearai/anthropic/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nearai/anthropic/claude-opus-4-6": {
     toolCall: true,
     structuredOutput: null
   },
   "nearai/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-opus-5-5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -24560,9 +27374,33 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "nearai/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/anthropic/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "nearai/black-forest-labs/FLUX.2-klein-4B": {
     toolCall: false,
     structuredOutput: null
+  },
+  "nearai/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/deepseek-ai/DeepSeek-V4.1-Flash-1017-abliterated": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/deepseek/deepseek-v3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/deepseek/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nearai/google/gemini-2.5-flash": {
     toolCall: true,
@@ -24584,15 +27422,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nearai/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/moonshotai/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "nearai/openai/gpt-4.1": {
     toolCall: true,
     structuredOutput: true
   },
   "nearai/openai/gpt-4.1-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nearai/openai/gpt-4.1-nano": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24632,6 +27482,30 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nearai/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nearai/openai/o3": {
     toolCall: true,
     structuredOutput: true
@@ -24660,11 +27534,39 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nearai/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nearai/Qwen/Qwen3.6-35B-A3B-FP8": {
     toolCall: true,
     structuredOutput: true
   },
-  "nearai/zai-org/GLM-5.1-FP8": {
+  "nearai/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "nearai/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/Qwen/Qwen3.8-27B-abliterated": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/x-ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nearai/z-ai/glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24676,13 +27578,33 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nebius/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/deepseek-ai/DeepSeek-V4.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nebius/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/meta-models/muse-spark-open": {
     toolCall: true,
     structuredOutput: true
   },
   "nebius/MiniMaxAI/MiniMax-M3": {
     toolCall: true,
     structuredOutput: null
+  },
+  "nebius/MiniMaxAI/MiniMax-M3.1-Flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nebius/moonshotai/Kimi-K2.7-Code": {
     toolCall: true,
@@ -24708,6 +27630,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "nebius/nvidia/Nemotron-3.5-Super-VL": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nebius/openai/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
@@ -24728,7 +27654,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "nebius/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/reflection/beam": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nebius/zai-org/GLM-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "nebius/zai-org/GLM-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24747,6 +27685,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "neon/claude-haiku-4-5": {
     toolCall: true,
     structuredOutput: true
+  },
+  "neon/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: false
   },
   "neon/claude-opus-4-1": {
     toolCall: true,
@@ -24772,6 +27714,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "neon/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "neon/claude-sonnet-4-5": {
     toolCall: true,
     structuredOutput: true
@@ -24783,6 +27729,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "neon/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: true
+  },
+  "neon/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: false
   },
   "neon/gemini-3-1-flash-lite": {
     toolCall: true,
@@ -24804,7 +27754,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "neon/gemini-3-7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-3-8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "neon/gemini-3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gemini-4-argon": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24813,6 +27775,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "neon/glm-5-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/glm-5-3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24876,7 +27842,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "neon/gpt-6-1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "neon/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neon/gpt-6-sol": {
     toolCall: true,
     structuredOutput: true
   },
@@ -24892,9 +27870,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "neon/inkling": {
+  "neon/grok-4-7": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "neon/kimi-k3": {
     toolCall: true,
@@ -24952,6 +27930,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/anthropic/claude-haiku-5-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/anthropic/claude-opus-4-5": {
     toolCall: null,
     structuredOutput: null
@@ -24976,6 +27958,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/anthropic/claude-opus-5-5": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/anthropic/claude-sonnet-4-5": {
     toolCall: null,
     structuredOutput: null
@@ -24992,19 +27978,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/gemini/gemini-2.5-flash": {
+  "netlify/anthropic/claude-sonnet-5-5": {
     toolCall: null,
     structuredOutput: null
   },
   "netlify/gemini/gemini-2.5-flash-image": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "netlify/gemini/gemini-2.5-flash-lite": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "netlify/gemini/gemini-2.5-pro": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25056,11 +28034,35 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/gemini/gemini-4-argon": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/gemini/gemini-flash-latest": {
     toolCall: null,
     structuredOutput: null
   },
   "netlify/gemini/gemini-flash-lite-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/gemini/gemini-nano-banana-2.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/meta/muse-spark-1.1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/meta/muse-spark-1.2": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/meta/muse-spark-1.3": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/meta/muse-wonder-1.0": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25073,10 +28075,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openai/gpt-4.1-mini": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "netlify/openai/gpt-4.1-nano": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25204,7 +28202,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openai/gpt-image-1": {
+  "netlify/openai/gpt-6-luna": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-6-sol": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-6.1-sol": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openai/gpt-6.1-terra": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25240,11 +28250,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openai/o3-mini": {
+  "netlify/openrouter/~deepseek/deepseek-flash-latest": {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openai/o4-mini": {
+  "netlify/openrouter/~deepseek/deepseek-pro-latest": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25253,6 +28263,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/~moonshotai/kimi-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/~unbiased/pareto-latest": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25269,10 +28283,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/anthracite-org/magnum-v4-72b": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "netlify/openrouter/baidu/ernie-4.5-vl-424b-a47b": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25308,11 +28318,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/deepseek/deepseek-chat": {
+  "netlify/openrouter/cohere/command-a-plus": {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/deepseek/deepseek-chat-v3-0324": {
+  "netlify/openrouter/deepseek/deepseek-chat": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25320,27 +28330,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/deepseek/deepseek-r1": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "netlify/openrouter/deepseek/deepseek-r1-0528": {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/deepseek/deepseek-r1-distill-llama-70b": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "netlify/openrouter/deepseek/deepseek-v3.1-terminus": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "netlify/openrouter/deepseek/deepseek-v3.2": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "netlify/openrouter/deepseek/deepseek-v3.2-exp": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25365,6 +28359,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/deepseek/deepseek-v4.1-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/deepseek/deepseek-v4.1-flash-1017": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/elorian/glimpse": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/fireworks/ember-1": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25408,19 +28414,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openrouter/inception/mercury-3": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openrouter/inclusionai/ling-3.0-flash": {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/inclusionai/ling-3.0-flash-fin": {
+  "netlify/openrouter/inclusionai/ling-3.0-flash-vl": {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/inclusionai/ling-3.0-flash-fin:free": {
+  "netlify/openrouter/inclusionai/ling-3.1-flash": {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/inclusionai/ling-3.0-flash-sante:free": {
+  "netlify/openrouter/inference-net/schematron-v2-small": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/inference-net/schematron-v2-turbo": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/liquid/lfm-2.5-24b-a2b": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25433,6 +28451,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/meta-llama/llama-3.1-8b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/meta-llama/llama-3.2-1b-instruct": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25460,11 +28482,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/microsoft/phi-4": {
+  "netlify/openrouter/meta/muse-spark-open": {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/microsoft/wizardlm-2-8x22b": {
+  "netlify/openrouter/microsoft/phi-4": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25492,6 +28514,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openrouter/minimax/minimax-m3.1-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openrouter/mistralai/devstral-2512": {
     toolCall: null,
     structuredOutput: null
@@ -25513,6 +28539,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/mistralai/mistral-large-2512": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/mistralai/mistral-large-4-0": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25544,6 +28574,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openrouter/mistralai/mistral-small-3.1-24b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openrouter/mistralai/mistral-small-3.2-24b-instruct": {
     toolCall: null,
     structuredOutput: null
@@ -25553,6 +28587,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/mistralai/voxtral-small-24b-2507": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moondream/moondream3-preview": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/moondream/moondream3.1-9b-a2b": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25624,6 +28666,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openrouter/nvidia/nemotron-3.5-super-vl": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/nvidia/switchyard": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openrouter/openai/gpt-oss-120b": {
     toolCall: null,
     structuredOutput: null
@@ -25652,7 +28702,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openrouter/particle-ai/particle-1": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openrouter/perceptron/perceptron-mk1": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/perceptron/perceptron-mk1.5": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25681,6 +28739,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/qwen/qwen-2.5-7b-instruct": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/qwen/qwen-2.5-coder-32b-instruct": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25716,10 +28778,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/qwen/qwen3-coder-30b-a3b-instruct": {
-    toolCall: null,
-    structuredOutput: null
-  },
   "netlify/openrouter/qwen/qwen3-coder-next": {
     toolCall: null,
     structuredOutput: null
@@ -25729,10 +28787,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/qwen/qwen3-vl-235b-a22b-instruct": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "netlify/openrouter/qwen/qwen3-vl-235b-a22b-thinking": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25780,7 +28834,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/qwen/qwen3.8-flash": {
+  "netlify/openrouter/reflection/beam-1.0-501b-a23b": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25808,11 +28862,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
-  "netlify/openrouter/sao10k/l3.3-euryale-70b": {
+  "netlify/openrouter/scaledown/extract": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/scaledown/summarize": {
     toolCall: null,
     structuredOutput: null
   },
   "netlify/openrouter/stepfun/step-3.7-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/stepfun/step-5-preview": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25856,7 +28918,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openrouter/typesafe/jev-router": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/unbiased/pareto-26.10": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openrouter/undi95/remm-slerp-l2-13b": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/upstage/solar-mini4": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25884,6 +28958,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/openrouter/x-ai/grok-4.7": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "netlify/openrouter/x-ai/grok-build-0.1": {
     toolCall: null,
     structuredOutput: null
@@ -25893,6 +28971,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "netlify/openrouter/xiaomi/mimo-v2.5-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/xiaomi/mimo-v2.6-flash": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/xiaomi/mimo-v2.6-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/openrouter/xingchen-agi/xing4.0-29b-a4b:free": {
     toolCall: null,
     structuredOutput: null
   },
@@ -25940,6 +29030,22 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: null,
     structuredOutput: null
   },
+  "netlify/typesafe/jev-1.13.0": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/typesafe/jev-1.14.0": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/typesafe/jev-latest": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "netlify/typesafe/jev-preview": {
+    toolCall: null,
+    structuredOutput: null
+  },
   "neuralwatt/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
@@ -25948,7 +29054,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "neuralwatt/deepseek-v4-pro": {
+  "neuralwatt/deepseek-v4-flash-speed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/deepseek-v4.1-flash-flex": {
     toolCall: true,
     structuredOutput: true
   },
@@ -25956,49 +29070,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "neuralwatt/glm-5.2": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "neuralwatt/glm-5.2-fast": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "neuralwatt/glm-5.2-flex": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "neuralwatt/glm-5.2-short": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "neuralwatt/glm-5.2-short-fast": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "neuralwatt/glm-5.2-short-fast-flex": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "neuralwatt/glm-5.2-short-flex": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "neuralwatt/glm-5.3": {
     toolCall: true,
     structuredOutput: false
   },
-  "neuralwatt/kimi-k2.7-code": {
+  "neuralwatt/glm-5.3-flash": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "neuralwatt/kimi-k2.7-code-fast": {
+  "neuralwatt/glm-5.3-flash-flex": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
-  "neuralwatt/kimi-k2.7-code-flex": {
+  "neuralwatt/glm-5.3-flex": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "neuralwatt/kimi-k3": {
     toolCall: true,
@@ -26012,7 +29098,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "neuralwatt/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "neuralwatt/mimo-v2.6-pro-flex": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "neuralwatt/qwen-3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "neuralwatt/qwen-3.8-27b-flex": {
     toolCall: true,
     structuredOutput: true
   },
@@ -26024,6 +29122,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "neuralwatt/qwen3.6-35b-flex": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "nova/nova-2-lite-v1": {
     toolCall: true,
     structuredOutput: null
@@ -26032,43 +29134,35 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "novita-ai/apodex/apodex-1.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/baai/bge-m3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "novita-ai/baai/bge-reranker-v2-m3": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "novita-ai/baichuan/baichuan-m2-32b": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: null
+  },
+  "novita-ai/baidu/cobuddy": {
+    toolCall: true,
+    structuredOutput: null
   },
   "novita-ai/baidu/ernie-4.5-21B-a3b": {
     toolCall: true,
     structuredOutput: null
   },
-  "novita-ai/baidu/ernie-4.5-21B-a3b-thinking": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/baidu/ernie-4.5-300b-a47b-paddle": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "novita-ai/baidu/ernie-4.5-vl-28b-a3b": {
+  "novita-ai/deepseek/deepseek_v3": {
     toolCall: true,
     structuredOutput: null
-  },
-  "novita-ai/baidu/ernie-4.5-vl-28b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/baidu/ernie-4.5-vl-424b-a47b": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/deepseek/deepseek-ocr": {
-    toolCall: false,
-    structuredOutput: true
   },
   "novita-ai/deepseek/deepseek-ocr-2": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/deepseek/deepseek-prover-v2-671b": {
     toolCall: false,
     structuredOutput: null
   },
@@ -26080,51 +29174,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "novita-ai/deepseek/deepseek-r1-distill-llama-70b": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "novita-ai/deepseek/deepseek-r1-distill-qwen-14b": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/deepseek/deepseek-r1-distill-qwen-32b": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "novita-ai/deepseek/deepseek-r1-turbo": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/deepseek/deepseek-v3-0324": {
-    toolCall: true,
     structuredOutput: true
   },
-  "novita-ai/deepseek/deepseek-v3-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/deepseek/deepseek-v3.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/deepseek/deepseek-v3.1-terminus": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/deepseek/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/deepseek/deepseek-v3.2-exp": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/deepseek/deepseek-v4-flash": {
+  "novita-ai/deepseek/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: true
   },
   "novita-ai/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/deepseek/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -26148,45 +29218,41 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "novita-ai/inclusionai/ling-2.6-1t": {
+  "novita-ai/inclusionai/ling-3.0-flash": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
-  "novita-ai/inclusionai/ling-2.6-flash": {
+  "novita-ai/inclusionai/ling-3.0-flash-fin": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
-  "novita-ai/inclusionai/ring-2.6-1t": {
+  "novita-ai/inclusionai/ling-3.0-flash-sante": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
-  "novita-ai/kwaipilot/kat-coder-pro": {
+  "novita-ai/inclusionai/ling-3.0-flash-vl": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
-  "novita-ai/meta-llama/llama-3-70b-instruct": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "novita-ai/meta-llama/llama-3-8b-instruct": {
-    toolCall: false,
+  "novita-ai/inclusionai/ling-3.1-flash": {
+    toolCall: true,
     structuredOutput: null
   },
   "novita-ai/meta-llama/llama-3.1-8b-instruct": {
     toolCall: false,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "novita-ai/meta-llama/llama-3.2-3b-instruct": {
+  "novita-ai/meta-llama/llama-3.2-1b-instruct": {
     toolCall: false,
-    structuredOutput: null
+    structuredOutput: true
   },
   "novita-ai/meta-llama/llama-3.3-70b-instruct": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "novita-ai/meta-llama/llama-4-maverick-17b-128e-instruct-fp8": {
     toolCall: false,
-    structuredOutput: null
+    structuredOutput: true
   },
   "novita-ai/meta-llama/llama-4-scout-17b-16e-instruct": {
     toolCall: false,
@@ -26194,21 +29260,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "novita-ai/microsoft/wizardlm-2-8x22b": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/minimax/minimax-m2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/minimax/minimax-m2.1": {
-    toolCall: true,
     structuredOutput: true
+  },
+  "novita-ai/mindai/macaron-v1-tall": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "novita-ai/mindai/macaron-v1-venti": {
+    toolCall: true,
+    structuredOutput: null
   },
   "novita-ai/minimax/minimax-m2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/minimax/minimax-m2.5-highspeed": {
     toolCall: true,
     structuredOutput: true
   },
@@ -26220,12 +29282,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "novita-ai/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/minimax/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "novita-ai/minimaxai/minimax-m1-80k": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/mistralai/mistral-nemo": {
-    toolCall: false,
     structuredOutput: true
   },
   "novita-ai/moonshotai/kimi-k2-0905": {
@@ -26256,115 +29322,47 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "novita-ai/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/moonshotai/kimi-k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "novita-ai/nousresearch/hermes-2-pro-llama-3-8b": {
     toolCall: false,
+    structuredOutput: true
+  },
+  "novita-ai/nvidia/nemotron-3-nano-30b-a3b": {
+    toolCall: true,
     structuredOutput: true
   },
   "novita-ai/openai/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
   },
-  "novita-ai/openai/gpt-oss-20b": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "novita-ai/paddlepaddle/paddleocr-vl": {
     toolCall: false,
     structuredOutput: null
-  },
-  "novita-ai/qwen/qwen-2.5-72b-instruct": {
-    toolCall: true,
-    structuredOutput: true
   },
   "novita-ai/qwen/qwen-mt-plus": {
     toolCall: false,
     structuredOutput: null
   },
-  "novita-ai/qwen/qwen2.5-7b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen2.5-vl-72b-instruct": {
+  "novita-ai/qwen/qwen3-embedding-8b": {
     toolCall: false,
     structuredOutput: null
-  },
-  "novita-ai/qwen/qwen3-235b-a22b-fp8": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/qwen/qwen3-235b-a22b-instruct-2507": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-235b-a22b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/qwen/qwen3-30b-a3b-fp8": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/qwen/qwen3-32b-fp8": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/qwen/qwen3-4b-fp8": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/qwen/qwen3-8b-fp8": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/qwen/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-coder-next": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-max": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-omni-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: true
   },
   "novita-ai/qwen/qwen3-omni-30b-a3b-thinking": {
     toolCall: true,
     structuredOutput: true
   },
-  "novita-ai/qwen/qwen3-vl-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-vl-235b-a22b-thinking": {
+  "novita-ai/qwen/qwen3-reranker-8b": {
     toolCall: false,
     structuredOutput: null
   },
   "novita-ai/qwen/qwen3-vl-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-vl-30b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "novita-ai/qwen/qwen3-vl-8b-instruct": {
     toolCall: true,
     structuredOutput: true
   },
@@ -26384,31 +29382,51 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "novita-ai/qwen/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "novita-ai/qwen/qwen3.7-max": {
     toolCall: true,
     structuredOutput: true
   },
-  "novita-ai/sao10K/l3-70b-euryale-v2.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/sao10K/l3-8b-lunaris": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "novita-ai/sao10K/L3-8B-stheno-v3.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/sao10K/l31-70b-euryale-v2.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "novita-ai/xiaomimimo/mimo-v2-flash": {
+  "novita-ai/qwen/qwen3.8-2.4t-a95b": {
     toolCall: true,
     structuredOutput: true
   },
-  "novita-ai/xiaomimimo/mimo-v2-pro": {
+  "novita-ai/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/qwen/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/stepfun/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/tencent/hy3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/tencent/hy4-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/xiaomimimo/mimo-v2.5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -26416,12 +29434,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "novita-ai/xiaomimimo/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "novita-ai/xiaomimimo/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "novita-ai/zai-org/autoglm-phone-9b-multilingual": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "novita-ai/zai-org/glm-4.5": {
-    toolCall: true,
     structuredOutput: null
   },
   "novita-ai/zai-org/glm-4.5-air": {
@@ -26460,13 +29482,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nvidia/abacusai/dracarys-llama-3.1-70b-instruct": {
+  "novita-ai/zai-org/glm-5.3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "nvidia/baai/bge-m3": {
-    toolCall: false,
-    structuredOutput: null
+  "novita-ai/zai-org/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "nvidia/black-forest-labs/flux_1-kontext-dev": {
     toolCall: false,
@@ -26484,45 +29506,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "nvidia/bytedance/seed-oss-36b-instruct": {
+  "nvidia/deepseek-ai/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "nvidia/deepseek-ai/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/deepseek-ai/deepseek-v4-flash-0731": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/deepseek-ai/deepseek-v4-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/deepseek-ai/deepseek-v4-pro-0813": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/google/gemma-2-2b-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/google/gemma-3-12b-it": {
+  "nvidia/google/diffusiongemma-26b-a4b-it": {
     toolCall: true,
     structuredOutput: null
-  },
-  "nvidia/google/gemma-3-4b-it": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/google/gemma-3n-e2b-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/google/gemma-3n-e4b-it": {
-    toolCall: true,
-    structuredOutput: true
   },
   "nvidia/google/gemma-4-31b-it": {
     toolCall: true,
@@ -26532,45 +29522,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "nvidia/meta/esm2-650m": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/meta/esmfold": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/meta/llama-3.1-70b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/meta/llama-3.1-8b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "nvidia/meta/llama-3.2-11b-vision-instruct": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/meta/llama-3.2-1b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/meta/llama-3.2-3b-instruct": {
-    toolCall: false,
     structuredOutput: true
   },
   "nvidia/meta/llama-3.2-90b-vision-instruct": {
     toolCall: true,
     structuredOutput: null
-  },
-  "nvidia/meta/llama-3.3-70b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/meta/llama-4-maverick-17b-128e-instruct": {
-    toolCall: true,
-    structuredOutput: true
   },
   "nvidia/meta/llama-guard-4-12b": {
     toolCall: false,
@@ -26580,71 +29538,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "nvidia/microsoft/phi-4-mini-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/microsoft/phi-4-multimodal-instruct": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nvidia/minimaxai/minimax-m2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/minimaxai/minimax-m3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/mistralai/magistral-small-2506": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nvidia/mistralai/ministral-14b-instruct-2512": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/mistralai/mistral-7b-instruct-v0.3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/mistralai/mistral-large-3-675b-instruct-2512": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/mistralai/mistral-medium-3-instruct": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "nvidia/mistralai/mistral-medium-3.5-128b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/mistralai/mistral-nemotron": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/mistralai/mistral-small-4-119b-2603": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/mistralai/mixtral-8x22b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/mistralai/mixtral-8x7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/moonshotai/kimi-k2-instruct-0905": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/moonshotai/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "nvidia/moonshotai/kimi-k3": {
+  "nvidia/minimaxai/minimax-m3.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -26656,56 +29550,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "nvidia/nvidia/cosmos-predict1-5b": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/cosmos-reason2-8b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/cosmos-transfer1-7b": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "nvidia/nvidia/cosmos-transfer2_5-2b": {
     toolCall: false,
     structuredOutput: null
   },
-  "nvidia/nvidia/gliner-pii": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/llama-3_2-nemoretriever-300m-embed-v1": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/llama-3.1-nemotron-70b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/llama-3.1-nemotron-nano-8b-v1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/llama-3.1-nemotron-nano-vl-8b-v1": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "nvidia/nvidia/llama-3.1-nemotron-safety-guard-8b-v3": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/llama-3.1-nemotron-ultra-253b-v1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/llama-3.3-nemotron-super-49b-v1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/llama-3.3-nemotron-super-49b-v1.5": {
-    toolCall: true,
     structuredOutput: null
   },
   "nvidia/nvidia/llama-nemotron-embed-vl-1b-v2": {
@@ -26720,64 +29570,28 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "nvidia/nvidia/nemotron-3-content-safety": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/nemotron-3-nano-30b-a3b": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "nvidia/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {
     toolCall: true,
     structuredOutput: true
-  },
-  "nvidia/nvidia/nemotron-3-super-120b-a12b": {
-    toolCall: true,
-    structuredOutput: null
   },
   "nvidia/nvidia/nemotron-3-ultra-550b-a55b": {
     toolCall: true,
     structuredOutput: true
   },
+  "nvidia/nvidia/nemotron-3.5-content-safety": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "nvidia/nvidia/nemotron-3.5-lightning-30b-a3b": {
     toolCall: true,
     structuredOutput: true
   },
-  "nvidia/nvidia/nemotron-content-safety-reasoning-4b": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/nemotron-mini-4b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/nemotron-nano-12b-v2-vl": {
+  "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b": {
     toolCall: true,
     structuredOutput: null
   },
   "nvidia/nvidia/nemotron-voicechat": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/nv-embed-v1": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/nv-embedcode-7b-v1": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/nvidia-nemotron-nano-9b-v2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/rerank-qa-mistral-4b": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/riva-translate-4b-instruct-v1.1": {
-    toolCall: false,
     structuredOutput: null
   },
   "nvidia/nvidia/sparsedrive": {
@@ -26795,18 +29609,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "nvidia/nvidia/synthetic-video-detector": {
     toolCall: false,
     structuredOutput: null
-  },
-  "nvidia/nvidia/usdcode": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/nvidia/usdvalidate": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "nvidia/openai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
   },
   "nvidia/openai/gpt-oss-20b": {
     toolCall: true,
@@ -26828,47 +29630,43 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "nvidia/qwen/qwen2.5-coder-32b-instruct": {
+  "nvidia/stepfun-ai/step-5-preview": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "nvidia/z-ai/glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "nvidia/qwen/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
+  "oci/meta.llama-4-maverick-17b-128e-instruct-fp8": {
+    toolCall: false,
     structuredOutput: null
   },
-  "nvidia/qwen/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
+  "oci/meta.llama-4-scout-17b-16e-instruct": {
+    toolCall: false,
     structuredOutput: null
   },
-  "nvidia/qwen/qwen3.5-122b-a10b": {
+  "oci/openai.gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
   },
-  "nvidia/qwen/qwen3.5-397b-a17b": {
+  "oci/openai.gpt-oss-20b": {
     toolCall: true,
     structuredOutput: true
   },
-  "nvidia/sarvamai/sarvam-m": {
+  "oci/xai.grok-4.20-non-reasoning": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "nvidia/stepfun-ai/step-3.5-flash": {
+  "oci/xai.grok-4.20-reasoning": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "nvidia/stepfun-ai/step-3.7-flash": {
+  "oci/xai.grok-4.3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "nvidia/thinkingmachines/inkling": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/upstage/solar-10.7b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "nvidia/z-ai/glm-5.2": {
+  "oci/xai.grok-4.6": {
     toolCall: true,
     structuredOutput: true
   },
@@ -26884,9 +29682,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "ofox/anthropic/claude-opus-4.5": {
+  "ofox/anthropic/claude-haiku-5.5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/anthropic/claude-opus-4.6": {
     toolCall: true,
@@ -26904,7 +29702,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "ofox/anthropic/claude-sonnet-4.5": {
+  "ofox/anthropic/claude-opus-5.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -26916,17 +29714,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "ofox/anthropic/claude-sonnet-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "ofox/bailian/qwen-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen-turbo": {
     toolCall: true,
@@ -26938,7 +29740,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "ofox/bailian/qwen3-coder-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen3-coder-next": {
     toolCall: true,
@@ -26974,7 +29776,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "ofox/bailian/qwen3.5-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen3.6-27b": {
     toolCall: true,
@@ -26990,27 +29792,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "ofox/bailian/qwen3.6-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen3.7-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen3.7-plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen3.8-27b": {
     toolCall: true,
     structuredOutput: true
   },
+  "ofox/bailian/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "ofox/bailian/qwen3.8-max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/bailian/qwen3.8-max-0902": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "ofox/deepseek/deepseek-v3.2": {
     toolCall: true,
@@ -27020,11 +29826,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "ofox/deepseek/deepseek-v4-flash-0731": {
+  "ofox/deepseek/deepseek-v4-flash-0423": {
     toolCall: true,
     structuredOutput: true
   },
-  "ofox/deepseek/deepseek-v4-flash-vision-exp": {
+  "ofox/deepseek/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: true
   },
@@ -27037,6 +29843,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "ofox/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/deepseek/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -27080,45 +29894,49 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "ofox/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "ofox/minimax/m2-her": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m2": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m2.1": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m2.1-lightning": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m2.5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m2.5-lightning": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m2.7": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m2.7-highspeed": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ofox/minimax/minimax-m3": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "ofox/moonshotai/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "ofox/moonshotai/kimi-k2.6": {
     toolCall: true,
@@ -27135,6 +29953,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "ofox/moonshotai/kimi-k3": {
     toolCall: true,
     structuredOutput: true
+  },
+  "ofox/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: null
   },
   "ofox/openai/gpt-4.1": {
     toolCall: true,
@@ -27224,19 +30046,119 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "ofox/volcengine/doubao-seed-1-6": {
+  "ofox/openai/gpt-6-luna": {
     toolCall: true,
     structuredOutput: true
   },
-  "ofox/volcengine/doubao-seed-1-6-flash": {
+  "ofox/openai/gpt-6-sol": {
     toolCall: true,
     structuredOutput: true
   },
-  "ofox/volcengine/doubao-seed-1-6-vision": {
+  "ofox/openai/gpt-6.1-sol": {
     toolCall: true,
     structuredOutput: true
   },
-  "ofox/volcengine/doubao-seed-1-8": {
+  "ofox/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen-turbo": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/qwen/qwen-vl-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/qwen/qwen3-coder-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3-coder-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/qwen/qwen3-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/qwen/qwen3.5-122b-a10b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.5-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.5-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.5-397b-a17b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.5-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.6-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.6-max-preview": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "ofox/qwen/qwen3.6-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "ofox/qwen/qwen3.8-max-0902": {
     toolCall: true,
     structuredOutput: true
   },
@@ -27292,6 +30214,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "ofox/x-ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "ofox/z-ai/glm-4.6": {
     toolCall: true,
     structuredOutput: null
@@ -27328,111 +30254,103 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "ofox/z-ai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "ofox/z-ai/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: null
   },
-  "ollama-cloud/deepseek-v4-flash": {
+  "ollama-cloud/beam": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "ollama-cloud/deepseek-v4-flash:0731": {
-    toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "ollama-cloud/deepseek-v4-pro": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "ollama-cloud/deepseek-v4-pro:0813": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "ollama-cloud/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "ollama-cloud/deepseek-v4.1-flash:1017": {
+    toolCall: true,
+    structuredOutput: false
   },
   "ollama-cloud/gemma4:31b": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "ollama-cloud/glm-5.1": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/glm-5.2": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "ollama-cloud/glm-5.3": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "ollama-cloud/glm-5.3-flash": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "ollama-cloud/gpt-oss:120b": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/gpt-oss:20b": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "ollama-cloud/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/kimi-k2.6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/kimi-k2.7-code": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "ollama-cloud/kimi-k3": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "ollama-cloud/minimax-m2.5": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/minimax-m2.7": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/minimax-m3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "ollama-cloud/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: false
   },
   "ollama-cloud/mistral-large-3:675b": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
+  },
+  "ollama-cloud/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "ollama-cloud/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: false
   },
   "ollama-cloud/nemotron-3-nano:30b": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/nemotron-3-super": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "ollama-cloud/nemotron-3-ultra": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "ollama-cloud/qwen3.5:397b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "openai/chatgpt-image-latest": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "openai/gpt-3.5-turbo": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "openai/gpt-4": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "openai/gpt-4-turbo": {
     toolCall: true,
     structuredOutput: false
   },
@@ -27444,15 +30362,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openai/gpt-4.1-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openai/gpt-4o": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openai/gpt-4o-2024-05-13": {
     toolCall: true,
     structuredOutput: true
   },
@@ -27492,17 +30402,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openai/gpt-5.2-chat-latest": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openai/gpt-5.2-pro": {
     toolCall: true,
     structuredOutput: false
-  },
-  "openai/gpt-5.3-chat-latest": {
-    toolCall: true,
-    structuredOutput: true
   },
   "openai/gpt-5.3-codex": {
     toolCall: true,
@@ -27556,17 +30458,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openai/gpt-image-1": {
-    toolCall: false,
-    structuredOutput: null
+  "openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
   },
-  "openai/gpt-image-1-mini": {
-    toolCall: false,
-    structuredOutput: null
+  "openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
   },
-  "openai/gpt-image-1.5": {
-    toolCall: false,
-    structuredOutput: null
+  "openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-daybreak-blue-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openai/gpt-daybreak-red-latest": {
+    toolCall: true,
+    structuredOutput: true
   },
   "openai/gpt-image-2": {
     toolCall: false,
@@ -27576,27 +30490,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "openai/o1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openai/o1-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openai/o3": {
     toolCall: true,
     structuredOutput: true
   },
-  "openai/o3-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openai/o3-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openai/o4-mini": {
     toolCall: true,
     structuredOutput: true
   },
@@ -27612,157 +30510,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "opencode-go/deepseek-flash": {
-    toolCall: null,
-    structuredOutput: null
-  },
-  "opencode-go/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/deepseek-v4-flash-vision-exp": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/deepseek-v4-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/glm-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/glm-5.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/glm-5.3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/glm-5.3-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/gpt-5.6-luna": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/grok-4.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/grok-4.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/hy3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/hy4-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/kimi-k2.7-code": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/kimi-k3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/longcat-2.0": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/mimo-v2-omni": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/mimo-v2-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/mimo-v2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/minimax-m2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/minimax-m2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/minimax-m3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/muse-spark-1.2-contributor": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/muse-spark-1.3-contributor": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/omen-alpha": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/ox-alpha-free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/qwen3.5-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/qwen3.6-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/qwen3.7-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/qwen3.7-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode-go/qwen3.8-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode-go/qwen3.8-max": {
+  "opencode/beam-free": {
     toolCall: true,
     structuredOutput: true
   },
   "opencode/big-pickle": {
     toolCall: true,
     structuredOutput: true
-  },
-  "opencode/claude-3-5-haiku": {
-    toolCall: true,
-    structuredOutput: null
   },
   "opencode/claude-fable-5": {
     toolCall: true,
@@ -27776,9 +30530,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/claude-opus-4-1": {
+  "opencode/claude-haiku-5-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "opencode/claude-opus-4-5": {
     toolCall: true,
@@ -27800,7 +30554,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/claude-sonnet-4": {
+  "opencode/claude-opus-5-5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -27816,27 +30570,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/deepseek-v4-flash": {
+  "opencode/claude-sonnet-5-5": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "opencode/deepseek-v4-flash-free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode/deepseek-v4-flash-vision-exp": {
-    toolCall: true,
-    structuredOutput: true
+    structuredOutput: null
   },
   "opencode/deepseek-v4-pro": {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/gemini-3-flash": {
+  "opencode/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/gemini-3-pro": {
+  "opencode/deepseek-v4.1-flash-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/flint-40b-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gemini-3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -27864,23 +30618,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/glm-4.6": {
+  "opencode/gemini-4-argon": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/glm-4.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/glm-4.7-free": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "opencode/glm-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/glm-5-free": {
     toolCall: true,
     structuredOutput: null
   },
@@ -27897,6 +30639,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "opencode/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/glm-5.3-flash-free": {
     toolCall: true,
     structuredOutput: true
   },
@@ -27984,6 +30730,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "opencode/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "opencode/grok-4.5": {
     toolCall: true,
     structuredOutput: true
@@ -27992,35 +30750,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "opencode/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "opencode/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/grok-code": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/hy3-free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode/hy3-preview-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/kimi-k2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/kimi-k2-thinking": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "opencode/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/kimi-k2.5-free": {
     toolCall: true,
     structuredOutput: null
   },
@@ -28036,59 +30774,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/laguna-s-2.1-free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "opencode/ling-2.6-flash-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/ling-3.0-flash-fin-free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "opencode/ling-3.0-flash-free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "opencode/ling-3.0-tiny-free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "opencode/longcat-2.0-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/mimo-v2-flash-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/mimo-v2-omni-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/mimo-v2-pro-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/mimo-v2.5-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/minimax-m2.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/minimax-m2.1-free": {
+  "opencode/mimo-v2.6-flash-free": {
     toolCall: true,
     structuredOutput: null
   },
   "opencode/minimax-m2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/minimax-m2.5-free": {
     toolCall: true,
     structuredOutput: null
   },
@@ -28100,15 +30790,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/minimax-m3-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/muse-spark-1.2": {
+  "opencode/mistral-large-4": {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/muse-spark-1.2-contributor-free": {
+  "opencode/muse-spark-1.2": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28116,27 +30802,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/muse-spark-1.3-contributor-free": {
+  "opencode/muse-wonder-1.0": {
     toolCall: true,
     structuredOutput: true
-  },
-  "opencode/nemotron-3-super-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opencode/nemotron-3-ultra-free": {
-    toolCall: true,
-    structuredOutput: null
   },
   "opencode/nemotron-3.5-lightning-free": {
     toolCall: true,
     structuredOutput: true
   },
-  "opencode/north-mini-code-free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opencode/qwen3-coder": {
+  "opencode/nemotron-3.5-super-vl-free": {
     toolCall: true,
     structuredOutput: null
   },
@@ -28148,19 +30822,131 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/qwen3.6-plus-free": {
+  "opencode/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode/qwen3.8-max": {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/ring-2.6-1t-free": {
+  "opencode-go/beam-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/hy3": {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/trinity-large-preview-free": {
+  "opencode-go/hy4-preview": {
     toolCall: true,
     structuredOutput: null
   },
-  "opencode/x-preview-f-free": {
+  "opencode-go/iceman-contributor-free": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/longcat-2.0": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2.5-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/muse-spark-1.2-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/muse-spark-1.3-contributor": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "opencode-go/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opencode-go/step-5-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28192,6 +30978,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/~deepseek/deepseek-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~deepseek/deepseek-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/~deepseek/deepseek-v4-flash-latest": {
     toolCall: true,
     structuredOutput: true
@@ -28208,13 +31002,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/~openai/gpt-latest": {
+  "openrouter/~openai/gpt-astra-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~openai/gpt-luna-latest": {
     toolCall: true,
     structuredOutput: true
   },
   "openrouter/~openai/gpt-mini-latest": {
     toolCall: true,
     structuredOutput: true
+  },
+  "openrouter/~openai/gpt-sol-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~openai/gpt-terra-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/~unbiased/pareto-latest": {
+    toolCall: true,
+    structuredOutput: false
   },
   "openrouter/~x-ai/grok-latest": {
     toolCall: true,
@@ -28240,6 +31050,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "openrouter/aion-labs/aion-3.5": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/aion-labs/aion-3.5-mini": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "openrouter/aion-labs/aion-rp-llama-3.1-8b": {
     toolCall: false,
     structuredOutput: false
@@ -28256,10 +31074,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "openrouter/amazon/nova-premier-v1": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "openrouter/amazon/nova-pro-v1": {
     toolCall: true,
     structuredOutput: false
@@ -28267,10 +31081,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "openrouter/anthracite-org/magnum-v4-72b": {
     toolCall: false,
     structuredOutput: true
-  },
-  "openrouter/anthropic/claude-3-haiku": {
-    toolCall: true,
-    structuredOutput: false
   },
   "openrouter/anthropic/claude-fable-5": {
     toolCall: true,
@@ -28284,9 +31094,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/anthropic/claude-opus-4": {
+  "openrouter/anthropic/claude-haiku-5.5": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "openrouter/anthropic/claude-opus-4.1": {
     toolCall: true,
@@ -28312,9 +31122,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/anthropic/claude-sonnet-4": {
+  "openrouter/anthropic/claude-opus-5.5": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "openrouter/anthropic/claude-sonnet-4.5": {
     toolCall: true,
@@ -28328,27 +31138,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/arcee-ai/trinity-large-thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "openrouter/baidu/ernie-4.5-vl-424b-a47b": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "openrouter/bytedance-seed/seed-1.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/bytedance-seed/seed-1.6-flash": {
+  "openrouter/anthropic/claude-sonnet-5.5": {
     toolCall: true,
     structuredOutput: true
   },
   "openrouter/bytedance-seed/seed-2-1-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/bytedance-seed/seed-2.0-code": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28370,6 +31164,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "openrouter/cohere/command-a": {
     toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/cohere/command-a-plus": {
+    toolCall: true,
     structuredOutput: true
   },
   "openrouter/cohere/command-r-08-2024": {
@@ -28400,17 +31198,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/deepseek/deepseek-r1": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/deepseek/deepseek-r1-0528": {
     toolCall: true,
     structuredOutput: true
-  },
-  "openrouter/deepseek/deepseek-r1-distill-llama-70b": {
-    toolCall: false,
-    structuredOutput: false
   },
   "openrouter/deepseek/deepseek-v3.1-terminus": {
     toolCall: true,
@@ -28448,11 +31238,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/dots-studio/dots-3-note-preview:free": {
+  "openrouter/deepseek/deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/google/gemini-2.5-flash": {
+  "openrouter/elorian/glimpse": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/fireworks/ember-1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28460,19 +31254,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: true
   },
-  "openrouter/google/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/google/gemini-2.5-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/google/gemini-2.5-pro-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/google/gemini-2.5-pro-preview-05-06": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28536,6 +31318,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/google/gemini-nano-banana-2.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/google/gemma-2-27b-it": {
     toolCall: false,
     structuredOutput: true
@@ -28580,10 +31370,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: true
   },
-  "openrouter/ibm-granite/granite-4.0-h-micro": {
-    toolCall: false,
-    structuredOutput: false
-  },
   "openrouter/ibm-granite/granite-4.2-8b": {
     toolCall: true,
     structuredOutput: true
@@ -28596,31 +31382,39 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/inception/mercury-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/inclusionai/ling-3.0-flash": {
     toolCall: true,
     structuredOutput: false
   },
-  "openrouter/inclusionai/ling-3.0-flash-fin": {
+  "openrouter/inclusionai/ling-3.0-flash-vl": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/inclusionai/ling-3.0-flash-fin:free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "openrouter/inclusionai/ling-3.0-flash-sante:free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "openrouter/kwaipilot/kat-coder-pro-v2": {
+  "openrouter/inclusionai/ling-3.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/kwaipilot/kat-coder-pro-v2.5": {
+  "openrouter/inference-net/schematron-v2-small": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/inference-net/schematron-v2-turbo": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/liquid/lfm-2.5-2.6b": {
     toolCall: true,
     structuredOutput: true
   },
   "openrouter/liquid/lfm-2.5-2.6b:free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/liquid/lfm-2.5-24b-a2b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28688,13 +31482,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/meta/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/meta/muse-wonder": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/microsoft/phi-4": {
     toolCall: false,
     structuredOutput: true
-  },
-  "openrouter/microsoft/wizardlm-2-8x22b": {
-    toolCall: false,
-    structuredOutput: false
   },
   "openrouter/minimax/minimax-01": {
     toolCall: false,
@@ -28706,7 +31504,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "openrouter/minimax/minimax-m2": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "openrouter/minimax/minimax-m2-her": {
     toolCall: false,
@@ -28722,9 +31520,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "openrouter/minimax/minimax-m2.7": {
     toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "openrouter/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/minimax/minimax-m3.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28760,6 +31562,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/mistralai/mistral-large-4-0": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/mistralai/mistral-medium-3": {
     toolCall: true,
     structuredOutput: true
@@ -28789,8 +31595,8 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "openrouter/mistralai/mistral-small-3.1-24b-instruct": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: true
   },
   "openrouter/mistralai/mistral-small-3.2-24b-instruct": {
     toolCall: true,
@@ -28803,6 +31609,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "openrouter/mistralai/voxtral-small-24b-2507": {
     toolCall: true,
     structuredOutput: true
+  },
+  "openrouter/moondream/moondream3-preview": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/moondream/moondream3.1-9b-a2b": {
+    toolCall: false,
+    structuredOutput: false
   },
   "openrouter/moonshotai/kimi-k2": {
     toolCall: true,
@@ -28832,33 +31646,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/morph/morph-v3-fast": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: true
   },
   "openrouter/morph/morph-v3-large": {
     toolCall: false,
     structuredOutput: true
   },
-  "openrouter/nex-agi/nex-n2.5-mini:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/nex-agi/nex-n2.5-pro:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/nousresearch/hermes-3-llama-3.1-405b": {
+  "openrouter/nex-agi/nex-n2.5-mini": {
     toolCall: false,
     structuredOutput: true
   },
-  "openrouter/nousresearch/hermes-3-llama-3.1-70b": {
-    toolCall: false,
+  "openrouter/nex-agi/nex-n2.5-pro": {
+    toolCall: true,
     structuredOutput: true
   },
   "openrouter/nousresearch/hermes-4-405b": {
     toolCall: false,
-    structuredOutput: false
+    structuredOutput: true
   },
   "openrouter/nvidia/nemotron-3-nano-30b-a3b": {
     toolCall: true,
@@ -28869,10 +31679,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: false
   },
   "openrouter/nvidia/nemotron-3-super-120b-a12b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "openrouter/nvidia/nemotron-3-super-120b-a12b:free": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28900,7 +31706,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "openrouter/openai/gpt-3.5-turbo": {
+  "openrouter/nvidia/nemotron-3.5-super-vl": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/nvidia/nemotron-3.5-super-vl:free": {
     toolCall: true,
     structuredOutput: true
   },
@@ -28912,21 +31722,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/openai/gpt-3.5-turbo-instruct": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "openrouter/openai/gpt-4": {
     toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/openai/gpt-4-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/openai/gpt-4-turbo-preview": {
-    toolCall: true,
-    structuredOutput: true
+    structuredOutput: false
   },
   "openrouter/openai/gpt-4.1": {
     toolCall: true,
@@ -29008,10 +31806,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/openai/gpt-5.2-chat": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/openai/gpt-5.2-codex": {
     toolCall: true,
     structuredOutput: true
@@ -29084,6 +31878,38 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6.1-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/openai/gpt-6.1-terra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/openai/gpt-audio": {
     toolCall: true,
     structuredOutput: true
@@ -29108,35 +31934,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/openai/o1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/openai/o1-pro": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "openrouter/openai/o3": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/openai/o3-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/openai/o3-mini-high": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/openai/o3-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/openai/o4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/openai/o4-mini-high": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29160,8 +31962,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
+  "openrouter/particle-ai/particle-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/perceptron/perceptron-mk1": {
     toolCall: false,
+    structuredOutput: true
+  },
+  "openrouter/perceptron/perceptron-mk1.5": {
+    toolCall: true,
     structuredOutput: true
   },
   "openrouter/perplexity/sonar": {
@@ -29184,21 +31994,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "openrouter/poolside/laguna-s-2.1": {
+  "openrouter/prism-ml/ternary-bonsai-2-27b": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
-  "openrouter/poolside/laguna-s-2.1:free": {
+  "openrouter/prism-ml/ternary-bonsai-2-9b": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "openrouter/poolside/laguna-xs-2.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "openrouter/poolside/laguna-xs-2.1:free": {
-    toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "openrouter/qwen/qwen-2.5-72b-instruct": {
     toolCall: true,
@@ -29216,10 +32018,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/qwen/qwen-plus-2025-07-28": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/qwen/qwen2.5-vl-72b-instruct": {
     toolCall: false,
     structuredOutput: true
@@ -29227,10 +32025,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "openrouter/qwen/qwen3-14b": {
     toolCall: true,
     structuredOutput: true
-  },
-  "openrouter/qwen/qwen3-235b-a22b": {
-    toolCall: true,
-    structuredOutput: false
   },
   "openrouter/qwen/qwen3-235b-a22b-2507": {
     toolCall: true,
@@ -29248,17 +32042,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/qwen/qwen3-30b-a3b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "openrouter/qwen/qwen3-32b": {
     toolCall: true,
     structuredOutput: true
-  },
-  "openrouter/qwen/qwen3-8b": {
-    toolCall: true,
-    structuredOutput: false
   },
   "openrouter/qwen/qwen3-coder": {
     toolCall: true,
@@ -29276,31 +32062,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/qwen/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/qwen/qwen3-max": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/qwen/qwen3-max-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/qwen/qwen3-next-80b-a3b-instruct": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/qwen/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/qwen/qwen3-vl-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/qwen/qwen3-vl-235b-a22b-thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29312,15 +32078,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/qwen/qwen3-vl-32b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "openrouter/qwen/qwen3-vl-8b-instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/qwen/qwen3-vl-8b-thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29337,10 +32095,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "openrouter/qwen/qwen3.5-397b-a17b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/qwen/qwen3.5-9b": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29365,10 +32119,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "openrouter/qwen/qwen3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/qwen/qwen3.6-max-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29404,6 +32154,22 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/qwen/qwen3.8-max-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/qwen/qwen3.8-omni-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/recursive/flint-v1.0:free": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/reflection/beam-1.0-501b-a23b": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/rekaai/reka-edge": {
     toolCall: true,
     structuredOutput: true
@@ -29420,7 +32186,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "openrouter/sakana/fugu-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/sakana/fugu-ultra-v2": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29433,18 +32207,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "openrouter/sao10k/l3.1-euryale-70b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "openrouter/sao10k/l3.3-euryale-70b": {
     toolCall: false,
     structuredOutput: true
+  },
+  "openrouter/scaledown/extract": {
+    toolCall: false,
+    structuredOutput: false
+  },
+  "openrouter/scaledown/summarize": {
+    toolCall: false,
+    structuredOutput: false
   },
   "openrouter/stepfun/step-3.5-flash": {
     toolCall: true,
     structuredOutput: false
   },
   "openrouter/stepfun/step-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "openrouter/stepfun/step-5-preview": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29485,7 +32267,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "openrouter/thedrummer/unslopnemo-12b": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: true
   },
   "openrouter/thinkingmachines/inkling": {
@@ -29504,11 +32286,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "openrouter/unbiased/pareto-26.10": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/unbiased/pareto-26.9": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "openrouter/undi95/remm-slerp-l2-13b": {
     toolCall: false,
     structuredOutput: true
   },
-  "openrouter/upstage/solar-pro-3": {
+  "openrouter/upstage/solar-mini4": {
     toolCall: true,
     structuredOutput: true
   },
@@ -29540,21 +32330,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/x-ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "openrouter/x-ai/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/xiaomi/mimo-v2.5": {
+  "openrouter/xiaomi/mimo-v2.6-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/xiaomi/mimo-v2.5-pro": {
+  "openrouter/xiaomi/mimo-v2.6-pro": {
     toolCall: true,
     structuredOutput: true
   },
-  "openrouter/z-ai/glm-4.5": {
+  "openrouter/xiaomi/mimo-v2.6-pro-ultraspeed": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
+  },
+  "openrouter/xingchen-agi/xing4.0-29b-a4b:free": {
+    toolCall: true,
+    structuredOutput: true
   },
   "openrouter/z-ai/glm-4.5-air": {
     toolCall: true,
@@ -29604,168 +32402,228 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "openrouter/z-ai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "openrouter/z-ai/glm-5.3-prime": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "openrouter/z-ai/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: false
   },
-  "opper/anthropic/claude-fable-5": {
+  "opper/claude-fable-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-haiku-4-5": {
+  "opper/claude-fable-5-1": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-opus-4-5": {
+  "opper/claude-haiku-4-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-opus-4-6": {
+  "opper/claude-opus-4-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-opus-4-7": {
+  "opper/claude-opus-4-6": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-opus-4-8": {
+  "opper/claude-opus-4-7": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-opus-5": {
+  "opper/claude-opus-4-8": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-sonnet-4-5": {
+  "opper/claude-opus-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-sonnet-4-6": {
+  "opper/claude-sonnet-4-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/anthropic/claude-sonnet-5": {
+  "opper/claude-sonnet-4-6": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/gemini/gemini-3-flash-preview": {
+  "opper/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/gemini/gemini-3.1-pro-preview": {
+  "opper/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/gemini/gemini-3.5-flash": {
+  "opper/deepseek-v4-pro": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/gemini/gemini-3.5-flash-lite": {
+  "opper/gemini-3-flash-preview": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/meta/muse-spark-1.2": {
+  "opper/gemini-3.1-pro-preview": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/minimax/m3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opper/mistral/devstral-2512": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opper/mistral/mistral-large-2512": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opper/mistral/mistral-small-2603": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "opper/moonshot/kimi-k3": {
+  "opper/gemini-3.5-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.3-chat-latest": {
+  "opper/gemini-3.5-flash-lite": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.3-codex": {
+  "opper/gemini-3.8-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.4": {
+  "opper/gemma-4-31b-it": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.4-mini": {
+  "opper/glm-5.2": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.4-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opper/openai/gpt-5.4-pro": {
+  "opper/glm-5.3": {
     toolCall: true,
     structuredOutput: false
   },
-  "opper/openai/gpt-5.5": {
+  "opper/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opper/gpt-5.3-codex": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.5-pro": {
+  "opper/gpt-5.4": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.6-luna": {
+  "opper/gpt-5.4-mini": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.6-sol": {
+  "opper/gpt-5.4-nano": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/openai/gpt-5.6-terra": {
+  "opper/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opper/gpt-5.5": {
     toolCall: true,
     structuredOutput: true
   },
-  "opper/perplexity/sonar": {
+  "opper/gpt-5.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/minimax-m2.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/minimax-m3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opper/muse-spark-1.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/qwen3.6-35b-a3b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/qwen3.8-2.4t-a95b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "opper/qwen3.8-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "opper/sonar": {
     toolCall: false,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "opper/perplexity/sonar-pro": {
+  "opper/sonar-pro": {
     toolCall: false,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "opper/perplexity/sonar-reasoning-pro": {
+  "opper/sonar-reasoning-pro": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "opper/vertexai/gemini-3.7-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opper/vertexai/gemini-3.7-flash-eu": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opper/xai/grok-4.3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opper/xai/grok-4.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opper/xai/grok-4.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "opper/xai/grok-build-0.1": {
-    toolCall: true,
     structuredOutput: true
   },
   "orcarouter/anthropic/claude-fable-5": {
@@ -29793,10 +32651,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "orcarouter/anthropic/claude-opus-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "orcarouter/anthropic/claude-sonnet-4.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -30096,10 +32950,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "orcarouter/openai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "orcarouter/orcarouter/auto": {
     toolCall: true,
     structuredOutput: true
@@ -30248,10 +33098,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "ovhcloud/mistral-7b-instruct-v0.3": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "ovhcloud/mistral-nemo-instruct-2407": {
     toolCall: true,
     structuredOutput: true
@@ -30262,14 +33108,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "ovhcloud/qwen2.5-vl-72b-instruct": {
     toolCall: false,
-    structuredOutput: true
-  },
-  "ovhcloud/qwen3-32b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "ovhcloud/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
     structuredOutput: true
   },
   "ovhcloud/qwen3.5-397b-a17b": {
@@ -30296,6 +33134,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "pareto/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "pendra/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
@@ -30320,25 +33162,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "perplexity/sonar": {
-    toolCall: false,
-    structuredOutput: null
+  "perplexity-agent/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
   },
-  "perplexity/sonar-deep-research": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "perplexity/sonar-pro": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "perplexity/sonar-reasoning-pro": {
-    toolCall: false,
-    structuredOutput: null
+  "perplexity-agent/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
   },
   "perplexity-agent/anthropic/claude-haiku-4-5": {
     toolCall: true,
     structuredOutput: null
+  },
+  "perplexity-agent/anthropic/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "perplexity-agent/anthropic/claude-opus-4-5": {
     toolCall: true,
@@ -30352,6 +33190,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "perplexity-agent/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/anthropic/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "perplexity-agent/anthropic/claude-sonnet-4-5": {
     toolCall: true,
     structuredOutput: null
@@ -30360,17 +33206,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "perplexity-agent/deepseek/deepseek-v4-flash-0731": {
+  "perplexity-agent/anthropic/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "perplexity-agent/google/gemini-2.5-flash": {
+  "perplexity-agent/anthropic/claude-sonnet-5-5": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "perplexity-agent/google/gemini-2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "perplexity-agent/google/gemini-3-flash-preview": {
     toolCall: true,
@@ -30380,479 +33222,139 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "perplexity-agent/moonshot-ai/kimi-k2.7-code": {
+  "perplexity-agent/google/gemini-3.6-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "perplexity-agent/moonshot-ai/kimi-k3": {
+  "perplexity-agent/google/gemini-3.7-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "perplexity-agent/nvidia/nemotron-3-super-120b-a12b": {
+  "perplexity-agent/google/gemini-3.8-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "perplexity-agent/openai/gpt-5-mini": {
+  "perplexity-agent/google/gemini-4-argon": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "perplexity-agent/openai/gpt-5.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "perplexity-agent/openai/gpt-5.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "perplexity-agent/openai/gpt-5.4": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "perplexity-agent/openai/gpt-5.5": {
     toolCall: true,
     structuredOutput: null
   },
+  "perplexity-agent/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/perplexity/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/perplexity/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/perplexity/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/perplexity/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "perplexity-agent/perplexity/nemotron-3.5-super-120b-a12b": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "perplexity-agent/perplexity/sonar": {
     toolCall: true,
     structuredOutput: null
   },
-  "perplexity-agent/xai/grok-4-1-fast-non-reasoning": {
+  "perplexity-agent/xai/grok-4.5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "perplexity-agent/xai/grok-4.6": {
     toolCall: true,
     structuredOutput: true
   },
-  "pioneer/claude-3-7-sonnet-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-fable-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-haiku-4-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-opus-4-1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-opus-4-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-opus-4-6": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-opus-4-7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-opus-4-8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-opus-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-sonnet-4-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-sonnet-4-6": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/claude-sonnet-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/deepseek-ai/DeepSeek-V3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/deepseek-ai/DeepSeek-V3.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/deepseek-ai/DeepSeek-V4-Flash": {
+  "perplexity-agent/xai/grok-4.7": {
     toolCall: true,
     structuredOutput: true
-  },
-  "pioneer/deepseek-ai/DeepSeek-V4-Pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/devstral-2": {
-    toolCall: true,
-    structuredOutput: null
   },
   "pioneer/fastino/gliguard-LLMGuardrails-300M": {
-    toolCall: true,
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/fastino/gliguard-PII-multi": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "pioneer/fastino/GLiNER-2.5-Decide": {
+    toolCall: false,
     structuredOutput: null
   },
   "pioneer/fastino/gliner2-base-v1": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: null
   },
   "pioneer/fastino/gliner2-large-v1": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: null
   },
   "pioneer/fastino/gliner2-multi-large-v1": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: null
   },
   "pioneer/fastino/gliner2-multi-v1": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: null
   },
   "pioneer/fastino/gliner2-privacy-filter-PII-multi": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/gemini-3-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gemini-3.1-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gemini-3.1-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gemini-3.5-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gemini-3.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gemini-3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/google/diffusiongemma-26B-A4B-it": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/google/gemma-3-4b-pt": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/google/gemma-4-12B-it": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/google/gemma-4-31B-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/google/gemma-4-E2B-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/google/gemma-4-E4B-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-4.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-4.1-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-4.1-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-4o": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-4o-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.3-codex": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.4": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.4-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.6-luna": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.6-sol": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/gpt-5.6-terra": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/grok-4.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/HuggingFaceTB/SmolLM3-3B-Base": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/LiquidAI/LFM2-24B-A2B": {
     toolCall: false,
     structuredOutput: null
   },
-  "pioneer/meta-llama/Llama-3.1-8B-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/meta-llama/Llama-3.2-1B": {
+  "pioneer/fastino/gliner2.5-base-v1": {
     toolCall: false,
     structuredOutput: null
   },
-  "pioneer/meta-llama/Llama-3.2-1B-Instruct": {
+  "pioneer/fastino/gliner2.5-multi-v1": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "pioneer/meta-llama/Llama-3.2-3B": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "pioneer/meta-llama/Llama-3.2-3B-Instruct": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "pioneer/meta-llama/Llama-3.3-70B-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/meta/muse-spark-1.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/MiniMaxAI/MiniMax-M2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/MiniMaxAI/MiniMax-M3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/mistral-large-3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/mistral-medium-3.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/mistralai/Codestral-22B-v0.1": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "pioneer/mistralai/Magistral-Small-2506": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/mistralai/Ministral-8B-Instruct-2410": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/mistralai/Mistral-7B-Instruct-v0.3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/mistralai/Mistral-Nemo-Instruct-2407": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/mistralai/Mistral-Small-4-119B-2603": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/mistralai/Pixtral-12B-2409": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/moonshotai/Kimi-K2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/moonshotai/Kimi-K2.7-Code": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/moonshotai/Kimi-K3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16": {
-    toolCall: true,
     structuredOutput: null
   },
   "pioneer/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16": {
     toolCall: true,
     structuredOutput: true
   },
-  "pioneer/openai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/openai/gpt-oss-20b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/pioneer/auto": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/poolside/laguna-s-2.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "pioneer/Qwen/Qwen2.5-Coder-0.5B": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "pioneer/Qwen/Qwen3-1.7B-Base": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/Qwen/Qwen3-235B-A22B-Instruct-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/Qwen/Qwen3-32B": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/Qwen/Qwen3-4B-Base": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/Qwen/Qwen3-4B-Instruct-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/Qwen/Qwen3-8B": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/Qwen/Qwen3.5-9B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/Qwen/Qwen3.6-27B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/Qwen/Qwen3.6-35B-A3B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/qwen3.6-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/qwen3.6-max-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/qwen3.6-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/qwen3.7-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/qwen3.7-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/sakana/fugu-ultra": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/XiaomiMiMo/MiMo-V2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/XiaomiMiMo/MiMo-V2.5-Pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "pioneer/zai-org/GLM-5.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "pioneer/zai-org/GLM-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "poe/anthropic/claude-haiku-3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/anthropic/claude-haiku-3.5": {
+  "pioneer/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4": {
     toolCall: true,
     structuredOutput: null
   },
   "poe/anthropic/claude-haiku-4.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/anthropic/claude-opus-4": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/anthropic/claude-opus-4.1": {
     toolCall: true,
     structuredOutput: null
   },
@@ -30872,22 +33374,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/anthropic/claude-sonnet-3.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/anthropic/claude-sonnet-3.5-june": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/anthropic/claude-sonnet-3.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/anthropic/claude-sonnet-4": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/anthropic/claude-sonnet-4.5": {
     toolCall: true,
     structuredOutput: null
@@ -30901,18 +33387,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "poe/cerebras/llama-3.1-8b-cs": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/cerebras/llama-3.3-70b-cs": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "poe/cerebras/qwen3-235b-2507-cs": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/cerebras/qwen3-32b-cs": {
     toolCall: true,
     structuredOutput: null
   },
@@ -30936,63 +33410,43 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/fireworks-ai/kimi-k2.5-fw": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/gemini-2.0-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/gemini-2.0-flash-lite": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/gemini-2.5-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/gemini-2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/google/gemini-3-flash": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/gemini-3-pro": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "poe/google/gemini-3.1-flash-lite": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "poe/google/gemini-3.1-pro": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "poe/google/gemini-3.5-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "poe/google/gemini-deep-research": {
+  "poe/google/gemini-3.5-flash-lite": {
     toolCall: true,
+    structuredOutput: true
+  },
+  "poe/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "poe/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "poe/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "poe/google/gemini-omni-1.1-flash": {
+    toolCall: false,
     structuredOutput: null
   },
   "poe/google/gemma-4-31b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/imagen-3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/imagen-3-fast": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31004,31 +33458,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/google/imagen-4-ultra": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/google/lyria": {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/google/nano-banana": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/google/nano-banana-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/veo-2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/veo-3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/google/veo-3-fast": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31072,10 +33506,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/novita/glm-4.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/novita/glm-4.7-flash": {
     toolCall: true,
     structuredOutput: null
@@ -31088,14 +33518,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/novita/kimi-k2-thinking": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/novita/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/novita/kimi-k2.6": {
     toolCall: true,
     structuredOutput: null
@@ -31104,47 +33526,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/openai/chatgpt-4o-latest": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/dall-e-3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-3.5-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-3.5-turbo-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-3.5-turbo-raw": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-4-classic": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-4-classic-0314": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-4-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/openai/gpt-4.1": {
     toolCall: true,
     structuredOutput: null
   },
   "poe/openai/gpt-4.1-mini": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-4.1-nano": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31160,23 +33546,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/openai/gpt-4o-mini-search": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/openai/gpt-4o-search": {
     toolCall: true,
     structuredOutput: null
   },
   "poe/openai/gpt-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5-chat": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5-codex": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31196,31 +33570,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/openai/gpt-5.1-codex": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5.1-codex-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5.1-codex-mini": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5.1-instant": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/openai/gpt-5.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5.2-codex": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5.2-instant": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31233,10 +33583,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "poe/openai/gpt-5.3-codex-spark": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/gpt-5.3-instant": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31264,10 +33610,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "poe/openai/gpt-image-1": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/openai/gpt-image-1-mini": {
     toolCall: true,
     structuredOutput: null
@@ -31280,27 +33622,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "poe/openai/o1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/o1-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/openai/o3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/o3-deep-research": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/o3-mini": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/o3-mini-high": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31308,31 +33630,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/openai/o4-mini": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/o4-mini-deep-research": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/sora-2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/openai/sora-2-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/poetools/claude-code": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/runwayml/runway": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/runwayml/runway-gen-4-turbo": {
     toolCall: true,
     structuredOutput: null
   },
@@ -31356,26 +33654,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "poe/xai/grok-4": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/xai/grok-4-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/xai/grok-4-fast-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/xai/grok-4.1-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "poe/xai/grok-4.1-fast-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "poe/xai/grok-4.20-multi-agent": {
     toolCall: true,
     structuredOutput: null
@@ -31396,6 +33674,286 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "prime/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-opus-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-opus-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-opus-4.8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-opus-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-sonnet-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/anthropic/claude-sonnet-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/deepseek/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/google/gemma-3-27b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/meta-llama/llama-3.3-70b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/meta/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/mistralai/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/mistralai/mistral-nemo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/mistralai/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/mistralai/mixtral-8x22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/moonshotai/kimi-k2-0905": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-4.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-4.1-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-4.1-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-4o": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-4o-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.3-codex": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.4-mini": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.4-nano": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.6-luna-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.6-sol-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-5.6-terra-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/qwen/qwen3-30b-a3b-instruct-2507": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/qwen/qwen3-coder-next": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/qwen/qwen3-vl-235b-a22b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/qwen/qwen3-vl-30b-a3b-instruct": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/x-ai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "prime/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "prime/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: false
+  },
   "privatemode-ai/deepseek-ocr-2": {
     toolCall: false,
     structuredOutput: null
@@ -31404,19 +33962,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "privatemode-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "privatemode-ai/glm-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "privatemode-ai/glm-latest": {
     toolCall: true,
     structuredOutput: true
   },
   "privatemode-ai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "privatemode-ai/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "privatemode-ai/kimi-latest": {
     toolCall: true,
     structuredOutput: true
   },
@@ -31436,14 +33994,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "qihang-ai/claude-opus-4-5-20251101": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "qihang-ai/claude-sonnet-4-5-20250929": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "qihang-ai/gemini-2.5-flash": {
     toolCall: true,
     structuredOutput: true
@@ -31460,315 +34010,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "qihang-ai/gpt-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "qihang-ai/gpt-5.2-codex": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "qiniu-ai/claude-3.5-haiku": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-3.5-sonnet": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-3.7-sonnet": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-4.0-opus": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-4.0-sonnet": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-4.1-opus": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-4.5-haiku": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-4.5-opus": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/claude-4.5-sonnet": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek-r1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek-r1-0528": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek-v3": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek-v3-0324": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek-v3.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek/deepseek-math-v2": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek/deepseek-v3.1-terminus": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek/deepseek-v3.1-terminus-thinking": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek/deepseek-v3.2-251201": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek/deepseek-v3.2-exp": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/deepseek/deepseek-v3.2-exp-thinking": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-1.5-pro-32k": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-1.5-thinking-pro": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-1.5-vision-pro": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-seed-1.6": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-seed-1.6-flash": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-seed-1.6-thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-seed-2.0-code": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "qiniu-ai/doubao-seed-2.0-lite": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "qiniu-ai/doubao-seed-2.0-mini": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/doubao-seed-2.0-pro": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-2.0-flash": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-2.0-flash-lite": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-2.5-flash": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-2.5-flash-image": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-2.5-flash-lite": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-2.5-pro": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-3.0-flash-preview": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-3.0-pro-image-preview": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/gemini-3.0-pro-preview": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/glm-4.5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/glm-4.5-air": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/gpt-oss-20b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/kimi-k2": {
-    toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "qiniu-ai/kling-v2-6": {
     toolCall: false,
     structuredOutput: false
   },
-  "qiniu-ai/meituan/longcat-flash-chat": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/meituan/longcat-flash-lite": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/mimo-v2-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "qiniu-ai/MiniMax-M1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/minimax/minimax-m2": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/minimax/minimax-m2.1": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "qiniu-ai/minimax/minimax-m2.5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/minimax/minimax-m2.5-highspeed": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/moonshotai/kimi-k2-0905": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/moonshotai/kimi-k2-thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/moonshotai/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/openai/gpt-5": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/openai/gpt-5.2": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen-max-2025-01-25": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen-turbo": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen-vl-max-2025-01-25": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen2.5-vl-72b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen2.5-vl-7b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-235b-a22b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-235b-a22b-instruct-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-235b-a22b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-30b-a3b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-30b-a3b-instruct-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-30b-a3b-thinking-2507": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-32b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-coder-480b-a35b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-max": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-max-preview": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-next-80b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-next-80b-a3b-thinking": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/qwen3-vl-30b-a3b-thinking": {
     toolCall: true,
     structuredOutput: false
   },
@@ -31776,61 +34030,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
-  "qiniu-ai/stepfun-ai/gelab-zero-4b-preview": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/stepfun/step-3.5-flash": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "qiniu-ai/x-ai/grok-4-fast": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/x-ai/grok-4-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/x-ai/grok-4-fast-reasoning": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/x-ai/grok-4.1-fast": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/x-ai/grok-4.1-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/x-ai/grok-4.1-fast-reasoning": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/x-ai/grok-code-fast-1": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/xiaomi/mimo-v2-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "qiniu-ai/z-ai/autoglm-phone-9b": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/z-ai/glm-4.6": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "qiniu-ai/z-ai/glm-4.7": {
-    toolCall: true,
-    structuredOutput: false
-  },
   "qiniu-ai/z-ai/glm-5": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
+  },
+  "reflection/Beam-1.0-501B-A23B": {
+    toolCall: true,
+    structuredOutput: true
   },
   "regolo-ai/apertus-70b": {
     toolCall: true,
@@ -31868,20 +34074,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "regolo-ai/llama-3.3-70b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "regolo-ai/mistral-small-4-119b": {
     toolCall: true,
     structuredOutput: null
   },
   "regolo-ai/qwen-image": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "regolo-ai/qwen3-coder-next": {
-    toolCall: true,
     structuredOutput: null
   },
   "regolo-ai/qwen3-embedding-8b": {
@@ -31928,6 +34126,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "requesty/claude-haiku-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-haiku-5-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/claude-opus-4-1": {
     toolCall: true,
     structuredOutput: true
@@ -31968,6 +34174,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "requesty/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-opus-5-5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/claude-opus-5@eu": {
     toolCall: true,
     structuredOutput: true
@@ -31988,11 +34202,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "requesty/claude-sonnet-4@eu": {
+  "requesty/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: true
   },
-  "requesty/claude-sonnet-5": {
+  "requesty/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/claude-sonnet-5-5@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32025,6 +34243,22 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "requesty/deepseek-v4-pro@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4.1-flash-1017@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/deepseek-v4.1-flash@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32108,6 +34342,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "requesty/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gemini-4-argon@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/gemma-4-26b-a4b-it": {
     toolCall: true,
     structuredOutput: true
@@ -32131,10 +34373,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "requesty/glm-5.2-fast": {
     toolCall: true,
     structuredOutput: false
-  },
-  "requesty/glm-5.2@eu": {
-    toolCall: true,
-    structuredOutput: true
   },
   "requesty/glm-5.3": {
     toolCall: true,
@@ -32248,6 +34486,38 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "requesty/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-6-luna@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-6-sol@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-6.1-sol@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/gpt-6.1-terra@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/grok-4.2-beta": {
     toolCall: true,
     structuredOutput: true
@@ -32261,6 +34531,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "requesty/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/grok-4.7": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32284,6 +34558,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "requesty/kimi-k2.5@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/kimi-k2.6": {
     toolCall: true,
     structuredOutput: true
@@ -32304,17 +34582,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "requesty/kimi-k3@eu": {
+  "requesty/kimi-k3.1-pro": {
     toolCall: true,
     structuredOutput: true
   },
-  "requesty/laguna-m.1": {
-    toolCall: false,
-    structuredOutput: false
+  "requesty/kimi-k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: true
   },
-  "requesty/laguna-xs.2": {
-    toolCall: false,
-    structuredOutput: false
+  "requesty/kimi-k3@eu": {
+    toolCall: true,
+    structuredOutput: true
   },
   "requesty/leanstral-1-5": {
     toolCall: true,
@@ -32344,6 +34622,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: false
   },
+  "requesty/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/minimax-m2.7": {
     toolCall: true,
     structuredOutput: true
@@ -32356,7 +34642,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "requesty/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/minimax-m3.1-flash@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "requesty/minimax-m3@eu": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-large-4": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/mistral-large-4@eu": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32387,6 +34689,18 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "requesty/muse-glimmer-30b": {
     toolCall: true,
     structuredOutput: false
+  },
+  "requesty/muse-spark-1.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "requesty/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: false
+  },
+  "requesty/muse-wonder-1.0": {
+    toolCall: true,
+    structuredOutput: true
   },
   "requesty/nemotron-3-nano-omni": {
     toolCall: true,
@@ -32508,13 +34822,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "requesty/thinkingcap-qwen3.6-27b": {
+  "requesty/step-5-preview": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "requesty/thinkingcap-qwen3.6-27b@eu": {
-    toolCall: true,
-    structuredOutput: false
+    structuredOutput: true
   },
   "routing-run/claude-opus-4-8": {
     toolCall: true,
@@ -32576,18 +34886,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "runinfra/deepseek-ai/DeepSeek-V4-Flash-0731": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "runinfra/deepseek-ai/DeepSeek-V4-Pro-0813": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "runinfra/Inferact/Qwen3.8-2.4T-A95B-NVFP4": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "runinfra/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16": {
     toolCall: true,
     structuredOutput: true
@@ -32597,6 +34895,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "runinfra/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "runinfra/zai-org/GLM-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32620,11 +34922,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "sarvam/sarvam-105b": {
+  "sambanova/DeepSeek-V3.1": {
     toolCall: true,
     structuredOutput: null
   },
-  "sarvam/sarvam-30b": {
+  "sambanova/DeepSeek-V3.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sambanova/gemma-4-31B-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sambanova/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "sambanova/Meta-Llama-3.3-70B-Instruct": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "sambanova/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "sarvam/sarvam-105b": {
     toolCall: true,
     structuredOutput: null
   },
@@ -32636,6 +34958,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "scaleway/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "scaleway/gemma-4-26b-a4b-it": {
     toolCall: true,
     structuredOutput: true
@@ -32644,9 +34970,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "scaleway/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "scaleway/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: null
+  },
+  "scaleway/lightonocr-3-0.8b": {
+    toolCall: false,
+    structuredOutput: false
   },
   "scaleway/llama-3.3-70b-instruct": {
     toolCall: true,
@@ -32660,15 +34994,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "scaleway/pixtral-12b-2409": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "scaleway/qwen3-235b-a22b-instruct-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "scaleway/qwen3-coder-30b-a3b-instruct": {
     toolCall: true,
     structuredOutput: null
   },
@@ -32684,12 +35010,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "scaleway/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "scaleway/whisper-large-v3": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "scnet-token-plan/DeepSeek-V3.2": {
-    toolCall: null,
     structuredOutput: null
   },
   "scnet-token-plan/DeepSeek-V4-Flash": {
@@ -32705,6 +35031,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "scnet-token-plan/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "scnet-token-plan/DeepSeek-V4.1-Flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32743,10 +35073,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "scnet-token-plan/Kimi-K3": {
     toolCall: true,
     structuredOutput: true
-  },
-  "scnet-token-plan/MiMo-V2.5-Pro": {
-    toolCall: null,
-    structuredOutput: null
   },
   "scnet-token-plan/MiniMax-M2.5": {
     toolCall: true,
@@ -32792,6 +35118,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "sensenova/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "sensenova/glm-5.2": {
     toolCall: true,
     structuredOutput: true
@@ -32801,10 +35131,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "sensenova/sensenova-6.8-flash-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow/baidu/ERNIE-4.5-300B-A47B": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32840,7 +35166,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "siliconflow/deepseek-ai/DeepSeek-V4-Flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "siliconflow/deepseek-ai/DeepSeek-V4-Pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/deepseek-ai/DeepSeek-V4-Pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/google/gemma-4-12B-it": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32856,9 +35198,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "siliconflow/MiniMaxAI/MiniMax-M2.5": {
+  "siliconflow/meituan-longcat/LongCat-2.0": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: null
+  },
+  "siliconflow/MiniMaxAI/MiniMax-M3": {
+    toolCall: true,
+    structuredOutput: null
   },
   "siliconflow/moonshotai/Kimi-K2.5": {
     toolCall: true,
@@ -32868,12 +35214,20 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "siliconflow/openai/gpt-oss-120b": {
+  "siliconflow/moonshotai/Kimi-K2.7-Code": {
     toolCall: true,
     structuredOutput: true
   },
-  "siliconflow/openai/gpt-oss-20b": {
+  "siliconflow/moonshotai/Kimi-K3": {
     toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/openai/gpt-oss-120b": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "siliconflow/openai/gpt-oss-20b": {
+    toolCall: false,
     structuredOutput: true
   },
   "siliconflow/Qwen/Qwen2.5-72B-Instruct": {
@@ -32885,10 +35239,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "siliconflow/Qwen/Qwen3-14B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow/Qwen/Qwen3-235B-A22B-Thinking-2507": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32909,14 +35259,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "siliconflow/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow/Qwen/Qwen3-VL-235B-A22B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow/Qwen/Qwen3-VL-235B-A22B-Thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -32952,10 +35294,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "siliconflow/Qwen/Qwen3.5-397B-A17B": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "siliconflow/Qwen/Qwen3.5-9B": {
     toolCall: true,
     structuredOutput: true
@@ -32968,15 +35306,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "siliconflow/Qwen/Qwen3.8-2.4T-A95B": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "siliconflow/stepfun-ai/Step-3.5-Flash": {
     toolCall: true,
     structuredOutput: true
   },
   "siliconflow/tencent/Hunyuan-A13B-Instruct": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: true
   },
-  "siliconflow/tencent/Hy3-preview": {
+  "siliconflow/tencent/Hy3": {
     toolCall: true,
     structuredOutput: null
   },
@@ -32996,13 +35338,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "siliconflow/zai-org/GLM-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "siliconflow/zai-org/GLM-5.3-Flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "siliconflow/zai-org/GLM-5V-Turbo": {
     toolCall: true,
     structuredOutput: null
-  },
-  "siliconflow-cn/baidu/ERNIE-4.5-300B-A47B": {
-    toolCall: true,
-    structuredOutput: true
   },
   "siliconflow-cn/ByteDance-Seed/Seed-OSS-36B-Instruct": {
     toolCall: true,
@@ -33060,19 +35406,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "siliconflow-cn/Pro/MiniMaxAI/MiniMax-M2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow-cn/Pro/moonshotai/Kimi-K2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "siliconflow-cn/Pro/moonshotai/Kimi-K2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow-cn/Pro/zai-org/GLM-5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33092,10 +35426,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "siliconflow-cn/Qwen/Qwen3-235B-A22B-Thinking-2507": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "siliconflow-cn/Qwen/Qwen3-30B-A3B-Instruct-2507": {
     toolCall: true,
     structuredOutput: true
@@ -33109,18 +35439,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "siliconflow-cn/Qwen/Qwen3-Coder-30B-A3B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow-cn/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow-cn/Qwen/Qwen3-VL-235B-A22B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "siliconflow-cn/Qwen/Qwen3-VL-235B-A22B-Thinking": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33156,10 +35474,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "siliconflow-cn/Qwen/Qwen3.5-397B-A17B": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "siliconflow-cn/Qwen/Qwen3.5-4B": {
     toolCall: true,
     structuredOutput: null
@@ -33177,7 +35491,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "siliconflow-cn/tencent/Hunyuan-A13B-Instruct": {
-    toolCall: true,
+    toolCall: false,
     structuredOutput: true
   },
   "siliconflow-cn/zai-org/GLM-4.5-Air": {
@@ -33190,55 +35504,55 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "snowflake-cortex/claude-fable-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-haiku-4-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-opus-4-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-opus-4-6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-opus-4-7": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-opus-4-8": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-opus-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-sonnet-4-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-sonnet-4-6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/claude-sonnet-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "snowflake-cortex/deepseek-r1": {
-    toolCall: true,
-    structuredOutput: null
+    toolCall: false,
+    structuredOutput: false
   },
   "snowflake-cortex/gemini-3.1-pro": {
     toolCall: true,
     structuredOutput: true
   },
   "snowflake-cortex/mistral-large2": {
-    toolCall: true,
-    structuredOutput: null
+    toolCall: false,
+    structuredOutput: false
   },
   "snowflake-cortex/openai-gpt-4.1": {
     toolCall: true,
@@ -33285,15 +35599,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "snowflake-cortex/snowflake-llama3.3-70b": {
-    toolCall: true,
-    structuredOutput: null
+    toolCall: false,
+    structuredOutput: false
   },
   "stackit/cortecs/Llama-3.3-70B-Instruct-FP8-Dynamic": {
     toolCall: true,
-    structuredOutput: false
-  },
-  "stackit/google/gemma-3-27b-it": {
-    toolCall: false,
     structuredOutput: false
   },
   "stackit/intfloat/e5-mistral-7b-instruct": {
@@ -33316,33 +35626,181 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "stackit/Qwen/Qwen3.6-27B": {
+  "standardcompute/anthropic/claude-fable-5": {
     toolCall: true,
-    structuredOutput: false
+    structuredOutput: null
+  },
+  "standardcompute/anthropic/claude-fable-5.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/anthropic/claude-haiku-5.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/anthropic/claude-opus-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/anthropic/claude-sonnet-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/deepseek/deepseek-v4-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/deepseek/deepseek-v4-flash-0731": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/deepseek/deepseek-v4-pro-0813": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/google/gemini-2.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/google/gemini-2.5-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/minimax/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/mistralai/mistral-large-4-0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/moonshotai/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/openai/gpt-5.6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/openai/gpt-5.6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/openai/gpt-5.6-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/openai/gpt-6-astra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/qwen/qwen3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/qwen/qwen3.7-max": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/qwen/qwen3.7-plus": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/qwen/qwen3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/qwen/qwen3.8-max-0902": {
+    toolCall: true,
+    structuredOutput: null
   },
   "standardcompute/standardcompute": {
     toolCall: true,
     structuredOutput: true
   },
-  "stepfun/step-1-32k": {
+  "standardcompute/x-ai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/xiaomi/mimo-v2.5": {
     toolCall: true,
     structuredOutput: null
   },
-  "stepfun/step-2-16k": {
+  "standardcompute/xiaomi/mimo-v2.5-pro": {
     toolCall: true,
     structuredOutput: null
+  },
+  "standardcompute/xiaomi/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/xiaomi/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "standardcompute/z-ai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "standardcompute/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "stepfun/step-3.5-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "stepfun/step-3.5-flash-2603": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "stepfun/step-3.7-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "stepfun/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
   },
   "stepfun/step-tts-2": {
     toolCall: false,
@@ -33356,25 +35814,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "stepfun-ai/step-1-32k": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "stepfun-ai/step-2-16k": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "stepfun-ai/step-3.5-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "stepfun-ai/step-3.5-flash-2603": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "stepfun-ai/step-3.7-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "stepfun-ai/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
   },
   "stepfun-ai/step-tts-2": {
     toolCall: false,
@@ -33390,15 +35844,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "stepfun-step-plan/step-3.5-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "stepfun-step-plan/step-3.5-flash-2603": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "stepfun-step-plan/step-3.7-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "stepfun-step-plan/step-5-preview": {
+    toolCall: true,
+    structuredOutput: true
   },
   "stepfun-step-plan/step-router-v1": {
     toolCall: true,
@@ -33416,11 +35874,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "subconscious/subconscious/glm-5.2": {
+  "stepfun-ai-step-plan/step-5-preview": {
     toolCall: true,
     structuredOutput: true
   },
-  "subconscious/subconscious/tim-qwen3.6-27b": {
+  "subconscious/subconscious/deepseek-v4.1-flash-marathon": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "subconscious/subconscious/glm-5.3-marathon": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33460,11 +35922,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "synthetic/hf:MiniMaxAI/MiniMax-M3": {
+  "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "synthetic/hf:moonshotai/Kimi-K2.7-Code": {
+  "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33480,15 +35942,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "synthetic/hf:Qwen/Qwen3.6-27B": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "synthetic/hf:zai-org/GLM-4.7-Flash": {
     toolCall: true,
     structuredOutput: null
   },
-  "synthetic/hf:zai-org/GLM-5.2": {
+  "synthetic/hf:zai-org/GLM-5.3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33496,31 +35954,319 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "tencent-coding-plan/glm-5": {
+  "tempr/anthropic/claude-fable-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-fable-5-1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-haiku-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-haiku-4-5-20251001": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-opus-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-opus-4-5-20251101": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-opus-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-opus-4-7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-opus-4-8": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-sonnet-4-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-sonnet-4-5-20250929": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-sonnet-4-6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/anthropic/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/cerebras/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/cerebras/qwen-3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/deepseek/deepseek-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3-flash-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.1-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.1-pro-preview": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.1-pro-preview-customtools": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.5-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.5-flash-lite": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.7-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-3.8-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-embedding-001": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "tempr/google/gemini-embedding-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "tempr/google/gemini-flash-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemini-flash-lite-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemma-4-26b-a4b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/google/gemma-4-31b-it": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/groq/allam-2-7b": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "tempr/groq/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/groq/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/groq/qwen/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/minimax/MiniMax-M3": {
     toolCall: true,
     structuredOutput: null
   },
-  "tencent-coding-plan/hunyuan-2.0-instruct": {
+  "tempr/mistral/mistral-embed": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "tempr/mistral/mistral-large-2512": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/mistral/mistral-large-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/mistral/mistral-medium-2604": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/mistral/mistral-medium-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/mistral/mistral-small-2603": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/mistral/mistral-small-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/mistral/voxtral-small-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/mistral/zai-glm-5-3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/moonshot/kimi-k2.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/moonshot/kimi-k2.7-code": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/moonshot/kimi-k2.7-code-highspeed": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/moonshot/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xai/grok-4.20-0309-non-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xai/grok-4.20-0309-reasoning": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xai/grok-4.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xai/grok-4.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xai/grok-build-0.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/xiaomi-mimo/mimo-v2.6-flash": {
     toolCall: true,
     structuredOutput: null
   },
-  "tencent-coding-plan/hunyuan-2.0-thinking": {
+  "tempr/xiaomi-mimo/mimo-v2.6-pro": {
     toolCall: true,
     structuredOutput: null
   },
-  "tencent-coding-plan/hunyuan-t1": {
+  "tempr/xiaomi-mimo/mimo-v2.6-pro-ultraspeed": {
     toolCall: true,
     structuredOutput: null
   },
-  "tencent-coding-plan/hunyuan-turbos": {
+  "tempr/zai/glm-4.5": {
     toolCall: true,
     structuredOutput: null
   },
-  "tencent-coding-plan/kimi-k2.5": {
+  "tempr/zai/glm-4.5-air": {
     toolCall: true,
     structuredOutput: null
   },
-  "tencent-coding-plan/minimax-m2.5": {
+  "tempr/zai/glm-4.5-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-4.5v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-4.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-4.6v-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-4.7": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-4.7-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-4.7-flashx": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tempr/zai/glm-5-turbo": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/zai/glm-5.1": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/zai/glm-5.2": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/zai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/zai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/zai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "tempr/zai/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: null
   },
@@ -33548,45 +36294,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "tensorx/deepseek/deepseek-chat-v3.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/deepseek/deepseek-r1-0528": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/deepseek/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/deepseek/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "tensorx/deepseek/deepseek-v4-flash-0731": {
     toolCall: true,
     structuredOutput: true
   },
-  "tensorx/deepseek/deepseek-v4-pro": {
+  "tensorx/deepseek/deepseek-v4-pro-0813": {
     toolCall: true,
     structuredOutput: true
   },
-  "tensorx/minimax/minimax-m2.5": {
+  "tensorx/deepseek/deepseek-v4.1-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "tensorx/minimax/minimax-m3": {
     toolCall: true,
     structuredOutput: null
-  },
-  "tensorx/moonshotai/kimi-k2.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "tensorx/moonshotai/kimi-k2.6": {
-    toolCall: true,
-    structuredOutput: true
   },
   "tensorx/moonshotai/kimi-k2.7-code": {
     toolCall: true,
@@ -33596,47 +36318,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "tensorx/nvidia/nemotron-3-super-120b-a12b": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/openai/gpt-oss-120b": {
+  "tensorx/qwen/qwen3.8-2.4t-a95b": {
     toolCall: true,
     structuredOutput: true
   },
-  "tensorx/qwen/qwen3-235b-a22b-2507": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/qwen/qwen3-coder-30b-a3b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/qwen/qwen3-vl-235b-a22b-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/qwen/qwen3.5-122b-a10b": {
+  "tensorx/qwen/qwen3.8-27b": {
     toolCall: true,
     structuredOutput: true
   },
-  "tensorx/qwen/qwen3.5-9b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "tensorx/z-ai/glm-4.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/z-ai/glm-5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "tensorx/z-ai/glm-5-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "tensorx/z-ai/glm-5.1": {
+  "tensorx/qwen/qwen3.8-flash-next": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33644,9 +36334,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "tensorx/z-ai/glm-5v-turbo": {
+  "tensorx/z-ai/glm-5.3": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "tensorx/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "the-grid-ai/agent-max": {
     toolCall: true,
@@ -33657,6 +36351,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "the-grid-ai/agent-standard": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/bytedance-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/claude-opus-latest": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33672,6 +36374,30 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "the-grid-ai/deepseek-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/gemini-pro-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/glm-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/gpt-sol-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/kimi-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "the-grid-ai/minimax-latest": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "the-grid-ai/text-max": {
     toolCall: true,
     structuredOutput: true
@@ -33684,7 +36410,139 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "thinkingmachines/deepseek-ai/DeepSeek-V3.1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/deepseek-ai/DeepSeek-V4.1-Flash-1017:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/deepseek-ai/DeepSeek-V4.1-Flash:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/moonshotai/Kimi-K2.6": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/moonshotai/Kimi-K2.6:peft:131072": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/openai/gpt-oss-120b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/openai/gpt-oss-120b:peft:131072": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/openai/gpt-oss-20b": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3-8B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.5-35B-A3B-Base": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.5-397B-A17B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.5-397B-A17B:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.5-4B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.5-4B:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.5-9B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.5-9B-Base": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.6-27B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.6-35B-A3B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.6-35B-A3B:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.8-27B": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/Qwen/Qwen3.8-27B:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "thinkingmachines/thinkingmachines/Inkling": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/thinkingmachines/Inkling-Small": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/thinkingmachines/Inkling-Small:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/thinkingmachines/Inkling-Small:peft:262144:sampling-nvfp4": {
     toolCall: true,
     structuredOutput: null
   },
@@ -33692,7 +36550,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "tinfoil/deepseek-v4-flash": {
+  "thinkingmachines/thinkingmachines/Inkling:peft:262144:sampling-nvfp4": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/zai-org/GLM-5.3-Flash:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "thinkingmachines/zai-org/GLM-5.3:peft:262144": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "tinfoil/deepseek-v4-1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33700,7 +36570,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "tinfoil/glm-5-3-flash": {
+  "tinfoil/glm-5-3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33724,63 +36594,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: false
   },
-  "togetherai/deepcogito/cogito-v2-1-671b": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "togetherai/deepseek-ai/DeepSeek-R1": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "togetherai/deepseek-ai/DeepSeek-V3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/deepseek-ai/DeepSeek-V3-1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/deepseek-ai/DeepSeek-V4-Flash-0731": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "togetherai/deepseek-ai/DeepSeek-V4-Pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "togetherai/deepseek-ai/DeepSeek-V4-Pro-0813": {
     toolCall: true,
     structuredOutput: true
   },
-  "togetherai/essentialai/Rnj-1-Instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/google/gemma-3n-E4B-it": {
-    toolCall: false,
-    structuredOutput: true
-  },
-  "togetherai/google/gemma-4-31B-it": {
+  "togetherai/deepseek-ai/DeepSeek-V4.1-Flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "togetherai/LiquidAI/LFM2-24B-A2B": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "togetherai/meta-llama/Llama-3.3-70B-Instruct-Turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/meta-llama/Meta-Llama-3-8B-Instruct-Lite": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "togetherai/MiniMaxAI/MiniMax-M2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/MiniMaxAI/MiniMax-M2.7": {
+  "togetherai/meta-models/Muse-Spark-Open-816B-A42B": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33788,57 +36610,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "togetherai/moonshotai/Kimi-K2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/moonshotai/Kimi-K2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "togetherai/moonshotai/Kimi-K2.7-Code": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "togetherai/moonshotai/Kimi-K3": {
     toolCall: true,
     structuredOutput: true
   },
-  "togetherai/nvidia/nemotron-3-ultra-550b-a55b": {
+  "togetherai/nvidia/NVIDIA-Nemotron-3.5-Super-VL": {
     toolCall: true,
     structuredOutput: true
   },
   "togetherai/openai/gpt-oss-120b": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/openai/gpt-oss-20b": {
-    toolCall: true,
     structuredOutput: true
-  },
-  "togetherai/pearl-ai/gemma-4-31b-it": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "togetherai/Qwen/Qwen2.5-7B-Instruct-Turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "togetherai/Qwen/Qwen3-235B-A22B-Instruct-2507-tput": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/Qwen/Qwen3-Coder-Next-FP8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "togetherai/Qwen/Qwen3.5-397B-A17B": {
-    toolCall: true,
-    structuredOutput: null
   },
   "togetherai/Qwen/Qwen3.5-9B": {
     toolCall: true,
@@ -33846,21 +36628,17 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "togetherai/Qwen/Qwen3.6-Plus": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "togetherai/Qwen/Qwen3.7-Max": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "togetherai/reflection/Beam-1.0-501B-A23B": {
+    toolCall: true,
+    structuredOutput: true
   },
   "togetherai/thinkingmachines/Inkling": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "togetherai/zai-org/GLM-5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "togetherai/zai-org/GLM-5.1": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33968,7 +36746,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "umans-ai/umans-deepseek-v4-pro-0813": {
+  "umans-ai/umans-deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai/umans-deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33976,11 +36758,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "umans-ai/umans-glm-5.2": {
+  "umans-ai/umans-glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
-  "umans-ai/umans-kimi-k2.7": {
+  "umans-ai/umans-glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -33996,7 +36778,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "umans-ai-coding-plan/umans-deepseek-v4-pro-0813": {
+  "umans-ai-coding-plan/umans-deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "umans-ai-coding-plan/umans-deepseek-v4.1-flash-1017": {
     toolCall: true,
     structuredOutput: true
   },
@@ -34004,11 +36790,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "umans-ai-coding-plan/umans-glm-5.2": {
+  "umans-ai-coding-plan/umans-glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
-  "umans-ai-coding-plan/umans-kimi-k2.7": {
+  "umans-ai-coding-plan/umans-glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -34024,27 +36810,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "unorouter/claude-opus-4-8": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "unorouter/claude-sonnet-5": {
     toolCall: true,
     structuredOutput: null
   },
-  "unorouter/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/deepseek-v4-flash:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "unorouter/deepseek-v4-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/deepseek-v4-pro:free": {
     toolCall: true,
     structuredOutput: true
   },
@@ -34060,41 +36830,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "unorouter/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/glm-5.2:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/gpt-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/gpt-5.4": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/gpt-5.4:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "unorouter/gpt-5.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/gpt-5.5:free": {
     toolCall: true,
     structuredOutput: true
   },
   "unorouter/kimi-k2.6": {
     toolCall: true,
     structuredOutput: true
-  },
-  "unorouter/minimax-m2.7": {
-    toolCall: true,
-    structuredOutput: null
   },
   "unorouter/minimax-m2.7:free": {
     toolCall: true,
@@ -34104,17 +36846,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "unorouter/qwen3.5-397b-a17b:free": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "unorouter/step-3.7-flash:free": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "upstage/solar-mini": {
     toolCall: true,
     structuredOutput: null
+  },
+  "upstage/solar-mini4": {
+    toolCall: true,
+    structuredOutput: true
   },
   "upstage/solar-pro2": {
     toolCall: true,
@@ -34128,15 +36866,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vancine/deepseek-v4-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vancine/deepseek-v4-flash-vision-exp": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vancine/deepseek-v4-pro": {
+  "vancine/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -34155,10 +36885,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "vancine/kimi-k3": {
     toolCall: true,
     structuredOutput: true
-  },
-  "vancine/MiniMax-M3": {
-    toolCall: true,
-    structuredOutput: null
   },
   "vancine/qwen3.8-flash": {
     toolCall: true,
@@ -34184,14 +36910,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/alibaba/qwen-3.6-max-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/alibaba/qwen3-235b-a22b-thinking": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "vercel/alibaba/qwen3-coder": {
     toolCall: true,
     structuredOutput: null
@@ -34204,10 +36922,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vercel/alibaba/qwen3-coder-plus": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "vercel/alibaba/qwen3-embedding-0.6b": {
     toolCall: false,
     structuredOutput: null
@@ -34218,14 +36932,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "vercel/alibaba/qwen3-embedding-8b": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "vercel/alibaba/qwen3-max": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/alibaba/qwen3-max-preview": {
-    toolCall: true,
     structuredOutput: null
   },
   "vercel/alibaba/qwen3-max-thinking": {
@@ -34240,15 +36946,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/alibaba/qwen3-vl-235b-a22b-instruct": {
-    toolCall: false,
-    structuredOutput: true
-  },
   "vercel/alibaba/qwen3-vl-instruct": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/alibaba/qwen3-vl-thinking": {
     toolCall: true,
     structuredOutput: null
   },
@@ -34292,10 +36990,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vercel/alibaba/qwen3.8-flash-next": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "vercel/alibaba/qwen3.8-max": {
     toolCall: true,
     structuredOutput: null
@@ -34303,6 +36997,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "vercel/alibaba/qwen3.8-max-0902": {
     toolCall: true,
     structuredOutput: null
+  },
+  "vercel/alibaba/qwen3.8-max-prime": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/alibaba/qwen3.8-omni-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
   "vercel/alibaba/wan-v2.5-t2v-preview": {
     toolCall: false,
@@ -34364,10 +37066,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/anthropic/claude-3-haiku": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "vercel/anthropic/claude-fable-5": {
     toolCall: true,
     structuredOutput: null
@@ -34380,9 +37078,9 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/anthropic/claude-opus-4": {
+  "vercel/anthropic/claude-haiku-5.5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "vercel/anthropic/claude-opus-4.5": {
     toolCall: true,
@@ -34412,7 +37110,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/anthropic/claude-sonnet-4": {
+  "vercel/anthropic/claude-opus-5.5": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/anthropic/claude-opus-5.5-fast": {
     toolCall: true,
     structuredOutput: null
   },
@@ -34428,7 +37130,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/arcee-ai/trinity-large-thinking": {
+  "vercel/anthropic/claude-sonnet-5.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -34449,6 +37151,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "vercel/bfl/flux-2-pro": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-3-image": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/bfl/flux-3-image-klein": {
     toolCall: false,
     structuredOutput: null
   },
@@ -34478,11 +37188,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "vercel/bytedance/seed-1.6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "vercel/bytedance/seed-1.8": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "vercel/bytedance/seed-2.1-turbo": {
+    toolCall: true,
+    structuredOutput: true
   },
   "vercel/bytedance/seedance-2.0": {
     toolCall: false,
@@ -34528,11 +37242,23 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/cohere/command-a": {
+  "vercel/callstack/apex": {
     toolCall: true,
     structuredOutput: null
   },
+  "vercel/cohere/command-a": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "vercel/cohere/embed-v4.0": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/cohere/embed-v5.0-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/cohere/embed-v5.0-pro": {
     toolCall: false,
     structuredOutput: null
   },
@@ -34548,15 +37274,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/deepseek/deepseek-r1": {
-    toolCall: true,
+  "vercel/cohere/rerank-v5-fast": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/cohere/rerank-v5-pro": {
+    toolCall: false,
     structuredOutput: null
   },
   "vercel/deepseek/deepseek-v3.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/deepseek/deepseek-v3.1-terminus": {
     toolCall: true,
     structuredOutput: null
   },
@@ -34588,15 +37314,35 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vercel/deepseek/deepseek-v4.1-flash-beta": {
-    toolCall: null,
-    structuredOutput: null
+  "vercel/deepseek/deepseek-v4.1-flash": {
+    toolCall: true,
+    structuredOutput: true
   },
-  "vercel/fish-audio/s1": {
+  "vercel/deepseek/deepseek-v4.1-flash-1017": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/deepseek/deepseek-v4.1-flash-1017-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/deepseek/deepseek-v4.1-flash-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/elorian/glimpse": {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/fish-audio/s1-free": {
+  "vercel/fireworks/ember-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/drama-3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/fish-audio/s1": {
     toolCall: false,
     structuredOutput: null
   },
@@ -34604,23 +37350,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/fish-audio/s2-pro-free": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "vercel/fish-audio/s2.1-pro": {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/fish-audio/s2.1-pro-free": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "vercel/fish-audio/transcribe-1": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "vercel/fish-audio/transcribe-1-free": {
     toolCall: false,
     structuredOutput: null
   },
@@ -34696,6 +37430,26 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "vercel/google/gemini-3.8-flash-lite-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.8-flash-tts": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.8-live": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-3.8-live-extended-thinking": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/google/gemini-4-argon": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "vercel/google/gemini-embedding-001": {
     toolCall: false,
     structuredOutput: null
@@ -34703,6 +37457,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "vercel/google/gemini-embedding-2": {
     toolCall: false,
     structuredOutput: null
+  },
+  "vercel/google/gemini-nano-banana-2.1": {
+    toolCall: false,
+    structuredOutput: false
   },
   "vercel/google/gemini-omni-flash-preview": {
     toolCall: false,
@@ -34744,11 +37502,19 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/inception/mercury-2": {
-    toolCall: true,
+  "vercel/heygen/heygen-video-1": {
+    toolCall: false,
     structuredOutput: null
   },
+  "vercel/inception/mercury-2": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "vercel/inception/mercury-2.5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/inception/mercury-3": {
     toolCall: true,
     structuredOutput: null
   },
@@ -34764,17 +37530,29 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/inclusionai/ling-3.0-flash-fin-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "vercel/inclusionai/ling-3.0-flash-sante": {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/inclusionai/ling-3.0-flash-sante-free": {
+  "vercel/inclusionai/ling-3.0-flash-vl": {
     toolCall: true,
     structuredOutput: null
+  },
+  "vercel/inclusionai/ling-3.1-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inclusionai/ling-3.1-flash-1019": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/inference-net/schematron-v2-small": {
+    toolCall: false,
+    structuredOutput: true
+  },
+  "vercel/inference-net/schematron-v2-turbo": {
+    toolCall: false,
+    structuredOutput: true
   },
   "vercel/interfaze/interfaze-beta": {
     toolCall: false,
@@ -34812,20 +37590,12 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/kwaipilot/kat-coder-air-v2.5": {
+  "vercel/liquid/lfm2.5-24b-a2b": {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/kwaipilot/kat-coder-pro-v1": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "vercel/kwaipilot/kat-coder-pro-v2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/kwaipilot/kat-coder-pro-v2.5": {
-    toolCall: true,
+  "vercel/meituan/longcat-2.5-preview": {
+    toolCall: null,
     structuredOutput: null
   },
   "vercel/meta/llama-3.1-70b": {
@@ -34876,6 +37646,46 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "vercel/meta/muse-spark-open": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/meta/muse-wonder-1.0": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/microsoft/mai-image-2.6": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/microsoft/mai-image-2.6-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/microsoft/mai-transcribe-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/microsoft/mai-transcribe-2-streaming": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/microsoft/mai-voice-2": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/microsoft/mai-voice-2-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/microsoft/mai-voice-2.1": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/microsoft/mai-voice-2.1-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "vercel/minimax/minimax-h3": {
     toolCall: false,
     structuredOutput: null
@@ -34916,20 +37726,16 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "vercel/minimax/minimax-m3.1-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "vercel/mistral/codestral": {
     toolCall: true,
     structuredOutput: null
   },
   "vercel/mistral/codestral-embed": {
     toolCall: false,
-    structuredOutput: null
-  },
-  "vercel/mistral/devstral-2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/mistral/devstral-small-2": {
-    toolCall: true,
     structuredOutput: null
   },
   "vercel/mistral/ministral-14b": {
@@ -34952,7 +37758,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/mistral/mistral-medium": {
+  "vercel/mistral/mistral-large-4": {
     toolCall: true,
     structuredOutput: null
   },
@@ -34968,17 +37774,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/mistral/pixtral-12b": {
+  "vercel/mistral/voxtral-mini-transcribe-3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/mistral/voxtral-mini-tts-3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/mistral/voxtral-small-transcribe-3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/mixedbread/toast-1": {
     toolCall: true,
     structuredOutput: null
   },
   "vercel/moonshotai/kimi-k2": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/moonshotai/kimi-k2-thinking": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: false
   },
   "vercel/moonshotai/kimi-k2.5": {
     toolCall: true,
@@ -35004,6 +37818,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "vercel/moonshotai/kimi-k3.1-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/moonshotai/kimi-k3.1-pro-highspeed": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "vercel/morph/morph-v3-fast": {
     toolCall: false,
     structuredOutput: null
@@ -35028,6 +37850,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "vercel/nvidia/nemotron-3.5-lightning-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/nvidia/nemotron-3.5-super-vl": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "vercel/nvidia/nemotron-nano-12b-v2-vl": {
     toolCall: true,
     structuredOutput: null
@@ -35035,14 +37865,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "vercel/nvidia/nemotron-nano-9b-v2": {
     toolCall: true,
     structuredOutput: null
-  },
-  "vercel/openai/gpt-3.5-turbo": {
-    toolCall: false,
-    structuredOutput: false
-  },
-  "vercel/openai/gpt-4-turbo": {
-    toolCall: true,
-    structuredOutput: false
   },
   "vercel/openai/gpt-4.1": {
     toolCall: true,
@@ -35057,14 +37879,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "vercel/openai/gpt-4.1-mini-fast": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vercel/openai/gpt-4.1-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vercel/openai/gpt-4.1-nano-fast": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35232,8 +38046,36 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vercel/openai/gpt-image-1": {
-    toolCall: false,
+  "vercel/openai/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6-luna-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6-sol-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6.1-sol-fast": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/openai/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/openai/gpt-6.1-terra-fast": {
+    toolCall: true,
     structuredOutput: null
   },
   "vercel/openai/gpt-image-1-mini": {
@@ -35256,6 +38098,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "vercel/openai/gpt-live-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "vercel/openai/gpt-oss-120b": {
     toolCall: true,
     structuredOutput: true
@@ -35270,31 +38116,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "vercel/openai/gpt-oss-safeguard-20b": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "vercel/openai/gpt-realtime-1.5": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: null
   },
   "vercel/openai/gpt-realtime-2": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: null
   },
   "vercel/openai/gpt-realtime-2.1": {
-    toolCall: false,
-    structuredOutput: false
+    toolCall: true,
+    structuredOutput: null
   },
   "vercel/openai/gpt-realtime-mini": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: null
   },
   "vercel/openai/gpt-realtime-whisper": {
     toolCall: false,
     structuredOutput: null
-  },
-  "vercel/openai/o1": {
-    toolCall: true,
-    structuredOutput: true
   },
   "vercel/openai/o3": {
     toolCall: true,
@@ -35304,19 +38146,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vercel/openai/o3-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "vercel/openai/o3-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vercel/openai/o4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vercel/openai/o4-mini-fast": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35344,6 +38174,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "vercel/particle/particle-1": {
+    toolCall: true,
+    structuredOutput: null
+  },
   "vercel/perplexity/pplx-embed-v1-0.6b": {
     toolCall: false,
     structuredOutput: null
@@ -35356,28 +38190,20 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "vercel/perplexity/sonar-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/perplexity/sonar-reasoning-pro": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "vercel/poolside/laguna-s-2.1": {
     toolCall: true,
     structuredOutput: false
   },
   "vercel/poolside/laguna-s-2.1-free": {
-    toolCall: true,
-    structuredOutput: false
-  },
-  "vercel/prodia/flux-fast-schnell": {
-    toolCall: false,
+    toolCall: null,
     structuredOutput: null
   },
-  "vercel/quiverai/arrow-1.1": {
-    toolCall: false,
+  "vercel/quiverai/arrow-2": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/quiverai/arrow-2-telos": {
+    toolCall: true,
     structuredOutput: null
   },
   "vercel/recraft/recraft-v2": {
@@ -35400,6 +38226,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "vercel/recraft/recraft-v4.1-flash": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "vercel/recraft/recraft-v4.1-pro": {
     toolCall: false,
     structuredOutput: null
@@ -35412,20 +38242,36 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "vercel/reflection/beam": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/reflection/beam-free": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/sakana/fugu-max": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "vercel/sakana/fugu-ultra": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/sakana/fugu-ultra-v2": {
     toolCall: true,
     structuredOutput: true
   },
   "vercel/sakana/namazu": {
     toolCall: true,
+    structuredOutput: true
+  },
+  "vercel/scaledown/scaledown-extract-1": {
+    toolCall: false,
     structuredOutput: null
   },
-  "vercel/spacexai/grok-4.1-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vercel/spacexai/grok-4.1-fast-reasoning": {
-    toolCall: true,
+  "vercel/scaledown/scaledown-summarize-1": {
+    toolCall: false,
     structuredOutput: null
   },
   "vercel/spacexai/grok-4.20-multi-agent": {
@@ -35464,6 +38310,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "vercel/spacexai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "vercel/spacexai/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
@@ -35484,6 +38334,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
+  "vercel/spacexai/grok-imagine-video-1.5-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "vercel/spacexai/grok-stt": {
     toolCall: false,
     structuredOutput: null
@@ -35492,21 +38346,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "vercel/spacexai/grok-voice-think-fast-1.0": {
-    toolCall: false,
-    structuredOutput: null
-  },
   "vercel/spacexai/grok-voice-think-fast-2.0": {
-    toolCall: false,
+    toolCall: true,
     structuredOutput: null
   },
-  "vercel/stepfun/step-3.5-flash": {
+  "vercel/stealth/glyph-cluster": {
     toolCall: true,
     structuredOutput: null
   },
   "vercel/stepfun/step-3.7-flash": {
     toolCall: true,
     structuredOutput: null
+  },
+  "vercel/stepfun/step-5-preview": {
+    toolCall: false,
+    structuredOutput: true
   },
   "vercel/tencent/hy-mt2-lite": {
     toolCall: false,
@@ -35536,11 +38390,31 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
+  "vercel/topaz/proteus": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/topaz/starlight-precise-2.6": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/topaz/wonder-3.5": {
+    toolCall: false,
+    structuredOutput: null
+  },
   "vercel/voyage/rerank-2.5": {
     toolCall: false,
     structuredOutput: null
   },
   "vercel/voyage/rerank-2.5-lite": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/rerank-3": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vercel/voyage/rerank-3-lite": {
     toolCall: false,
     structuredOutput: null
   },
@@ -35585,10 +38459,22 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "vercel/xiaomi/mimo-v2.5": {
-    toolCall: true,
+    toolCall: null,
     structuredOutput: null
   },
   "vercel/xiaomi/mimo-v2.5-pro": {
+    toolCall: null,
+    structuredOutput: null
+  },
+  "vercel/xiaomi/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/xiaomi/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vercel/xiaomi/mimo-v2.6-pro-ultraspeed": {
     toolCall: true,
     structuredOutput: null
   },
@@ -35652,9 +38538,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "vercel/zai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "vercel/zai/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: null
+  },
+  "vispark/vispark/vision-large": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vispark/vispark/vision-medium": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vispark/vispark/vision-small": {
+    toolCall: true,
+    structuredOutput: true
   },
   "vivgrid/claude-fable-5": {
     toolCall: true,
@@ -35664,9 +38566,25 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vivgrid/deepseek-v3.2": {
+  "vivgrid/claude-haiku-5-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "vivgrid/claude-opus-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/claude-opus-5-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/claude-sonnet-5": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/claude-sonnet-5-5": {
+    toolCall: true,
+    structuredOutput: true
   },
   "vivgrid/deepseek-v4-flash": {
     toolCall: true,
@@ -35680,11 +38598,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vivgrid/gemini-3.1-flash-lite-preview": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gemini-3.1-pro-preview": {
+  "vivgrid/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35696,51 +38610,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "vivgrid/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "vivgrid/glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
   "vivgrid/glm-5.3-flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gpt-5-mini": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vivgrid/gpt-5.1-codex": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gpt-5.1-codex-max": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gpt-5.2-codex": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vivgrid/gpt-5.3-codex": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gpt-5.4": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gpt-5.4-mini": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gpt-5.4-nano": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "vivgrid/gpt-5.5": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35760,7 +38634,27 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "vivgrid/gpt-6-luna": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-6-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-6.1-sol": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/gpt-6.1-terra": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "vivgrid/kimi-k3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vivgrid/viv-fast": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35772,35 +38666,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "volcengine/doubao-seed-1-6-251015": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "volcengine/doubao-seed-1-6-flash-250828": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "volcengine/doubao-seed-1-6-vision-250815": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "volcengine/doubao-seed-1-8-251228": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "volcengine/doubao-seed-2-0-code-preview-260215": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "volcengine/doubao-seed-2-0-lite-260428": {
     toolCall: true,
     structuredOutput: true
   },
   "volcengine/doubao-seed-2-0-mini-260428": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "volcengine/doubao-seed-2-0-pro-260215": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35824,19 +38694,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "volcengine/glm-5-3-flash-260828": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "volcengine-coding-plan/deepseek-v4-flash": {
     toolCall: true,
     structuredOutput: true
   },
   "volcengine-coding-plan/deepseek-v4-pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "volcengine-coding-plan/doubao-seed-2.0-lite": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "volcengine-coding-plan/doubao-seed-2.1-turbo": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35848,55 +38714,63 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "volcengine-coding-plan/kimi-k2.7-code": {
+  "volcengine-coding-plan/glm-5.3-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "volcengine-coding-plan/minimax-m3": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vultr/deepseek-ai/DeepSeek-V4-Flash": {
+  "volcengine-coding-plan/kimi-k3": {
     toolCall: true,
     structuredOutput: true
   },
-  "vultr/MiniMaxAI/MiniMax-M2.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vultr/moonshotai/Kimi-K2.6": {
+  "vultr/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
-  "vultr/nvidia/DeepSeek-V3.2-NVFP4": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vultr/nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vultr/nvidia/Nemotron-Cascade-2-30B-A3B": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "vultr/Qwen/Qwen3.5-397B-A17B": {
+  "vultr/glm-5.2": {
     toolCall: true,
     structuredOutput: true
   },
-  "vultr/Qwen/Qwen3.6-27B": {
+  "vultr/glm-5.3": {
     toolCall: true,
     structuredOutput: true
   },
-  "vultr/XiaomiMiMo/MiMo-V2.5-Pro": {
+  "vultr/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vultr/glm-5.x-menthol": {
     toolCall: true,
     structuredOutput: null
   },
-  "vultr/zai-org/GLM-5.2-FP8": {
+  "vultr/mimo-v2.6-flash-rl": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/mimo-v2.6-pro-rl": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/minimax-m3": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/muse-glimmer-30b": {
     toolCall: true,
     structuredOutput: true
   },
-  "wafer.ai/GLM-5.1": {
+  "vultr/nemotron-3-nano-omni-30b-a3b-reasoning": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "vultr/nemotron-3.5-content-safety": {
+    toolCall: false,
+    structuredOutput: null
+  },
+  "vultr/qwen3.8-27b": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "vultr/qwen3.8-flash-next": {
     toolCall: true,
     structuredOutput: true
   },
@@ -35904,123 +38778,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "wafer.ai/glm5.2-fast": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wafer.ai/Kimi-K2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wafer.ai/MiniMax-M3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/deepseek-ai/DeepSeek-V3.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/deepseek-ai/DeepSeek-V4-Flash": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/deepseek-ai/DeepSeek-V4-Flash-0731": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/deepseek-ai/DeepSeek-V4-Pro": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/deepseek-ai/DeepSeek-V4-Pro-0813": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/google/gemma-4-31B-it": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/ibm-granite/granite-4.1-8b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/ibm-granite/granite-4.2-8b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/JetBrains/Mellum2-12B-A2.5B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/meta-llama/Llama-3.1-70B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/meta-llama/Llama-3.1-8B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/meta-llama/Llama-3.3-70B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/MiniMaxAI/MiniMax-M3": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/moonshotai/Kimi-K2.6": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/moonshotai/Kimi-K2.7-Code": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/openai/gpt-oss-120b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/openai/gpt-oss-20b": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/OpenPipe/Qwen3-14B-Instruct": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/Qwen/Qwen3-30B-A3B-Instruct-2507": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/Qwen/Qwen3.5-35B-A3B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/Qwen/Qwen3.6-27B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/Qwen/Qwen3.6-35B-A3B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/Qwen/Qwen3.8-27B": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/zai-org/GLM-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "wandb/zai-org/GLM-5.3-Flash": {
+  "wallaby/moonshotai/kimi-k3": {
     toolCall: true,
     structuredOutput: true
   },
@@ -36048,19 +38806,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "xai/grok-4.7": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "xai/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
   },
   "xai/grok-imagine-image": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "xai/grok-imagine-image-2.0": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "xai/grok-imagine-image-quality": {
     toolCall: false,
     structuredOutput: null
   },
@@ -36072,45 +38826,21 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "xiaomi/mimo-v2-flash": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi/mimo-v2-omni": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi/mimo-v2-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi/mimo-v2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi/mimo-v2.5-pro-ultraspeed": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi-token-plan-cn/mimo-v2-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi-token-plan-cn/mimo-v2-tts": {
+  "xai/grok-imagine-video-1.5-lite": {
     toolCall: false,
     structuredOutput: null
   },
-  "xiaomi-token-plan-cn/mimo-v2.5": {
+  "xiaomi/mimo-v2.6-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "xiaomi-token-plan-cn/mimo-v2.5-pro": {
+  "xiaomi/mimo-v2.6-pro": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
+  },
+  "xiaomi/mimo-v2.6-pro-ultraspeed": {
+    toolCall: true,
+    structuredOutput: true
   },
   "xiaomi-token-plan-cn/mimo-v2.5-tts": {
     toolCall: false,
@@ -36124,21 +38854,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "xiaomi-token-plan-ams/mimo-v2-pro": {
+  "xiaomi-token-plan-cn/mimo-v2.6-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "xiaomi-token-plan-ams/mimo-v2-tts": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "xiaomi-token-plan-ams/mimo-v2.5": {
+  "xiaomi-token-plan-cn/mimo-v2.6-pro": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi-token-plan-ams/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "xiaomi-token-plan-ams/mimo-v2.5-tts": {
     toolCall: false,
@@ -36152,21 +38874,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: false,
     structuredOutput: null
   },
-  "xiaomi-token-plan-sgp/mimo-v2-pro": {
+  "xiaomi-token-plan-ams/mimo-v2.6-flash": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "xiaomi-token-plan-sgp/mimo-v2-tts": {
-    toolCall: false,
-    structuredOutput: null
-  },
-  "xiaomi-token-plan-sgp/mimo-v2.5": {
+  "xiaomi-token-plan-ams/mimo-v2.6-pro": {
     toolCall: true,
-    structuredOutput: null
-  },
-  "xiaomi-token-plan-sgp/mimo-v2.5-pro": {
-    toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "xiaomi-token-plan-sgp/mimo-v2.5-tts": {
     toolCall: false,
@@ -36179,6 +38893,14 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "xiaomi-token-plan-sgp/mimo-v2.5-tts-voicedesign": {
     toolCall: false,
     structuredOutput: null
+  },
+  "xiaomi-token-plan-sgp/mimo-v2.6-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "xiaomi-token-plan-sgp/mimo-v2.6-pro": {
+    toolCall: true,
+    structuredOutput: true
   },
   "xpersona/claude-fable-5": {
     toolCall: true,
@@ -36228,10 +38950,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "xpersona/xpersona-gpt-5.5": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "zai/glm-4.5": {
     toolCall: true,
     structuredOutput: null
@@ -36253,6 +38971,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "zai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zai/glm-4.6v-flash": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36292,25 +39014,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "zai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "zai/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: null
-  },
-  "zai-coding-plan/glm-4.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zai-coding-plan/glm-5-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "zai-coding-plan/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "zai-coding-plan/glm-5.2-highspeed": {
-    toolCall: true,
-    structuredOutput: true
   },
   "zai-coding-plan/glm-5.3": {
     toolCall: true,
@@ -36332,23 +39042,15 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/anthropic/claude-3.5-haiku": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/anthropic/claude-3.7-sonnet": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "zenmux/anthropic/claude-fable-5": {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/anthropic/claude-haiku-4.5": {
+  "zenmux/anthropic/claude-fable-5.1": {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/anthropic/claude-opus-4": {
+  "zenmux/anthropic/claude-haiku-4.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36372,7 +39074,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/anthropic/claude-sonnet-4": {
+  "zenmux/anthropic/claude-opus-5.5": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36388,23 +39090,35 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/anthropic/claude-sonnet-5-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "zenmux/baidu/ernie-5.0-thinking-preview": {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/deepseek/deepseek-chat": {
+  "zenmux/bytedance/doubao-seed-1.8": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/bytedance/doubao-seed-2.0-code": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/bytedance/doubao-seed-2.0-lite": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/bytedance/doubao-seed-2.0-mini": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/bytedance/doubao-seed-2.0-pro": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/bytedance/doubao-seed-code": {
     toolCall: true,
     structuredOutput: null
   },
   "zenmux/deepseek/deepseek-v3.2": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/deepseek/deepseek-v3.2-exp": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36413,6 +39127,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: true
   },
   "zenmux/deepseek/deepseek-v4-pro": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/deepseek/deepseek-v4.1-flash": {
     toolCall: true,
     structuredOutput: true
   },
@@ -36436,10 +39154,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/google/gemini-3.1-flash-lite-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "zenmux/google/gemini-3.1-pro-preview": {
     toolCall: true,
     structuredOutput: null
@@ -36448,19 +39162,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/inclusionai/ling-1t": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/inclusionai/ring-1t": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "zenmux/inclusionai/ring-2.6-1t": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/kuaishou/kat-coder-pro-v2": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36492,19 +39194,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/moonshotai/kimi-k2-0905": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/moonshotai/kimi-k2-thinking": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/moonshotai/kimi-k2-thinking-turbo": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/moonshotai/kimi-k2.5": {
+  "zenmux/minimax/minimax-m3.1-flash": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36516,7 +39206,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/moonshotai/kimi-k2.7-code-free": {
+  "zenmux/moonshotai/kimi-k2.7-code-highspeed": {
     toolCall: true,
     structuredOutput: true
   },
@@ -36524,7 +39214,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/moonshotai/kimi-k3-free": {
+  "zenmux/openai/chat-latest": {
     toolCall: true,
     structuredOutput: true
   },
@@ -36537,10 +39227,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "zenmux/openai/gpt-5.1": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/openai/gpt-5.1-chat": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36561,10 +39247,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "zenmux/openai/gpt-5.2-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/openai/gpt-5.3-chat": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36592,10 +39274,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/openai/gpt-5.5-instant": {
-    toolCall: true,
-    structuredOutput: true
-  },
   "zenmux/openai/gpt-5.5-pro": {
     toolCall: true,
     structuredOutput: true
@@ -36612,13 +39290,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/qwen/qwen3-coder-plus": {
+  "zenmux/openai/gpt-6-astra": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
-  "zenmux/qwen/qwen3-max": {
+  "zenmux/openai/gpt-6-sol": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/qwen/qwen3.5-flash": {
     toolCall: true,
@@ -36640,18 +39318,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/sapiens-ai/agnes-1.5-lite": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/sapiens-ai/agnes-1.5-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/stepfun/step-3": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "zenmux/stepfun/step-3.5-flash": {
     toolCall: true,
     structuredOutput: null
@@ -36660,61 +39326,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: null
   },
-  "zenmux/stepfun/step-3.7-flash-free": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/tencent/hy3-preview": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/volcengine/doubao-seed-1.8": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/volcengine/doubao-seed-2.0-code": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/volcengine/doubao-seed-2.0-lite": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/volcengine/doubao-seed-2.0-mini": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/volcengine/doubao-seed-2.0-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/volcengine/doubao-seed-code": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/x-ai/grok-4": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/x-ai/grok-4-fast": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/x-ai/grok-4.1-fast": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/x-ai/grok-4.1-fast-non-reasoning": {
-    toolCall: true,
-    structuredOutput: null
-  },
   "zenmux/x-ai/grok-4.2-fast": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/x-ai/grok-4.2-fast-non-reasoning": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/x-ai/grok-4.3": {
     toolCall: true,
@@ -36724,37 +39342,33 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "zenmux/x-ai/grok-4.6": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "zenmux/x-ai/grok-build-0.1": {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/x-ai/grok-code-fast-1": {
-    toolCall: true,
+  "zenmux/x-ai/grok-imagine-image-2.0": {
+    toolCall: false,
     structuredOutput: null
   },
-  "zenmux/xiaomi/mimo-v2-flash": {
-    toolCall: true,
+  "zenmux/x-ai/grok-voice-stt-1.0": {
+    toolCall: false,
     structuredOutput: null
   },
-  "zenmux/xiaomi/mimo-v2-omni": {
-    toolCall: true,
+  "zenmux/x-ai/grok-voice-tts-1.0": {
+    toolCall: false,
     structuredOutput: null
   },
-  "zenmux/xiaomi/mimo-v2-pro": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/xiaomi/mimo-v2.5": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zenmux/xiaomi/mimo-v2.5-pro": {
+  "zenmux/xiaomi/mimo-v2.6-pro": {
     toolCall: true,
     structuredOutput: null
   },
   "zenmux/z-ai/glm-4.5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/z-ai/glm-4.5-air": {
     toolCall: true,
@@ -36762,7 +39376,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "zenmux/z-ai/glm-4.6": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/z-ai/glm-4.6v": {
     toolCall: true,
@@ -36778,7 +39392,7 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "zenmux/z-ai/glm-4.7": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/z-ai/glm-4.7-flash-free": {
     toolCall: true,
@@ -36790,11 +39404,11 @@ export const MASTRA_MODEL_CAPABILITIES = {
   },
   "zenmux/z-ai/glm-5": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/z-ai/glm-5-turbo": {
     toolCall: true,
-    structuredOutput: null
+    structuredOutput: true
   },
   "zenmux/z-ai/glm-5.1": {
     toolCall: true,
@@ -36804,12 +39418,24 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
-  "zenmux/z-ai/glm-5.2-free": {
+  "zenmux/z-ai/glm-5.3": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/z-ai/glm-5.3-flash": {
+    toolCall: true,
+    structuredOutput: true
+  },
+  "zenmux/z-ai/glm-5.3-flashx": {
     toolCall: true,
     structuredOutput: true
   },
   "zenmux/z-ai/glm-5v-turbo": {
     toolCall: true,
+    structuredOutput: null
+  },
+  "zenmux/z-ai/glm-image": {
+    toolCall: false,
     structuredOutput: null
   },
   "zhipuai/glm-4.5": {
@@ -36833,6 +39459,10 @@ export const MASTRA_MODEL_CAPABILITIES = {
     structuredOutput: null
   },
   "zhipuai/glm-4.6v": {
+    toolCall: true,
+    structuredOutput: null
+  },
+  "zhipuai/glm-4.6v-flash": {
     toolCall: true,
     structuredOutput: null
   },
@@ -36868,33 +39498,13 @@ export const MASTRA_MODEL_CAPABILITIES = {
     toolCall: true,
     structuredOutput: true
   },
+  "zhipuai/glm-5.3-flashx": {
+    toolCall: true,
+    structuredOutput: true
+  },
   "zhipuai/glm-5v-turbo": {
     toolCall: true,
     structuredOutput: null
-  },
-  "zhipuai-coding-plan/glm-4.6v": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zhipuai-coding-plan/glm-4.7": {
-    toolCall: true,
-    structuredOutput: null
-  },
-  "zhipuai-coding-plan/glm-5-turbo": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "zhipuai-coding-plan/glm-5.1": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "zhipuai-coding-plan/glm-5.2": {
-    toolCall: true,
-    structuredOutput: true
-  },
-  "zhipuai-coding-plan/glm-5.2-highspeed": {
-    toolCall: true,
-    structuredOutput: true
   },
   "zhipuai-coding-plan/glm-5.3": {
     toolCall: true,
@@ -36907,10 +39517,6 @@ export const MASTRA_MODEL_CAPABILITIES = {
   "zhipuai-coding-plan/glm-5.3-highspeed": {
     toolCall: true,
     structuredOutput: true
-  },
-  "zhipuai-coding-plan/glm-5v-turbo": {
-    toolCall: true,
-    structuredOutput: null
   }
 } as const satisfies Record<string, MastraModelCapability>;
 
@@ -36941,5 +39547,5 @@ export function parseMastraModelId(modelId: string): { provider: string | null; 
   return { provider: modelId.slice(0, idx), model: modelId.slice(idx + 1) };
 }
 
-// Catalog content hash: d81b32ca22ed971e — informational (includes live models.dev capabilities).
-// Catalog registry hash: 00cde7b92603f4df — compared by sync script --check; do not edit.
+// Catalog content hash: d83d6c8719bbf0fc — informational (includes live models.dev capabilities).
+// Catalog registry hash: 9808907739aeb31c — compared by sync script --check; do not edit.
