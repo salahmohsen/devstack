@@ -8,7 +8,11 @@
  * - Feature context only adjusts the title when the kind is generic
  */
 
+import { extractChatgptPlanErrorCode } from "@tsu-stack/core";
+
 export type AiErrorKind =
+  | "chatgpt_plan_limit"
+  | "chatgpt_plan_reconnect"
   | "insufficient_balance"
   | "missing_byo"
   | "unauthorized"
@@ -246,6 +250,37 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
   const json = tryParseJsonMessage(technical);
   const haystack = collectText(technical, json).toLowerCase();
   const urls = extractHttpUrls(technical);
+
+  const planCode =
+    extractChatgptPlanErrorCode(technical) ??
+    (/subscription_sharing_usage_limit_exceeded/.test(technical) ? "CHATGPT_PLAN_LIMIT" : null);
+  if (planCode === "CHATGPT_PLAN_LIMIT") {
+    return {
+      kind: "chatgpt_plan_limit",
+      variant: "warning",
+      title: "ChatGPT plan limit reached",
+      description:
+        "Your ChatGPT plan is out of usage for now. The limit is shared with ChatGPT and every app using your plan, so try again later.",
+      billingUrl: null,
+      externalActionLabel: null,
+      showAiSettings: true,
+      retryable: true,
+      technicalDetails: technical
+    };
+  }
+  if (planCode === "CHATGPT_PLAN_RECONNECT") {
+    return {
+      kind: "chatgpt_plan_reconnect",
+      variant: "warning",
+      title: "Reconnect ChatGPT",
+      description: "Your ChatGPT sign-in expired or was revoked. Reconnect it in AI settings.",
+      billingUrl: null,
+      externalActionLabel: null,
+      showAiSettings: true,
+      retryable: false,
+      technicalDetails: technical
+    };
+  }
 
   // Provider out of credits / balance (OpenCode, OpenAI-compatible, etc.)
   if (

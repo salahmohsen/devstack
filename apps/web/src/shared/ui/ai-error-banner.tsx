@@ -51,8 +51,10 @@ export type AiErrorBannerProps = {
 function ErrorKindIcon({ kind }: { kind: AiErrorKind }) {
   const className = "size-4 shrink-0";
   switch (kind) {
+    case "chatgpt_plan_limit":
     case "insufficient_balance":
       return <WalletIcon className={className} />;
+    case "chatgpt_plan_reconnect":
     case "missing_byo":
       return <KeyRoundIcon className={className} />;
     case "unauthorized":

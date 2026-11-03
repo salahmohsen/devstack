@@ -19,6 +19,7 @@ import {
   AI_FEATURES,
   AI_PROVIDER_FEATURED,
   aiProviderLabel,
+  CHATGPT_PLAN_PROVIDER_KIND,
   MASTRA_PROVIDER_CATALOG,
   type AiModelProviderIdsMap,
   type AiProviderKind,
@@ -115,12 +116,13 @@ function testInputFromDraft(
 }
 
 export function AiProvidersSection({
-  providers,
+  providers: allProviders,
   modelProviderIds
 }: {
   providers: AiProviderPublic[];
   modelProviderIds: AiModelProviderIdsMap;
 }) {
+  const providers = allProviders.filter((p) => p.kind !== CHATGPT_PLAN_PROVIDER_KIND);
   const [dialog, setDialog] = useState<
     { mode: "add" } | { mode: "edit"; provider: AiProviderPublic } | null
   >(null);
