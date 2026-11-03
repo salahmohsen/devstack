@@ -24,6 +24,7 @@ export * from "./resume.schema.ts";
 export * from "./stack-dependency.schema.ts";
 export * from "./stack.schema.ts";
 export * from "./user-ai-settings.schema.ts";
+export * from "./user-chatgpt-plan.schema.ts";
 export * from "./user-custom-domain.schema.ts";
 export * from "./user-gmail-sync.schema.ts";
 export * from "./user-hub-state.schema.ts";
