@@ -223,6 +223,9 @@ overrides:
   drizzle-orm: "catalog:"
   hono: "catalog:"
   kysely: 0.28.17
+  # Mastra bump pulled ws 8.22.1 beside 8.21.0; two ws variants duplicate @orpc/server
+  # (peer-keyed) and break oRPC plugin types in apps/server.
+  ws: 8.22.1
   yoga-layout: 2.0.1
   # assistant-ui doctor: one core/store. @assistant-ui/react@0.15.13 uses 0.3;
   # @assistant-ui/react-ai-sdk@1.3.40 (last AI SDK v6 pin) still declares 0.2.
