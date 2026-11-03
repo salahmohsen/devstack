@@ -45,6 +45,7 @@ import {
   prependUniqueHubMessages,
   unionHubMessages
 } from "@/features/agent-hub/lib/hub-thread-history-adapter";
+import { stopHubChatAndWaitIdle } from "@/features/agent-hub/lib/stop-hub-chat-and-wait-idle";
 
 import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 
@@ -298,19 +299,13 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   );
 
   const startNewChat = React.useCallback(async () => {
-    // Cancel leftover HITL so composer is free on the new thread.
-    for (const card of waitingHubConfirmCards(messagesRef.current)) {
-      try {
-        await Promise.resolve(
-          addToolOutput({
-            tool: card.toolName,
-            toolCallId: card.toolCallId,
-            output: cancelOutputForHubHitl(card.toolName)
-          })
-        );
-      } catch {
-        // Best-effort cancel; new epoch still proceeds.
-      }
+    // Abort first: a live stream would otherwise repaint the old reply into the
+    // new thread, and a cancel below could auto-resume against the old epoch.
+    await stopHubChatAndWaitIdle(chat);
+    // Sealed locally (not addToolOutput) so cancelling cannot trigger a resume.
+    const sealed = sealWaitingHubHitlOnRemount(messagesRef.current);
+    if (sealed.cancelledIds.length > 0) {
+      setMessagesRef.current(sealed.messages as typeof messages);
     }
     // Drop inspect / Today / form panels from the previous thread.
     dismissDashboardSidePanel({ force: true });
@@ -331,7 +326,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     // Re-hydrate empty history for the new epoch thread (retry on transient fail).
     await ensureHistory();
     return { epoch: result.epoch, threadId: result.threadId };
-  }, [addToolOutput, ensureHistory]);
+  }, [chat, ensureHistory]);
 
   // Open in agent: fresh thread, then plant (composer-side). Never send.
   React.useEffect(() => {
