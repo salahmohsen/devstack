@@ -56,6 +56,10 @@ import {
   unionHubMessages
 } from "@/features/agent-hub/lib/hub-thread-history-adapter";
 import { stopHubChatAndWaitIdle } from "@/features/agent-hub/lib/stop-hub-chat-and-wait-idle";
+import {
+  hubToolCallIsOnLastMessage,
+  writeHubToolOutputs
+} from "@/features/agent-hub/lib/write-hub-tool-output";
 
 import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 
@@ -307,6 +311,15 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
       const api = chat as unknown as {
         addToolOutput: (a: HubToolOutputArgs) => void | PromiseLike<void>;
       };
+      // Chat.addToolOutput rewrites only the last message; older cards would be
+      // dropped silently, so write those into state directly (no auto-resume).
+      if (!hubToolCallIsOnLastMessage(chat.messages, args.toolCallId)) {
+        const written = writeHubToolOutputs(chat.messages, [args]);
+        if (written.changedIds.length > 0) {
+          setMessagesRef.current(written.messages as typeof messages);
+        }
+        return;
+      }
       return api.addToolOutput(args);
     },
     [chat]
@@ -415,21 +428,21 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!historyReady || messages.length === 0) return;
-    const stale = staleWaitingHubConfirmCards(messages);
-    for (const card of stale) {
-      if (cancelledStaleIdsRef.current.has(card.toolCallId)) continue;
-      cancelledStaleIdsRef.current.add(card.toolCallId);
-      void Promise.resolve(
-        addToolOutput({
-          tool: card.toolName,
-          toolCallId: card.toolCallId,
-          output: cancelOutputForHubHitl(card.toolName)
-        })
-      ).catch(() => {
-        cancelledStaleIdsRef.current.delete(card.toolCallId);
-      });
+    const stale = staleWaitingHubConfirmCards(messages).filter(
+      (card) => !cancelledStaleIdsRef.current.has(card.toolCallId)
+    );
+    if (stale.length === 0) return;
+    // Cards on older messages cannot go through Chat.addToolOutput (last message
+    // only), so the cancellation is written into state and recorded only if it took.
+    const writes = stale.map((card) => {
+      return { toolCallId: card.toolCallId, output: cancelOutputForHubHitl(card.toolName) };
+    });
+    const written = writeHubToolOutputs(messages, writes);
+    for (const id of written.changedIds) cancelledStaleIdsRef.current.add(id);
+    if (written.changedIds.length > 0) {
+      setMessages((prev) => writeHubToolOutputs(prev, writes).messages as typeof messages);
     }
-  }, [addToolOutput, historyReady, messages]);
+  }, [historyReady, messages, setMessages]);
 
   const value: HubChatContextValue = {
     ...helpers,
