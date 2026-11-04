@@ -165,3 +165,21 @@ describe("buildFreehireQuery", () => {
     expect(hash).toBe(await preferenceQueryHash(filters));
   });
 });
+
+it("separates remote eligibility from physical geography in a mixed search", async () => {
+  const { params, filters } = await buildFreehireQuery(
+    prefsWith({
+      workModes: ["remote", "hybrid"],
+      regions: ["mena"],
+      countries: ["eg"],
+      cities: ["Cairo"]
+    })
+  );
+  expect(params.get("work_mode")).toBe("remote,hybrid");
+  expect(params.get("work_mode_remote_anywhere")).toBe("true");
+  expect(params.get("work_mode_remote_regions")).toBe("mena");
+  expect(params.get("regions")).toBeNull();
+  expect(params.get("countries")).toBe("eg");
+  expect(params.get("cities")).toBe("Cairo");
+  expect(filters.work_mode_remote_regions).toBe("mena");
+});

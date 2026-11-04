@@ -4,8 +4,13 @@ import { setTimeout as wait } from "node:timers/promises";
 
 const dbUrl = new URL(process.env.DATABASE_URL ?? "");
 assert(["localhost", "127.0.0.1"].includes(dbUrl.hostname), "harness requires a local database");
+const redisUrl = new URL(process.env.REDIS_URL ?? "");
+assert(
+  ["localhost", "127.0.0.1", "[::1]"].includes(redisUrl.hostname),
+  "harness requires local Redis"
+);
 let requests = 0;
-let mode: "retry" | "permanent" | "empty" = "retry";
+let mode: "retry" | "permanent" | "empty" | "hybrid" = "retry";
 const fixture = createServer((request, response) => {
   if (!request.url?.startsWith("/agent/jobs/search")) {
     response.writeHead(404).end();
@@ -28,15 +33,15 @@ const fixture = createServer((request, response) => {
   response.end(
     JSON.stringify({
       data: [45_000, 2_000].map((salary, index) => ({
-        public_slug: `fixture-${index}`,
-        url: `https://example.com/jobs/discovery-fixture-${index}`,
+        public_slug: `fixture-${mode === "hybrid" ? "hybrid-" : ""}${index}`,
+        url: `https://example.com/jobs/discovery-fixture-${mode === "hybrid" ? "hybrid-" : ""}${index}`,
         title: "React Engineer",
         company: "Fixture Employer",
-        location: "Unrecognized location",
-        regions: ["global"],
+        location: mode === "hybrid" ? "Cairo, Egypt" : "Unrecognized location",
+        regions: ["mena"],
         countries: [],
         cities: [],
-        work_mode: "remote",
+        work_mode: mode === "hybrid" ? "hybrid" : "remote",
         skills: ["react"],
         description: "<p>Build accessible frontend applications with React and TypeScript.</p>",
         enrichment_version: 1,
@@ -57,6 +62,7 @@ assert(address && typeof address === "object");
 process.env.FREEHIRE_API_BASE_URL = `http://127.0.0.1:${address.port}`;
 
 const { eq } = await import("drizzle-orm");
+const { DISCOVERY_AI_FALLBACK_NOTE, DISCOVERY_NO_AI_NOTE } = await import("@tsu-stack/core");
 const { userJobRepository: staging } = await import("../../../packages/db/src/index.ts");
 const {
   createDb,
@@ -98,6 +104,7 @@ try {
       salaryCurrency: "EGP",
       minMatchScore: 0
     });
+    await runs.claim(userId, runId, new Date());
     startJobDiscoveryLandQueue(process.env.REDIS_URL!);
     startJobInboxAiQueue(process.env.REDIS_URL!);
     await Promise.all(
@@ -137,6 +144,15 @@ try {
           1,
           "one actual inbox row is created"
         );
+        const addedApplication = await applicationRepository.findByUserIdAndUrl(
+          userId,
+          "https://example.com/jobs/discovery-fixture-0"
+        );
+        assert.equal(
+          addedApplication?.hiringRegion,
+          "mena",
+          "restricted remote eligibility remains on the saved application"
+        );
         const reservedAgain = await runs.reserveCandidate(
           userId,
           claimed.runId,
@@ -145,6 +161,10 @@ try {
         assert.equal(reservedAgain, false, "completed candidate cannot be reserved twice");
         console.log(
           "PASS: real Redis retry, atomic coalescing, tenant isolation, structured geography, monthly EGP floor, category gate, persisted completion and one inbox insert"
+        );
+        assert(
+          current.warnings.some((note) => note.includes("without AI scoring")),
+          "no-key scoring is disclosed after an actual insertion"
         );
         const prior = await staging.findById(Object.keys(current.candidates)[0]!);
         assert(prior);
@@ -156,7 +176,7 @@ try {
             listingUrl: "https://example.com/jobs/stale-unseen-fixture"
           }
         ]);
-        for (const nextMode of ["permanent", "empty"] as const) {
+        for (const nextMode of ["permanent", "hybrid", "empty"] as const) {
           mode = nextMode;
           const before: number = requests;
           const nextId = `${runId}_${nextMode}`;
@@ -175,6 +195,20 @@ try {
                 1,
                 "permanent failures and empty results do not retry"
               );
+              if (nextMode === "hybrid") {
+                assert.equal(
+                  Object.values(next.candidates)[0],
+                  "heuristic",
+                  "a broad source region does not override a precise hybrid location during screening"
+                );
+              }
+              if (nextMode === "empty") {
+                assert(
+                  !next.warnings.includes(DISCOVERY_AI_FALLBACK_NOTE) &&
+                    !next.warnings.includes(DISCOVERY_NO_AI_NOTE),
+                  "empty searches do not claim heuristic matches were added"
+                );
+              }
               settled = true;
               break;
             }
@@ -185,18 +219,27 @@ try {
         const failedCandidateRun = `${runId}_screening_failure`;
         await runs.claim(userId, failedCandidateRun, new Date());
         assert(await runs.reserveCandidate(userId, failedCandidateRun, "failed-candidate"));
-        await runs.update(userId, failedCandidateRun, { landFinished: true, stage: "scoring" });
+        await runs.update(userId, failedCandidateRun, {
+          landFinished: true,
+          stage: "scoring",
+          retryAt: new Date()
+        });
         await runs.finishCandidate(userId, failedCandidateRun, "failed-candidate", "failed");
         assert.equal(
           (await runs.find(userId, failedCandidateRun))?.stage,
           "failed",
           "screening failure cannot masquerade as an empty success"
         );
+        assert.equal(
+          (await runs.find(userId, failedCandidateRun))?.retryAt,
+          null,
+          "settled failures clear obsolete retry times"
+        );
         const staleRun = `${runId}_stale`;
         await runs.claim(userId, staleRun, new Date(Date.now() - 60 * 60_000));
         await db
           .update(jobDiscoveryRun)
-          .set({ updatedAt: new Date(Date.now() - 60 * 60_000) })
+          .set({ updatedAt: new Date(Date.now() - 60 * 60_000), retryAt: new Date() })
           .where(eq(jobDiscoveryRun.runId, staleRun));
         await runs.expireStale(userId);
         assert.equal(
@@ -204,12 +247,60 @@ try {
           "failed",
           "worker crash cannot block future searches forever"
         );
+        assert.equal(
+          (await runs.find(userId, staleRun))?.retryAt,
+          null,
+          "stale failures clear obsolete retry times"
+        );
+        const lastSuccess = await runs.lastSuccessful(userId);
+        await db
+          .update(jobPreference)
+          .set({ categories: [], roleKeywords: [] })
+          .where(eq(jobPreference.userId, userId));
+        const blockedId = `${runId}_blocked`;
+        await requestJobDiscoveryLand({ userId, runId: blockedId, trigger: "find_now" });
+        let blocked = false;
+        for (let n = 0; n < 100; n += 1) {
+          const record = await runs.find(userId, blockedId);
+          if (record?.stage === "failed") {
+            assert.equal(record.reason, "title_required");
+            assert.equal(record.retryAt, null);
+            blocked = true;
+            break;
+          }
+          await wait(100);
+        }
+        assert(
+          blocked,
+          "cleared preferences block the worker instead of recording a successful search"
+        );
+        assert.equal(
+          (await runs.lastSuccessful(userId))?.getTime(),
+          lastSuccess?.getTime(),
+          "blocked runs do not advance last success"
+        );
+        await db
+          .update(jobPreference)
+          .set({ categories: ["frontend"] })
+          .where(eq(jobPreference.userId, userId));
         mode = "empty";
         const scheduledId = `${runId}_scheduled`;
         await requestJobDiscoveryLand(
           { userId, runId: scheduledId, trigger: "cron" },
           { delayMs: 60_000 }
         );
+        const { Queue } = await import("bullmq");
+        const { JOB_DISCOVERY_LAND_QUEUE_NAME, landJobId } = await import("@tsu-stack/core");
+        const queue = new Queue(JOB_DISCOVERY_LAND_QUEUE_NAME, {
+          connection: { url: process.env.REDIS_URL! }
+        });
+        try {
+          const lost = await queue.getJob(landJobId(userId, scheduledId));
+          assert(lost, "scheduled run has a delayed queue job");
+          await lost.remove();
+        } finally {
+          await queue.close();
+        }
         const before: number = Date.now();
         await requestJobDiscoveryLand({ userId, runId: `${runId}_manual`, trigger: "find_now" });
         for (let n = 0; n < 100; n += 1) {
@@ -219,7 +310,7 @@ try {
             const manual = await runs.find(userId, `${runId}_manual`);
             assert.equal(manual, null, "manual find reuses the scheduled run");
             console.log(
-              "PASS: permanent errors fail immediately, empty results complete, and manual find expedites the scheduled run"
+              "PASS: permanent errors fail immediately, blocked runs preserve last success, terminal retry times clear, and manual find repairs a lost scheduled job"
             );
             return;
           }

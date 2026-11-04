@@ -7,6 +7,7 @@ import {
   JOB_DISCOVERY_LAND_QUEUE_NAME,
   JobDiscoveryLandPayloadSchema,
   landJobId,
+  discoveryBlockedReason,
   type JobDiscoveryLandPayload
 } from "@tsu-stack/core";
 import { jobDiscoveryRunRepository, createDb, runWithDb } from "@tsu-stack/db";
@@ -70,7 +71,7 @@ export function startJobDiscoveryLandQueue(redisUrl: string): void {
           }
           const result = await runDiscoveryLand({ userId, runId });
           await jobDiscoveryRunRepository.update(userId, runId, {
-            stage: "scoring",
+            stage: discoveryBlockedReason(result.reason) ? "failed" : "scoring",
             landFinished: true,
             reason:
               result.reason === "ok"

@@ -71,3 +71,35 @@ No production migration, environment change or deployment was performed. Product
 4. Run a search on the affected account. Verify source fetch succeeds through the scoped resolver, real provider screening reaches a terminal state, persisted additions equal actual inserted jobs, and the UI reports the same outcome.
 5. Browser-check New jobs, hub initiation, dismissal/navigation, empty/error states, narrow viewport, and both appearances. Check the scheduled run and last-success display.
 6. If rollback is needed, roll back application artifacts. The migration is additive; retain the run records and columns rather than deleting them during an incident.
+
+## PR 60 review follow-up
+
+Accepted review findings now have code fixes. Discovery status keys include the account ID. An auth-cache account change cancels the detached poll, clears its shared state, and removes the old discovery status cache. Polling checks cancellation after each awaited invalidation. Transient status reads get three bounded retries; exhausted tracking reports unavailable status while preserving the server search outcome. Idle visible dashboards refresh every 30 seconds.
+
+Queued-run recovery reuses the claimed run ID and recreates a missing Redis job. The enqueue result carries that ID back to the caller instead of looking up a potentially different active run afterward. A legitimate scoring run is coalesced. Remote geography uses the existing Locations fallback and lineage matcher. Screening retains precise physical locations when broad source regions are present.
+
+Runs blocked by missing role/category or a full inbox persist a failed outcome with a readable Search paused label. They do not advance lastSuccessfulAt. All terminal transitions clear retryAt, and the status card shows a next attempt only while retrying. Heuristic disclosures are persisted only after an actual insert. No-key searches use neutral wording; configured AI failures retain the unavailable warning.
+
+The local worker harness now rejects remote DATABASE_URL and REDIS_URL before creating resources. Additional proof covers a crash after the database claim, a missing delayed Redis job, blocked preferences preserving last success, precise hybrid locations surviving both screening stages, obsolete retry cleanup, no-key disclosure after insertion, and empty runs without false addition notices. Controlled frontend tests cover transient polling recovery, bounded failure, invalid sessions, dismissal during both invalidation awaits, and account changes. The alternate DNS transport also rejects a real self-signed TLS certificate in a local HTTPS fixture.
+
+Skipped review suggestions remain the one-off Set allocation and speculative hydration state. No SSR prefetch path was found for this status query. Neither change fixes a demonstrated failure.
+
+## Required deployment sequence
+
+Do not overlap old and new inbox workers. Old code does not finish the new candidate reservations. Dokploy reports one replica and no explicit updateConfigSwarm, which does not prove the running service update order.
+
+Before rollout, verify the actual Docker service update order is stop-first, or pause discovery producers and drain/stop every old land and inbox worker before starting the new version. Apply the additive migration before starting the new application. Confirm the old container/process is gone and the new worker artifact is running before resuming producers. If zero-downtime overlapping worker versions are required, introduce a versioned queue or reservation reconciliation before deployment.
+
+After rollout, trigger one search for the affected account and confirm a real terminal run, zero pending candidates, no stale retry time, actual inbox additions or an honest empty result, and the dashboard's last-success timestamp. Recheck source connectivity inside the deployed container. Migration, deployment order, interactive browser behavior, and paid AI execution are not verified by the local suite.
+
+### Follow-up validation results
+
+- API discovery tests passed, 71 tests across 9 files, including the actual TLS rejection.
+- Core discovery and salary tests passed, 139 tests across 16 files.
+- Web tracker, status rendering, and hub enqueue tests passed, 13 tests across 3 files.
+- Real local PostgreSQL/Redis harness passed with restricted remote metadata retained and the hybrid location regression included. A separate remote-Redis probe stopped at the guard before starting workers.
+- Server and web production builds passed. Web TypeScript passed. API and DB package checks passed with existing warnings. The final changed-web check passed with no warnings or errors.
+- The full workspace fix command found four errors in new test imports plus existing warnings. Those imports were corrected and the affected check rerun successfully. The full workspace command was not repeated.
+- React Doctor 0.9.22 reported 92/100 and one locale-formatting warning on the already-reviewed status date rendering. This warning remains deferred because no SSR-prefetch path was found. The score is not directly comparable with the earlier scanner version.
+
+The full worker loop and asynchronous tests are substitutes for the current behavior checks. They do not establish interactive browser or deployed production verification.

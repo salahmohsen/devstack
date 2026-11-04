@@ -43,7 +43,19 @@ export const DiscoveryStatusOutputSchema = z.object({
 export function isDiscoveryRunTerminal(stage: DiscoveryRunStage): boolean {
   return stage === "completed" || stage === "failed";
 }
+export function discoveryBlockedReason(reason: string | null): string | null {
+  if (reason === "title_required") {
+    return "Choose a role or category in Job preferences, then try again.";
+  }
+  if (reason === "inbox_full") {
+    return "Your inbox is full. Dismiss or track some jobs, then try again.";
+  }
+  return null;
+}
 export function discoveryRunLabel(run: DiscoveryRun): string {
+  if (isDiscoveryRunTerminal(run.stage) && discoveryBlockedReason(run.reason)) {
+    return "Search paused";
+  }
   switch (run.stage) {
     case "queued":
       return "Search queued";

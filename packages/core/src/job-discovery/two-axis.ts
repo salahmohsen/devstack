@@ -123,11 +123,15 @@ export function decideStructuredJobPlace(
   if (mode === "remote" && (input.regions?.length ?? 0) > 0) {
     const regions = input.regions!.map(normalized);
     if (regions.includes("global")) return { action: "pass", reason: "remote worldwide listing" };
-    const wanted = input.prefs.remoteRegions.map(normalized);
-    if (wanted.length === 0 && input.prefs.locations.length === 0) {
+    const wanted = remoteRegionGate(input.prefs);
+    if (wanted.length === 0) {
       return { action: "pass", reason: "remote unrestricted" };
     }
-    if (wanted.some((region) => regions.includes(region))) {
+    if (
+      regions.some((region) =>
+        hiringRegionsOverlap(wanted, region, input.location, { expand: "lineage" })
+      )
+    ) {
       return { action: "pass", reason: "structured remote region overlaps" };
     }
     return { action: "drop", reason: "structured remote region does not overlap" };

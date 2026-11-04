@@ -65,17 +65,17 @@ export const jobDiscoveryRouter = {
       await jobDiscoveryRunRepository.expireStale(userId);
       const active = await jobDiscoveryRunRepository.findActive(userId);
       if (active) {
-        await requestJobDiscoveryLand({
+        const requested = await requestJobDiscoveryLand({
           userId,
           runId: `find_${randomUUID()}`,
           trigger: "find_now"
         });
         return {
-          enqueued: true,
+          enqueued: requested.enqueued,
           ingestTriggered: false,
           seats: 0,
-          reason: "ok",
-          runId: active.runId
+          reason: requested.enqueued ? "ok" : "queue_unavailable",
+          runId: requested.runId
         };
       }
       const [prefs, llm] = await Promise.all([
@@ -129,7 +129,7 @@ export const jobDiscoveryRouter = {
       }
 
       const runId = `find_${userId}_${randomUUID()}`;
-      const enqueued = await requestJobDiscoveryLand({
+      const { enqueued, runId: trackedRunId } = await requestJobDiscoveryLand({
         userId,
         runId,
         trigger: "find_now"
@@ -148,7 +148,7 @@ export const jobDiscoveryRouter = {
         enqueued: true,
         ingestTriggered: false,
         seats,
-        runId: (await jobDiscoveryRunRepository.findActive(userId))?.runId ?? runId,
+        runId: trackedRunId,
         reason: "ok"
       };
     }),

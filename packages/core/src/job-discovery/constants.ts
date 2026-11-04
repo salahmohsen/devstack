@@ -33,3 +33,6 @@ export const DISCOVERY_SALARY_NOTE =
 
 export const DISCOVERY_AI_FALLBACK_NOTE =
   "AI scoring was unavailable. Matches were added using your saved filters.";
+
+export const DISCOVERY_NO_AI_NOTE =
+  "Matches were added using your saved filters without AI scoring. Add an AI key in Settings for personalized scoring.";

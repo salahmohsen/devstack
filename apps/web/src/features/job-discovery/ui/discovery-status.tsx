@@ -1,6 +1,6 @@
 "use client";
 
-import { discoveryRunLabel } from "@tsu-stack/core";
+import { discoveryRunLabel, discoveryBlockedReason } from "@tsu-stack/core";
 
 import { useDiscoveryStatusQuery } from "@/features/job-discovery/api/discovery-status.query";
 
@@ -19,10 +19,18 @@ export function DiscoveryStatus() {
   return (
     <div className="space-y-1 text-xs text-muted-foreground" aria-live="polite">
       {data.run && (
-        <p className={data.run.stage === "failed" ? "text-destructive" : undefined}>
+        <p
+          className={
+            data.run.stage === "failed" && !discoveryBlockedReason(data.run.reason)
+              ? "text-destructive"
+              : undefined
+          }
+        >
           {discoveryRunLabel(data.run)}
-          {data.run.reason ? `: ${data.run.reason}` : ""}
-          {data.run.retryAt ? ` Next attempt: ${date(data.run.retryAt)}.` : ""}
+          {data.run.reason ? `: ${discoveryBlockedReason(data.run.reason) ?? data.run.reason}` : ""}
+          {data.run.stage === "retrying" && data.run.retryAt
+            ? ` Next attempt: ${date(data.run.retryAt)}.`
+            : ""}
         </p>
       )}
       {data.lastSuccessfulAt && <p>Last successful search: {date(data.lastSuccessfulAt)}</p>}

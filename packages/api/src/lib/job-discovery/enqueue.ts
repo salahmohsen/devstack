@@ -180,33 +180,28 @@ export function registerJobInboxAiEnqueue(fn: EnqueueFn<JobInboxAiPayload>): voi
 export async function requestJobDiscoveryLand(
   input: Omit<JobDiscoveryLandPayload, "enqueuedAt">,
   opts?: EnqueueOpts
-): Promise<boolean> {
+): Promise<{ enqueued: boolean; runId: string }> {
   const claimed = await jobDiscoveryRunRepository.claim(
     input.userId,
     input.runId,
     new Date(Date.now() + (opts?.delayMs ?? 0))
   );
-  if (!claimed.created && claimed.run.stage === "completed") return false;
-  if (!claimed.created && claimed.run.stage === "failed") return false;
-  if (claimed.run.runId !== input.runId) {
-    if (input.trigger === "find_now" && claimed.run.scheduledAt.getTime() > Date.now()) {
-      const queue = getProducerQueue(LAND_QUEUE_KEY, JOB_DISCOVERY_LAND_QUEUE_NAME);
-      const existing = await queue?.getJob(landJobId(input.userId, claimed.run.runId));
-      if (existing && (await existing.getState()) === "delayed") {
-        await existing.changeDelay(0);
-        await jobDiscoveryRunRepository.update(input.userId, claimed.run.runId, {
-          scheduledAt: new Date()
-        });
-      }
-    }
-    return true;
+  const runId = claimed.run.runId;
+  if (claimed.run.stage === "completed" || claimed.run.stage === "failed") {
+    return { enqueued: false, runId };
   }
+  if (runId !== input.runId && claimed.run.stage !== "queued") {
+    return { enqueued: true, runId };
+  }
+  const delayMs =
+    input.trigger === "find_now" ? 0 : Math.max(0, claimed.run.scheduledAt.getTime() - Date.now());
   const data = JobDiscoveryLandPayloadSchema.parse({
     ...input,
+    runId,
     enqueuedAt: new Date().toISOString()
   });
   if (input.trigger === "backfill") {
-    await jobDiscoveryRunRepository.update(input.userId, input.runId, { landFinished: false });
+    await jobDiscoveryRunRepository.update(input.userId, runId, { landFinished: false });
   }
   const enqueued = await requestWithHook({
     hookKey: LAND_HOOK_KEY,
@@ -218,17 +213,23 @@ export async function requestJobDiscoveryLand(
     event: "job_discovery_land_enqueued",
     extra: { userId: data.userId, runId: data.runId, trigger: data.trigger },
     jobId: landJobId(data.userId, data.runId),
-    delayMs: opts?.delayMs,
+    delayMs,
     removeOnComplete: true,
     removeOnFail: true
   });
   if (!enqueued) {
-    await jobDiscoveryRunRepository.update(input.userId, input.runId, {
+    await jobDiscoveryRunRepository.update(input.userId, runId, {
       stage: "failed",
       reason: "Search queue unavailable. Try again shortly."
     });
   }
-  return enqueued;
+  if (enqueued && input.trigger === "find_now" && claimed.run.stage === "queued") {
+    const queue = getProducerQueue(LAND_QUEUE_KEY, JOB_DISCOVERY_LAND_QUEUE_NAME);
+    const existing = await queue?.getJob(landJobId(input.userId, runId));
+    if (existing && (await existing.getState()) === "delayed") await existing.changeDelay(0);
+    await jobDiscoveryRunRepository.update(input.userId, runId, { scheduledAt: new Date() });
+  }
+  return { enqueued, runId };
 }
 
 export async function requestJobInboxAi(input: JobInboxAiPayload): Promise<boolean> {

@@ -8,6 +8,7 @@ import {
   dailyAiAttemptCap,
   DISCOVERY_FETCH_POOL_SIZE,
   DISCOVERY_AI_FALLBACK_NOTE,
+  DISCOVERY_NO_AI_NOTE,
   EmploymentTypeSchema,
   inferApplicationSource,
   INBOX_TTL_MS,
@@ -547,9 +548,13 @@ async function runInboxAiForJob(input: {
   const existing = await applicationRepository.findByUserIdAndUrl(input.userId, listingUrl);
   if (existing) return { outcome: "skipped" };
 
+  const sourceWorkMode = asWorkMode(job.workMode);
   const leftover = applyZeroDollarCandidate({
-    workMode: asWorkMode(job.workMode),
-    hiringRegion: job.regions?.join(", ") || job.countries?.join(", ") || null,
+    workMode: sourceWorkMode,
+    hiringRegion:
+      sourceWorkMode === "remote"
+        ? job.regions?.join(", ") || job.countries?.join(", ") || null
+        : null,
     location: trimmedOrNull(job.location),
     employmentType: job.employmentType,
     description: job.description,
@@ -657,6 +662,13 @@ async function runInboxAiForJob(input: {
       trackingStatus: "inbox",
       poolSize: DISCOVERY_FETCH_POOL_SIZE
     });
+    if (row) {
+      await jobDiscoveryRunRepository.addWarning(
+        input.userId,
+        input.runId,
+        hasAiKey ? DISCOVERY_AI_FALLBACK_NOTE : DISCOVERY_NO_AI_NOTE
+      );
+    }
     return { outcome: row ? "heuristic" : "skipped" };
   }
 
@@ -703,11 +715,6 @@ async function runInboxAiForJob(input: {
   });
   let takeText: string | null = null;
   if (keep === "heuristic") {
-    await jobDiscoveryRunRepository.addWarning(
-      input.userId,
-      input.runId,
-      DISCOVERY_AI_FALLBACK_NOTE
-    );
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
   }
   if (keep === "passed" || keep === "heuristic") {
@@ -763,6 +770,13 @@ async function runInboxAiForJob(input: {
     dismissVia: plan.insert.trackingStatus === "dismissed" ? "low_match" : undefined,
     agentTake: plan.insert.agentTake
   });
+  if (row && keep === "heuristic") {
+    await jobDiscoveryRunRepository.addWarning(
+      input.userId,
+      input.runId,
+      DISCOVERY_AI_FALLBACK_NOTE
+    );
+  }
   return { outcome: row ? plan.outcome : "skipped" };
 }
 

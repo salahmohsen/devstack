@@ -77,3 +77,22 @@ describe("DiscoveryStatus", () => {
     );
   });
 });
+
+it("shows readable blocked reasons without a stale retry time", () => {
+  const html = render({ ...run, stage: "failed", reason: "title_required" });
+  expect(html).toContain("Search paused");
+  expect(html).toContain("Choose a role or category");
+  expect(html).not.toContain("title_required");
+  expect(html).not.toContain("Next attempt:");
+});
+it("displays both successful and scheduled timestamps", () => {
+  const last = "2026-11-03T12:00:00.000Z";
+  const next = "2026-11-05T12:00:00.000Z";
+  query.mockReturnValue({
+    isError: false,
+    data: { run: null, lastSuccessfulAt: last, nextScheduledAt: next }
+  });
+  const html = renderToStaticMarkup(createElement(DiscoveryStatus));
+  expect(html).toContain(`Last successful search: ${new Date(last).toLocaleString()}`);
+  expect(html).toContain(`Next automatic search: ${new Date(next).toLocaleString()}`);
+});

@@ -40,6 +40,7 @@ export const jobDiscoveryRunRepository = {
       .set({
         stage: "failed",
         reason: "Search stopped responding. Try again.",
+        retryAt: null,
         updatedAt: new Date()
       })
       .where(
@@ -109,7 +110,11 @@ export const jobDiscoveryRunRepository = {
   ) {
     await getDb()
       .update(run)
-      .set({ ...patch, updatedAt: new Date() })
+      .set({
+        ...patch,
+        ...(patch.stage === "completed" || patch.stage === "failed" ? { retryAt: null } : {}),
+        updatedAt: new Date()
+      })
       .where(and(scope(userId, runId), active));
   },
   async reserveCandidate(userId: string, runId: string, jobId: string) {
@@ -152,6 +157,7 @@ export const jobDiscoveryRunRepository = {
     await getDb()
       .update(run)
       .set({
+        retryAt: null,
         stage: sql`case when exists
         (select 1 from jsonb_each_text(${run.candidates}) as c where c.value = 'failed') then 'failed' else 'completed' end`,
         reason: sql`case when exists (select 1 from jsonb_each_text(${run.candidates}) as c where c.value = 'failed')

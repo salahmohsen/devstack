@@ -17,6 +17,16 @@
 
 ---
 
+## 2026-11-04 — Discovery review recovery and account boundaries
+
+- **Trigger:** Review of persisted discovery tracking and queue retry behavior.
+- **Finding:** An active database claim does not prove a Redis job exists. Repair only queued runs using their original ID and return that ID directly from enqueue; do not restart legitimate scoring work.
+- **Finding:** Detached polling must check cancellation after every awaited invalidation, and account changes must clear both the query cache and shared tracker. A transient read failure is not a failed server run.
+- **Finding:** Keep source geography arrays separate from fallback extraction. A broad region can erase a precise city when fed into a helper that prioritizes the region.
+- **Finding:** Publish addition disclosures only after the insert succeeds. Missing AI configuration and a configured provider outage need different wording.
+- **Finding:** Verification scripts that start workers must guard every backing service URL before creating any resource. A local database guard does not protect remote Redis.
+- **Evidence class:** Local PostgreSQL/Redis worker recovery loop, controlled asynchronous tracker tests, rendered status tests, and an actual untrusted-certificate TLS rejection. Interactive browser and paid-provider paths remain unverified.
+
 ## 2026-11-04 — Queue completion must follow the product outcome
 
 - **Trigger:** Job discovery showed no new matches after upstream connection failures.

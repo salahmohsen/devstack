@@ -103,7 +103,7 @@ async function runFetchTick(): Promise<Record<string, unknown>> {
   let failed = 0;
   for (const userId of userIds) {
     try {
-      const enqueued = await requestJobDiscoveryLand(
+      const { enqueued } = await requestJobDiscoveryLand(
         { userId, runId, trigger: "cron" },
         { delayMs: hashToDelay(userId) }
       );

@@ -88,7 +88,7 @@ export const JobPreferenceFields = withForm({
         <FieldGroup className="gap-8">
           <FieldsSection
             title="Where"
-            description="Remote reach and locations for hybrid or on-site work."
+            description="Remote regions control remote eligibility. When empty, locations also limit remote jobs. Locations match hybrid and on-site work."
           >
             <form.AppField name="regions">
               {(field) => (

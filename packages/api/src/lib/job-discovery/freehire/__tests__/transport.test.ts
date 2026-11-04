@@ -45,3 +45,40 @@ describe("Freehire DNS route recovery", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
+
+it("rejects an untrusted certificate on the actual alternate TLS connection", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { createServer } = await import("node:https");
+  const { Resolver } = await import("node:dns/promises");
+  const nativeFetch = globalThis.fetch;
+  const server = createServer({
+    key: readFileSync(new URL("./fixtures/untrusted-test-key.pem.fixture", import.meta.url)),
+    cert: readFileSync(new URL("./fixtures/untrusted-test-cert.pem.fixture", import.meta.url))
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("TLS fixture failed to listen");
+  const lookup = vi.spyOn(Resolver.prototype, "resolve4").mockResolvedValue(["127.0.0.1"]);
+  vi.resetModules();
+  const { fetchFreehire: freshFetch } = await import("#@/lib/job-discovery/freehire/transport");
+  const fetch = vi
+    .fn()
+    .mockRejectedValueOnce(
+      new TypeError("fetch failed", { cause: { code: "UND_ERR_CONNECT_TIMEOUT" } })
+    )
+    .mockImplementation(nativeFetch);
+  vi.stubGlobal("fetch", fetch);
+  try {
+    await expect(
+      freshFetch(`https://freehire.me:${address.port}/jobs`, {
+        signal: AbortSignal.timeout(5_000)
+      })
+    ).rejects.toMatchObject({ cause: { code: "DEPTH_ZERO_SELF_SIGNED_CERT" } });
+    expect(lookup).toHaveBeenCalledWith("freehire.me");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  } finally {
+    lookup.mockRestore();
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

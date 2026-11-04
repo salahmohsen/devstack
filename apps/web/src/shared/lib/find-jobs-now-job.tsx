@@ -3,11 +3,12 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import {
   type FindJobsNowInput,
   type FindJobsNowOutput,
   discoveryRunLabel,
-  DISCOVERY_AI_FALLBACK_NOTE,
+  discoveryBlockedReason,
   isDiscoveryRunTerminal,
   MAX_OPEN_INBOX
 } from "@tsu-stack/core";
@@ -20,7 +21,11 @@ import {
   isAbortError,
   upsertAiJobIsland
 } from "@/shared/lib/ai-job";
-import { getFindJobsNowState, setFindJobsNowState } from "@/shared/lib/find-jobs-now-store";
+import {
+  getFindJobsNowState,
+  resetFindJobsNowState,
+  setFindJobsNowState
+} from "@/shared/lib/find-jobs-now-store";
 import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
 import { presentAiError } from "@/shared/lib/parse-ai-error";
 
@@ -35,6 +40,46 @@ const jobController = createDetachedJobController({
   // Ingest/land run on the server queue; UI “Dismiss” only stops client tracking.
   cancelRemoteRun: () => undefined
 });
+
+export function bindDiscoveryAccount(queryClient: QueryClient) {
+  const key = getAuthUserQueryOptions().queryKey;
+  let owner = queryClient.getQueryData(getAuthUserQueryOptions().queryKey)?.id;
+  return queryClient.getQueryCache().subscribe((event) => {
+    if (event.query.queryKey.length !== key.length || event.query.queryKey[0] !== key[0]) return;
+    const next = queryClient.getQueryData(getAuthUserQueryOptions().queryKey)?.id;
+    if (next === owner) return;
+    owner = next;
+    jobController.cancel(null);
+    resetFindJobsNowState();
+    dismissAiJobIsland(FIND_TOAST_ID);
+    void queryClient.cancelQueries({ queryKey: orpcQueryClient.jobDiscovery.status.key() });
+    queryClient.removeQueries({ queryKey: orpcQueryClient.jobDiscovery.status.key() });
+  });
+}
+
+function isCurrent(generation: number, signal: AbortSignal) {
+  return jobController.isCurrent(generation) && !signal.aborted;
+}
+
+function isTransientStatusError(error: unknown) {
+  if (isAbortError(error)) return false;
+  if (!error || typeof error !== "object") return false;
+  const status = "status" in error ? error.status : undefined;
+  if (typeof status === "number") return status === 408 || status === 429 || status >= 500;
+  const code = "code" in error ? error.code : undefined;
+  return !["UNAUTHORIZED", "FORBIDDEN", "BAD_REQUEST", "NOT_FOUND"].includes(String(code));
+}
+
+async function readDiscoveryStatus(runId: string, signal: AbortSignal) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await orpcClient.jobDiscovery.status({ runId }, { signal });
+    } catch (error) {
+      if (signal.aborted || attempt >= 3 || !isTransientStatusError(error)) throw error;
+      await sleep(1_000 * 2 ** attempt, signal);
+    }
+  }
+}
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -70,14 +115,17 @@ function cachedHasAiKey(queryClient: QueryClient): boolean | null {
 }
 
 function toastMissingAiKey() {
-  toast.message("Landed without AI scoring. Add a key in Settings → AI.", {
-    action: (
-      <Link to="/dashboard/settings/ai" data-button>
-        Settings → AI
-      </Link>
-    ),
-    duration: 12_000
-  });
+  toast.message(
+    "This search will use your saved filters without AI scoring. Add a key in Settings → AI.",
+    {
+      action: (
+        <Link to="/dashboard/settings/ai" data-button>
+          Settings → AI
+        </Link>
+      ),
+      duration: 12_000
+    }
+  );
 }
 
 function setFindStepLabel(label: string) {
@@ -193,7 +241,7 @@ async function runFindJobsNow(
   try {
     const data = await orpcClient.jobDiscovery.findNow(input ?? {}, { signal });
 
-    if (!jobController.isCurrent(generation)) return data;
+    if (!isCurrent(generation, signal)) return data;
 
     if (data.reason === "title_required") {
       if (showToast) dismissAiJobIsland(FIND_TOAST_ID);
@@ -268,21 +316,12 @@ async function runFindJobsNow(
     void queryClient.invalidateQueries({ queryKey: orpcQueryClient.jobDiscovery.status.key() });
 
     const poll = () =>
-      pollFindJobsNow({
-        queryClient,
-        data,
-        generation,
-        signal,
-        showToast
-      });
-
-    if (!awaitPoll) {
-      handedOffPoll = true;
-      void poll()
-        .catch((error: unknown) => {
-          if (!jobController.isCurrent(generation) || isAbortError(error) || signal.aborted) return;
-          const message = error instanceof Error ? error.message : "Could not read search status.";
-          setFindJobsNowState({ status: "failed", stepLabel: null, error: message });
+      pollFindJobsNow({ queryClient, data, generation, signal, showToast }).catch(
+        (error: unknown) => {
+          if (!isCurrent(generation, signal) || isAbortError(error)) return;
+          const message =
+            "Live status could not be read. The search may still be running. Check New jobs to reconnect.";
+          setFindJobsNowState({ status: "ready", stepLabel: null, error: message });
           if (showToast) {
             completeAiJobIsland(FIND_TOAST_ID, {
               status: "error",
@@ -290,18 +329,22 @@ async function runFindJobsNow(
               errorMessage: message,
               requiresAction: false
             });
-          } else toast.error("Search status unavailable", { description: message });
-        })
-        .finally(() => {
-          jobController.clearIf(controller);
-        });
+          } else toast.message("Search status unavailable", { description: message });
+        }
+      );
+
+    if (!awaitPoll) {
+      handedOffPoll = true;
+      void poll().finally(() => {
+        jobController.clearIf(controller);
+      });
       return data;
     }
 
     await poll();
     return data;
   } catch (error) {
-    if (!jobController.isCurrent(generation)) {
+    if (!isCurrent(generation, signal)) {
       return {
         enqueued: false,
         ingestTriggered: false,
@@ -366,31 +409,34 @@ async function pollFindJobsNow(input: {
   if (!data.runId) throw new Error("Search did not return a tracking ID. Refresh and try again.");
   const started = Date.now();
   let lastAdded = -1;
-  while (jobController.isCurrent(generation)) {
-    const { run } = await orpcClient.jobDiscovery.status({ runId: data.runId }, { signal });
-    if (!jobController.isCurrent(generation)) return;
+  while (isCurrent(generation, signal)) {
+    const { run } = await readDiscoveryStatus(data.runId, signal);
+    if (!isCurrent(generation, signal)) return;
     if (!run) throw new Error("Search status is unavailable. Refresh to check the latest run.");
     setFindJobsNowState({ newJobsFound: run.added });
     const label = discoveryRunLabel(run);
     if (getFindJobsNowState().stepLabel !== label) setFindStepLabel(label);
     if (run.added !== lastAdded) {
       await invalidateInbox(queryClient);
+      if (!isCurrent(generation, signal)) return;
       lastAdded = run.added;
     }
     if (isDiscoveryRunTerminal(run.stage)) {
       await queryClient.invalidateQueries({ queryKey: orpcQueryClient.jobDiscovery.status.key() });
-      const failed = run.stage === "failed";
-      const outcomeMessage = failed
-        ? (run.reason ?? "Search failed. Try again shortly.")
-        : run.added > 0
-          ? "Matches are available under New jobs."
-          : (run.reason ??
-            (run.fetched === 0
-              ? "The job source returned no listings for your saved filters. Review Job preferences."
-              : `${run.fetched} listings checked. No new jobs passed screening; existing jobs and duplicates were skipped.`));
-      const message = run.warnings.includes(DISCOVERY_AI_FALLBACK_NOTE)
-        ? `${outcomeMessage} ${DISCOVERY_AI_FALLBACK_NOTE}`
-        : outcomeMessage;
+      if (!isCurrent(generation, signal)) return;
+      const blocked = discoveryBlockedReason(run.reason);
+      const failed = run.stage === "failed" && !blocked;
+      const outcomeMessage =
+        blocked ??
+        (failed
+          ? (run.reason ?? "Search failed. Try again shortly.")
+          : run.added > 0
+            ? "Matches are available under New jobs."
+            : (run.reason ??
+              (run.fetched === 0
+                ? "The job source returned no listings for your saved filters. Review Job preferences."
+                : `${run.fetched} listings checked. No new jobs passed screening; existing jobs and duplicates were skipped.`)));
+      const message = [outcomeMessage, ...run.warnings].join(" ");
       setFindJobsNowState({
         status: failed ? "failed" : "ready",
         stepLabel: null,
