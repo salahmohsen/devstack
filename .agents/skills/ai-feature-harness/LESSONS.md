@@ -17,6 +17,15 @@
 
 ---
 
+## 2026-11-04 — Queue completion must follow the product outcome
+
+- **Trigger:** Job discovery showed no new matches after upstream connection failures.
+- **Finding:** Returning a failure object from a worker dependency resolves the queue job and bypasses configured retries. Persist run state and propagate retryable failures; never infer success or empty results from a stable inbox count.
+- **Finding:** Prove a network hypothesis from the deployed container. DNS can resolve successfully to an unreachable CDN route; an alternate resolver is useful only after hostname-preserving HTTPS probes prove its answers work. Keep resolver overrides scoped and preserve TLS verification.
+- **Finding:** Preserve upstream structured geography and pay periods across every screening stage. Re-parsing display text can reject already qualified locations or compare monthly preferences with annual amounts.
+- **Finding:** Test the actual dispatcher/runtime pair: a newer standalone HTTP client may not implement the native fetch dispatcher protocol used by the deployed Node version.
+- **Evidence class:** Production container DNS/TLS probes, real local PostgreSQL/Redis worker failure-recovery loop, status component rendering, production builds. Interactive browser and paid-provider execution remain separate rollout checks.
+
 ## 2026-09-10 — Apply-package review dialog harness: single-mount panes, same-site oRPC, excluded-stub reachability
 
 - **Trigger:** Apply package review dialog (sheet → Paper Studio dialog): resume/cover-letter papers, Matte mail editor, attachment squares, Save/Send, live parity loop on seeded drafts

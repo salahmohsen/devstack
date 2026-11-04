@@ -4,9 +4,11 @@ import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
-  type ApplicationOutput,
   type FindJobsNowInput,
   type FindJobsNowOutput,
+  discoveryRunLabel,
+  DISCOVERY_AI_FALLBACK_NOTE,
+  isDiscoveryRunTerminal,
   MAX_OPEN_INBOX
 } from "@tsu-stack/core";
 
@@ -22,23 +24,12 @@ import { getFindJobsNowState, setFindJobsNowState } from "@/shared/lib/find-jobs
 import { invalidateApplicationsListQueries } from "@/shared/lib/invalidate-applications-list";
 import { presentAiError } from "@/shared/lib/parse-ai-error";
 
-const inboxListQueryKey = orpcQueryClient.applications.list.queryKey({
-  input: { trackingStatus: "inbox" }
-});
 const inboxCountQueryKey = orpcQueryClient.applications.count.queryKey({
   input: { trackingStatus: "inbox" }
 });
 
 /** Stable island id so step updates + dismiss work across navigations. */
 const FIND_TOAST_ID = "find-jobs-now-job";
-
-/**
- * Absolute poll times from enqueue (ms). Ingest + land are async BullMQ work —
- * matches land under New jobs as workers finish, not only at the end.
- */
-const POLL_AT_MS = [
-  4_000, 12_000, 25_000, 45_000, 70_000, 100_000, 160_000, 220_000, 280_000, 340_000
-] as const;
 
 const jobController = createDetachedJobController({
   // Ingest/land run on the server queue; UI “Dismiss” only stops client tracking.
@@ -61,13 +52,6 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
     }
     signal.addEventListener("abort", onAbort, { once: true });
   });
-}
-
-function inboxCountFromCache(queryClient: QueryClient): number {
-  const list = queryClient.getQueryData<ApplicationOutput[]>(inboxListQueryKey);
-  if (Array.isArray(list)) return list.length;
-  const count = queryClient.getQueryData<{ count: number }>(inboxCountQueryKey);
-  return typeof count?.count === "number" ? count.count : 0;
 }
 
 async function invalidateInbox(queryClient: QueryClient) {
@@ -94,25 +78,6 @@ function toastMissingAiKey() {
     ),
     duration: 12_000
   });
-}
-
-function stepForPoll(index: number, ingestTriggered: boolean, newJobsFound: number): string {
-  if (newJobsFound > 0) {
-    return newJobsFound === 1 ? "1 new job so far…" : `${newJobsFound} new jobs so far…`;
-  }
-  if (index <= 0) {
-    return ingestTriggered ? "Refreshing boards…" : "Scoring matches…";
-  }
-  if (index === 1) {
-    return ingestTriggered ? "Scoring board listings…" : "Scoring catalog listings…";
-  }
-  if (index === 2) {
-    return "Still scoring…";
-  }
-  if (index === 3) {
-    return "Skipping duplicates…";
-  }
-  return "Finishing up…";
 }
 
 function setFindStepLabel(label: string) {
@@ -212,7 +177,6 @@ async function runFindJobsNow(
   }
 
   const { generation, controller, signal } = jobController.begin();
-  const baselineInbox = inboxCountFromCache(queryClient);
 
   setFindJobsNowState({
     status: "running",
@@ -239,9 +203,8 @@ async function runFindJobsNow(
         ingestTriggered: false,
         seats: data.seats
       });
-      toast.message("Set a job title first", {
-        description:
-          "Choose a title pack or a custom title with at least two role keywords, then try again.",
+      toast.message("Choose a role or category first", {
+        description: "Choose at least one role keyword or job category, then try again.",
         action: (
           <Link to="/dashboard/settings/jobs" data-button>
             Settings → Jobs
@@ -301,13 +264,13 @@ async function runFindJobsNow(
       ingestTriggered: data.ingestTriggered,
       seats: data.seats
     });
-    setFindStepLabel(data.ingestTriggered ? "Queued board refresh…" : "Queued scoring…");
+    setFindStepLabel("Search queued");
+    void queryClient.invalidateQueries({ queryKey: orpcQueryClient.jobDiscovery.status.key() });
 
     const poll = () =>
       pollFindJobsNow({
         queryClient,
         data,
-        baselineInbox,
         generation,
         signal,
         showToast
@@ -315,9 +278,23 @@ async function runFindJobsNow(
 
     if (!awaitPoll) {
       handedOffPoll = true;
-      void poll().finally(() => {
-        jobController.clearIf(controller);
-      });
+      void poll()
+        .catch((error: unknown) => {
+          if (!jobController.isCurrent(generation) || isAbortError(error) || signal.aborted) return;
+          const message = error instanceof Error ? error.message : "Could not read search status.";
+          setFindJobsNowState({ status: "failed", stepLabel: null, error: message });
+          if (showToast) {
+            completeAiJobIsland(FIND_TOAST_ID, {
+              status: "error",
+              resultTitle: "Search status unavailable",
+              errorMessage: message,
+              requiresAction: false
+            });
+          } else toast.error("Search status unavailable", { description: message });
+        })
+        .finally(() => {
+          jobController.clearIf(controller);
+        });
       return data;
     }
 
@@ -381,137 +358,60 @@ async function runFindJobsNow(
 async function pollFindJobsNow(input: {
   queryClient: QueryClient;
   data: FindJobsNowOutput;
-  baselineInbox: number;
   generation: number;
   signal: AbortSignal;
   showToast: boolean;
 }): Promise<void> {
-  const { queryClient, data, baselineInbox, generation, signal, showToast } = input;
-  await invalidateInbox(queryClient);
-
-  let newJobsFound = Math.max(0, inboxCountFromCache(queryClient) - baselineInbox);
-  setFindJobsNowState({ newJobsFound });
-  setFindStepLabel(stepForPoll(0, data.ingestTriggered, newJobsFound));
-
-  const pollStartedAt = Date.now();
-  let lastSeenCount = newJobsFound;
-  let grewOnLastPoll = false;
-  for (let i = 0; i < POLL_AT_MS.length; i += 1) {
-    const waitMs = Math.max(0, pollStartedAt + POLL_AT_MS[i]! - Date.now());
-    await sleep(waitMs, signal);
+  const { queryClient, data, generation, signal, showToast } = input;
+  if (!data.runId) throw new Error("Search did not return a tracking ID. Refresh and try again.");
+  const started = Date.now();
+  let lastAdded = -1;
+  while (jobController.isCurrent(generation)) {
+    const { run } = await orpcClient.jobDiscovery.status({ runId: data.runId }, { signal });
     if (!jobController.isCurrent(generation)) return;
-
-    await invalidateInbox(queryClient);
-    const latest = Math.max(0, inboxCountFromCache(queryClient) - baselineInbox);
-    grewOnLastPoll = latest > lastSeenCount;
-    lastSeenCount = latest;
-    newJobsFound = Math.max(newJobsFound, latest);
-    setFindJobsNowState({ newJobsFound });
-    setFindStepLabel(stepForPoll(i + 1, data.ingestTriggered, newJobsFound));
-  }
-
-  if (!jobController.isCurrent(generation)) return;
-
-  setFindJobsNowState({
-    status: "ready",
-    stepLabel: null,
-    newJobsFound
-  });
-
-  const hasAiKey = cachedHasAiKey(queryClient);
-
-  // Hub tool path never mounts the island — keep Sonner completions there.
-  if (!showToast) {
-    if (grewOnLastPoll) {
-      toast.message("Still scoring in the background", {
-        description:
-          newJobsFound > 0
-            ? `${newJobsFound} already under New jobs. More keepers may appear as evaluate finishes.`
-            : "Board refresh and scoring are still running. Check New jobs shortly.",
-        action: (
-          <Link to="/dashboard/new-jobs" data-button>
-            New jobs
-          </Link>
-        ),
-        duration: 14_000
-      });
-    } else if (newJobsFound > 0) {
-      toast.success(newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`, {
-        description:
-          hasAiKey === true
-            ? "They're under New jobs. Score-fails go to Dismissed; more keepers may still arrive."
-            : "Matches that passed your Job preferences are under New jobs.",
-        action: (
-          <Link to="/dashboard/new-jobs" data-button>
-            Open New jobs
-          </Link>
-        ),
-        duration: 12_000
-      });
-    } else if (data.ingestTriggered) {
-      toast.message("No new inbox jobs yet", {
-        description:
-          "Board refresh and scoring can take several minutes. Keepers appear under New jobs as they pass.",
-        action: (
-          <Link to="/dashboard/new-jobs" data-button>
-            New jobs
-          </Link>
-        ),
-        duration: 14_000
-      });
-    } else {
-      toast.message("No new inbox jobs", {
-        description:
-          "Every URL is already on a tracked job (or did not match your title). Deleting New jobs does not free URLs still on Tracked jobs.",
-        action: (
-          <Link to="/dashboard/tracked-jobs" data-button>
-            Tracked jobs
-          </Link>
-        ),
-        duration: 14_000
-      });
+    if (!run) throw new Error("Search status is unavailable. Refresh to check the latest run.");
+    setFindJobsNowState({ newJobsFound: run.added });
+    const label = discoveryRunLabel(run);
+    if (getFindJobsNowState().stepLabel !== label) setFindStepLabel(label);
+    if (run.added !== lastAdded) {
+      await invalidateInbox(queryClient);
+      lastAdded = run.added;
     }
-    return;
-  }
-
-  if (grewOnLastPoll) {
-    completeAiJobIsland(FIND_TOAST_ID, {
-      status: "success",
-      resultTitle: "Still scoring in the background",
-      errorMessage:
-        newJobsFound > 0
-          ? `${newJobsFound} already under New jobs. More keepers may appear as evaluate finishes.`
-          : "Board refresh and scoring are still running. Check New jobs shortly.",
-      requiresAction: true,
-      resultAction: { label: "New jobs", to: "/dashboard/new-jobs" }
-    });
-  } else if (newJobsFound > 0) {
-    completeAiJobIsland(FIND_TOAST_ID, {
-      status: "success",
-      resultTitle: newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`,
-      errorMessage:
-        hasAiKey === true
-          ? "They're under New jobs. Score-fails go to Dismissed; more keepers may still arrive."
-          : "Matches that passed your Job preferences are under New jobs.",
-      requiresAction: true,
-      resultAction: { label: "Open New jobs", to: "/dashboard/new-jobs" }
-    });
-  } else if (data.ingestTriggered) {
-    completeAiJobIsland(FIND_TOAST_ID, {
-      status: "success",
-      resultTitle: "No new inbox jobs yet",
-      errorMessage:
-        "Board refresh and scoring can take several minutes. Keepers appear under New jobs as they pass.",
-      requiresAction: true,
-      resultAction: { label: "New jobs", to: "/dashboard/new-jobs" }
-    });
-  } else {
-    completeAiJobIsland(FIND_TOAST_ID, {
-      status: "success",
-      resultTitle: "No new inbox jobs",
-      errorMessage:
-        "Every URL is already on a tracked job (or did not match your title). Deleting New jobs does not free URLs still on Tracked jobs.",
-      requiresAction: false
-    });
+    if (isDiscoveryRunTerminal(run.stage)) {
+      await queryClient.invalidateQueries({ queryKey: orpcQueryClient.jobDiscovery.status.key() });
+      const failed = run.stage === "failed";
+      const outcomeMessage = failed
+        ? (run.reason ?? "Search failed. Try again shortly.")
+        : run.added > 0
+          ? "Matches are available under New jobs."
+          : (run.reason ??
+            (run.fetched === 0
+              ? "The job source returned no listings for your saved filters. Review Job preferences."
+              : `${run.fetched} listings checked. No new jobs passed screening; existing jobs and duplicates were skipped.`));
+      const message = run.warnings.includes(DISCOVERY_AI_FALLBACK_NOTE)
+        ? `${outcomeMessage} ${DISCOVERY_AI_FALLBACK_NOTE}`
+        : outcomeMessage;
+      setFindJobsNowState({
+        status: failed ? "failed" : "ready",
+        stepLabel: null,
+        newJobsFound: run.added,
+        error: failed ? message : null
+      });
+      if (showToast) {
+        completeAiJobIsland(FIND_TOAST_ID, {
+          status: failed ? "error" : "success",
+          resultTitle: label,
+          errorMessage: message,
+          requiresAction: run.added > 0,
+          resultAction: run.added > 0 ? { label: "New jobs", to: "/dashboard/new-jobs" } : undefined
+        });
+      } else if (failed) toast.error("Search failed", { description: message });
+      else toast.message(label, { description: message });
+      return;
+    }
+    if (Date.now() - started > 20 * 60_000) {
+      throw new Error("Search is still running. You can check its live status under New jobs.");
+    }
+    await sleep(3_000, signal);
   }
 }

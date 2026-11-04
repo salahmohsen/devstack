@@ -106,3 +106,41 @@ export function decideTwoAxis(input: TwoAxisInput): TwoAxisDecision {
 
   return { action: "pass", reason: "remote region overlaps" };
 }
+
+/** Freehire has already normalized place data; avoid losing it to prose parsing. */
+export function decideStructuredJobPlace(
+  input: TwoAxisInput & {
+    regions?: readonly string[];
+    countries?: readonly string[];
+    cities?: readonly string[];
+    preferredCountries?: readonly string[];
+  }
+): TwoAxisDecision {
+  const mode = input.workMode;
+  const modes = effectiveWorkModes(input.prefs.workModes);
+  if (!mode || (modes.length > 0 && !modes.includes(mode))) return decideTwoAxis(input);
+  const normalized = (value: string) => value.trim().toLowerCase();
+  if (mode === "remote" && (input.regions?.length ?? 0) > 0) {
+    const regions = input.regions!.map(normalized);
+    if (regions.includes("global")) return { action: "pass", reason: "remote worldwide listing" };
+    const wanted = input.prefs.remoteRegions.map(normalized);
+    if (wanted.length === 0 && input.prefs.locations.length === 0) {
+      return { action: "pass", reason: "remote unrestricted" };
+    }
+    if (wanted.some((region) => regions.includes(region))) {
+      return { action: "pass", reason: "structured remote region overlaps" };
+    }
+    return { action: "drop", reason: "structured remote region does not overlap" };
+  }
+  if (mode !== "remote") {
+    const cities = (input.cities ?? []).map(normalized);
+    if (input.prefs.locations.some((city) => cities.includes(normalized(city)))) {
+      return { action: "pass", reason: "structured city overlaps" };
+    }
+    const countries = (input.countries ?? []).map(normalized);
+    if (input.preferredCountries?.some((country) => countries.includes(normalized(country)))) {
+      return { action: "pass", reason: "structured country overlaps" };
+    }
+  }
+  return decideTwoAxis(input);
+}

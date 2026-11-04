@@ -30,9 +30,12 @@ export function inboxAiQueueJobId(payload: {
   userId: string;
   jobId?: string;
   applicationId?: string;
+  runId?: string;
 }): string {
   if (payload.applicationId) return inboxAiJobId(payload.applicationId);
-  if (payload.jobId) return inboxEvaluateJobId(payload.userId, payload.jobId);
+  if (payload.jobId) {
+    return `${inboxEvaluateJobId(payload.userId, payload.jobId)}${payload.runId ? `_${sanitizeBullJobIdPart(payload.runId)}` : ""}`;
+  }
   throw new Error("inboxAiQueueJobId: jobId or applicationId is required");
 }
 

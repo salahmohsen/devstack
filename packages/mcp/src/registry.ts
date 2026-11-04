@@ -30,6 +30,7 @@ const crud = (router: string, extra: ToolDef[] = []): ToolDef[] => [
 
 export const TOOLS: readonly ToolDef[] = [
   tool("jobDiscovery.findNow", "write"),
+  tool("jobDiscovery.status", "read"),
   tool("jobDiscovery.searchCities", "read"),
 
   tool("applications.list", "read"),

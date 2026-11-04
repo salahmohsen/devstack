@@ -30,3 +30,4 @@ export type * from "./user-hub-state.schema.ts";
 export type * from "./user-job-ai-budget.schema.ts";
 export type * from "./user-mail-settings.schema.ts";
 export type * from "./user-notification-settings.schema.ts";
+export type * from "./job-discovery-run.schema.ts";

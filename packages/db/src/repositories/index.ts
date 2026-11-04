@@ -142,3 +142,7 @@ export {
   type ChatgptPlanConnectedPatch,
   type UserChatgptPlanEntity
 } from "./user-chatgpt-plan.repository.ts";
+export {
+  jobDiscoveryRunRepository,
+  type JobDiscoveryRunEntity
+} from "./job-discovery-run.repository.ts";

@@ -14,6 +14,8 @@ type CheapListing = {
   skills: readonly string[];
   salaryMin: number | null;
   salaryCurrency: string | null;
+  salaryPeriod?: "month" | "year" | "day" | "hour" | null;
+  category?: string | null;
   experienceYearsMin?: number | null;
 };
 
@@ -52,7 +54,8 @@ export function scoreCatalogAgainstPreference(
       title: listing.title,
       companyName: listing.companyName,
       location: listing.location,
-      salaryMin: listing.salaryMin,
+      salaryMin: listing.salaryPeriod ? listing.salaryMin : null,
+      salaryPeriod: listing.salaryPeriod,
       salaryCurrency: listing.salaryCurrency
     },
     prefs
@@ -65,12 +68,22 @@ export function scoreCatalogAgainstPreference(
   const needles = roleKeywords.length > 0 ? roleKeywords : (prefs.categories ?? []);
   const titleHits = needles.filter((k) => matchesKeywordPhrase(listing.title, k));
 
-  if (titleHits.length === 0) {
+  const categoryHit =
+    roleKeywords.length === 0 &&
+    listing.category != null &&
+    (prefs.categories ?? []).includes(
+      listing.category as NonNullable<JobPreferenceOutput["categories"]>[number]
+    );
+  if (titleHits.length === 0 && !categoryHit) {
     return { score: 15, passed: false, reasons: ["no role keyword in title"] };
   }
 
   let score = 40 + Math.min(40, 15 + titleHits.length * 10);
-  reasons.push(`title keywords: ${titleHits.slice(0, 3).join(", ")}`);
+  reasons.push(
+    categoryHit
+      ? `category: ${listing.category}`
+      : `title keywords: ${titleHits.slice(0, 3).join(", ")}`
+  );
 
   // One structured skill bonus: listing.skills vs role keywords / categories
   if (

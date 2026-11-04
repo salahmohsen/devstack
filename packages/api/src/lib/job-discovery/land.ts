@@ -2,8 +2,9 @@ import {
   applyZeroDollarCandidate,
   computeLandBudget,
   dailyAiAttemptCap,
-  decideTwoAxis,
+  decideStructuredJobPlace,
   DISCOVERY_FETCH_POOL_SIZE,
+  DISCOVERY_SALARY_NOTE,
   hasValidRoleQuery,
   isThinJobDescription,
   MAX_OPEN_INBOX,
@@ -13,6 +14,7 @@ import {
   type WorkMode
 } from "@tsu-stack/core";
 import {
+  jobDiscoveryRunRepository,
   applicationRepository,
   userJobAiBudgetRepository,
   userJobRepository,
@@ -76,6 +78,10 @@ export function decideLandCandidate(input: {
   location: string | null;
   description: string | null;
   prefs: TwoAxisPrefs;
+  regions?: readonly string[];
+  countries?: readonly string[];
+  cities?: readonly string[];
+  preferredCountries?: readonly string[];
 }): { created: boolean; reason: string } {
   const candidate = applyZeroDollarCandidate({
     workMode: input.workMode,
@@ -85,7 +91,11 @@ export function decideLandCandidate(input: {
     description: input.description,
     skills: []
   });
-  const decision = decideTwoAxis({
+  const decision = decideStructuredJobPlace({
+    regions: input.regions,
+    countries: input.countries,
+    cities: input.cities,
+    preferredCountries: input.preferredCountries,
     workMode: candidate.workMode,
     hiringRegion: candidate.hiringRegion,
     location: candidate.location,
@@ -114,22 +124,27 @@ async function remainingLandBudget(input: {
   dailyBoardScoreCap: number;
   hasAiKey: boolean;
 }): Promise<number> {
-  const [openInbox, inboxThisRun, remaining] = await Promise.all([
+  const [openInbox, inboxThisRun, remaining, run] = await Promise.all([
     applicationRepository.countByUserIdAndTrackingStatus(input.userId, "inbox"),
     applicationRepository.countInboxThisRun(input.userId, input.runId),
     userJobAiBudgetRepository.remainingAttempts(
       input.userId,
       utcDay(),
       dailyAiAttemptCap(input.dailyBoardScoreCap)
-    )
+    ),
+    jobDiscoveryRunRepository.find(input.userId, input.runId)
   ]);
-  return computeLandBudget({
-    poolSize: input.poolSize,
-    openInbox,
-    inboxThisRun,
-    remainingDailyAiAttempts: remaining,
-    hasAiKey: input.hasAiKey
-  });
+  const pending = Object.values(run?.candidates ?? {}).filter((v) => v === "pending").length;
+  return Math.max(
+    0,
+    computeLandBudget({
+      poolSize: input.poolSize,
+      openInbox,
+      inboxThisRun,
+      remainingDailyAiAttempts: remaining,
+      hasAiKey: input.hasAiKey
+    }) - pending
+  );
 }
 
 /** $0 two-axis pass enqueues evaluate on the user_job snapshot — no hydrate hop. */
@@ -139,6 +154,7 @@ async function enqueueEvaluateIfPassed(input: {
   candidate: ScoredUserJob;
   hasAiKey: boolean;
   prefs: TwoAxisPrefs;
+  preferredCountries: readonly string[];
 }): Promise<boolean> {
   const job = input.candidate.job;
   // With a BYO key, N is AI-passed keepers. Do not spend an evaluate on a thin JD.
@@ -146,6 +162,10 @@ async function enqueueEvaluateIfPassed(input: {
 
   const gate = decideLandCandidate({
     workMode: asWorkMode(job.workMode),
+    preferredCountries: input.preferredCountries,
+    regions: job.regions,
+    countries: job.countries,
+    cities: job.cities,
     hiringRegion: null,
     location: trimmedOrNull(job.location),
     description: job.description,
@@ -153,11 +173,22 @@ async function enqueueEvaluateIfPassed(input: {
   });
   if (!gate.created) return false;
 
-  return requestJobInboxAi({
+  const reserved = await jobDiscoveryRunRepository.reserveCandidate(
+    input.userId,
+    input.runId,
+    job.id
+  );
+  if (!reserved) return false;
+  const enqueued = await requestJobInboxAi({
     userId: input.userId,
     runId: input.runId,
     jobId: job.id
   });
+  if (!enqueued) {
+    await jobDiscoveryRunRepository.releaseCandidate(input.userId, input.runId, job.id);
+    throw new Error("Could not queue screening. Try again shortly.");
+  }
+  return true;
 }
 
 export async function runDiscoveryLand(input: {
@@ -173,11 +204,25 @@ export async function runDiscoveryLand(input: {
     return { landed: 0, reason: "title_required" };
   }
 
-  // Fetch first: the run's shelf is this user's own freehire results.
-  const fetched = await fetchUserJobs({ userId: input.userId, preference: prefs });
-  if (!fetched.ok) {
-    return { landed: 0, reason: "fetch_failed" };
+  const run = await jobDiscoveryRunRepository.find(input.userId, input.runId);
+  if (!run || run.stage === "failed" || run.stage === "completed") {
+    return { landed: 0, reason: "ok" };
   }
+  await jobDiscoveryRunRepository.update(input.userId, input.runId, {
+    stage: run.queryHash ? "filtering" : "fetching",
+    landFinished: false,
+    reason: null,
+    retryAt: null
+  });
+  const fetched = run.queryHash
+    ? { hash: run.queryHash, fetchedCount: run.fetched }
+    : await fetchUserJobs({ userId: input.userId, preference: prefs, runId: input.runId });
+  await jobDiscoveryRunRepository.update(input.userId, input.runId, {
+    stage: "filtering",
+    queryHash: fetched.hash,
+    fetched: fetched.fetchedCount,
+    ...(run.queryHash ? {} : { warnings: prefs.salaryMin != null ? [DISCOVERY_SALARY_NOTE] : [] })
+  });
 
   const hasAiKey = Boolean(llm.apiKey?.trim());
   const openInbox = await applicationRepository.countByUserIdAndTrackingStatus(
@@ -200,7 +245,7 @@ export async function runDiscoveryLand(input: {
   const shelf = await userJobRepository.listUnlanded({
     userId: input.userId,
     excludeUrls: seen.urls,
-    excludeJobIds: seen.jobIds,
+    excludeJobIds: [...seen.jobIds, ...Object.keys(run.candidates)],
     limit: DISCOVERY_FETCH_POOL_SIZE,
     queryHash: fetched.hash
   });
@@ -215,7 +260,9 @@ export async function runDiscoveryLand(input: {
         workMode: asWorkMode(job.workMode),
         skills: job.skills ?? [],
         salaryMin: job.salaryMin,
-        salaryCurrency: job.salaryCurrency
+        salaryCurrency: job.salaryCurrency,
+        salaryPeriod: job.salaryPeriod as "month" | "year" | "day" | "hour" | null,
+        category: job.category
       },
       prefs
     );
@@ -259,17 +306,21 @@ export async function runDiscoveryLand(input: {
             runId: input.runId,
             candidate,
             hasAiKey,
-            prefs: twoAxisPrefs
+            prefs: twoAxisPrefs,
+            preferredCountries: prefs.countries ?? []
           });
           if (enqueued) landed += 1;
           else reserved -= 1;
-        } catch {
+        } catch (error) {
           reserved -= 1;
+          throw error;
         }
       }
     };
     const pool = Math.min(LAND_CONCURRENCY, Math.max(1, limit));
-    await Promise.all(Array.from({ length: pool }, () => worker()));
+    const results = await Promise.allSettled(Array.from({ length: pool }, () => worker()));
+    const failure = results.find((result) => result.status === "rejected");
+    if (failure?.status === "rejected") throw failure.reason;
   };
 
   await landUpTo(toLand);
@@ -278,13 +329,13 @@ export async function runDiscoveryLand(input: {
   // extra pass cannot double the evaluate pool while keepers are still pending.
   const extraBudget = Math.max(
     0,
-    (await remainingLandBudget({
+    await remainingLandBudget({
       userId: input.userId,
       runId: input.runId,
       poolSize: DISCOVERY_FETCH_POOL_SIZE,
       dailyBoardScoreCap: prefs.dailyBoardScoreCap,
       hasAiKey
-    })) - landed
+    })
   );
   if (extraBudget > 0) {
     await landUpTo(extraPassCreateLimit(extraBudget));

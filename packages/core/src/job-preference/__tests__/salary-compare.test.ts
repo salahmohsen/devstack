@@ -75,3 +75,11 @@ describe("comparableMonthlyPay §6.4", () => {
     });
   });
 });
+
+describe("discovery-stated salary periods", () => {
+  it("does not guess annual pay for an explicitly unknown period or hourly/daily pay", () => {
+    expect(comparableMonthlyPay({ salaryRange: "50k EGP (period not stated)" })).toBeNull();
+    expect(comparableMonthlyPay({ salaryRange: "50k EGP/hour" })).toBeNull();
+    expect(comparableMonthlyPay({ salaryRange: "50k EGP/day" })).toBeNull();
+  });
+});

@@ -1,5 +1,6 @@
-import { Queue, Worker, type ConnectionOptions, type Job } from "bullmq";
+import { UnrecoverableError, Queue, Worker, type ConnectionOptions, type Job } from "bullmq";
 
+import { FreehireError } from "@tsu-stack/api/lib/job-discovery/freehire/errors";
 import { runDiscoveryLand } from "@tsu-stack/api/lib/job-discovery/land";
 import {
   JOB_DISCOVERY_LAND_JOB_NAME,
@@ -8,7 +9,7 @@ import {
   landJobId,
   type JobDiscoveryLandPayload
 } from "@tsu-stack/core";
-import { createDb, runWithDb } from "@tsu-stack/db";
+import { jobDiscoveryRunRepository, createDb, runWithDb } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 /**
@@ -61,12 +62,41 @@ export function startJobDiscoveryLandQueue(redisUrl: string): void {
       }
 
       const db = createDb();
-      const result = await runWithDb(db, () =>
-        runDiscoveryLand({
-          userId: parsed.data.userId,
-          runId: parsed.data.runId
-        })
-      );
+      const result = await runWithDb(db, async () => {
+        const { userId, runId } = parsed.data;
+        try {
+          if (!(await jobDiscoveryRunRepository.find(userId, runId))) {
+            await jobDiscoveryRunRepository.claim(userId, runId, new Date());
+          }
+          const result = await runDiscoveryLand({ userId, runId });
+          await jobDiscoveryRunRepository.update(userId, runId, {
+            stage: "scoring",
+            landFinished: true,
+            reason:
+              result.reason === "ok"
+                ? null
+                : result.reason === "empty_shelf"
+                  ? "No unseen listings passed your saved preferences."
+                  : result.reason
+          });
+          await jobDiscoveryRunRepository.settle(userId, runId);
+          return result;
+        } catch (error) {
+          const permanent = error instanceof FreehireError && !error.retryable;
+          const terminal = permanent || job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
+          const delay = discoveryRetryDelay(job.attemptsMade + 1, error);
+          await jobDiscoveryRunRepository.update(userId, runId, {
+            stage: terminal ? "failed" : "retrying",
+            reason:
+              error instanceof FreehireError
+                ? error.message
+                : "Search could not finish. Try again shortly.",
+            retryAt: terminal ? null : new Date(Date.now() + delay)
+          });
+          if (permanent) throw new UnrecoverableError((error as Error).message);
+          throw error;
+        }
+      });
 
       log.set({
         event: "job_discovery_land_ok",
@@ -79,7 +109,12 @@ export function startJobDiscoveryLandQueue(redisUrl: string): void {
       });
       log.emit();
     },
-    { connection }
+    {
+      connection,
+      settings: {
+        backoffStrategy: (attemptsMade, _type, error) => discoveryRetryDelay(attemptsMade, error)
+      }
+    }
   );
 
   s.worker.on("failed", (job, err) => {
@@ -137,7 +172,7 @@ export async function enqueueJobDiscoveryLand(
       removeOnComplete: true,
       removeOnFail: true,
       attempts: 3,
-      backoff: { type: "exponential", delay: 2000 }
+      backoff: { type: "discovery", delay: 2000 }
     });
     return { enqueued: true, jobId: job.id };
   } catch (error) {
@@ -161,4 +196,10 @@ export async function stopJobDiscoveryLandQueue(): Promise<void> {
   await s.queue?.close();
   s.worker = null;
   s.queue = null;
+}
+
+export function discoveryRetryDelay(attempt: number, error: unknown): number {
+  const backoff = Math.min(30_000, 2_000 * 2 ** Math.max(0, attempt - 1));
+  const retryAfter = error instanceof FreehireError ? error.retryAfterMs : 0;
+  return Math.max(retryAfter, backoff);
 }

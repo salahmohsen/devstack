@@ -4,9 +4,10 @@ import {
   buildApplicationSourceTags,
   canonicalizeJobUrl,
   classifyJobSkills,
-  decideTwoAxis,
+  decideStructuredJobPlace,
   dailyAiAttemptCap,
   DISCOVERY_FETCH_POOL_SIZE,
+  DISCOVERY_AI_FALLBACK_NOTE,
   EmploymentTypeSchema,
   inferApplicationSource,
   INBOX_TTL_MS,
@@ -25,6 +26,7 @@ import {
 } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
+  jobDiscoveryRunRepository,
   applicationRepository,
   experienceRepository,
   stackRepository,
@@ -42,7 +44,7 @@ import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
 import { utcDay } from "#@/lib/job-discovery/enrollment";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
-export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
+export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped" | "failed";
 
 async function displayScoreForUser(input: {
   userId: string;
@@ -76,16 +78,17 @@ const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
 function formatSnapshotSalaryRange(
   salaryMin: number | null,
   salaryMax: number | null,
-  salaryCurrency: string | null
+  salaryCurrency: string | null,
+  salaryPeriod?: string | null
 ): string | null {
   if (salaryMin == null && salaryMax == null) return null;
-  const fmt = (n: number) => (n % 1000 === 0 && Math.abs(n) >= 1000 ? `$${n / 1000}k` : `$${n}`);
+  const fmt = (n: number) => (n % 1000 === 0 && Math.abs(n) >= 1000 ? `${n / 1000}k` : `${n}`);
   const range =
     salaryMin != null && salaryMax != null
       ? `${fmt(salaryMin)}–${fmt(salaryMax)}`
       : fmt(salaryMin ?? salaryMax!);
   const currency = salaryCurrency?.trim();
-  return currency ? `${range} ${currency}` : range;
+  return `${range}${currency ? ` ${currency}` : ""}${salaryPeriod ? `/${salaryPeriod}` : " (period not stated)"}`;
 }
 
 /**
@@ -331,7 +334,8 @@ async function insertDiscoveryApplication(input: {
   const salaryRange = formatSnapshotSalaryRange(
     input.job.salaryMin,
     input.job.salaryMax,
-    input.job.salaryCurrency
+    input.job.salaryCurrency,
+    input.job.salaryPeriod
   );
 
   const insertInput = {
@@ -524,6 +528,10 @@ async function runInboxAiForJob(input: {
   jobId: string;
   runId: string;
 }): Promise<{ outcome: InboxAiOutcome }> {
+  const trackedRun = await jobDiscoveryRunRepository.find(input.userId, input.runId);
+  if (trackedRun?.stage === "failed" || trackedRun?.stage === "completed") {
+    return { outcome: "skipped" };
+  }
   const [prefs, llm, job] = await Promise.all([
     loadJobPreferenceOutput(input.userId),
     resolveRuntimeAiCredentials(input.userId, "scorer"),
@@ -541,14 +549,18 @@ async function runInboxAiForJob(input: {
 
   const leftover = applyZeroDollarCandidate({
     workMode: asWorkMode(job.workMode),
-    hiringRegion: null,
+    hiringRegion: job.regions?.join(", ") || job.countries?.join(", ") || null,
     location: trimmedOrNull(job.location),
     employmentType: job.employmentType,
     description: job.description,
     skills: job.skills ?? []
   });
   const workMode = leftover.workMode;
-  const twoAxis = decideTwoAxis({
+  const twoAxis = decideStructuredJobPlace({
+    regions: job.regions,
+    countries: job.countries,
+    cities: job.cities,
+    preferredCountries: prefs.countries ?? [],
     workMode,
     hiringRegion: leftover.hiringRegion,
     location: leftover.location,
@@ -575,13 +587,23 @@ async function runInboxAiForJob(input: {
       workMode,
       skills: job.skills ?? [],
       salaryMin: job.salaryMin,
-      salaryCurrency: job.salaryCurrency
+      salaryCurrency: job.salaryCurrency,
+      salaryPeriod: job.salaryPeriod as "month" | "year" | "day" | "hour" | null,
+      category: job.category
     },
     prefs
   );
-  const hiringRegion = persistHiringRegion(workMode, null);
+  const hiringRegion = persistHiringRegion(
+    workMode,
+    job.regions?.join(", ") || leftover.hiringRegion
+  );
   const description = job.description;
-  const salaryRange = formatSnapshotSalaryRange(job.salaryMin, job.salaryMax, job.salaryCurrency);
+  const salaryRange = formatSnapshotSalaryRange(
+    job.salaryMin,
+    job.salaryMax,
+    job.salaryCurrency,
+    job.salaryPeriod
+  );
 
   const willCallAgent = hasAiKey && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
   const employmentType = asEmploymentType(leftover.employmentType);
@@ -670,7 +692,7 @@ async function runInboxAiForJob(input: {
         trigger: "backfill"
       });
     }
-    return { outcome: plan.outcome };
+    return { outcome: "failed" };
   }
 
   const keep = decideInboxAiKeep(match);
@@ -681,6 +703,11 @@ async function runInboxAiForJob(input: {
   });
   let takeText: string | null = null;
   if (keep === "heuristic") {
+    await jobDiscoveryRunRepository.addWarning(
+      input.userId,
+      input.runId,
+      DISCOVERY_AI_FALLBACK_NOTE
+    );
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
   }
   if (keep === "passed" || keep === "heuristic") {
