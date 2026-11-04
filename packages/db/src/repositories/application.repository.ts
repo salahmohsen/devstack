@@ -581,8 +581,27 @@ export const applicationRepository = {
    * Inserts when absent; on conflict returns the existing row without error.
    */
   async createIfAbsentByUrl(
-    input: CreateApplicationData & { url: string }
+    input: CreateApplicationData & { url: string },
+    activity?: Pick<
+      InferInsertModel<typeof applicationActivity>,
+      "kind" | "actorUserId" | "metadata"
+    >
   ): Promise<{ row: ApplicationEntity; created: boolean }> {
+    if (activity) {
+      return getDb().transaction(async (tx) => {
+        const result = await insertIfAbsentByUrl(tx, input);
+        if (result.created) {
+          await tx.insert(applicationActivity).values({
+            ...activity,
+            id: crypto.randomUUID(),
+            userId: input.userId,
+            applicationId: result.row.id,
+            body: null
+          });
+        }
+        return result;
+      });
+    }
     return insertIfAbsentByUrl(getDb(), input);
   },
 
