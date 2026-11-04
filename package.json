@@ -1,6 +1,7 @@
 {
   "name": "tsu-stack",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
     "check": "vp check",
