@@ -43,6 +43,7 @@ export const MailPurposeSchema = z.enum(["career", "system_notification"]);
 export type MailPurpose = z.infer<typeof MailPurposeSchema>;
 
 /** Ingress source for idempotency + debugging. */
+// Retain the legacy Gmail source tag so previously imported messages remain readable.
 export const MailProviderSchema = z.enum(["resend", "gmail", "manual"]);
 export type MailProvider = z.infer<typeof MailProviderSchema>;
 

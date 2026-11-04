@@ -23,7 +23,8 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/onboa
   },
   head: () =>
     generateAppSeo({
-      description: "Import your resume, set job preferences, and connect Gmail and GitHub.",
+      description:
+        "Import your resume, set job preferences, and optionally connect Resend and GitHub.",
       robots: {
         follow: false,
         index: false

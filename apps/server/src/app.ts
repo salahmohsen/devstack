@@ -14,8 +14,6 @@ import {
   createContext,
   type OrpcContextBindings
 } from "@tsu-stack/api/lib/context/hono/create-context";
-import { handleGmailPushNotification } from "@tsu-stack/api/lib/gmail/handle-gmail-push";
-import { verifyGmailPushAuth } from "@tsu-stack/api/lib/gmail/verify-gmail-push-auth";
 import { handleResendInboundWebhook } from "@tsu-stack/api/lib/mail/handle-resend-inbound";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { resolveAllowedBrowserOrigin } from "@tsu-stack/auth";
@@ -299,42 +297,6 @@ app.post("/webhooks/github", async (c) => {
     });
 
     return c.json({ ok: true }, result.status);
-  });
-});
-
-/**
- * Gmail Pub/Sub push (users.watch). Body is Google Cloud Pub/Sub push envelope.
- * Auth: Google OIDC JWT (GMAIL_PUSH_OIDC_AUDIENCE) and/or GMAIL_PUSH_SHARED_SECRET.
- * Configure subscription → {VITE_SERVER_URL}/webhooks/gmail-push
- */
-app.post("/webhooks/gmail-push", async (c) => {
-  const requestLog = c.get("log");
-  const authResult = await verifyGmailPushAuth(c.req.header("authorization") ?? null);
-  if (!authResult.ok) {
-    requestLog?.set({
-      event: "gmail_push_unauthorized",
-      status: 401,
-      reason: authResult.reason
-    });
-    return c.json({ ok: false }, 401);
-  }
-
-  const rawBody = await c.req.text();
-  requestLog?.set({
-    event: "gmail_push_received",
-    authMethod: authResult.method
-  });
-
-  const db = createDb();
-  return runWithDb(db, async () => {
-    const result = await handleGmailPushNotification(rawBody);
-    requestLog?.set({
-      event: "gmail_push_handled",
-      handled: result.handled,
-      skipped: result.skipped
-    });
-    // Opaque 200 — never leak mailbox/user ids to the push client.
-    return c.json({ ok: true });
   });
 });
 

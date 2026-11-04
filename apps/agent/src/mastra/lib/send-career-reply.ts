@@ -21,7 +21,6 @@ export type SendCareerReplyOk = {
   ok: true;
   providerMessageId: string | null;
   from: string;
-  usedByoKey: boolean;
 };
 
 export type SendCareerReplyErr = {
@@ -62,25 +61,21 @@ export async function sendCareerReply(
 
   const db = createDb();
   const settings = await runWithDb(db, () => userMailSettingsRepository.findByUserId(input.userId));
-  const byoKey = openSecret(settings?.resendApiKeyCiphertext);
-  const platformKey = nonEmpty(process.env.RESEND_API_KEY);
-  const apiKey = byoKey ?? platformKey;
+  const apiKey = nonEmpty(openSecret(settings?.resendApiKeyCiphertext));
   if (!apiKey) {
     return {
       ok: false,
       code: "MISSING_API_KEY",
-      message:
-        "Add a Resend API key under Settings → Integrations (or configure platform RESEND_API_KEY) before sending."
+      message: "Add a Resend API key under Settings → Integrations before sending."
     };
   }
 
-  const from = nonEmpty(settings?.inboundAddress) ?? nonEmpty(process.env.EMAIL_FROM);
+  const from = nonEmpty(settings?.inboundAddress);
   if (!from) {
     return {
       ok: false,
       code: "MISSING_FROM",
-      message:
-        "Set your inbound/career From address under Settings → Integrations (or platform EMAIL_FROM)."
+      message: "Set your inbound/career From address under Settings → Integrations."
     };
   }
 
@@ -134,7 +129,6 @@ export async function sendCareerReply(
   return {
     ok: true,
     providerMessageId: json?.id ?? null,
-    from,
-    usedByoKey: Boolean(byoKey)
+    from
   };
 }

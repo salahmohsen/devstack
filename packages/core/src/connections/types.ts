@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { GmailSyncStatusSchema } from "./gmail-sync";
-
 export const ProviderConnectionStatusSchema = z.object({
   providerId: z.enum(["google", "github"]),
   /** Provider is linked on the Better Auth account table. */
@@ -10,8 +8,6 @@ export const ProviderConnectionStatusSchema = z.object({
   accountId: z.string().nullable(),
   /** Raw scope string from the account row (space-separated). */
   scope: z.string().nullable(),
-  /** Google only: token includes Gmail API scopes. */
-  gmailConnected: z.boolean().optional(),
   /** Whether server has OAuth client credentials configured. */
   available: z.boolean()
 });
@@ -28,8 +24,7 @@ export type GithubConnectionStatus = z.infer<typeof GithubConnectionStatusSchema
 
 export const ConnectionsStatusOutputSchema = z.object({
   google: ProviderConnectionStatusSchema,
-  github: GithubConnectionStatusSchema,
-  gmailSync: GmailSyncStatusSchema
+  github: GithubConnectionStatusSchema
 });
 export type ConnectionsStatusOutput = z.infer<typeof ConnectionsStatusOutputSchema>;
 
@@ -49,7 +44,6 @@ export type DisconnectProviderInput = z.infer<typeof DisconnectProviderInputSche
 
 export const DisconnectProviderOutputSchema = z.object({
   ok: z.literal(true),
-  /** `unlinked` removed the OAuth row; `gmail_scopes_removed` kept Google login. */
-  mode: z.enum(["unlinked", "gmail_scopes_removed"])
+  mode: z.literal("unlinked")
 });
 export type DisconnectProviderOutput = z.infer<typeof DisconnectProviderOutputSchema>;

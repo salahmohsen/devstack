@@ -40,8 +40,8 @@ function OnboardingSoftCta() {
       <AlertTitle>Set up your portfolio from a resume</AlertTitle>
       <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <span className="max-w-2xl text-pretty">
-          Upload a PDF, set what jobs you want, and connect Gmail. You review everything before it
-          goes live.
+          Upload a PDF, set what jobs you want, and optionally connect Resend. You review everything
+          before it goes live.
         </span>
         <span className="flex shrink-0 flex-wrap gap-2" data-slot="alert-action">
           <Button size="sm" render={<Link to="/dashboard/onboarding" />}>

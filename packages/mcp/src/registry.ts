@@ -114,9 +114,6 @@ export const TOOLS: readonly ToolDef[] = [
   tool("domain.remove", "destructive"),
 
   tool("connections.getStatus", "read"),
-  tool("connections.syncGmail", "write"),
-  tool("connections.setGmailAutoSync", "write"),
-  tool("connections.startGmailWatch", "write"),
   tool("connections.refreshGithub", "write"),
   tool("connections.disconnectProvider", "destructive"),
 

@@ -12,7 +12,7 @@ import { SettingsFrame } from "./settings-frame";
 const connectionsRoute = getRouteApi("/(root-layout)/__protected/dashboard/settings/connections/");
 
 const FRAME_DESCRIPTION =
-  "Gmail, GitHub, and Resend. Sign-in, inbox sync, and inbound mail are separate — grant only what you need.";
+  "GitHub, Google sign-in, and optional mail through your own Resend account.";
 
 export function ConnectionsSettings() {
   const navigate = useNavigate();

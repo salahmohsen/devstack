@@ -79,7 +79,7 @@ async function start(): Promise<void> {
 
     // Career Inbox classify queue (BullMQ). Soft-fail so Redis/BullMQ issues
     // never keep /health/live from answering.
-    // Static imports: already pulled in by app.ts / gmail sync — dynamic import
+    // Static imports: already pulled in by app.ts — dynamic import
     // would be ineffective (same chunk) and only adds bundler noise.
     try {
       startMailClassifyQueue(ENV_SERVER.REDIS_URL);
@@ -106,18 +106,6 @@ async function start(): Promise<void> {
       const log = createLogger({ operation: "server__mail_job_harvest_queue" });
       log.error(error instanceof Error ? error : new Error(String(error)), {
         event: "mail_job_harvest_queue_start_failed"
-      });
-      log.emit({ _forceKeep: true });
-    }
-
-    // Periodic Gmail History sync for users with Gmail scopes + auto-sync on.
-    try {
-      const { startGmailSyncQueue } = await import("#@/queues/gmail-sync-queue");
-      startGmailSyncQueue(ENV_SERVER.REDIS_URL);
-    } catch (error) {
-      const log = createLogger({ operation: "server__gmail_sync_queue" });
-      log.error(error instanceof Error ? error : new Error(String(error)), {
-        event: "gmail_sync_queue_start_failed"
       });
       log.emit({ _forceKeep: true });
     }

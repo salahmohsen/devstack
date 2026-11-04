@@ -1,5 +1,4 @@
 import { userMailSettingsRepository } from "@tsu-stack/db";
-import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { openSecret } from "#@/lib/settings/seal-secret";
 
@@ -23,7 +22,6 @@ export type SendCareerReplyOk = {
   ok: true;
   providerMessageId: string | null;
   from: string;
-  usedByoKey: boolean;
 };
 
 export type SendCareerReplyErr = {
@@ -46,7 +44,7 @@ function toBase64Content(content: Buffer | Uint8Array | string): string {
 
 /**
  * Send a Career Inbox reply via Resend.
- * Prefer per-user BYO API key + inbound address; fall back to platform env.
+ * Requires the user’s Resend API key and career From address.
  */
 export async function sendCareerReply(
   input: SendCareerReplyInput
@@ -57,25 +55,21 @@ export async function sendCareerReply(
   }
 
   const settings = await userMailSettingsRepository.findByUserId(input.userId);
-  const byoKey = openSecret(settings?.resendApiKeyCiphertext);
-  const platformKey = nonEmpty(ENV_SERVER.RESEND_API_KEY);
-  const apiKey = byoKey ?? platformKey;
+  const apiKey = nonEmpty(openSecret(settings?.resendApiKeyCiphertext));
   if (!apiKey) {
     return {
       ok: false,
       code: "MISSING_API_KEY",
-      message:
-        "Add a Resend API key under Settings → Integrations (or configure platform RESEND_API_KEY) before sending."
+      message: "Add a Resend API key under Settings → Integrations before sending."
     };
   }
 
-  const from = nonEmpty(settings?.inboundAddress) ?? nonEmpty(ENV_SERVER.EMAIL_FROM);
+  const from = nonEmpty(settings?.inboundAddress);
   if (!from) {
     return {
       ok: false,
       code: "MISSING_FROM",
-      message:
-        "Set your inbound/career From address under Settings → Integrations (or platform EMAIL_FROM)."
+      message: "Set your inbound/career From address under Settings → Integrations."
     };
   }
 
@@ -129,8 +123,7 @@ export async function sendCareerReply(
   return {
     ok: true,
     providerMessageId: json?.id ?? null,
-    from,
-    usedByoKey: Boolean(byoKey)
+    from
   };
 }
 

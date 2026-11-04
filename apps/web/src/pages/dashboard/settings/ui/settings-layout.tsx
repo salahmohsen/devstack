@@ -83,7 +83,7 @@ const SETTINGS_NAV: readonly NavItem[] = [
   {
     id: "connections",
     label: "Integrations",
-    description: "Gmail, GitHub, and Resend inbound",
+    description: "GitHub, Google sign-in, and optional Resend mail",
     to: "/dashboard/settings/connections",
     icon: Blocks,
     group: "Workspace"

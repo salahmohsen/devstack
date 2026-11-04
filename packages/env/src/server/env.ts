@@ -65,7 +65,7 @@ export const ENV_SERVER = createEnv({
       : normalizedUrlSchema.default("http://localhost:3000"),
     /**
      * Public HTTPS origin for inbound webhooks when the browser API stays on
-     * localhost (local `pnpm dev:tunnel`). Prefer this for Resend/Gmail copy-paste
+     * localhost (local `pnpm dev:tunnel`). Prefer this for Resend copy-paste
      * URLs; falls back to VITE_SERVER_URL when unset.
      */
     PUBLIC_SERVER_URL: normalizedUrlSchema.optional(),
@@ -88,7 +88,7 @@ export const ENV_SERVER = createEnv({
     GITHUB_WEBHOOK_SECRET: z.string().min(1).optional(),
     GITHUB_CLIENT_ID: runtimeRequired(z.string().min(1)),
     GITHUB_CLIENT_SECRET: runtimeRequired(z.string().min(1)),
-    /** Google OAuth (login + Gmail connect). Optional until Connections is used. */
+    /** Google OAuth for optional sign-in. */
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     RESEND_API_KEY: z.string().optional(),
@@ -103,15 +103,7 @@ export const ENV_SERVER = createEnv({
     // binding is available. In production, prefer the AGENT_WORKER service
     // binding (which `createAgentWorker` checks first).
     AGENT_WORKER_URL: z.url().optional(),
-    /**
-     * Gmail Pub/Sub push auth (see packages/api gmail verify helper).
-     * OIDC audience is typically the full push endpoint URL.
-     */
-    GMAIL_PUSH_SHARED_SECRET: z.string().min(16).optional(),
-    GMAIL_PUSH_OIDC_AUDIENCE: z.string().min(1).optional(),
-    GMAIL_PUSH_OIDC_EMAIL: z.string().email().optional(),
-    GMAIL_PUSH_REQUIRE_AUTH: z.stringbool().optional(),
-    GMAIL_PUBSUB_TOPIC: z.string().min(1).optional(),
+
     // Redis
     REDIS_URL: z.string().optional(),
     /** Freehire API base override (fail-soft drills / staging). Defaults to https://freehire.me/api/v1. */

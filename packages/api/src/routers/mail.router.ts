@@ -371,9 +371,7 @@ export const mailRouter = {
       return {
         sent: true as const,
         providerMessageId: sent.providerMessageId,
-        note: sent.usedByoKey
-          ? `Sent via your Resend key from ${sent.from}.`
-          : `Sent via platform Resend from ${sent.from}.`
+        note: `Sent via your Resend key from ${sent.from}.`
       };
     })
 };

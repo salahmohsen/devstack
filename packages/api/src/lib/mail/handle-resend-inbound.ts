@@ -69,6 +69,11 @@ export async function handleResendInboundWebhook(input: {
     return { status: 503, reason: "inbound_disabled" };
   }
 
+  const apiKey = openSecret(settings.resendApiKeyCiphertext)?.trim();
+  if (!apiKey) {
+    return { status: 503, reason: "resend_api_key_missing" };
+  }
+
   const webhookSecret = openSecret(settings.webhookSecretCiphertext);
   if (!webhookSecret) {
     return { status: 503, reason: "webhook_secret_missing" };
@@ -145,15 +150,12 @@ export async function handleResendInboundWebhook(input: {
   let bodyText = "";
   let bodyHtml: string | null = null;
 
-  const apiKey = openSecret(settings.resendApiKeyCiphertext);
-  if (apiKey) {
-    const content = await fetchReceivedEmailContent({ apiKey, emailId });
-    if (content) {
-      bodyText = content.text?.trim() ?? "";
-      bodyHtml = content.html ?? null;
-      if (!bodyText && bodyHtml) {
-        bodyText = stripHtml(bodyHtml);
-      }
+  const content = await fetchReceivedEmailContent({ apiKey, emailId });
+  if (content) {
+    bodyText = content.text?.trim() ?? "";
+    bodyHtml = content.html ?? null;
+    if (!bodyText && bodyHtml) {
+      bodyText = stripHtml(bodyHtml);
     }
   }
 

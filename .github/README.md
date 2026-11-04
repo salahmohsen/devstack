@@ -9,7 +9,7 @@ Live install: **[devstack.salahmohsen.com](https://devstack.salahmohsen.com)** Â
 
 ## About
 
-DEVSTACK closes the apply loop on infrastructure you control. Adapters fill **New jobs** from public boards; you promote roles into a tracked CRM; Career Inbox (optional Gmail) can move stages; a Mastra hub agent drafts apply packages with human review; opted-in evidence shows on your public profile or a verified custom domain.
+DEVSTACK closes the apply loop on infrastructure you control. Adapters fill **New jobs** from public boards; you promote roles into a tracked CRM; Career Inbox (optional BYO Resend) can move stages; a Mastra hub agent drafts apply packages with human review; opted-in evidence shows on your public profile or a verified custom domain.
 
 BYO AI and optional BYO Resend mean there is no platform model or mail budget. Missing keys degrade AI steps; CRUD still works.
 
@@ -33,7 +33,7 @@ Built on [tsu-stack](https://github.com/tsu-moe/tsu-stack). Parts of the GitHub 
 | Auth   | Better Auth (magic link, GitHub OAuth, passkeys)                 |
 | Data   | Postgres (Drizzle), Redis                                        |
 | AI     | Mastra agents / workflows, BYO provider keys                     |
-| Mail   | Gmail OAuth + optional BYO Resend                                |
+| Mail   | Optional BYO Resend                                              |
 | Deploy | Docker Compose, Dokploy, Cloudflare Tunnel for edge Host routing |
 
 Monorepo layout:
