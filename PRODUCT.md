@@ -37,9 +37,9 @@ The product is the apply assistant (hub chat, mail, HITL, apply packages). The p
 
 Confirmed:
 
-- Career Inbox (Gmail OAuth + optional BYO Resend inbound), applications CRM, resumes, experiences, projects, stacks, notifications, smart mail rules.
+- Career Inbox (optional BYO Resend), applications CRM, resumes, experiences, projects, stacks, notifications, smart mail rules.
 - BYO AI: per-tenant sealed provider keys in Settings → AI. No platform-funded model budget. Missing keys degrade AI features; CRUD still works.
-- BYO Resend is optional for transactional/inbound mail; unset skips sending.
+- Career mail requires the user’s Resend key and sender address. Inbound additionally requires their webhook secret; transactional auth/product mail uses optional operator Resend configuration.
 - Public GitHub surface uses that tenant’s OAuth token server-side, never a global env PAT.
 
 Terminology that must stay: `username` (path + Better Auth identity), invite, custom domain, tenant `userId`, BYO AI, BYO Resend.

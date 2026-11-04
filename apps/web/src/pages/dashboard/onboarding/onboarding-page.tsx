@@ -54,7 +54,8 @@ const COPY: Record<OnboardingFlowStep, { title: string; description: React.React
   },
   connect: {
     title: "Connect the accounts you already use",
-    description: "Gmail fills Career Inbox. GitHub helps detect stacks from your repos."
+    description:
+      "Optionally add your Resend credentials for Career Inbox. GitHub helps detect stacks from your repos."
   },
   done: {
     title: "You’re ready",

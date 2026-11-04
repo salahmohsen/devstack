@@ -140,7 +140,7 @@ export const COMMAND_CATALOG = [
   {
     id: "nav:settings-connections",
     label: "Settings: Integrations",
-    description: "Gmail, GitHub, and inbound mail",
+    description: "GitHub, Google sign-in, and Resend mail",
     group: "Settings",
     scope: "palette-closed"
   },

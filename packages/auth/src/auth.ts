@@ -336,12 +336,12 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      // Google (login + Gmail connect) and GitHub (portfolio) may link by email.
+      // Google (sign-in) and GitHub (portfolio) may link by email.
       trustedProviders: ["github", "google"],
       // Portfolio admin may have been seeded / signed up before verifying
       // email; still allow GitHub/Google to attach when emails match.
       requireLocalEmailVerified: false,
-      // Hub identity email (e.g. contact@…) may differ from Gmail/GitHub
+      // Hub identity email (e.g. contact@…) may differ from Google/GitHub
       // mailbox used for Connections. linkSocial still requires a session;
       // this only allows the linked provider email to differ from user.email.
       allowDifferentEmails: true
@@ -550,13 +550,11 @@ export const auth = betterAuth({
       );
     }
 
-    // Google: basic OIDC for login; Settings → Connections requests Gmail scopes
-    // via authClient.linkSocial({ scopes: GMAIL_CONNECT_SCOPES }).
+    // Google uses basic OIDC scopes for sign-in.
     if (ENV_SERVER.GOOGLE_CLIENT_ID && ENV_SERVER.GOOGLE_CLIENT_SECRET) {
       providers.google = {
         clientId: ENV_SERVER.GOOGLE_CLIENT_ID,
         clientSecret: ENV_SERVER.GOOGLE_CLIENT_SECRET,
-        // Login/register only — not Gmail. Mail scopes are requested at connect time.
         scope: ["openid", "email", "profile"],
         accessType: "offline",
         prompt: "select_account consent"

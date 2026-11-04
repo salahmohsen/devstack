@@ -216,7 +216,6 @@ registerCommands([
       "integrations",
       "connections",
       "google",
-      "gmail",
       "github",
       "oauth",
       "resend",

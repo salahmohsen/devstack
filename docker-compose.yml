@@ -170,12 +170,6 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@hub-redis:6379
       AGENT_WORKER_URL: ${AGENT_WORKER_URL:-http://agent:4111}
       FREEHIRE_API_BASE_URL: ${FREEHIRE_API_BASE_URL:-}
-      # Gmail Pub/Sub push auth (OIDC and/or shared secret)
-      GMAIL_PUBSUB_TOPIC: ${GMAIL_PUBSUB_TOPIC:-}
-      GMAIL_PUSH_SHARED_SECRET: ${GMAIL_PUSH_SHARED_SECRET:-}
-      GMAIL_PUSH_OIDC_AUDIENCE: ${GMAIL_PUSH_OIDC_AUDIENCE:-}
-      GMAIL_PUSH_OIDC_EMAIL: ${GMAIL_PUSH_OIDC_EMAIL:-}
-      GMAIL_PUSH_REQUIRE_AUTH: ${GMAIL_PUSH_REQUIRE_AUTH:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       VITE_SERVER_URL: ${VITE_SERVER_URL}
       VITE_WEB_URL: ${VITE_WEB_URL}
@@ -183,7 +177,7 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
-      # Google OAuth (login + Gmail Connections). Optional until set in Dokploy.
+      # Google OAuth (sign-in). Optional until set in Dokploy.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}

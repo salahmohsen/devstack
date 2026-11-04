@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 /**
- * Prefer HTML body (Gmail/Resend) when present — plain text parts are often
+ * Prefer HTML body when present — plain text parts are often
  * tracking-URL dumps (LinkedIn, etc.). Sandboxed iframe isolates styles/scripts.
  */
 export function MailBody({

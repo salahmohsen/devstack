@@ -93,13 +93,6 @@ export const betterAuthAccountRepository = {
       .where(and(eq(account.userId, userId), eq(account.providerId, providerId)));
   },
 
-  async updateProviderScope(accountRowId: string, scope: string): Promise<void> {
-    await getDb()
-      .update(account)
-      .set({ scope, updatedAt: new Date() })
-      .where(eq(account.id, accountRowId));
-  },
-
   async updateProviderTokens(
     accountRowId: string,
     tokens: {

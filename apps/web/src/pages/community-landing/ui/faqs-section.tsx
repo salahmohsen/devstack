@@ -86,7 +86,7 @@ const questions: FaqItem[] = [
     id: "item-5",
     title: "Is Career Inbox required?",
     content:
-      "No. You can track jobs and build apply packages without mail. Gmail OAuth (and optional BYO Resend) adds classification and stage moves when you connect it."
+      "No. You can track jobs and build apply packages without mail. Your own Resend account adds career mail, classification, and stage moves when you connect it."
   },
   {
     id: "item-6",

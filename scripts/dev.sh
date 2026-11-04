@@ -201,14 +201,14 @@ for port in 3000 4206 5200 4111 9229; do
 done
 
 # ─── Step 5b: Optional public HTTPS tunnel for webhooks ───────────
-# SaaS providers (Resend, Gmail Pub/Sub, GitHub) cannot POST to localhost.
+# SaaS providers (Resend, GitHub) cannot POST to localhost.
 # Options (env from packages/env/.env — never hardcode hostnames in this script):
 #
 #   # Quick ephemeral URL (changes every run):
 #   pnpm dev:tunnel
 #   DEV_TUNNEL=1 pnpm dev
 #
-#   # Named tunnel + your subdomain (stable — recommended for Gmail/OAuth):
+#   # Named tunnel + your subdomain (stable — recommended for OAuth):
 #   DEV_TUNNEL=1
 #   DEV_TUNNEL_MODE=named
 #   DEV_PUBLIC_SERVER_URL=https://api-dev.example.com
@@ -231,7 +231,7 @@ load_dev_env_keys() {
     line="${line%%$'\r'}"
     case "$line" in
       ''|\#*) continue ;;
-      DEV_*=*|GMAIL_PUSH_OIDC_AUDIENCE=*)
+      DEV_*=*)
         key="${line%%=*}"
         val="${line#*=}"
         # strip surrounding quotes
@@ -384,7 +384,7 @@ start_quick_tunnel() {
     fail "Timed out waiting for cloudflared HTTPS URL — see $TUNNEL_LOG"
   fi
   ok "Quick tunnel (ephemeral): $PUBLIC_SERVER_URL"
-  warn "URL changes each run — prefer DEV_TUNNEL_MODE=named + DEV_PUBLIC_SERVER_URL for Gmail/OAuth"
+  warn "URL changes each run — prefer DEV_TUNNEL_MODE=named + DEV_PUBLIC_SERVER_URL for OAuth"
   TUNNEL_KIND="quick"
 }
 
@@ -433,18 +433,7 @@ print_dev_links_banner() {
     echo -e "${BOLD}${MAGENTA}║${RESET}  ${BOLD}Inbound webhooks${RESET} (public origin)                                      ${BOLD}${MAGENTA}║${RESET}"
     printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Resend" "$public/webhooks/resend/<token>"
     echo -e "${BOLD}${MAGENTA}║${RESET}            ${DIM}token from Settings → Integrations; paste full URL in Resend${RESET} ${BOLD}${MAGENTA}║${RESET}"
-    printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Gmail push" "$public/webhooks/gmail-push"
     printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "GitHub hook" "$public/webhooks/github"
-    if [ -n "${GMAIL_PUSH_OIDC_AUDIENCE:-}" ]; then
-      if [ "${GMAIL_PUSH_OIDC_AUDIENCE}" = "${public}/webhooks/gmail-push" ]; then
-        echo -e "${BOLD}${MAGENTA}║${RESET}    ${GREEN}✔ GMAIL_PUSH_OIDC_AUDIENCE matches Gmail push URL${RESET}                   ${BOLD}${MAGENTA}║${RESET}"
-      else
-        echo -e "${BOLD}${MAGENTA}║${RESET}    ${YELLOW}⚠ GMAIL_PUSH_OIDC_AUDIENCE mismatch — expected:${RESET}                    ${BOLD}${MAGENTA}║${RESET}"
-        printf "${BOLD}${MAGENTA}║${RESET}      ${YELLOW}%-66s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "${public}/webhooks/gmail-push"
-      fi
-    else
-      echo -e "${BOLD}${MAGENTA}║${RESET}    ${YELLOW}⚠ set GMAIL_PUSH_OIDC_AUDIENCE=${public}/webhooks/gmail-push${RESET} ${BOLD}${MAGENTA}║${RESET}"
-    fi
     echo -e "${BOLD}${MAGENTA}║${RESET}  ${DIM}API process binds :5200; cloudflared forwards public HTTPS.${RESET}          ${BOLD}${MAGENTA}║${RESET}"
   fi
 

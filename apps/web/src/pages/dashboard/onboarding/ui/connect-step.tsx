@@ -6,6 +6,7 @@ import { useCallback } from "react";
 import { Button } from "@tsu-stack/ui/components/button";
 
 import { ConnectionsIntegrations } from "@/features/connections";
+import { ResendIntegration } from "@/features/mail-settings";
 
 const onboardingRoute = getRouteApi("/(root-layout)/__protected/dashboard/onboarding/");
 
@@ -31,6 +32,7 @@ export function ConnectStep({
   return (
     <div className="flex flex-col gap-5">
       <ConnectionsIntegrations
+        extra={<ResendIntegration />}
         callbackPath="/dashboard/onboarding?step=connect"
         oauthError={oauthError}
         oauthErrorDescription={oauthErrorDescription}
