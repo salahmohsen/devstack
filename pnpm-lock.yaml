@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@noble/ciphers':
+      specifier: 2.2.0
+      version: 2.2.0
     '@ai-sdk/openai':
       specifier: 3.0.88
       version: 3.0.88
@@ -450,6 +453,9 @@ catalogs:
     typescript:
       specifier: ^7.0.2
       version: 7.0.2
+    undici:
+      specifier: ^7.30.1
+      version: 7.30.1
     unpdf:
       specifier: ^1.8.0
       version: 1.8.0
@@ -739,6 +745,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@noble/ciphers':
+        specifier: 'catalog:'
+        version: 2.2.0
       '@ai-sdk/react':
         specifier: 'catalog:'
         version: 3.0.252(react@19.2.7)(zod@4.4.3)
@@ -1094,6 +1103,9 @@ importers:
       sanitize-html:
         specifier: 'catalog:'
         version: 2.17.7
+      undici:
+        specifier: 'catalog:'
+        version: 7.30.1
       unpdf:
         specifier: 'catalog:'
         version: 1.8.0

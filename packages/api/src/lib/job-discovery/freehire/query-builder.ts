@@ -5,7 +5,6 @@ import {
   FACET_KEY_TO_WIRE,
   FACETS,
   OpenFacetValueSchema,
-  SalaryCurrencySchema,
   preferenceQueryHash,
   type FacetKey,
   type JobPreferenceOutput
@@ -74,17 +73,32 @@ export async function buildFreehireQuery(prefs: JobPreferenceOutput): Promise<Fr
     filters.work_mode = prefs.workModes;
   }
 
-  const salaryCurrency = prefs.salaryCurrency?.trim().toUpperCase() ?? "";
-  const currencyValid = SalaryCurrencySchema.safeParse(salaryCurrency).success;
-  if (salaryCurrency !== "" && !currencyValid) {
-    dropped.push(`salaryCurrency:${salaryCurrency}`);
+  // The preference is a monthly floor, with unknown/different-currency pay
+  // retained. Freehire salary filters exclude those rows and compare raw periods.
+  // Keep the filter local and include it in the hash for snapshot invalidation.
+  if (prefs.salaryMin != null && prefs.salaryCurrency?.trim()) {
+    filters.local_monthly_salary_min = prefs.salaryMin;
+    filters.local_salary_currency = prefs.salaryCurrency.trim().toUpperCase();
   }
-  if (prefs.salaryMin != null && currencyValid) {
-    const salaryMin = Math.trunc(prefs.salaryMin);
-    params.set("salary_min", String(salaryMin));
-    params.set("salary_currency", salaryCurrency);
-    filters.salary_min = salaryMin;
-    filters.salary_currency = salaryCurrency;
+
+  const modes = prefs.workModes;
+  const hasPhysical = modes.length === 0 || modes.some((mode) => mode !== "remote");
+  const hasRemote = modes.length === 0 || modes.includes("remote");
+  const remoteRegions = params.get("regions");
+  if (
+    hasRemote &&
+    hasPhysical &&
+    ((prefs.cities?.length ?? 0) > 0 || (prefs.countries?.length ?? 0) > 0)
+  ) {
+    if (modes.length === 0) {
+      params.set("work_mode", "remote,hybrid,onsite");
+      filters.work_mode = ["remote", "hybrid", "onsite"];
+    }
+    params.set("work_mode_remote_anywhere", "true");
+    if (remoteRegions) params.set("work_mode_remote_regions", remoteRegions);
+    params.delete("regions");
+    filters.work_mode_remote_anywhere = true;
+    filters.work_mode_remote_regions = remoteRegions;
   }
 
   if (prefs.experienceYearsMin != null) {
@@ -108,5 +122,10 @@ export async function buildFreehireQuery(prefs: JobPreferenceOutput): Promise<Fr
     filters.requires_clearance = prefs.requiresClearance;
   }
 
+  if (prefs.experienceYearsMin != null || prefs.experienceYearsMax != null) {
+    params.set("experience_include_unspecified", "true");
+    filters.experience_include_unspecified = true;
+  }
+  params.set("description_format", "html");
   return { params, filters, hash: await preferenceQueryHash(filters), dropped };
 }

@@ -33,6 +33,7 @@
     "ioredis": "catalog:",
     "jose": "catalog:",
     "sanitize-html": "catalog:",
+    "undici": "catalog:",
     "unpdf": "catalog:",
     "zod": "catalog:"
   },

@@ -94,30 +94,32 @@ describe("fetchUserJobs", () => {
         })
       ])
     );
-    expect(result).toEqual({ ok: true, total: 77, hash: "hash1234" });
+    expect(result).toEqual({ ok: true, total: 77, fetchedCount: 2, hash: "hash1234" });
     expect(logger.emit).toHaveBeenCalledTimes(1);
   });
 
   it("upserts nothing when the search returns zero jobs", async () => {
     searchFreehireJobs.mockResolvedValue({ jobs: [], total: 0 });
     const result = await fetchUserJobs({ userId: "u1", preference: prefsWith({}) });
-    expect(result).toEqual({ ok: true, total: 0, hash: "hash1234" });
+    expect(result).toEqual({ ok: true, total: 0, fetchedCount: 0, hash: "hash1234" });
     expect(upsertMany).toHaveBeenCalledWith("u1", []);
   });
 
-  it("fails soft on a client throw — no upsert, wide-event error", async () => {
+  it("propagates fetch failures so the queue can retry instead of completing successfully", async () => {
     searchFreehireJobs.mockRejectedValue(new Error("HTTP 503 paused"));
-    const result = await fetchUserJobs({ userId: "u1", preference: prefsWith({}) });
-    expect(result).toEqual({ ok: false });
+    await expect(fetchUserJobs({ userId: "u1", preference: prefsWith({}) })).rejects.toThrow(
+      "HTTP 503 paused"
+    );
     expect(upsertMany).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalled();
     expect(logger.emit).toHaveBeenCalledWith({ _forceKeep: true });
   });
 
-  it("fails soft when the upsert itself throws", async () => {
+  it("propagates storage failures for retry", async () => {
     searchFreehireJobs.mockResolvedValue({ jobs: [{ public_slug: "a" }], total: 1 });
     upsertMany.mockRejectedValue(new Error("deadlock"));
-    const result = await fetchUserJobs({ userId: "u1", preference: prefsWith({}) });
-    expect(result).toEqual({ ok: false });
+    await expect(fetchUserJobs({ userId: "u1", preference: prefsWith({}) })).rejects.toThrow(
+      "deadlock"
+    );
   });
 });

@@ -17,6 +17,34 @@
 
 ---
 
+## 2026-11-04 — Follow-up work needs its own completion boundary
+
+- **Trigger:** Review found a backfill coalescing into an already active landing pass.
+- **Finding:** A shared finished boolean cannot represent newer work arriving during completion. Persist a revision, give follow-up work a distinct queue ID, and condition completion on the revision the worker owns. Superseded queued passes can skip provider and screening work.
+- **Finding:** Account-scoped cache keys need response ownership checks when authentication lives in a cookie shared across tabs.
+- **Finding:** An overall polling limit does not bound a pending request. Bound each request and preserve the distinction between a read timeout and a long-running server job.
+- **Finding:** Metadata failure after a successful write must not turn its retry into a rejected candidate. Keep warnings nonfatal or recover the original persisted outcome.
+- **Evidence class:** Forced completion/backfill race using actual local workers and services, controlled polling deadlines, response-cache rejection tests, and production builds. No production deployment or browser claim.
+
+## 2026-11-04 — Discovery review recovery and account boundaries
+
+- **Trigger:** Review of persisted discovery tracking and queue retry behavior.
+- **Finding:** An active database claim does not prove a Redis job exists. Repair only queued runs using their original ID and return that ID directly from enqueue; do not restart legitimate scoring work.
+- **Finding:** Detached polling must check cancellation after every awaited invalidation, and account changes must clear both the query cache and shared tracker. A transient read failure is not a failed server run.
+- **Finding:** Keep source geography arrays separate from fallback extraction. A broad region can erase a precise city when fed into a helper that prioritizes the region.
+- **Finding:** Publish addition disclosures only after the insert succeeds. Missing AI configuration and a configured provider outage need different wording.
+- **Finding:** Verification scripts that start workers must guard every backing service URL before creating any resource. A local database guard does not protect remote Redis.
+- **Evidence class:** Local PostgreSQL/Redis worker recovery loop, controlled asynchronous tracker tests, rendered status tests, and an actual untrusted-certificate TLS rejection. Interactive browser and paid-provider paths remain unverified.
+
+## 2026-11-04 — Queue completion must follow the product outcome
+
+- **Trigger:** Job discovery showed no new matches after upstream connection failures.
+- **Finding:** Returning a failure object from a worker dependency resolves the queue job and bypasses configured retries. Persist run state and propagate retryable failures; never infer success or empty results from a stable inbox count.
+- **Finding:** Prove a network hypothesis from the deployed container. DNS can resolve successfully to an unreachable CDN route; an alternate resolver is useful only after hostname-preserving HTTPS probes prove its answers work. Keep resolver overrides scoped and preserve TLS verification.
+- **Finding:** Preserve upstream structured geography and pay periods across every screening stage. Re-parsing display text can reject already qualified locations or compare monthly preferences with annual amounts.
+- **Finding:** Test the actual dispatcher/runtime pair: a newer standalone HTTP client may not implement the native fetch dispatcher protocol used by the deployed Node version.
+- **Evidence class:** Production container DNS/TLS probes, real local PostgreSQL/Redis worker failure-recovery loop, status component rendering, production builds. Interactive browser and paid-provider execution remain separate rollout checks.
+
 ## 2026-09-10 — Apply-package review dialog harness: single-mount panes, same-site oRPC, excluded-stub reachability
 
 - **Trigger:** Apply package review dialog (sheet → Paper Studio dialog): resume/cover-letter papers, Matte mail editor, attachment squares, Save/Send, live parity loop on seeded drafts

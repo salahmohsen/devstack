@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
+import { bindDiscoveryAccount } from "@/shared/lib/find-jobs-now-job";
 // TODO
 import { readStoredTabs, type Tab, useTabs } from "@/shared/lib/tab-store";
 
@@ -295,6 +296,7 @@ export function createAppQueryClient() {
     }
   });
 
+  if (typeof window !== "undefined") bindDiscoveryAccount(queryClient);
   restorePersistedGitHubQueryCache(queryClient);
 
   return queryClient;

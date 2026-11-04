@@ -10,3 +10,5 @@ export {
   type FindJobsNowState
 } from "@/shared/lib/find-jobs-now-store";
 export { FindJobsNowButton } from "@/features/job-discovery/ui/find-jobs-now-button";
+
+export { DiscoveryStatus } from "./ui/discovery-status";

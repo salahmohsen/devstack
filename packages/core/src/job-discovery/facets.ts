@@ -191,7 +191,9 @@ export const FACET_KEY_TO_WIRE: Record<FacetKey, string> = {
 };
 
 export const SALARY_CURRENCIES = ["USD", "EUR", "GBP", "RUB"] as const;
-export const SalaryCurrencySchema = z.enum(SALARY_CURRENCIES);
+export const SalaryCurrencySchema = z
+  .string()
+  .regex(/^[A-Z]{3}$/, "Use a three-letter currency code");
 export type SalaryCurrency = (typeof SALARY_CURRENCIES)[number];
 
 /** Closed-vocabulary facet schemas keyed by freehire wire param. */

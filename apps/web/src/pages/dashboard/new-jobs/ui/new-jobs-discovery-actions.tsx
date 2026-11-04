@@ -5,14 +5,14 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { useFindJobsNowJob } from "@/shared/lib/find-jobs-now-store";
 
 import { ScanJobAlertsButton, useScanJobAlertsJob } from "@/features/applications";
-import { FindJobsNowButton } from "@/features/job-discovery";
+import { DiscoveryStatus, FindJobsNowButton } from "@/features/job-discovery";
 
 /**
  * Find jobs ± Scan mail. Idle: one primary Group. While either job runs, the
  * running trigger pulls out (same pattern as Organize in HeaderActions) so the
  * white loading chrome is not flattened into the neighbor.
  */
-export function NewJobsDiscoveryActions({ importFromEmail }: { importFromEmail: boolean }) {
+function DiscoveryButtons({ importFromEmail }: { importFromEmail: boolean }) {
   const findRunning = useFindJobsNowJob().status === "running";
   const scanRunning = useScanJobAlertsJob().status === "running";
 
@@ -37,5 +37,14 @@ export function NewJobsDiscoveryActions({ importFromEmail }: { importFromEmail: 
       <GroupSeparator />
       <ScanJobAlertsButton />
     </Group>
+  );
+}
+
+export function NewJobsDiscoveryActions({ importFromEmail }: { importFromEmail: boolean }) {
+  return (
+    <div className="space-y-2">
+      <DiscoveryButtons importFromEmail={importFromEmail} />
+      <DiscoveryStatus />
+    </div>
   );
 }

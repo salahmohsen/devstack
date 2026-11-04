@@ -199,6 +199,8 @@ catalog:
   "@better-auth/core": 1.6.23
   "@modelcontextprotocol/sdk": 1.29.0
   "@ai-sdk/openai": 3.0.88
+  undici: ^7.30.1
+  "@noble/ciphers": 2.2.0
 
 catalogMode: prefer
 

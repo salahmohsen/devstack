@@ -33,3 +33,4 @@ export * from "./user-job.schema.ts";
 export * from "./user-mail-settings.schema.ts";
 export * from "./user-notification-settings.schema.ts";
 export * from "./username-slug-alias.schema.ts";
+export * from "./job-discovery-run.schema.ts";

@@ -58,6 +58,12 @@ export function toUserJobRow(
     companyLogoUrl: null,
     listingUrl: job.url,
     location: textOrNull(job.location),
+    regions: job.regions ?? [],
+    countries: job.countries ?? [],
+    cities: job.cities ?? [],
+    salaryPeriod: ["month", "year", "day", "hour"].includes(enrichment?.salary_period ?? "")
+      ? enrichment!.salary_period!
+      : null,
     workMode: asWorkMode(job.work_mode),
     employmentType: textOrNull(enrichment?.employment_type),
     seniority: textOrNull(enrichment?.seniority),

@@ -381,6 +381,7 @@ export const ScanJobAlertsOutputSchema = z.object({
 /** Manual “Find jobs now” — enqueue discovery + optional ingest. */
 export const FindJobsNowInputSchema = z.object({}).optional();
 export const FindJobsNowOutputSchema = z.object({
+  runId: z.string().optional(),
   enqueued: z.boolean(),
   ingestTriggered: z.boolean(),
   seats: z.number().int().nonnegative(),

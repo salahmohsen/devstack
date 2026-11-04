@@ -113,9 +113,7 @@ describe("searchFreehireJobs", () => {
       "fetch",
       vi.fn().mockResolvedValue(jsonResponse({ error: "paused for maintenance" }, 503))
     );
-    await expect(searchFreehireJobs(new URLSearchParams())).rejects.toThrow(
-      /HTTP 503 paused for maintenance/
-    );
+    await expect(searchFreehireJobs(new URLSearchParams())).rejects.toThrow(/HTTP 503/);
     expect(loggerSpies.error).toHaveBeenCalled();
     expect(loggerSpies.emit).toHaveBeenCalledWith({ _forceKeep: true });
   });
@@ -132,7 +130,7 @@ describe("searchFreehireJobs", () => {
     );
     const failure = searchFreehireJobs(new URLSearchParams()).catch((error: unknown) => error);
     const error = (await failure) as Error;
-    expect(error.message).toContain("bad envelope (HTTP 200)");
+    expect(error.message).toContain("invalid response");
     expect(error.cause).toBeInstanceOf(SyntaxError);
     expect(loggerSpies.emit).toHaveBeenCalledWith({ _forceKeep: true });
   });
@@ -146,9 +144,8 @@ describe("searchFreehireJobs", () => {
           jsonResponse(okEnvelope({ ignored_params: ["work_mode", "bogus_param"] }), 200)
         )
     );
-    await searchFreehireJobs(new URLSearchParams());
-    expect(loggerSpies.warn).toHaveBeenCalledWith("ignored_params_present", {
-      ignoredParams: ["work_mode", "bogus_param"]
+    await expect(searchFreehireJobs(new URLSearchParams())).rejects.toMatchObject({
+      retryable: false
     });
   });
 
@@ -170,8 +167,8 @@ describe("searchFreehireJobs", () => {
     const failure = pending.catch((error: unknown) => error);
     await vi.advanceTimersByTimeAsync(15_000);
     const error = (await failure) as Error;
-    expect(error).toBeInstanceOf(DOMException);
-    expect(error.message).toContain("Aborted");
+    expect(error).toMatchObject({ retryable: true });
+    expect(error.cause).toBeInstanceOf(DOMException);
     vi.useRealTimers();
   });
 
@@ -192,8 +189,8 @@ describe("searchFreehireJobs", () => {
     const failure = pending.catch((error: unknown) => error);
     controller.abort();
     const error = (await failure) as Error;
-    expect(error).toBeInstanceOf(DOMException);
-    expect(error.message).toContain("Aborted");
+    expect(error).toMatchObject({ retryable: true });
+    expect(error.cause).toBeInstanceOf(DOMException);
   });
 });
 
@@ -297,5 +294,16 @@ describe("searchFreehireCities", () => {
     await searchFreehireCities("newest");
     await searchFreehireCities("query-499");
     expect(fetchMock).toHaveBeenCalledTimes(502);
+  });
+});
+
+it("retries malformed JSON but treats a valid JSON schema mismatch as permanent", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>gateway splash</html>")));
+  await expect(searchFreehireJobs(new URLSearchParams())).rejects.toMatchObject({
+    retryable: true
+  });
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ unexpected: true })));
+  await expect(searchFreehireJobs(new URLSearchParams())).rejects.toMatchObject({
+    retryable: false
   });
 });

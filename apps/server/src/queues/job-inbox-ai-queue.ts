@@ -8,7 +8,7 @@ import {
   JobInboxAiPayloadSchema,
   type JobInboxAiPayload
 } from "@tsu-stack/core";
-import { createDb, runWithDb } from "@tsu-stack/db";
+import { jobDiscoveryRunRepository, createDb, runWithDb } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 /**
@@ -61,7 +61,30 @@ export function startJobInboxAiQueue(redisUrl: string): void {
       }
 
       const db = createDb();
-      const result = await runWithDb(db, () => runInboxAi(parsed.data));
+      const result = await runWithDb(db, async () => {
+        try {
+          const result = await runInboxAi(parsed.data);
+          if (parsed.data.jobId) {
+            await jobDiscoveryRunRepository.finishCandidate(
+              parsed.data.userId,
+              parsed.data.runId,
+              parsed.data.jobId,
+              result.outcome
+            );
+          }
+          return result;
+        } catch (error) {
+          if (parsed.data.jobId && job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+            await jobDiscoveryRunRepository.finishCandidate(
+              parsed.data.userId,
+              parsed.data.runId,
+              parsed.data.jobId,
+              "failed"
+            );
+          }
+          throw error;
+        }
+      });
 
       log.set({
         event: "job_inbox_ai_ok",

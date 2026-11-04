@@ -6,6 +6,7 @@ import { type ReactNode } from "react";
 
 import {
   DAILY_BOARD_SCORE_CAP_STEP,
+  DISCOVERY_SALARY_NOTE,
   MAX_DAILY_BOARD_SCORE_CAP,
   MIN_DAILY_BOARD_SCORE_CAP
 } from "@tsu-stack/core";
@@ -85,12 +86,15 @@ export const JobPreferenceFields = withForm({
         </form.Subscribe>
 
         <FieldGroup className="gap-8">
-          <FieldsSection title="Where" description="Jobs in any of these places.">
+          <FieldsSection
+            title="Where"
+            description="Remote regions control remote eligibility. When empty, locations also limit remote jobs. Locations match hybrid and on-site work."
+          >
             <form.AppField name="regions">
               {(field) => (
                 <field.ComboboxMultipleField
-                  label="Regions"
-                  description="Broad hiring areas. Leave empty for anywhere."
+                  label="Remote regions"
+                  description="Where remote roles can hire. Global means worldwide postings."
                   placeholder="e.g. EU, MENA"
                   emptyMessage="No regions match."
                   items={JOB_PREFERENCE_REGION_OPTIONS}
@@ -126,7 +130,7 @@ export const JobPreferenceFields = withForm({
               {(field) => (
                 <field.TagsField
                   label="Role keywords"
-                  description="Search terms for the title match. Leave empty with no other filters to accept anything."
+                  description="Optional title terms. Choose at least one role keyword or category to enable discovery."
                   placeholder="e.g. Full-stack, React"
                   maxItems={50}
                   maxItemLength={120}
@@ -178,7 +182,7 @@ export const JobPreferenceFields = withForm({
                   <field.InputField
                     type="number"
                     label="Minimum years"
-                    description="Leave empty for no minimum."
+                    description="Minimum experience a posting asks for. Unspecified requirements stay eligible."
                     placeholder="e.g. 3"
                     maxLength={3}
                   />
@@ -190,7 +194,7 @@ export const JobPreferenceFields = withForm({
                   <field.InputField
                     type="number"
                     label="Maximum years"
-                    description="Leave empty for no maximum."
+                    description="Most experience a posting may ask for. Unspecified requirements stay eligible."
                     placeholder="e.g. 10"
                     maxLength={3}
                   />
@@ -231,7 +235,7 @@ export const JobPreferenceFields = withForm({
                   <field.InputField
                     type="number"
                     label="Minimum monthly"
-                    description="Optional whole monthly floor. Leave empty for no salary filter."
+                    description={DISCOVERY_SALARY_NOTE}
                     placeholder="e.g. 4000"
                     maxLength={10}
                   />

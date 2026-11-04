@@ -4,9 +4,11 @@ import {
   buildApplicationSourceTags,
   canonicalizeJobUrl,
   classifyJobSkills,
-  decideTwoAxis,
+  decideStructuredJobPlace,
   dailyAiAttemptCap,
   DISCOVERY_FETCH_POOL_SIZE,
+  DISCOVERY_AI_FALLBACK_NOTE,
+  DISCOVERY_NO_AI_NOTE,
   EmploymentTypeSchema,
   inferApplicationSource,
   INBOX_TTL_MS,
@@ -25,6 +27,7 @@ import {
 } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
+  jobDiscoveryRunRepository,
   applicationRepository,
   experienceRepository,
   stackRepository,
@@ -34,6 +37,7 @@ import {
   type UserJobEntity
 } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { createLogger } from "@tsu-stack/logger/server";
 
 import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/generate-agent-take";
 import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
@@ -42,7 +46,7 @@ import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
 import { utcDay } from "#@/lib/job-discovery/enrollment";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
-export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
+export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped" | "failed";
 
 async function displayScoreForUser(input: {
   userId: string;
@@ -76,16 +80,17 @@ const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
 function formatSnapshotSalaryRange(
   salaryMin: number | null,
   salaryMax: number | null,
-  salaryCurrency: string | null
+  salaryCurrency: string | null,
+  salaryPeriod?: string | null
 ): string | null {
   if (salaryMin == null && salaryMax == null) return null;
-  const fmt = (n: number) => (n % 1000 === 0 && Math.abs(n) >= 1000 ? `$${n / 1000}k` : `$${n}`);
+  const fmt = (n: number) => (n % 1000 === 0 && Math.abs(n) >= 1000 ? `${n / 1000}k` : `${n}`);
   const range =
     salaryMin != null && salaryMax != null
       ? `${fmt(salaryMin)}–${fmt(salaryMax)}`
       : fmt(salaryMin ?? salaryMax!);
   const currency = salaryCurrency?.trim();
-  return currency ? `${range} ${currency}` : range;
+  return `${range}${currency ? ` ${currency}` : ""}${salaryPeriod ? `/${salaryPeriod}` : " (period not stated)"}`;
 }
 
 /**
@@ -331,7 +336,8 @@ async function insertDiscoveryApplication(input: {
   const salaryRange = formatSnapshotSalaryRange(
     input.job.salaryMin,
     input.job.salaryMax,
-    input.job.salaryCurrency
+    input.job.salaryCurrency,
+    input.job.salaryPeriod
   );
 
   const insertInput = {
@@ -518,12 +524,30 @@ async function runInboxAiForApplication(input: {
   return { outcome: decision === "heuristic" ? "heuristic" : "passed" };
 }
 
+export async function recordDiscoveryScoringWarning(
+  userId: string,
+  runId: string,
+  warning: string
+) {
+  try {
+    await jobDiscoveryRunRepository.addWarning(userId, runId, warning);
+  } catch (error) {
+    const log = createLogger({ operation: "api__discovery_scoring_warning" });
+    log.error(error instanceof Error ? error : new Error(String(error)), { userId, runId });
+    log.emit({ _forceKeep: true });
+  }
+}
+
 /** Discovery evaluate-then-insert: score the user_job snapshot → insert inbox or dismissed. */
 async function runInboxAiForJob(input: {
   userId: string;
   jobId: string;
   runId: string;
 }): Promise<{ outcome: InboxAiOutcome }> {
+  const trackedRun = await jobDiscoveryRunRepository.find(input.userId, input.runId);
+  if (trackedRun?.stage === "failed" || trackedRun?.stage === "completed") {
+    return { outcome: "skipped" };
+  }
   const [prefs, llm, job] = await Promise.all([
     loadJobPreferenceOutput(input.userId),
     resolveRuntimeAiCredentials(input.userId, "scorer"),
@@ -539,16 +563,24 @@ async function runInboxAiForJob(input: {
   const existing = await applicationRepository.findByUserIdAndUrl(input.userId, listingUrl);
   if (existing) return { outcome: "skipped" };
 
+  const sourceWorkMode = asWorkMode(job.workMode);
   const leftover = applyZeroDollarCandidate({
-    workMode: asWorkMode(job.workMode),
-    hiringRegion: null,
+    workMode: sourceWorkMode,
+    hiringRegion:
+      sourceWorkMode === "remote"
+        ? job.regions?.join(", ") || job.countries?.join(", ") || null
+        : null,
     location: trimmedOrNull(job.location),
     employmentType: job.employmentType,
     description: job.description,
     skills: job.skills ?? []
   });
   const workMode = leftover.workMode;
-  const twoAxis = decideTwoAxis({
+  const twoAxis = decideStructuredJobPlace({
+    regions: job.regions,
+    countries: job.countries,
+    cities: job.cities,
+    preferredCountries: prefs.countries ?? [],
     workMode,
     hiringRegion: leftover.hiringRegion,
     location: leftover.location,
@@ -575,13 +607,23 @@ async function runInboxAiForJob(input: {
       workMode,
       skills: job.skills ?? [],
       salaryMin: job.salaryMin,
-      salaryCurrency: job.salaryCurrency
+      salaryCurrency: job.salaryCurrency,
+      salaryPeriod: job.salaryPeriod as "month" | "year" | "day" | "hour" | null,
+      category: job.category
     },
     prefs
   );
-  const hiringRegion = persistHiringRegion(workMode, null);
+  const hiringRegion = persistHiringRegion(
+    workMode,
+    job.regions?.join(", ") || leftover.hiringRegion
+  );
   const description = job.description;
-  const salaryRange = formatSnapshotSalaryRange(job.salaryMin, job.salaryMax, job.salaryCurrency);
+  const salaryRange = formatSnapshotSalaryRange(
+    job.salaryMin,
+    job.salaryMax,
+    job.salaryCurrency,
+    job.salaryPeriod
+  );
 
   const willCallAgent = hasAiKey && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
   const employmentType = asEmploymentType(leftover.employmentType);
@@ -635,6 +677,13 @@ async function runInboxAiForJob(input: {
       trackingStatus: "inbox",
       poolSize: DISCOVERY_FETCH_POOL_SIZE
     });
+    if (row) {
+      await recordDiscoveryScoringWarning(
+        input.userId,
+        input.runId,
+        hasAiKey ? DISCOVERY_AI_FALLBACK_NOTE : DISCOVERY_NO_AI_NOTE
+      );
+    }
     return { outcome: row ? "heuristic" : "skipped" };
   }
 
@@ -670,7 +719,7 @@ async function runInboxAiForJob(input: {
         trigger: "backfill"
       });
     }
-    return { outcome: plan.outcome };
+    return { outcome: "failed" };
   }
 
   const keep = decideInboxAiKeep(match);
@@ -736,6 +785,9 @@ async function runInboxAiForJob(input: {
     dismissVia: plan.insert.trackingStatus === "dismissed" ? "low_match" : undefined,
     agentTake: plan.insert.agentTake
   });
+  if (row && keep === "heuristic") {
+    await recordDiscoveryScoringWarning(input.userId, input.runId, DISCOVERY_AI_FALLBACK_NOTE);
+  }
   return { outcome: row ? plan.outcome : "skipped" };
 }
 

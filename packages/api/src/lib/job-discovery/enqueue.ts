@@ -12,6 +12,7 @@ import {
   type JobDiscoveryLandPayload,
   type JobInboxAiPayload
 } from "@tsu-stack/core";
+import { jobDiscoveryRunRepository } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
@@ -90,7 +91,10 @@ async function enqueueDirect(input: {
           removeOnComplete: input.removeOnComplete ?? 1000,
           removeOnFail: input.removeOnFail ?? 5000,
           attempts: 3,
-          backoff: { type: "exponential", delay: 2000 }
+          backoff: {
+            type: input.queueName === JOB_DISCOVERY_LAND_QUEUE_NAME ? "discovery" : "exponential",
+            delay: 2000
+          }
         });
         return "added" as const;
       })(),
@@ -176,12 +180,36 @@ export function registerJobInboxAiEnqueue(fn: EnqueueFn<JobInboxAiPayload>): voi
 export async function requestJobDiscoveryLand(
   input: Omit<JobDiscoveryLandPayload, "enqueuedAt">,
   opts?: EnqueueOpts
-): Promise<boolean> {
+): Promise<{ enqueued: boolean; runId: string }> {
+  const claimed = await jobDiscoveryRunRepository.claim(
+    input.userId,
+    input.runId,
+    new Date(Date.now() + (opts?.delayMs ?? 0))
+  );
+  const runId = claimed.run.runId;
+  if (claimed.run.stage === "completed" || claimed.run.stage === "failed") {
+    return { enqueued: false, runId };
+  }
+  if (input.trigger !== "backfill" && runId !== input.runId && claimed.run.stage !== "queued") {
+    return { enqueued: true, runId };
+  }
+  const requested =
+    input.trigger === "backfill"
+      ? await jobDiscoveryRunRepository.requestBackfill(input.userId, runId)
+      : claimed.run;
+  if (!requested) return { enqueued: false, runId };
+  const landRevision = requested.landRevision;
+  const delayMs =
+    input.trigger === "find_now" || input.trigger === "backfill"
+      ? 0
+      : Math.max(0, claimed.run.scheduledAt.getTime() - Date.now());
   const data = JobDiscoveryLandPayloadSchema.parse({
     ...input,
+    runId,
+    landRevision,
     enqueuedAt: new Date().toISOString()
   });
-  return requestWithHook({
+  const enqueued = await requestWithHook({
     hookKey: LAND_HOOK_KEY,
     queueKey: LAND_QUEUE_KEY,
     queueName: JOB_DISCOVERY_LAND_QUEUE_NAME,
@@ -190,11 +218,24 @@ export async function requestJobDiscoveryLand(
     operation: "api__job_discovery_land_enqueue",
     event: "job_discovery_land_enqueued",
     extra: { userId: data.userId, runId: data.runId, trigger: data.trigger },
-    jobId: landJobId(data.userId, data.runId),
-    delayMs: opts?.delayMs,
+    jobId: landJobId(data.userId, data.runId, landRevision),
+    delayMs,
     removeOnComplete: true,
     removeOnFail: true
   });
+  if (!enqueued) {
+    await jobDiscoveryRunRepository.update(input.userId, runId, {
+      stage: "failed",
+      reason: "Search queue unavailable. Try again shortly."
+    });
+  }
+  if (enqueued && input.trigger === "find_now" && claimed.run.stage === "queued") {
+    const queue = getProducerQueue(LAND_QUEUE_KEY, JOB_DISCOVERY_LAND_QUEUE_NAME);
+    const existing = await queue?.getJob(landJobId(input.userId, runId, landRevision));
+    if (existing && (await existing.getState()) === "delayed") await existing.changeDelay(0);
+    await jobDiscoveryRunRepository.update(input.userId, runId, { scheduledAt: new Date() });
+  }
+  return { enqueued, runId };
 }
 
 export async function requestJobInboxAi(input: JobInboxAiPayload): Promise<boolean> {

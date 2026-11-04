@@ -17,6 +17,8 @@
 
 **Does not reopen.** Grill lock from the product owner (2026-09-05). Frozen **#3** (active-user cron enrollment), **#7** (one-time preference reset, null + re-onboard), **#12** (delete the adapter framework entirely, no NormalizedListing), **#16** (drop `jobsPerRun`, fixed pool of 100). Implementation may refine file names and internal column names, not these decisions.
 
+**2026-11-04 reliability amendment:** The owner requested fixes and enhancements after production discovery failures. [Reliability plan](../plans/2026-11-04-discovery-reliability.md) supersedes the no-retry/fail-soft behavior and the salary/geography integration details below using the current Freehire API. It preserves active-user enrollment, the per-user source/storage model and the fixed pool of 100. [Hardening evidence](../../reports/2026-11-04-job-discovery-hardening.md).
+
 ---
 
 ## 1. Goal

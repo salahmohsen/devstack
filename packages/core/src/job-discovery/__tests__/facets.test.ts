@@ -159,11 +159,13 @@ describe("freehire facet whitelists", () => {
     expect(CollectionFacetSchema.safeParse("bogus").success).toBe(false);
   });
 
-  it("locks salary currencies to USD/EUR/GBP/RUB", () => {
+  it("accepts ISO-shaped currencies beyond the suggested defaults", () => {
     expect([...SALARY_CURRENCIES]).toEqual(["USD", "EUR", "GBP", "RUB"]);
     for (const value of SALARY_CURRENCIES) {
       expect(SalaryCurrencySchema.safeParse(value).success).toBe(true);
     }
-    expect(SalaryCurrencySchema.safeParse("AED").success).toBe(false);
+    expect(SalaryCurrencySchema.safeParse("AED").success).toBe(true);
+    expect(SalaryCurrencySchema.safeParse("EGP").success).toBe(true);
+    expect(SalaryCurrencySchema.safeParse("not-a-currency").success).toBe(false);
   });
 });
