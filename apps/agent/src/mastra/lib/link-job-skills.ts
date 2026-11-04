@@ -65,7 +65,8 @@ export async function linkJobSkillsForUserInAgent(input: {
         }
       ],
       {
-        structuredOutput: { schema: LinkedJobSkillsPayloadSchema },
+        structuredOutput: { schema: LinkedJobSkillsPayloadSchema, jsonPromptInjection: "inline" },
+        toolChoice: "none",
         requestContext: createByoRequestContext(llm, { userId: input.userId }),
         maxSteps: 1
       }

@@ -74,17 +74,41 @@ async function failureFromResponse(response: Response, userId: string | undefine
 /** The plan endpoint is stream-only; collapse the stream back into one response for non-streaming callers. */
 async function collapseStream(response: Response, userId: string | undefined): Promise<Response> {
   const text = await response.text();
+  const outputItems = new Map<number, Record<string, unknown>>();
   for (const block of text.split(/\r?\n\r?\n/)) {
     const dataLine = block.split(/\r?\n/).find((l) => l.startsWith("data:"));
     if (!dataLine) continue;
-    let event: { type?: string; response?: Record<string, unknown>; error?: { code?: string } };
+    let event: {
+      type?: string;
+      response?: Record<string, unknown>;
+      error?: { code?: string };
+      output_index?: number;
+      item?: Record<string, unknown>;
+    };
     try {
       event = JSON.parse(dataLine.slice(5).trim());
     } catch {
       continue;
     }
+    if (
+      event.type === "response.output_item.done" &&
+      typeof event.output_index === "number" &&
+      event.item
+    ) {
+      outputItems.set(event.output_index, event.item);
+    }
     if (event.type === "response.completed" || event.type === "response.incomplete") {
-      return new Response(JSON.stringify(event.response), {
+      const completed = event.response;
+      if (
+        completed &&
+        (!Array.isArray(completed.output) || completed.output.length === 0) &&
+        outputItems.size > 0
+      ) {
+        completed.output = [...outputItems.entries()]
+          .toSorted(([a], [b]) => a - b)
+          .map(([, item]) => item);
+      }
+      return new Response(JSON.stringify(completed), {
         status: 200,
         headers: { "content-type": "application/json" }
       });

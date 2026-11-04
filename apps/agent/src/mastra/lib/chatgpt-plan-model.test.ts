@@ -154,4 +154,62 @@ describe("createChatgptPlanFetch", () => {
     expect(JSON.stringify(seen.body?.input)).not.toContain('"role":"system"');
     expect(result.content[0]).toMatchObject({ type: "text", text: "hello" });
   });
+
+  it("keeps completed output items when the terminal event has an empty output array", async () => {
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          sse([
+            {
+              type: "response.output_item.done",
+              output_index: 0,
+              item: {
+                type: "message",
+                id: "msg_1",
+                role: "assistant",
+                content: [{ type: "output_text", text: '{"items":[]}', annotations: [] }]
+              }
+            },
+            {
+              type: "response.completed",
+              response: {
+                id: "resp_1",
+                created_at: 1,
+                model: "gpt-x",
+                output: [],
+                usage: { input_tokens: 10, output_tokens: 5 }
+              }
+            }
+          ]),
+          { status: 200 }
+        )
+    );
+    const model = chatgptPlanLanguageModel({
+      modelId: "chatgpt-plan/gpt-x",
+      accessToken: "test-token"
+    });
+    const result = await model.doGenerate({
+      prompt: [{ role: "user", content: [{ type: "text", text: "rewrite" }] }]
+    });
+    expect(result.content).toContainEqual(
+      expect.objectContaining({
+        type: "text",
+        text: '{"items":[]}'
+      })
+    );
+    const { RequestContext } = await import("@mastra/core/di");
+    const { ApplyPackageProjectRewriteChunkSchema } = await import("@tsu-stack/core");
+    const { createApplyPackageAgent } = await import("#@/mastra/agents/apply-package-agent");
+    const { raceGenerate } = await import("#@/mastra/workflows/apply-package-workflow/llm-shared");
+    const draft = await raceGenerate(
+      createApplyPackageAgent(),
+      "Return an empty project rewrite chunk.",
+      ApplyPackageProjectRewriteChunkSchema,
+      model,
+      new RequestContext(),
+      { maxOutputTokens: 4096, timeoutMs: 1000, stepLabel: "rewrite-projects" }
+    );
+    expect(draft).toEqual({ items: [] });
+  });
 });

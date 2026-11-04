@@ -136,7 +136,7 @@ export const createApplicationTool = createTool({
           url: listingUrl
         });
         // URL conflict with inbox/dismissed → promote + merge non-empty hub fields.
-        if (!created && result.row.trackingStatus !== "tracked") {
+        if (!result.created && result.row.trackingStatus !== "tracked") {
           const from = result.row.trackingStatus;
           const promoted = await applicationRepository.setTrackingStatus(
             result.row.id,
@@ -165,7 +165,7 @@ export const createApplicationTool = createTool({
             return { row: merged ?? promoted, created: false };
           }
         }
-        if (created) {
+        if (result.created) {
           await applicationActivityRepository.append({
             userId,
             applicationId: result.row.id,

@@ -83,6 +83,7 @@ async function generateLinkedSkills(input: {
         // 900 was consumed entirely by reasoning with empty text output.
         modelSettings: { maxOutputTokens: 4_000, temperature: 0.1 },
         extras: {
+          toolChoice: "none",
           structuredOutput: {
             schema: {
               type: "object",
@@ -96,11 +97,13 @@ async function generateLinkedSkills(input: {
                       band: { type: "string", enum: ["required", "preferred"] },
                       stackId: { type: ["string", "null"] }
                     },
-                    required: ["name", "band"]
+                    required: ["name", "band", "stackId"],
+                    additionalProperties: false
                   }
                 }
               },
-              required: ["skills"]
+              required: ["skills"],
+              additionalProperties: false
             }
           }
         }

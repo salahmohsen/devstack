@@ -24,14 +24,19 @@ import {
   resolveHubChatMemory,
   slimMessagesForHubMemory
 } from "#@/lib/agent/hub-memory";
+import { loadHubProfileContext } from "#@/lib/agent/hub-profile-context";
 import { parseConcatenatedJsonStream } from "#@/lib/agent/parse-workflow-json-stream";
 import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
 import { assertWorkflowRunOwner } from "#@/lib/agent/workflow-run-registry";
 
 async function hubChatRequestContext(userId: string, personalityOverride?: string) {
-  const row = await userAiSettingsRepository.findByUserId(userId);
+  const [row, hubSeekerProfile] = await Promise.all([
+    userAiSettingsRepository.findByUserId(userId),
+    loadHubProfileContext(userId)
+  ]);
   return {
     userId,
+    hubSeekerProfile,
     hubPersonality: hubPersonalityById(personalityOverride ?? row?.hubPersonality).id,
     hubAvatar: hubAvatarById(row?.hubAvatar).id
   };

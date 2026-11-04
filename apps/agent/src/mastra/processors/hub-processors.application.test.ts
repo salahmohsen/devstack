@@ -6,6 +6,7 @@ import {
   createHubInputProcessors,
   HubApplicationMentionProcessor,
   HubEnsureFinalResponseProcessor,
+  HubSeekerProfileProcessor,
   hubSupervisorOnIterationComplete,
   messagesNeedGetApplication,
   shouldStopAfterStackCatalog,
@@ -24,6 +25,23 @@ function userText(text: string) {
 }
 
 const MENTION = "Look at application {app-1}";
+
+describe("HubSeekerProfileProcessor", () => {
+  it("supplies current saved evidence before the listing import tool restriction", async () => {
+    const contents: string[] = [];
+    await new HubSeekerProfileProcessor().processInputStep({
+      stepNumber: 0,
+      requestContext: { get: () => JSON.stringify({ skills: ["React"], experienceYears: 4 }) },
+      sendSignal: async (signal: { contents: string }) => {
+        contents.push(signal.contents);
+      }
+    } as never);
+    expect(contents[0]).toContain('"React"');
+    expect(contents[0]).toContain("not proof of years in a specific role");
+    const ids = createHubInputProcessors().map((item) => item.id);
+    expect(ids.indexOf("hub-seeker-profile")).toBeLessThan(ids.indexOf("hub-job-url-import"));
+  });
+});
 const FORCED_READ_TOOLS = {
   getApplication: {},
   "get-application": {},

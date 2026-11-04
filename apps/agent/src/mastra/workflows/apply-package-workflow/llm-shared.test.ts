@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { RequestContext } from "@mastra/core/di";
+import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
-import { extractStructuredGeneratePayload } from "./llm-shared";
+import { extractStructuredGeneratePayload, raceGenerate } from "./llm-shared";
 
 describe("extractStructuredGeneratePayload", () => {
   it("prefers result.object when present", () => {
@@ -48,5 +50,38 @@ describe("extractStructuredGeneratePayload", () => {
         text: '{"items":[{"experienceId":"e1","rewrittenBullets":["A"]}]} Here is a short note.'
       })
     ).toEqual({ items: [{ experienceId: "e1", rewrittenBullets: ["A"] }] });
+  });
+});
+
+describe("raceGenerate cancellation", () => {
+  it("aborts the underlying request when the deadline expires", async () => {
+    vi.useFakeTimers();
+    try {
+      let signal: AbortSignal | undefined;
+      const agent = {
+        generate: vi.fn((_messages, options) => {
+          signal = options.abortSignal;
+          return new Promise<never>(() => {});
+        })
+      };
+      const pending = raceGenerate(
+        agent,
+        "rewrite",
+        z.object({}),
+        {
+          id: "openai/test",
+          apiKey: "test-token"
+        },
+        new RequestContext(),
+        { maxOutputTokens: 100, timeoutMs: 50, stepLabel: "rewrite" }
+      );
+      const rejected = expect(pending).rejects.toThrow("rewrite timeout 50ms");
+      await vi.advanceTimersByTimeAsync(50);
+      await rejected;
+      expect(signal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
