@@ -3,7 +3,7 @@
 Self-hostable job-apply assistant: discover roles, track applications, draft packages with a hub agent on your keys, and publish evidence on `/{username}`.
 
 [![CI](https://github.com/salahmohsen/devstack/actions/workflows/ci.yml/badge.svg)](https://github.com/salahmohsen/devstack/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm_Noncommercial-blue.svg)](LICENSE)
 
 Live install: **[devstack.salahmohsen.com](https://devstack.salahmohsen.com)** · Apex portfolio: **[salahmohsen.com](https://salahmohsen.com)**
 
@@ -96,4 +96,8 @@ Custom domains for tenants: TXT verify + CNAME to the primary app host. Operator
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+DEVSTACK's original code is source available under the [PolyForm Noncommercial License 1.0.0](./LICENSE). Use, modification, and redistribution are permitted for the purposes covered by that license, including its noncommercial organization provisions. Commercial use outside those permissions requires a separate commercial license from Salah Mohsen. Contact [@salahmohsen](https://github.com/salahmohsen) to discuss commercial licensing.
+
+Third-party code and dependencies retain their original licenses. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for notices for the credited upstream projects.
+
+This change does not revoke permissions for copies previously distributed under MIT. Those copies remain available under their original terms.
