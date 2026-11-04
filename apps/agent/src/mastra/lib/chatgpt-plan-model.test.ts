@@ -212,4 +212,49 @@ describe("createChatgptPlanFetch", () => {
     );
     expect(draft).toEqual({ items: [] });
   });
+
+  it("restores completed output in output-index order rather than arrival order", async () => {
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          sse([
+            ...[1, 0].map((index) => {
+              return {
+                type: "response.output_item.done",
+                output_index: index,
+                item: {
+                  type: "message",
+                  id: `msg_${index}`,
+                  role: "assistant",
+                  content: [{ type: "output_text", text: String(index), annotations: [] }]
+                }
+              };
+            }),
+            {
+              type: "response.completed",
+              response: {
+                id: "resp_1",
+                created_at: 1,
+                model: "gpt-x",
+                output: [],
+                usage: { input_tokens: 1, output_tokens: 2 }
+              }
+            }
+          ]),
+          { status: 200 }
+        )
+    );
+    const model = chatgptPlanLanguageModel({
+      modelId: "chatgpt-plan/gpt-x",
+      accessToken: "test-token"
+    });
+    const result = await model.doGenerate({
+      prompt: [{ role: "user", content: [{ type: "text", text: "hello" }] }]
+    });
+    expect(result.content).toMatchObject([
+      { type: "text", text: "0" },
+      { type: "text", text: "1" }
+    ]);
+  });
 });

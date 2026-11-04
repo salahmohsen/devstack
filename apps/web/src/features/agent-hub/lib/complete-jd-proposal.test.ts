@@ -26,6 +26,32 @@ const input = {
 };
 
 describe("inferJdCardActionFromCrm", () => {
+  it.each([null, undefined])(
+    "keeps an unverified proposal score %s when preview has a heuristic",
+    (matchScore) => {
+      const merged = mergeJdProposalWithListingPreview(
+        { ...input, matchScore },
+        {
+          ok: true,
+          title: "Engineer",
+          companyName: "Acme",
+          location: null,
+          description: "Build React apps",
+          workMode: null,
+          salaryRange: null,
+          employmentType: null,
+          department: null,
+          datePosted: null,
+          experience: null,
+          requiredSkills: [],
+          preferredSkills: [],
+          matchScore: 40
+        }
+      );
+      expect(merged.matchScore).toBeNull();
+      expect(createInputFromJdProposal(merged).matchScore).toBeNull();
+    }
+  );
   it("recovers dismiss from a matching dismissed listing", () => {
     expect(
       inferJdCardActionFromCrm(input, {

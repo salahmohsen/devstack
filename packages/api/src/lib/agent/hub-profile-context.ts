@@ -15,7 +15,7 @@ export async function loadHubProfileContext(userId: string): Promise<string> {
     asOf: new Date().toISOString().slice(0, 10),
     experienceYears: mergeExperienceYears(experiences),
     totals: { experiences: experiences.length, projects: projects.length, skills: stacks.length },
-    experiences: experiences.slice(0, 20).map((row) => {
+    experiences: experiences.map((row) => {
       return {
         title: row.title,
         organization: row.organization,
@@ -35,4 +35,12 @@ export async function loadHubProfileContext(userId: string): Promise<string> {
     skills: stacks.slice(0, 100).map((row) => row.name),
     preferences
   });
+}
+
+export async function loadOptionalHubProfileContext(userId: string): Promise<string | undefined> {
+  try {
+    return await loadHubProfileContext(userId);
+  } catch {
+    return undefined;
+  }
 }

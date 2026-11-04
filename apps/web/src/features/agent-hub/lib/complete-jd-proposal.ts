@@ -223,7 +223,7 @@ export function mergeJdProposalWithListingPreview(
 
   const inputScore = typeof input.matchScore === "number" ? input.matchScore : null;
   const heuristic = typeof preview?.matchScore === "number" ? preview.matchScore : null;
-  const rawScore = heuristic ?? inputScore;
+  const rawScore = inputScore === null ? null : (heuristic ?? inputScore);
   const matchScore =
     typeof rawScore === "number" && Number.isFinite(rawScore)
       ? Math.min(100, Math.max(0, Math.round(rawScore)))

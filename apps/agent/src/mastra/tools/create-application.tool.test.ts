@@ -50,9 +50,10 @@ describe("createApplicationTool URL saves", () => {
       );
       expect(result).toEqual({ ok: true, applicationId: "app-1", created });
       expect(createIfAbsentByUrl).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: "session-user" })
+        expect.objectContaining({ userId: "session-user" }),
+        expect.objectContaining({ kind: "discovered", actorUserId: "session-user" })
       );
-      expect(append).toHaveBeenCalledTimes(created ? 1 : 0);
+      expect(append).not.toHaveBeenCalled();
     }
   );
 
@@ -72,6 +73,15 @@ describe("createApplicationTool URL saves", () => {
     );
     expect(result).toEqual({ ok: true, applicationId: "app-1", created: false });
     expect(setTrackingStatus).toHaveBeenCalledWith("app-1", "session-user", "tracked");
+    expect(update).toHaveBeenCalledWith(
+      "app-1",
+      "session-user",
+      expect.objectContaining({
+        title: "Frontend Engineer",
+        companyName: "Acme",
+        description: "React frontend role"
+      })
+    );
     expect(append).toHaveBeenCalledWith(
       expect.objectContaining({ kind: "promoted", userId: "session-user" })
     );

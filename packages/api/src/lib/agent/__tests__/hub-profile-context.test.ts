@@ -19,7 +19,10 @@ vi.mock("#@/lib/application/load-job-preference", () => {
   return { loadJobPreference: preferences };
 });
 
-import { loadHubProfileContext } from "#@/lib/agent/hub-profile-context";
+import {
+  loadHubProfileContext,
+  loadOptionalHubProfileContext
+} from "#@/lib/agent/hub-profile-context";
 
 describe("loadHubProfileContext", () => {
   beforeEach(() => {
@@ -66,4 +69,33 @@ describe("loadHubProfileContext", () => {
     expect(profile.experienceYears).toBeNull();
     expect(profile.totals).toEqual({ experiences: 0, projects: 0, skills: 0 });
   });
+
+  it("includes relevant career evidence beyond the first 20 experiences", async () => {
+    experiences.mockResolvedValue(
+      Array.from({ length: 21 }, (_, i) => {
+        return {
+          title: i === 20 ? "Frontend Team Lead" : `Engineer ${i}`,
+          organization: "Acme",
+          description: "Led frontend delivery",
+          fromDate: "2019-01-01",
+          toDate: "2024-01-01",
+          isPresent: false
+        };
+      })
+    );
+    const profile = JSON.parse(await loadHubProfileContext("session-user"));
+    expect(profile.experiences).toHaveLength(21);
+    expect(profile.experiences[20].title).toBe("Frontend Team Lead");
+    expect(profile.totals.experiences).toBe(21);
+  });
+
+  it.each(["experiences", "projects", "stacks", "preferences"] as const)(
+    "allows chat to continue when %s cannot load",
+    async (name) => {
+      ({ experiences, projects, stacks, preferences })[name].mockRejectedValueOnce(
+        new Error("read unavailable")
+      );
+      await expect(loadOptionalHubProfileContext("session-user")).resolves.toBeUndefined();
+    }
+  );
 });
