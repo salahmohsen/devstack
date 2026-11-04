@@ -142,7 +142,7 @@ export async function searchFreehireJobs(
     try {
       body = JSON.parse(bodyText);
     } catch (error) {
-      throw new FreehireError("Job source returned an invalid response.", false, 0, {
+      throw new FreehireError("Job source returned an invalid response.", true, 0, {
         cause: error
       });
     }

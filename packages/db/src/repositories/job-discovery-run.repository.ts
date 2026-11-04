@@ -91,6 +91,19 @@ export const jobDiscoveryRunRepository = {
       .limit(1);
     return row?.scheduledAt ?? null;
   },
+  async requestBackfill(userId: string, runId: string) {
+    const [row] = await getDb()
+      .update(run)
+      .set({
+        landRevision: sql`${run.landRevision} + 1`,
+        landFinished: false,
+        stage: "queued",
+        updatedAt: new Date()
+      })
+      .where(and(scope(userId, runId), active))
+      .returning();
+    return row ?? null;
+  },
   async update(
     userId: string,
     runId: string,
@@ -106,7 +119,8 @@ export const jobDiscoveryRunRepository = {
         | "retryAt"
         | "scheduledAt"
       >
-    >
+    >,
+    landRevision?: number
   ) {
     await getDb()
       .update(run)
@@ -115,7 +129,13 @@ export const jobDiscoveryRunRepository = {
         ...(patch.stage === "completed" || patch.stage === "failed" ? { retryAt: null } : {}),
         updatedAt: new Date()
       })
-      .where(and(scope(userId, runId), active));
+      .where(
+        and(
+          scope(userId, runId),
+          active,
+          landRevision === undefined ? undefined : eq(run.landRevision, landRevision)
+        )
+      );
   },
   async reserveCandidate(userId: string, runId: string, jobId: string) {
     const [row] = await getDb()

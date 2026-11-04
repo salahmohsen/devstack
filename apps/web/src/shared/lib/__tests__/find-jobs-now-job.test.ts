@@ -131,6 +131,28 @@ describe("discovery tracking lifecycle", () => {
       expect.objectContaining({ resultTitle: "Search status unavailable" })
     );
   });
+  it("ends a status read that never settles at its request deadline", async () => {
+    mocks.status.mockReturnValue(new Promise(() => undefined));
+    const pending = startFindJobsNow(client);
+    await vi.advanceTimersByTimeAsync(15_000);
+    await pending;
+    expect(mocks.status).toHaveBeenCalledTimes(1);
+    expect(getFindJobsNowState()).toMatchObject({
+      status: "ready",
+      error: expect.stringContaining("Live status could not be read")
+    });
+  });
+  it("preserves the still-running message after the overall tracking limit", async () => {
+    mocks.status.mockResolvedValue({ run: { ...run, stage: "scoring", added: 0 } });
+    const pending = startFindJobsNow(client);
+    await vi.advanceTimersByTimeAsync(20 * 60_000 + 3_000);
+    await pending;
+    expect(getFindJobsNowState().error).toContain("Search is still running");
+    expect(mocks.complete).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ resultTitle: "Search is still running" })
+    );
+  });
   it("does not retry an invalid session", async () => {
     mocks.status.mockRejectedValue(Object.assign(new Error("signed out"), { status: 401 }));
     await startFindJobsNow(client);

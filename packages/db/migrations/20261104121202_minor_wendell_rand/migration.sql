@@ -1,0 +1,1 @@
+ALTER TABLE "job_discovery_run" ADD COLUMN "land_revision" integer DEFAULT 0 NOT NULL;

@@ -48,6 +48,7 @@ export const jobDiscoveryRouter = {
         jobDiscoveryRunRepository.nextScheduled(userId)
       ]);
       return {
+        userId,
         run: run ? toDiscoveryRun(run) : null,
         lastSuccessfulAt: lastSuccessfulAt?.toISOString() ?? null,
         nextScheduledAt: nextScheduledAt?.toISOString() ?? null

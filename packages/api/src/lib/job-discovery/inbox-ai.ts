@@ -37,6 +37,7 @@ import {
   type UserJobEntity
 } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { createLogger } from "@tsu-stack/logger/server";
 
 import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/generate-agent-take";
 import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
@@ -523,6 +524,20 @@ async function runInboxAiForApplication(input: {
   return { outcome: decision === "heuristic" ? "heuristic" : "passed" };
 }
 
+export async function recordDiscoveryScoringWarning(
+  userId: string,
+  runId: string,
+  warning: string
+) {
+  try {
+    await jobDiscoveryRunRepository.addWarning(userId, runId, warning);
+  } catch (error) {
+    const log = createLogger({ operation: "api__discovery_scoring_warning" });
+    log.error(error instanceof Error ? error : new Error(String(error)), { userId, runId });
+    log.emit({ _forceKeep: true });
+  }
+}
+
 /** Discovery evaluate-then-insert: score the user_job snapshot → insert inbox or dismissed. */
 async function runInboxAiForJob(input: {
   userId: string;
@@ -663,7 +678,7 @@ async function runInboxAiForJob(input: {
       poolSize: DISCOVERY_FETCH_POOL_SIZE
     });
     if (row) {
-      await jobDiscoveryRunRepository.addWarning(
+      await recordDiscoveryScoringWarning(
         input.userId,
         input.runId,
         hasAiKey ? DISCOVERY_AI_FALLBACK_NOTE : DISCOVERY_NO_AI_NOTE
@@ -771,11 +786,7 @@ async function runInboxAiForJob(input: {
     agentTake: plan.insert.agentTake
   });
   if (row && keep === "heuristic") {
-    await jobDiscoveryRunRepository.addWarning(
-      input.userId,
-      input.runId,
-      DISCOVERY_AI_FALLBACK_NOTE
-    );
+    await recordDiscoveryScoringWarning(input.userId, input.runId, DISCOVERY_AI_FALLBACK_NOTE);
   }
   return { outcome: row ? plan.outcome : "skipped" };
 }

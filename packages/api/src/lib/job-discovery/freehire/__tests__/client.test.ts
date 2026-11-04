@@ -296,3 +296,14 @@ describe("searchFreehireCities", () => {
     expect(fetchMock).toHaveBeenCalledTimes(502);
   });
 });
+
+it("retries malformed JSON but treats a valid JSON schema mismatch as permanent", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>gateway splash</html>")));
+  await expect(searchFreehireJobs(new URLSearchParams())).rejects.toMatchObject({
+    retryable: true
+  });
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ unexpected: true })));
+  await expect(searchFreehireJobs(new URLSearchParams())).rejects.toMatchObject({
+    retryable: false
+  });
+});

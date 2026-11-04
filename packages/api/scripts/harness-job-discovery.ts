@@ -176,6 +176,15 @@ try {
             listingUrl: "https://example.com/jobs/stale-unseen-fixture"
           }
         ]);
+        const addWarning = runs.addWarning;
+        let warningFailures = 0;
+        runs.addWarning = async (...args: Parameters<typeof runs.addWarning>) => {
+          if (args[1] === `${runId}_hybrid` && warningFailures === 0) {
+            warningFailures += 1;
+            throw new Error("fixture warning write failed after insertion");
+          }
+          await addWarning.apply(runs, args);
+        };
         for (const nextMode of ["permanent", "hybrid", "empty"] as const) {
           mode = nextMode;
           const before: number = requests;
@@ -215,6 +224,66 @@ try {
             await wait(100);
           }
           assert(settled, `${nextMode} run reaches terminal state`);
+        }
+        runs.addWarning = addWarning;
+        assert.equal(
+          warningFailures,
+          1,
+          "warning storage failure does not retry an inserted keeper into skipped"
+        );
+        const backfillRaceId = `${runId}_late_backfill`;
+        const updateRun = runs.update;
+        let injectedBackfill = false;
+        let raceFinished = false;
+        runs.update = async (...args: Parameters<typeof runs.update>) => {
+          await updateRun.apply(runs, args);
+          if (args[1] !== backfillRaceId || !args[2].landFinished || injectedBackfill) return;
+          injectedBackfill = true;
+          const currentRun = await runs.find(userId, backfillRaceId);
+          assert(currentRun?.queryHash);
+          await staging.upsertMany(userId, [
+            {
+              ...prior,
+              id: crypto.randomUUID(),
+              freehireSlug: "late-backfill-fixture",
+              listingUrl: "https://example.com/jobs/late-backfill-fixture",
+              queryHash: currentRun.queryHash
+            }
+          ]);
+          await requestJobDiscoveryLand({ userId, runId: backfillRaceId, trigger: "backfill" });
+          await requestJobDiscoveryLand({ userId, runId: backfillRaceId, trigger: "backfill" });
+        };
+        try {
+          mode = "empty";
+          const beforeRequests = requests;
+          await requestJobDiscoveryLand({ userId, runId: backfillRaceId, trigger: "find_now" });
+          for (let n = 0; n < 150; n += 1) {
+            const row = await runs.find(userId, backfillRaceId);
+            if (row?.stage === "completed") {
+              assert(injectedBackfill, "backfill raced after the original pass wrote landFinished");
+              assert.equal(row.landRevision, 2, "each request reserves a distinct pass revision");
+              assert.equal(
+                Object.values(row.candidates).filter((value) => value === "heuristic").length,
+                1,
+                "follow-up pass fills the late seat instead of coalescing into the finished pass"
+              );
+              assert.equal(
+                requests - beforeRequests,
+                1,
+                "backfill uses the saved snapshot without another provider fetch"
+              );
+              raceFinished = true;
+              break;
+            }
+            if (row?.stage === "failed") throw new Error(row.reason ?? "backfill failed");
+            await wait(100);
+          }
+          assert(raceFinished, "racing backfills finish instead of leaving scoring stuck");
+          console.log(
+            "PASS: late backfill fills a seat, superseded passes skip, and landFinished race settles with one source fetch"
+          );
+        } finally {
+          runs.update = updateRun;
         }
         const failedCandidateRun = `${runId}_screening_failure`;
         await runs.claim(userId, failedCandidateRun, new Date());

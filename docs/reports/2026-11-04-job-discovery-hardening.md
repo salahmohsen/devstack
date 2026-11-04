@@ -103,3 +103,19 @@ After rollout, trigger one search for the affected account and confirm a real te
 - React Doctor 0.9.22 reported 92/100 and one locale-formatting warning on the already-reviewed status date rendering. This warning remains deferred because no SSR-prefetch path was found. The score is not directly comparable with the earlier scanner version.
 
 The full worker loop and asynchronous tests are substitutes for the current behavior checks. They do not establish interactive browser or deployed production verification.
+
+## Second PR review follow-up
+
+All six new findings are addressed. Status responses carry the authenticated userId, and the browser rejects a response for a different account before caching it. Each detached status request has a 15-second deadline, including a race guard for an unresponsive transport. The 20-minute tracking limit retains its still-running message instead of becoming a read-error message. Invalid JSON source responses are retryable; valid JSON with an incompatible schema remains permanent. A failed scoring-warning write is nonfatal after insertion, so the candidate keeps its inserted outcome rather than retrying into skipped.
+
+Backfill uses a persisted land_revision and a distinct queue ID for each requested pass. An old pass cannot write landFinished for a newer revision. Superseded queued passes skip work, and the latest pass reuses the saved snapshot. This adds migration 20261104121202_minor_wendell_rand with one non-null integer column defaulting to zero. Apply it before the new server starts and retain the stop-first worker requirement above.
+
+The real worker harness forces two backfills after the original pass writes landFinished. It confirms that a later available candidate is inserted, the run completes rather than remaining in scoring, and only one provider fetch occurs. Focused tests also cover mismatched response ownership, a request that never settles, the overall tracking limit, warning-storage failure, and malformed JSON versus schema mismatch. Interactive browser and deployed production verification remain outstanding.
+
+### Second follow-up validation
+
+- API discovery suite passed with 73 tests, core discovery and salary with 139, and web tracker/status/account-cache/hub helpers with 17. Total: 229 focused tests.
+- The real local worker harness passed the forced backfill completion race and a warning-write failure after insertion. The inserted candidate remains counted; superseded backfill revisions converge without another provider fetch.
+- Server and web production builds passed. Web TypeScript passed. API, database, server and changed-web checks passed. The full workspace fix found one new test-style error and existing warnings; the test-style error was corrected and the affected check passed. The full workspace command was not repeated.
+- React Doctor remained 92/100 with the same locale-formatting warning. No new diagnosis was added.
+- Migration 20261104121202_minor_wendell_rand was generated, inspected and applied against guarded local PostgreSQL. Production is unchanged.

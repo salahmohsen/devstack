@@ -26,6 +26,7 @@ export const jobDiscoveryRun = pgTable(
     queryHash: text("query_hash"),
     candidates: jsonb("candidates").$type<Record<string, string>>().notNull().default({}),
     warnings: jsonb("warnings").$type<string[]>().notNull().default([]),
+    landRevision: integer("land_revision").notNull().default(0),
     landFinished: boolean("land_finished").notNull().default(false),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull().defaultNow(),
     retryAt: timestamp("retry_at", { withTimezone: true }),

@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import { jobDiscoveryRunRepository } from "@tsu-stack/db";
 
 import {
+  recordDiscoveryScoringWarning,
   decideEvaluateOutcome,
   decideInboxAiKeep,
   shouldInsertAfterCapRecheck
@@ -105,4 +108,17 @@ describe("shouldInsertAfterCapRecheck", () => {
       })
     ).toBe(true);
   });
+});
+
+it("does not retry a successfully inserted candidate when its warning write fails", async () => {
+  const write = vi
+    .spyOn(jobDiscoveryRunRepository, "addWarning")
+    .mockRejectedValueOnce(new Error("warning storage unavailable"));
+  try {
+    await expect(
+      recordDiscoveryScoringWarning("fixture-user", "fixture-run", "fallback")
+    ).resolves.toBeUndefined();
+  } finally {
+    write.mockRestore();
+  }
 });

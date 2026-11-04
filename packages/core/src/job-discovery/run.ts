@@ -36,6 +36,7 @@ export const DiscoveryRunSchema = z.object({
 export type DiscoveryRun = z.infer<typeof DiscoveryRunSchema>;
 export const DiscoveryStatusInputSchema = z.object({ runId: z.string().min(1).optional() });
 export const DiscoveryStatusOutputSchema = z.object({
+  userId: z.string(),
   run: DiscoveryRunSchema.nullable(),
   lastSuccessfulAt: z.string().datetime().nullable(),
   nextScheduledAt: z.string().datetime().nullable()

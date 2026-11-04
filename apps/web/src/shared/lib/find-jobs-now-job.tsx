@@ -70,13 +70,44 @@ function isTransientStatusError(error: unknown) {
   return !["UNAUTHORIZED", "FORBIDDEN", "BAD_REQUEST", "NOT_FOUND"].includes(String(code));
 }
 
+class DiscoveryTrackingLimit extends Error {
+  constructor() {
+    super("Search is still running. You can check its live status under New jobs.");
+  }
+}
+
 async function readDiscoveryStatus(runId: string, signal: AbortSignal) {
   for (let attempt = 0; ; attempt += 1) {
+    const deadline = new AbortController();
+    const timer = window.setTimeout(
+      () => deadline.abort(new DOMException("Status request timed out.", "TimeoutError")),
+      15_000
+    );
+    const requestSignal = AbortSignal.any([signal, deadline.signal]);
+    let onAbort: () => void = () => undefined;
     try {
-      return await orpcClient.jobDiscovery.status({ runId }, { signal });
+      if (requestSignal.aborted) throw requestSignal.reason;
+      const canceled = new Promise<never>((_, reject) => {
+        onAbort = () => reject(requestSignal.reason);
+        requestSignal.addEventListener("abort", onAbort, { once: true });
+      });
+      return await Promise.race([
+        orpcClient.jobDiscovery.status({ runId }, { signal: requestSignal }),
+        canceled
+      ]);
     } catch (error) {
-      if (signal.aborted || attempt >= 3 || !isTransientStatusError(error)) throw error;
+      if (
+        signal.aborted ||
+        deadline.signal.aborted ||
+        attempt >= 3 ||
+        !isTransientStatusError(error)
+      ) {
+        throw error;
+      }
       await sleep(1_000 * 2 ** attempt, signal);
+    } finally {
+      window.clearTimeout(timer);
+      requestSignal.removeEventListener("abort", onAbort);
     }
   }
 }
@@ -320,16 +351,28 @@ async function runFindJobsNow(
         (error: unknown) => {
           if (!isCurrent(generation, signal) || isAbortError(error)) return;
           const message =
-            "Live status could not be read. The search may still be running. Check New jobs to reconnect.";
+            error instanceof DiscoveryTrackingLimit
+              ? error.message
+              : "Live status could not be read. The search may still be running. Check New jobs to reconnect.";
           setFindJobsNowState({ status: "ready", stepLabel: null, error: message });
           if (showToast) {
             completeAiJobIsland(FIND_TOAST_ID, {
               status: "error",
-              resultTitle: "Search status unavailable",
+              resultTitle:
+                error instanceof DiscoveryTrackingLimit
+                  ? "Search is still running"
+                  : "Search status unavailable",
               errorMessage: message,
               requiresAction: false
             });
-          } else toast.message("Search status unavailable", { description: message });
+          } else {
+            toast.message(
+              error instanceof DiscoveryTrackingLimit
+                ? "Search is still running"
+                : "Search status unavailable",
+              { description: message }
+            );
+          }
         }
       );
 
@@ -456,7 +499,7 @@ async function pollFindJobsNow(input: {
       return;
     }
     if (Date.now() - started > 20 * 60_000) {
-      throw new Error("Search is still running. You can check its live status under New jobs.");
+      throw new DiscoveryTrackingLimit();
     }
     await sleep(3_000, signal);
   }

@@ -190,19 +190,25 @@ export async function requestJobDiscoveryLand(
   if (claimed.run.stage === "completed" || claimed.run.stage === "failed") {
     return { enqueued: false, runId };
   }
-  if (runId !== input.runId && claimed.run.stage !== "queued") {
+  if (input.trigger !== "backfill" && runId !== input.runId && claimed.run.stage !== "queued") {
     return { enqueued: true, runId };
   }
+  const requested =
+    input.trigger === "backfill"
+      ? await jobDiscoveryRunRepository.requestBackfill(input.userId, runId)
+      : claimed.run;
+  if (!requested) return { enqueued: false, runId };
+  const landRevision = requested.landRevision;
   const delayMs =
-    input.trigger === "find_now" ? 0 : Math.max(0, claimed.run.scheduledAt.getTime() - Date.now());
+    input.trigger === "find_now" || input.trigger === "backfill"
+      ? 0
+      : Math.max(0, claimed.run.scheduledAt.getTime() - Date.now());
   const data = JobDiscoveryLandPayloadSchema.parse({
     ...input,
     runId,
+    landRevision,
     enqueuedAt: new Date().toISOString()
   });
-  if (input.trigger === "backfill") {
-    await jobDiscoveryRunRepository.update(input.userId, runId, { landFinished: false });
-  }
   const enqueued = await requestWithHook({
     hookKey: LAND_HOOK_KEY,
     queueKey: LAND_QUEUE_KEY,
@@ -212,7 +218,7 @@ export async function requestJobDiscoveryLand(
     operation: "api__job_discovery_land_enqueue",
     event: "job_discovery_land_enqueued",
     extra: { userId: data.userId, runId: data.runId, trigger: data.trigger },
-    jobId: landJobId(data.userId, data.runId),
+    jobId: landJobId(data.userId, data.runId, landRevision),
     delayMs,
     removeOnComplete: true,
     removeOnFail: true
@@ -225,7 +231,7 @@ export async function requestJobDiscoveryLand(
   }
   if (enqueued && input.trigger === "find_now" && claimed.run.stage === "queued") {
     const queue = getProducerQueue(LAND_QUEUE_KEY, JOB_DISCOVERY_LAND_QUEUE_NAME);
-    const existing = await queue?.getJob(landJobId(input.userId, runId));
+    const existing = await queue?.getJob(landJobId(input.userId, runId, landRevision));
     if (existing && (await existing.getState()) === "delayed") await existing.changeDelay(0);
     await jobDiscoveryRunRepository.update(input.userId, runId, { scheduledAt: new Date() });
   }

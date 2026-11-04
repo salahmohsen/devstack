@@ -17,6 +17,15 @@
 
 ---
 
+## 2026-11-04 — Follow-up work needs its own completion boundary
+
+- **Trigger:** Review found a backfill coalescing into an already active landing pass.
+- **Finding:** A shared finished boolean cannot represent newer work arriving during completion. Persist a revision, give follow-up work a distinct queue ID, and condition completion on the revision the worker owns. Superseded queued passes can skip provider and screening work.
+- **Finding:** Account-scoped cache keys need response ownership checks when authentication lives in a cookie shared across tabs.
+- **Finding:** An overall polling limit does not bound a pending request. Bound each request and preserve the distinction between a read timeout and a long-running server job.
+- **Finding:** Metadata failure after a successful write must not turn its retry into a rejected candidate. Keep warnings nonfatal or recover the original persisted outcome.
+- **Evidence class:** Forced completion/backfill race using actual local workers and services, controlled polling deadlines, response-cache rejection tests, and production builds. No production deployment or browser claim.
+
 ## 2026-11-04 — Discovery review recovery and account boundaries
 
 - **Trigger:** Review of persisted discovery tracking and queue retry behavior.

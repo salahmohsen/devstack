@@ -10,9 +10,9 @@ export const JOB_DISCOVERY_LAND_JOB_NAME = "discovery-land";
 export const JOB_INBOX_AI_JOB_NAME = "inbox-ai";
 export const JOB_INBOX_TICK_JOB_NAME = "inbox-tick";
 
-/** Coalesce cron / findNow / backfill while waiting or active. */
-export function landJobId(userId: string, runId: string): string {
-  return `land_${userId}_${runId}`;
+/** Initial requests coalesce; follow-up revisions have distinct queue jobs. */
+export function landJobId(userId: string, runId: string, revision = 0): string {
+  return `land_${userId}_${runId}${revision > 0 ? `_pass_${revision}` : ""}`;
 }
 
 /** One AI pass per application while waiting or active (harvest / manual). */
@@ -48,6 +48,7 @@ export const JobDiscoveryLandPayloadSchema = z.object({
   userId: z.string().min(1),
   runId: z.string().min(1),
   trigger: z.enum(["cron", "find_now", "backfill"]),
+  landRevision: z.number().int().nonnegative().optional(),
   enqueuedAt: z.string().datetime().optional()
 });
 export const JobInboxAiPayloadSchema = z

@@ -16,9 +16,8 @@ import { createLogger } from "@tsu-stack/logger/server";
 /**
  * Per-user discovery land.
  *
- * jobId `land_${userId}_${runId}` coalesces cron / findNow / backfill while
- * waiting or active. removeOnComplete/Fail so the same runId can be re-enqueued
- * after AI dismiss (do not keep harvest-style completed ids).
+ * Initial requests coalesce by account and run. Backfill revisions use distinct
+ * job IDs so an active pass cannot swallow newly requested work.
  */
 
 const STORE_KEY = "__tsu_stack_job_discovery_land_server_store__";
@@ -69,17 +68,32 @@ export function startJobDiscoveryLandQueue(redisUrl: string): void {
           if (!(await jobDiscoveryRunRepository.find(userId, runId))) {
             await jobDiscoveryRunRepository.claim(userId, runId, new Date());
           }
+          const run = await jobDiscoveryRunRepository.find(userId, runId);
+          const revision = parsed.data.landRevision ?? 0;
+          if (
+            !run ||
+            run.stage === "completed" ||
+            run.stage === "failed" ||
+            run.landRevision !== revision
+          ) {
+            return { landed: 0, reason: "ok" as const };
+          }
           const result = await runDiscoveryLand({ userId, runId });
-          await jobDiscoveryRunRepository.update(userId, runId, {
-            stage: discoveryBlockedReason(result.reason) ? "failed" : "scoring",
-            landFinished: true,
-            reason:
-              result.reason === "ok"
-                ? null
-                : result.reason === "empty_shelf"
-                  ? "No unseen listings passed your saved preferences."
-                  : result.reason
-          });
+          await jobDiscoveryRunRepository.update(
+            userId,
+            runId,
+            {
+              stage: discoveryBlockedReason(result.reason) ? "failed" : "scoring",
+              landFinished: true,
+              reason:
+                result.reason === "ok"
+                  ? null
+                  : result.reason === "empty_shelf"
+                    ? "No unseen listings passed your saved preferences."
+                    : result.reason
+            },
+            revision
+          );
           await jobDiscoveryRunRepository.settle(userId, runId);
           return result;
         } catch (error) {
@@ -132,7 +146,7 @@ export function startJobDiscoveryLandQueue(redisUrl: string): void {
   boot.emit();
 }
 
-/** Drop a leftover completed/failed id so backfill can reuse `land_${userId}_${runId}`. */
+/** Remove completed IDs when recovering a previously enqueued pass. */
 async function coalesceOrRemoveFinishedLandJob(
   queue: Queue<JobDiscoveryLandPayload>,
   jobId: string
@@ -160,7 +174,7 @@ export async function enqueueJobDiscoveryLand(
     ...payload,
     enqueuedAt: payload.enqueuedAt ?? new Date().toISOString()
   };
-  const jobId = landJobId(data.userId, data.runId);
+  const jobId = landJobId(data.userId, data.runId, data.landRevision);
 
   try {
     const gate = await coalesceOrRemoveFinishedLandJob(s.queue, jobId);
