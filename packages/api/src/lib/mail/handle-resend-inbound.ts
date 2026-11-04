@@ -147,16 +147,15 @@ export async function handleResendInboundWebhook(input: {
 
   const purpose = isProductNotificationFrom(from.email) ? "system_notification" : "career";
 
-  let bodyText = "";
-  let bodyHtml: string | null = null;
-
   const content = await fetchReceivedEmailContent({ apiKey, emailId });
-  if (content) {
-    bodyText = content.text?.trim() ?? "";
-    bodyHtml = content.html ?? null;
-    if (!bodyText && bodyHtml) {
-      bodyText = stripHtml(bodyHtml);
-    }
+  if (!content) {
+    return { status: 503, reason: "email_content_unavailable" };
+  }
+
+  let bodyText = content.text?.trim() ?? "";
+  const bodyHtml = content.html ?? null;
+  if (!bodyText && bodyHtml) {
+    bodyText = stripHtml(bodyHtml);
   }
 
   const subject = data?.subject?.trim() ?? "";

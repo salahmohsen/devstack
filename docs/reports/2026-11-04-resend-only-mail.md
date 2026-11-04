@@ -29,3 +29,11 @@ Settings and onboarding share the existing Resend configuration component and te
 ## Lesson
 
 Added “Provider removal includes every delivery fallback” to the AI feature harness lessons.
+
+## PR review follow-up
+
+- Reproduced missing Resend setup during loading/error and the enabled sole-login disconnect using a controlled server render of the actual connection component. The same render harness now passes all four states (loading, error, sole login, alternative login); dependencies and UI primitives are stubbed, so browser interaction remains unverified.
+- Added a shared `canDisconnect` field computed from the authenticated user's account count. Google and GitHub controls now disable sole-login removal and explain why; the API's final-account guard remains authoritative.
+- Reproduced inbound content-fetch failure returning 200 before the fix. Added two API regression tests: unavailable content returns 503 without persistence and a later retry saves its body; a successfully fetched email with legitimately empty content remains accepted. Both tests pass.
+- Corrected the README's obsolete multi-board discovery copy after verifying the single Freehire implementation.
+- Re-ran the 24 controlled mail checks and focused format/lint/type checks: passed. Server and web production builds passed again. React Doctor reported no new issues; the UI detector returned no findings.

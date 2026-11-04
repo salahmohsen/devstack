@@ -22,6 +22,7 @@
 - **Trigger:** Remove Gmail and require tenant-owned Resend for career mail.
 - **Finding:** Deleting a provider card leaves queues, push endpoints, MCP methods, and persisted cursors active unless every ingress path is removed. Keep historical source tags when existing messages still need to deserialize.
 - **Finding:** Verify both API and agent senders with platform credentials present and tenant credentials absent. Missing tenant keys or sender addresses must prevent delivery; inbound must also reject missing tenant credentials before storing a bodyless message.
+- **Finding:** Independent provider setup must render through sibling query loading/errors. Content-fetch failures must remain retryable before writing an ingress idempotency key, while valid empty messages remain accepted. Disconnect eligibility should share the API’s account-count rule and keep the server guard.
 - **Evidence class:** Controlled execution of actual API/agent send helpers and inbound handler, real webhook HMAC verification, local migration transaction rolled back, production builds, and package checks. Browser interaction and live Resend delivery remain separate checks.
 
 ## 2026-11-04 — Preserve streamed output and supply profile evidence before tool locks

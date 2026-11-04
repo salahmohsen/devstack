@@ -4,6 +4,7 @@ export const ProviderConnectionStatusSchema = z.object({
   providerId: z.enum(["google", "github"]),
   /** Provider is linked on the Better Auth account table. */
   connected: z.boolean(),
+  canDisconnect: z.boolean(),
   /** OAuth account id (provider subject) when connected. */
   accountId: z.string().nullable(),
   /** Raw scope string from the account row (space-separated). */

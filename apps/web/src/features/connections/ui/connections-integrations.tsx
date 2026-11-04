@@ -169,19 +169,25 @@ export function ConnectionsIntegrations({
 
   if (query.isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Spinner className="size-4" />
-        Loading integrations…
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground md:col-span-2">
+          <Spinner className="size-4" />
+          Loading integrations…
+        </div>
+        {extra}
       </div>
     );
   }
 
   if (query.isError || !query.data) {
     return (
-      <Alert variant="error">
-        <AlertTitle>Failed to load</AlertTitle>
-        <AlertDescription>Refresh the page or try again later.</AlertDescription>
-      </Alert>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Alert variant="error" className="md:col-span-2">
+          <AlertTitle>Failed to load</AlertTitle>
+          <AlertDescription>Refresh the page or try again later.</AlertDescription>
+        </Alert>
+        {extra}
+      </div>
     );
   }
 
@@ -204,14 +210,18 @@ export function ConnectionsIntegrations({
     googleState === "unavailable"
       ? "Google sign-in is not configured on the server."
       : googleStatus.connected
-        ? "Google is linked for sign-in."
+        ? googleStatus.canDisconnect
+          ? "Google is linked for sign-in."
+          : "Google is your only sign-in method. Add another before disconnecting."
         : "Connect Google to sign in with your Google account.";
 
   const githubDescription =
     githubState === "unavailable"
       ? "GitHub OAuth is not configured on the server."
       : githubState === "connected"
-        ? "OAuth granted. Portfolio, private repos, and stack detect use this connection."
+        ? githubStatus.canDisconnect
+          ? "OAuth granted. Portfolio, private repos, and stack detect use this connection."
+          : "GitHub is your only sign-in method. Add another before disconnecting."
         : "Not linked. Connect to use portfolio GitHub features and private repo detect.";
 
   const githubAccess = formatGithubAccessSummary(githubStatus.scope);
@@ -262,7 +272,7 @@ export function ConnectionsIntegrations({
         idleVariant="destructive-outline"
         state={unlinkGoogleState}
         label={unlinkGoogleState === "pending" ? "Disconnecting…" : "Disconnect"}
-        disabled={busy === "unlink-google"}
+        disabled={busy === "unlink-google" || !googleStatus.canDisconnect}
         onClick={() => setDisconnectTarget("google")}
       />
     );
@@ -311,7 +321,7 @@ export function ConnectionsIntegrations({
           idleVariant="destructive-outline"
           state={unlinkGithubState}
           label={unlinkGithubState === "pending" ? "Disconnecting…" : "Disconnect"}
-          disabled={busy === "unlink-github"}
+          disabled={busy === "unlink-github" || !githubStatus.canDisconnect}
           onClick={() => setDisconnectTarget("github")}
         />
       </>

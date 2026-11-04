@@ -9,7 +9,7 @@ Live install: **[devstack.salahmohsen.com](https://devstack.salahmohsen.com)** �
 
 ## About
 
-DEVSTACK closes the apply loop on infrastructure you control. Adapters fill **New jobs** from public boards; you promote roles into a tracked CRM; Career Inbox (optional BYO Resend) can move stages; a Mastra hub agent drafts apply packages with human review; opted-in evidence shows on your public profile or a verified custom domain.
+DEVSTACK closes the apply loop on infrastructure you control. Freehire fills **New jobs**; you promote roles into a tracked CRM; Career Inbox (optional BYO Resend) can move stages; a Mastra hub agent drafts apply packages with human review; opted-in evidence shows on your public profile or a verified custom domain.
 
 BYO AI and optional BYO Resend mean there is no platform model or mail budget. Missing keys degrade AI steps; CRUD still works.
 
@@ -17,7 +17,7 @@ Built on [tsu-stack](https://github.com/tsu-moe/tsu-stack). Parts of the GitHub 
 
 ## Features
 
-- **New jobs** — adapters for Freehire, Himalayas, Arbeitnow, Remotive, RemoteOK; rank against prefs; optional BYO AI scoring
+- **New jobs** — Freehire source; rank against prefs; optional BYO AI scoring
 - **Tracked jobs** — CRM board through offer; Career Inbox can classify hiring mail and move stages with undo
 - **Hub agent** — Mastra chat on sealed per-tenant provider keys; HITL for hard writes
 - **Apply packages** — resume, cover letter, outreach with review gates

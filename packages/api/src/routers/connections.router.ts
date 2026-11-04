@@ -22,10 +22,11 @@ export const connectionsRouter = {
     .output(ConnectionsStatusOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
-      const [google, github, githubConfig] = await Promise.all([
+      const [google, github, githubConfig, accountCount] = await Promise.all([
         betterAuthAccountRepository.findGoogleAccountForUser(userId),
         betterAuthAccountRepository.findGitHubAccountForUser(userId),
-        githubConfigRepository.findByUserId(userId)
+        githubConfigRepository.findByUserId(userId),
+        betterAuthAccountRepository.countAccountsForUser(userId)
       ]);
 
       const googleAvailable = Boolean(
@@ -39,6 +40,7 @@ export const connectionsRouter = {
         google: {
           providerId: "google" as const,
           connected: Boolean(google),
+          canDisconnect: Boolean(google) && accountCount > 1,
           accountId: google?.accountId ?? null,
           scope: google?.scope ?? null,
           available: googleAvailable
@@ -46,6 +48,7 @@ export const connectionsRouter = {
         github: {
           providerId: "github" as const,
           connected: Boolean(github),
+          canDisconnect: Boolean(github) && accountCount > 1,
           accountId: github?.accountId ?? null,
           scope: github?.scope ?? null,
           available: githubAvailable,
