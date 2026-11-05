@@ -79,7 +79,8 @@ services:
           - hub-minio
 
   minio-init:
-    image: minio/mc:latest
+    # The server image includes mc; reuse it instead of pulling the removed client image.
+    image: minio/minio
     depends_on:
       - minio
     restart: "no"
