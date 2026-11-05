@@ -29,7 +29,11 @@ const SOURCE_CACHE_TTL_MS = 30_000;
 /** Don't cache hard auth failures for long — user may re-link immediately. */
 const SOURCE_CACHE_FAIL_TTL_MS = 5_000;
 
-const cachedByUserId = new Map<string, { value: PublicGitHubSource; expiresAt: number }>();
+type SourceCacheEntry = { expiresAt: number } & (
+  | { value: PublicGitHubSource }
+  | { error: unknown }
+);
+const cachedByUserId = new Map<string, SourceCacheEntry>();
 const inflightByUserId = new Map<string, Promise<PublicGitHubSource>>();
 /**
  * Per-account refresh mutex. A single process-global promise would cross-wire
@@ -53,6 +57,7 @@ export async function resolvePublicGitHubSourceForUser(
   const now = Date.now();
   const cached = cachedByUserId.get(userId);
   if (cached && cached.expiresAt > now) {
+    if ("error" in cached) throw cached.error;
     return cached.value;
   }
 
@@ -63,9 +68,14 @@ export async function resolvePublicGitHubSourceForUser(
 
   const promise = resolvePublicGitHubSourceForUserUncached(userId)
     .then((value) => {
+      if (!value.isConfigured && value.reason === "missing_github_configuration") return value;
       const ttl = value.isConfigured ? SOURCE_CACHE_TTL_MS : SOURCE_CACHE_FAIL_TTL_MS;
       cachedByUserId.set(userId, { value, expiresAt: Date.now() + ttl });
       return value;
+    })
+    .catch((error: unknown) => {
+      cachedByUserId.set(userId, { error, expiresAt: Date.now() + SOURCE_CACHE_FAIL_TTL_MS });
+      throw error;
     })
     .finally(() => {
       inflightByUserId.delete(userId);

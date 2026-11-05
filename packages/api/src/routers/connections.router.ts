@@ -23,7 +23,8 @@ export const connectionsRouter = {
     .output(ConnectionsStatusOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
-      await resolvePublicGitHubSourceForUser(userId);
+      // A GitHub outage must not hide the user's other connection settings.
+      await resolvePublicGitHubSourceForUser(userId).catch(() => undefined);
       const [google, github, githubConfig, accountCount] = await Promise.all([
         betterAuthAccountRepository.findGoogleAccountForUser(userId),
         betterAuthAccountRepository.findGitHubAccountForUser(userId),

@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { getDb } from "../index.ts";
+import { getDb, pool } from "../index.ts";
 import { account } from "../schema/auth.schema.ts";
 
 export type GitHubAccountTokens = {
@@ -22,6 +22,25 @@ type GitHubTokenUpdate = {
   refreshTokenExpiresAt?: Date | null;
   scope?: string | null;
 };
+
+let activeGitHubRotations = 0;
+const waitingGitHubRotations: Array<() => void> = [];
+
+async function withGitHubRotationSlot<T>(run: () => Promise<T>): Promise<T> {
+  const capacity = Math.max(1, Math.floor((pool.options.max ?? 10) / 2));
+  if (activeGitHubRotations >= capacity) {
+    await new Promise<void>((resolve) => waitingGitHubRotations.push(resolve));
+  } else {
+    activeGitHubRotations++;
+  }
+  try {
+    return await run();
+  } finally {
+    const next = waitingGitHubRotations.shift();
+    if (next) next();
+    else activeGitHubRotations--;
+  }
+}
 
 export const betterAuthAccountRepository = {
   /**
@@ -91,31 +110,41 @@ export const betterAuthAccountRepository = {
     expected: { accountId: string; accessToken: string | null; refreshToken: string },
     rotate: (current: GitHubAccountTokens) => Promise<GitHubTokenUpdate | null>
   ): Promise<string | null> {
-    return getDb().transaction(async (tx) => {
-      const [current] = await tx
-        .select()
-        .from(account)
-        .where(and(eq(account.id, expected.accountId), eq(account.providerId, "github")))
-        .for("update")
-        .limit(1);
-      if (!current) return null;
+    return withGitHubRotationSlot(() =>
+      getDb().transaction(async (tx) => {
+        const [current] = await tx
+          .select()
+          .from(account)
+          .where(and(eq(account.id, expected.accountId), eq(account.providerId, "github")))
+          .for("update")
+          .limit(1);
+        if (!current) return null;
 
-      // Another process or OAuth callback may already have rotated this pair.
-      if (
-        current.accessToken !== expected.accessToken ||
-        current.refreshToken !== expected.refreshToken
-      ) {
-        return current.accessToken;
-      }
+        const accessToken = current.accessToken?.trim();
+        const refreshToken = current.refreshToken?.trim();
+        const normalized = {
+          ...current,
+          accessToken: accessToken?.length ? accessToken : null,
+          refreshToken: refreshToken?.length ? refreshToken : null
+        };
 
-      const tokens = await rotate(current);
-      if (!tokens) return null;
-      await tx
-        .update(account)
-        .set({ ...tokens, updatedAt: new Date() })
-        .where(eq(account.id, current.id));
-      return tokens.accessToken;
-    });
+        // Another process or OAuth callback may already have rotated this pair.
+        if (
+          normalized.accessToken !== expected.accessToken ||
+          normalized.refreshToken !== expected.refreshToken
+        ) {
+          return normalized.accessToken;
+        }
+
+        const tokens = await rotate(normalized);
+        if (!tokens) return null;
+        await tx
+          .update(account)
+          .set({ ...tokens, updatedAt: new Date() })
+          .where(eq(account.id, current.id));
+        return tokens.accessToken;
+      })
+    );
   },
 
   async countAccountsForUser(userId: string): Promise<number> {
