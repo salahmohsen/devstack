@@ -131,12 +131,19 @@ export const createApplicationTool = createTool({
     const db = createDb();
     if (listingUrl) {
       const { row, created } = await runWithDb(db, async () => {
-        const result = await applicationRepository.createIfAbsentByUrl({
-          ...common,
-          url: listingUrl
-        });
+        const result = await applicationRepository.createIfAbsentByUrl(
+          {
+            ...common,
+            url: listingUrl
+          },
+          {
+            kind: "discovered",
+            actorUserId: userId,
+            metadata: { via: "hub_create", sourceTags }
+          }
+        );
         // URL conflict with inbox/dismissed → promote + merge non-empty hub fields.
-        if (!created && result.row.trackingStatus !== "tracked") {
+        if (!result.created && result.row.trackingStatus !== "tracked") {
           const from = result.row.trackingStatus;
           const promoted = await applicationRepository.setTrackingStatus(
             result.row.id,
@@ -164,15 +171,6 @@ export const createApplicationTool = createTool({
             });
             return { row: merged ?? promoted, created: false };
           }
-        }
-        if (created) {
-          await applicationActivityRepository.append({
-            userId,
-            applicationId: result.row.id,
-            kind: "discovered",
-            actorUserId: userId,
-            metadata: { via: "hub_create", sourceTags }
-          });
         }
         return result;
       });

@@ -97,7 +97,7 @@ const JACK_AND_JILL_ONBOARDING_RE =
   /\b(ready\s+to\s+kick\s+things\s+off|good\s+to\s+have\s+you\s+here|i['’]m\s+jack[,.]?\s+and\s+i['’]ll\s+be\s+doing)\b/i;
 
 /**
- * Product / marketing noise domains from Gmail corpus (non-career).
+ * Product / marketing noise domains from mail corpus (non-career).
  * Careers/recruiting subdomains and subjects are handled by career heuristics first.
  */
 const NOISE_FROM_DOMAIN_RE =

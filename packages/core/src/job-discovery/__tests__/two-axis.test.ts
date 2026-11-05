@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { decideTwoAxis, type TwoAxisPrefs } from "#@/job-discovery/two-axis";
+import {
+  decideStructuredJobPlace,
+  decideTwoAxis,
+  type TwoAxisPrefs
+} from "#@/job-discovery/two-axis";
 
 const egyptRemotePrefs: TwoAxisPrefs = {
   workModes: ["remote"],
@@ -461,6 +465,40 @@ describe("decideTwoAxis", () => {
         hiringRegion: "latam",
         location: "LatAm",
         prefs: { workModes: ["hybrid"], locations: ["worldwide"], remoteRegions: [] }
+      }).action
+    ).toBe("drop");
+  });
+});
+
+describe("structured remote place fallback", () => {
+  it.each([
+    ["mena", "pass"],
+    ["emea", "pass"],
+    ["us", "drop"],
+    ["latam", "drop"],
+    ["global", "pass"]
+  ] as const)(
+    "matches %s using the preferred location when remote regions are empty",
+    (region, action) => {
+      expect(
+        decideStructuredJobPlace({
+          workMode: "remote",
+          hiringRegion: null,
+          location: null,
+          regions: [region],
+          prefs: { workModes: ["remote"], remoteRegions: [], locations: ["Cairo"] }
+        }).action
+      ).toBe(action);
+    }
+  );
+  it("keeps an explicit remote gate authoritative", () => {
+    expect(
+      decideStructuredJobPlace({
+        workMode: "remote",
+        hiringRegion: null,
+        location: null,
+        regions: ["mena"],
+        prefs: { workModes: ["remote"], remoteRegions: ["us"], locations: ["Cairo"] }
       }).action
     ).toBe("drop");
   });

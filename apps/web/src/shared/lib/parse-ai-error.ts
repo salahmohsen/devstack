@@ -8,7 +8,11 @@
  * - Feature context only adjusts the title when the kind is generic
  */
 
+import { extractChatgptPlanErrorCode } from "@tsu-stack/core";
+
 export type AiErrorKind =
+  | "chatgpt_plan_limit"
+  | "chatgpt_plan_reconnect"
   | "insufficient_balance"
   | "missing_byo"
   | "unauthorized"
@@ -60,6 +64,9 @@ export type PresentAiErrorOptions = {
   /** Soft-fail notes — folded into technical details, never primary bullets. */
   notes?: string[];
 };
+
+const KEY_REJECTED_RE =
+  /api[\s_-]?key[^.\n]{0,30}\b(?:expired|invalid|revoked|rejected|disabled|deactivated)|\b(?:expired|invalid|revoked|incorrect|rejected)\s+(?:x-)?api[\s_-]?key|invalid[_\s-]api[_\s-]key|authentication_error/i;
 
 const BILLING_URL_RE = /https?:\/\/[^\s"'<>\\]+/gi;
 
@@ -247,6 +254,37 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
   const haystack = collectText(technical, json).toLowerCase();
   const urls = extractHttpUrls(technical);
 
+  const planCode =
+    extractChatgptPlanErrorCode(technical) ??
+    (/subscription_sharing_usage_limit_exceeded/.test(technical) ? "CHATGPT_PLAN_LIMIT" : null);
+  if (planCode === "CHATGPT_PLAN_LIMIT") {
+    return {
+      kind: "chatgpt_plan_limit",
+      variant: "warning",
+      title: "ChatGPT plan limit reached",
+      description:
+        "Your ChatGPT plan is out of usage for now. The limit is shared with ChatGPT and every app using your plan, so try again later.",
+      billingUrl: null,
+      externalActionLabel: null,
+      showAiSettings: true,
+      retryable: true,
+      technicalDetails: technical
+    };
+  }
+  if (planCode === "CHATGPT_PLAN_RECONNECT") {
+    return {
+      kind: "chatgpt_plan_reconnect",
+      variant: "warning",
+      title: "Reconnect ChatGPT",
+      description: "Your ChatGPT sign-in expired or was revoked. Reconnect it in AI settings.",
+      billingUrl: null,
+      externalActionLabel: null,
+      showAiSettings: true,
+      retryable: false,
+      technicalDetails: technical
+    };
+  }
+
   // Provider out of credits / balance (OpenCode, OpenAI-compatible, etc.)
   if (
     /insufficient\s+balance|insufficient\s+credits|credits?\s+error|out of credits|payment required|402\b/i.test(
@@ -261,6 +299,26 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
       description: "Add credits with your AI provider, or switch model and key in AI settings.",
       billingUrl: preferBillingUrl(urls),
       externalActionLabel: "Open billing",
+      showAiSettings: true,
+      retryable: true,
+      technicalDetails: technical
+    };
+  }
+
+  const optInText = /opt.?in|hosted in china|region|not available in|explicit opt/i.test(haystack);
+  if (
+    !optInText &&
+    (KEY_REJECTED_RE.test(haystack) ||
+      (isAiProviderApiError(json, technical) && json?.statusCode === 401))
+  ) {
+    return {
+      kind: "provider_error",
+      variant: "error",
+      title: "Your AI provider key was rejected",
+      description:
+        "The key has expired, was revoked, or is invalid. Replace it in Settings, AI, then retry.",
+      billingUrl: null,
+      externalActionLabel: null,
       showAiSettings: true,
       retryable: true,
       technicalDetails: technical
@@ -348,7 +406,7 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
   }
 
   if (
-    /threadid.*undefined|resourceid and a threadid|memory|hub is unavailable|agent returned 5|internal server error|econnrefused|fetch failed|network|llm timeout|timeout after|upstream request failed|temporarily unavailable \(503\)|agent is unreachable|agent overloaded|create_run_failed|agent:unreachable|agent:create_run/i.test(
+    /threadid.*undefined|resourceid and a threadid|memory (?:store|unavailable|error|failed)|hub is unavailable|agent returned 5|internal server error|econnrefused|fetch failed|network (?:error|request failed|is unreachable|connection)|networkerror|llm timeout|timeout after|upstream request failed|temporarily unavailable \(503\)|agent is unreachable|agent overloaded|create_run_failed|agent:unreachable|agent:create_run/i.test(
       haystack
     )
   ) {

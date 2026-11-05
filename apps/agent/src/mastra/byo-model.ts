@@ -8,5 +8,6 @@ export {
   createByoRequestContext,
   generateModelOption,
   resolveGenerateModel,
+  type GenerateModel,
   type GenerateModelOverride
 } from "#@/mastra/runtime-llm";

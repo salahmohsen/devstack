@@ -1,6 +1,6 @@
 import { Bot, Briefcase } from "lucide-react";
 import { type ComponentProps, type ReactNode } from "react";
-import { SiGithub, SiGmail } from "react-icons/si";
+import { SiGithub, SiResend } from "react-icons/si";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -25,7 +25,7 @@ export function IntegrationsSection({ className }: { className?: string }) {
           Connects to what you already use
         </h2>
         <p className="text-sm leading-relaxed wrap-break-word text-muted-foreground sm:text-base">
-          Freehire listings fill New jobs. Gmail and optional Resend feed Career Inbox. GitHub
+          Freehire listings fill New jobs. Your optional Resend account feeds Career Inbox. GitHub
           powers the public repos surface. Model calls use keys you seal in Settings.
         </p>
       </div>
@@ -79,10 +79,10 @@ function IntegrationCard({
 
 const integrations: Integration[] = [
   {
-    name: "Gmail",
+    name: "Resend",
     description:
-      "Career Inbox connects with Gmail OAuth. Classify hiring mail and move tracked stages with undo.",
-    icon: <SiGmail aria-hidden />,
+      "Optionally connect your own Resend account to receive career mail, classify it, and reply.",
+    icon: <SiResend aria-hidden />,
     corner: <DecorIcon position="bottom-left" />
   },
   {

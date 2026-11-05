@@ -27,3 +27,12 @@ export function refineDailyBoardScoreCap(n: number): number {
 export function dailyAiAttemptCap(dailyBoardScoreCap: number): number {
   return refineDailyBoardScoreCap(dailyBoardScoreCap);
 }
+
+export const DISCOVERY_SALARY_NOTE =
+  "Monthly and yearly pay are compared in the same currency. Unknown pay, other currencies, and hourly or daily rates stay eligible.";
+
+export const DISCOVERY_AI_FALLBACK_NOTE =
+  "AI scoring was unavailable. Matches were added using your saved filters.";
+
+export const DISCOVERY_NO_AI_NOTE =
+  "Matches were added using your saved filters without AI scoring. Add an AI key in Settings for personalized scoring.";

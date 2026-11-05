@@ -17,10 +17,20 @@ import {
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
   cancelOutputForHubHitl,
+  sealHubApprovalCards,
   sealWaitingHubHitlOnRemount,
   staleWaitingHubConfirmCards,
+  waitingHubApprovalCards,
   waitingHubConfirmCards
 } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
+import {
+  classifyHubHistoryError,
+  type HubHistoryErrorKind
+} from "@/features/agent-hub/lib/classify-hub-history-error";
+import {
+  findHubApprovalId,
+  withApprovalRequested
+} from "@/features/agent-hub/lib/hub-approval-resume";
 import {
   consumeHubApplicationPlantNewChat,
   consumeHubCreateIntent,
@@ -45,6 +55,11 @@ import {
   prependUniqueHubMessages,
   unionHubMessages
 } from "@/features/agent-hub/lib/hub-thread-history-adapter";
+import { stopHubChatAndWaitIdle } from "@/features/agent-hub/lib/stop-hub-chat-and-wait-idle";
+import {
+  hubToolCallIsOnLastMessage,
+  writeHubToolOutputs
+} from "@/features/agent-hub/lib/write-hub-tool-output";
 
 import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 
@@ -77,6 +92,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const startingPlantChatRef = React.useRef(false);
 
   const [historyReady, setHistoryReady] = React.useState(false);
+  const [historyError, setHistoryError] = React.useState<HubHistoryErrorKind | null>(null);
   const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
   const nextHistoryPageRef = React.useRef(1);
@@ -142,6 +158,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
         try {
           const page = await fetchHubMessagesPage(0);
           historyRetryAttemptRef.current = 0;
+          setHistoryError(null);
           markHubHitlRemountSeen();
           // Initial hydrate must replace — a stale empty Chat path must not block import.
           importHistory(page.uiMessages, true);
@@ -160,12 +177,13 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
             setMessagesRef.current((prev) => (prev.length > 0 ? [...prev] : prev));
           }, 50);
           return;
-        } catch {
-          // Keep historyReady false so HubWelcome does not paint over a real
-          // thread while the agent is restarting (silent auto-retry).
-          if (attempt >= HISTORY_RETRY_DELAYS_MS.length) {
+        } catch (error) {
+          // Keep historyReady false so HubWelcome never paints over a real
+          // thread and the composer stays locked while the load is failing.
+          const kind = classifyHubHistoryError(error);
+          if (kind === "auth" || attempt >= HISTORY_RETRY_DELAYS_MS.length) {
             historyLoadRef.current = null;
-            setHistoryReady(true);
+            setHistoryError(kind);
             return;
           }
           const delay = HISTORY_RETRY_DELAYS_MS[attempt] ?? 4000;
@@ -203,6 +221,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
       if (historyRetryTimerRef.current != null) return;
       historyLoadRef.current = null;
       historyRetryAttemptRef.current = 0;
+      setHistoryError(null);
       setHistoryReady(false);
       void ensureHistory();
     };
@@ -292,25 +311,68 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
       const api = chat as unknown as {
         addToolOutput: (a: HubToolOutputArgs) => void | PromiseLike<void>;
       };
+      // Chat.addToolOutput rewrites only the last message; older cards would be
+      // dropped silently, so write those into state directly (no auto-resume).
+      if (!hubToolCallIsOnLastMessage(chat.messages, args.toolCallId)) {
+        const written = writeHubToolOutputs(chat.messages, [args]);
+        if (written.changedIds.length > 0) {
+          setMessagesRef.current(written.messages as typeof messages);
+        }
+        return;
+      }
       return api.addToolOutput(args);
     },
     [chat]
   );
 
-  const startNewChat = React.useCallback(async () => {
-    // Cancel leftover HITL so composer is free on the new thread.
-    for (const card of waitingHubConfirmCards(messagesRef.current)) {
-      try {
-        await Promise.resolve(
-          addToolOutput({
-            tool: card.toolName,
-            toolCallId: card.toolCallId,
-            output: cancelOutputForHubHitl(card.toolName)
-          })
+  const clearPendingHitl = React.useCallback(() => {
+    for (const card of waitingHubConfirmCards(chat.messages)) {
+      void addToolOutput({
+        tool: card.toolName,
+        toolCallId: card.toolCallId,
+        output: cancelOutputForHubHitl(card.toolName)
+      });
+    }
+    for (const card of waitingHubApprovalCards(chat.messages)) {
+      const approvalId = findHubApprovalId(chat.messages, card.toolCallId);
+      // The SDK only answers approvals on the last message; anything else, or an
+      // approval whose id is gone, is denied locally with no resume.
+      if (approvalId && chat.messages.at(-1)?.id === card.messageId) {
+        setMessagesRef.current(
+          withApprovalRequested(chat.messages, card.toolCallId, approvalId) as typeof messages
         );
-      } catch {
-        // Best-effort cancel; new epoch still proceeds.
+        void chat.addToolApprovalResponse({
+          id: approvalId,
+          approved: false,
+          reason: "cancelled"
+        });
+      } else {
+        setMessagesRef.current(
+          sealHubApprovalCards(chat.messages, [card]).messages as typeof messages
+        );
       }
+    }
+  }, [addToolOutput, chat]);
+
+  const retryHistory = React.useCallback(() => {
+    if (historyRetryTimerRef.current != null) {
+      clearTimeout(historyRetryTimerRef.current);
+      historyRetryTimerRef.current = null;
+    }
+    historyLoadRef.current = null;
+    historyRetryAttemptRef.current = 0;
+    setHistoryError(null);
+    void ensureHistory();
+  }, [ensureHistory]);
+
+  const startNewChat = React.useCallback(async () => {
+    // Abort first: a live stream would otherwise repaint the old reply into the
+    // new thread, and a cancel below could auto-resume against the old epoch.
+    await stopHubChatAndWaitIdle(chat);
+    // Sealed locally (not addToolOutput) so cancelling cannot trigger a resume.
+    const sealed = sealWaitingHubHitlOnRemount(messagesRef.current);
+    if (sealed.cancelledIds.length > 0) {
+      setMessagesRef.current(sealed.messages as typeof messages);
     }
     // Drop inspect / Today / form panels from the previous thread.
     dismissDashboardSidePanel({ force: true });
@@ -327,11 +389,12 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     setMessagesRef.current([]);
     setHasMoreHistory(false);
     nextHistoryPageRef.current = 1;
+    setHistoryError(null);
     setHistoryReady(false);
     // Re-hydrate empty history for the new epoch thread (retry on transient fail).
     await ensureHistory();
     return { epoch: result.epoch, threadId: result.threadId };
-  }, [addToolOutput, ensureHistory]);
+  }, [chat, ensureHistory]);
 
   // Open in agent: fresh thread, then plant (composer-side). Never send.
   React.useEffect(() => {
@@ -365,26 +428,29 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!historyReady || messages.length === 0) return;
-    const stale = staleWaitingHubConfirmCards(messages);
-    for (const card of stale) {
-      if (cancelledStaleIdsRef.current.has(card.toolCallId)) continue;
-      cancelledStaleIdsRef.current.add(card.toolCallId);
-      void Promise.resolve(
-        addToolOutput({
-          tool: card.toolName,
-          toolCallId: card.toolCallId,
-          output: cancelOutputForHubHitl(card.toolName)
-        })
-      ).catch(() => {
-        cancelledStaleIdsRef.current.delete(card.toolCallId);
-      });
+    const stale = staleWaitingHubConfirmCards(messages).filter(
+      (card) => !cancelledStaleIdsRef.current.has(card.toolCallId)
+    );
+    if (stale.length === 0) return;
+    // Cards on older messages cannot go through Chat.addToolOutput (last message
+    // only), so the cancellation is written into state and recorded only if it took.
+    const writes = stale.map((card) => {
+      return { toolCallId: card.toolCallId, output: cancelOutputForHubHitl(card.toolName) };
+    });
+    const written = writeHubToolOutputs(messages, writes);
+    for (const id of written.changedIds) cancelledStaleIdsRef.current.add(id);
+    if (written.changedIds.length > 0) {
+      setMessages((prev) => writeHubToolOutputs(prev, writes).messages as typeof messages);
     }
-  }, [addToolOutput, historyReady, messages]);
+  }, [historyReady, messages, setMessages]);
 
   const value: HubChatContextValue = {
     ...helpers,
     chat,
     historyReady,
+    historyError,
+    retryHistory,
+    clearPendingHitl,
     hasMoreHistory,
     isLoadingOlder,
     loadOlderMessages,

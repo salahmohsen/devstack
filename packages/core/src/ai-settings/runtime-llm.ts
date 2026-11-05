@@ -12,7 +12,7 @@ import { type AiFeature, AiModelIdSchema } from "./types";
  * Product rule: BYO only — no process.env provider keys on the agent.
  */
 export const RuntimeLlmConfigSchema = z.object({
-  /** Mastra model router id: `provider/model` (e.g. deepseek/deepseek-v4-flash). */
+  /** Mastra model router id: `provider/model` (e.g. deepseek/deepseek-flash). */
   modelId: AiModelIdSchema,
   /** Provider id prefix of modelId (or custom). */
   providerKind: z.string().min(1).max(64),
@@ -20,7 +20,9 @@ export const RuntimeLlmConfigSchema = z.object({
    * Decrypted BYO key when the user configured one for this provider.
    * Required for LLM steps; omit only when the step can degrade to heuristic.
    */
-  apiKey: z.string().min(1).max(512).optional()
+  apiKey: z.string().min(1).max(4096).optional(),
+  /** Set only for the ChatGPT plan provider, so plan errors can be recorded for that user. */
+  planUserId: z.string().min(1).max(128).optional()
 });
 export type RuntimeLlmConfig = z.infer<typeof RuntimeLlmConfigSchema>;
 

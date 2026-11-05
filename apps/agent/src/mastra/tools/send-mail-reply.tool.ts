@@ -60,9 +60,7 @@ export const sendMailReplyTool = createTool({
     return {
       ok: true,
       providerMessageId: sent.providerMessageId,
-      message: sent.usedByoKey
-        ? `Sent via your Resend key from ${sent.from}.`
-        : `Sent via platform Resend from ${sent.from}.`
+      message: `Sent via your Resend key from ${sent.from}.`
     };
   }
 });

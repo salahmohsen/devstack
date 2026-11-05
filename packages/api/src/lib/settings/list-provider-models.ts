@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import {
+  CHATGPT_PLAN_PROVIDER_KIND,
+  ChatgptPlanError,
   getMastraProvider,
   toMastraModelId,
   type ListProviderModelsInput,
@@ -8,6 +10,7 @@ import {
 } from "@tsu-stack/core";
 import { userAiSettingsRepository } from "@tsu-stack/db";
 
+import { listChatgptPlanModels } from "#@/lib/settings/chatgpt-plan";
 import { openSecret } from "#@/lib/settings/seal-secret";
 
 const CACHE_TTL_MS = 20 * 60 * 1000;
@@ -16,7 +19,15 @@ const FETCH_TIMEOUT_MS = 15_000;
 /** Known public OpenAI-compatible models endpoints (no invented base URLs). */
 const LIVE_MODELS_URL: Readonly<Record<string, string>> = {
   "opencode-go": "https://opencode.ai/zen/go/v1/models",
-  opencode: "https://opencode.ai/zen/v1/models"
+  opencode: "https://opencode.ai/zen/v1/models",
+  // Free-tier slugs (`:free`, `-free`) rotate weekly; the shipped catalog goes stale
+  // within days, so these gateways must be listed live.
+  openrouter: "https://openrouter.ai/api/v1/models",
+  kilo: "https://api.kilo.ai/api/gateway/models",
+  nvidia: "https://integrate.api.nvidia.com/v1/models",
+  deepseek: "https://api.deepseek.com/models",
+  groq: "https://api.groq.com/openai/v1/models",
+  mistral: "https://api.mistral.ai/v1/models"
 };
 
 type CacheEntry = {
@@ -109,7 +120,10 @@ function parseOpenAiModelsList(json: unknown, kind: string): Array<{ id: string;
     if (typeof rawId !== "string" || !rawId.trim()) continue;
 
     // API may return bare ids (`gpt-5.6-luna`) or already-prefixed; normalize to Mastra id.
-    const bare = rawId.includes("/") ? rawId.slice(rawId.lastIndexOf("/") + 1) : rawId.trim();
+    // Only strip our own provider prefix: slugs like openrouter `google/gemma-...:free`
+    // are provider-side namespaces and must survive intact.
+    const trimmed = rawId.trim();
+    const bare = trimmed.startsWith(`${kind}/`) ? trimmed.slice(kind.length + 1) : trimmed;
     if (!bare) continue;
     const id = toMastraModelId(kind, bare);
     if (seen.has(id)) continue;
@@ -177,6 +191,27 @@ export async function listProviderModels(
 ): Promise<ListProviderModelsOutput> {
   const { userId, input } = deps;
   const kind = input.kind;
+
+  if (kind === CHATGPT_PLAN_PROVIDER_KIND) {
+    try {
+      const { models } = await listChatgptPlanModels(userId);
+      return {
+        models,
+        source: models.length > 0 ? "live" : "empty",
+        providerId: input.providerId ?? null
+      };
+    } catch (error) {
+      return {
+        models: [],
+        source: "empty",
+        providerId: input.providerId ?? null,
+        errorMessage:
+          error instanceof ChatgptPlanError
+            ? error.message.replace(/^\[[A-Z_]+\]\s*/, "")
+            : "Could not load ChatGPT models."
+      };
+    }
+  }
 
   const keyResult = await resolveApiKey(userId, input);
   const providerId = "providerId" in keyResult ? keyResult.providerId : null;

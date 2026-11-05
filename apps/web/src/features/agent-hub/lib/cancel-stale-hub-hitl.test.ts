@@ -3,11 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   cancelOutputForHubHitl,
+  sealHubApprovalCards,
   sealWaitingHubHitlOnRemount,
   staleWaitingHubConfirmCards,
   toolCallIsOnLatestAssistant,
+  waitingHubApprovalCards,
   waitingHubConfirmCards
 } from "./cancel-stale-hub-hitl";
+import { lastHubHitlKind } from "./hub-tool-names";
 import { rememberTriageAction } from "./hub-triage-action-memory";
 
 function message(id: string, parts: UIMessage["parts"]): UIMessage {
@@ -110,5 +113,57 @@ describe("cancel stale hub HITL", () => {
     };
     expect(latestPart.state).toBe("output-available");
     expect(latestPart.output).toEqual({ action: "dismiss" });
+  });
+
+  describe("approval cards", () => {
+    const persistedApproval = {
+      type: "tool-generate-apply-package",
+      toolCallId: "gen-1",
+      toolName: "generate-apply-package",
+      state: "input-available",
+      input: { applicationId: "app-1" }
+    } as never;
+    const liveApproval = {
+      type: "tool-send-mail-reply",
+      toolCallId: "send-1",
+      toolName: "send-mail-reply",
+      state: "approval-requested",
+      approval: { id: "run-1::send-1" },
+      input: {}
+    } as never;
+
+    it("finds persisted and live approvals but not finished ones", () => {
+      const done = {
+        ...(persistedApproval as object),
+        toolCallId: "done",
+        state: "output-available"
+      } as never;
+      const messages = [message("a1", [persistedApproval, done]), message("a2", [liveApproval])];
+      expect(waitingHubApprovalCards(messages).map((card) => card.toolCallId)).toEqual([
+        "gen-1",
+        "send-1"
+      ]);
+    });
+
+    it("seals approvals so a reload cannot lock the composer", () => {
+      const messages = [message("a1", [persistedApproval])];
+      expect(lastHubHitlKind(messages)).toBe("approval");
+      const sealed = sealWaitingHubHitlOnRemount(messages);
+      expect(sealed.cancelledIds).toEqual(["gen-1"]);
+      expect(lastHubHitlKind(sealed.messages)).toBeNull();
+      const part = sealed.messages[0]?.parts[0] as {
+        state: string;
+        approval: { approved: boolean };
+      };
+      expect(part.state).toBe("output-denied");
+      expect(part.approval.approved).toBe(false);
+    });
+
+    it("keeps a live approval id when denying locally", () => {
+      const sealed = sealHubApprovalCards([message("a1", [liveApproval])]);
+      const part = sealed.messages[0]?.parts[0] as { approval: { id: string } };
+      expect(part.approval.id).toBe("run-1::send-1");
+      expect(sealHubApprovalCards([message("a1", [waitingMail])]).cancelledIds).toEqual([]);
+    });
   });
 });

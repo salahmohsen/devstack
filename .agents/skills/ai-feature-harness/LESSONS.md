@@ -17,6 +17,59 @@
 
 ---
 
+## 2026-11-05 — Configure stateless Responses before SDK serialization
+
+- **Trigger:** ChatGPT-plan follow-up requests referenced reasoning items that were never stored.
+- **Finding:** Forcing `store: false` only in fetch is too late: the SDK has already converted history into server-side item references. Apply stateless provider options to both generation and streaming before serialization, and request encrypted reasoning explicitly.
+- **Finding:** Existing history may contain reasoning IDs without encrypted payloads. Omit those reasoning parts while preserving visible assistant text and function call/result pairs; clear conversation and previous-response options before conversion so the SDK does not skip full history.
+- **Evidence class:** Exact production provider error, controlled installed-SDK request capture, generation/streaming regression loop including legacy history and tool pairs. Live-provider recovery remains a rollout check.
+
+## 2026-11-04 — Provider removal includes every delivery fallback
+
+- **Trigger:** Remove Gmail and require tenant-owned Resend for career mail.
+- **Finding:** Deleting a provider card leaves queues, push endpoints, MCP methods, and persisted cursors active unless every ingress path is removed. Keep historical source tags when existing messages still need to deserialize.
+- **Finding:** Verify both API and agent senders with platform credentials present and tenant credentials absent. Missing tenant keys or sender addresses must prevent delivery; inbound must also reject missing tenant credentials before storing a bodyless message.
+- **Finding:** Independent provider setup must render through sibling query loading/errors. Content-fetch failures must remain retryable before writing an ingress idempotency key, while valid empty messages remain accepted. Disconnect eligibility should share the API’s account-count rule and keep the server guard.
+- **Evidence class:** Controlled execution of actual API/agent send helpers and inbound handler, real webhook HMAC verification, local migration transaction rolled back, production builds, and package checks. Browser interaction and live Resend delivery remain separate checks.
+
+## 2026-11-04 — Preserve streamed output and supply profile evidence before tool locks
+
+- **Trigger:** Apply-package chunks and regenerated job takes returned empty text through a stream-only Responses adapter; chat proposals described an existing profile as unavailable.
+- **Finding:** A non-streaming adapter must preserve completed output items from SSE events when the terminal response omits its output. Token usage plus a successful finish does not prove the caller received text. Exercise the actual SDK and Mastra caller together.
+- **Finding:** A forced proposal path that excludes profile-reading tools must receive a fresh, session-scoped profile snapshot before the tool restriction. Keep experience dates, distinguish total career years from role-specific years, and leave unsupported fit scores null.
+- **Finding:** Verify null scores through preview merging and save serialization. Optional profile context must not block chat on a read failure, and its fallback must invalidate stale evidence. Atomic application/activity insertion needs a real rollback and concurrent retry check.
+- **Finding:** Strict native JSON schemas must require every declared property, using nullable values for absent data. In-process loose schemas can use explicit prompt injection while keeping schema validation.
+- **Finding:** A timeout race must abort its provider request and clear its timer. A URL create callback must use its inner result until the outer awaited result has initialized.
+- **Evidence class:** Production agent/server logs, controlled SSE through the installed AI SDK and actual Mastra apply-package agent, scoped profile and save-path tests, local PostgreSQL profile read, and agent/server builds. Raw production SSE and an authenticated live-provider retry remain rollout checks.
+
+## 2026-11-04 — Follow-up work needs its own completion boundary
+
+- **Trigger:** Review found a backfill coalescing into an already active landing pass.
+- **Finding:** A shared finished boolean cannot represent newer work arriving during completion. Persist a revision, give follow-up work a distinct queue ID, and condition completion on the revision the worker owns. Superseded queued passes can skip provider and screening work.
+- **Finding:** Account-scoped cache keys need response ownership checks when authentication lives in a cookie shared across tabs.
+- **Finding:** An overall polling limit does not bound a pending request. Bound each request and preserve the distinction between a read timeout and a long-running server job.
+- **Finding:** Metadata failure after a successful write must not turn its retry into a rejected candidate. Keep warnings nonfatal or recover the original persisted outcome.
+- **Evidence class:** Forced completion/backfill race using actual local workers and services, controlled polling deadlines, response-cache rejection tests, and production builds. No production deployment or browser claim.
+
+## 2026-11-04 — Discovery review recovery and account boundaries
+
+- **Trigger:** Review of persisted discovery tracking and queue retry behavior.
+- **Finding:** An active database claim does not prove a Redis job exists. Repair only queued runs using their original ID and return that ID directly from enqueue; do not restart legitimate scoring work.
+- **Finding:** Detached polling must check cancellation after every awaited invalidation, and account changes must clear both the query cache and shared tracker. A transient read failure is not a failed server run.
+- **Finding:** Keep source geography arrays separate from fallback extraction. A broad region can erase a precise city when fed into a helper that prioritizes the region.
+- **Finding:** Publish addition disclosures only after the insert succeeds. Missing AI configuration and a configured provider outage need different wording.
+- **Finding:** Verification scripts that start workers must guard every backing service URL before creating any resource. A local database guard does not protect remote Redis.
+- **Evidence class:** Local PostgreSQL/Redis worker recovery loop, controlled asynchronous tracker tests, rendered status tests, and an actual untrusted-certificate TLS rejection. Interactive browser and paid-provider paths remain unverified.
+
+## 2026-11-04 — Queue completion must follow the product outcome
+
+- **Trigger:** Job discovery showed no new matches after upstream connection failures.
+- **Finding:** Returning a failure object from a worker dependency resolves the queue job and bypasses configured retries. Persist run state and propagate retryable failures; never infer success or empty results from a stable inbox count.
+- **Finding:** Prove a network hypothesis from the deployed container. DNS can resolve successfully to an unreachable CDN route; an alternate resolver is useful only after hostname-preserving HTTPS probes prove its answers work. Keep resolver overrides scoped and preserve TLS verification.
+- **Finding:** Preserve upstream structured geography and pay periods across every screening stage. Re-parsing display text can reject already qualified locations or compare monthly preferences with annual amounts.
+- **Finding:** Test the actual dispatcher/runtime pair: a newer standalone HTTP client may not implement the native fetch dispatcher protocol used by the deployed Node version.
+- **Evidence class:** Production container DNS/TLS probes, real local PostgreSQL/Redis worker failure-recovery loop, status component rendering, production builds. Interactive browser and paid-provider execution remain separate rollout checks.
+
 ## 2026-09-10 — Apply-package review dialog harness: single-mount panes, same-site oRPC, excluded-stub reachability
 
 - **Trigger:** Apply package review dialog (sheet → Paper Studio dialog): resume/cover-letter papers, Matte mail editor, attachment squares, Save/Send, live parity loop on seeded drafts

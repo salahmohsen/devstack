@@ -105,11 +105,6 @@ export {
   type UpsertUserCustomDomainInput,
   type UserCustomDomainEntity
 } from "./user-custom-domain.repository.ts";
-export {
-  userGmailSyncRepository,
-  type UpsertUserGmailSyncInput,
-  type UserGmailSyncEntity
-} from "./user-gmail-sync.repository.ts";
 export { userHubStateRepository, type UserHubStateEntity } from "./user-hub-state.repository.ts";
 export {
   userJobAiBudgetRepository,
@@ -137,3 +132,12 @@ export {
   type CreateUsernameSlugAliasInput,
   type UsernameSlugAliasEntity
 } from "./username-slug-alias.repository.ts";
+export {
+  userChatgptPlanRepository,
+  type ChatgptPlanConnectedPatch,
+  type UserChatgptPlanEntity
+} from "./user-chatgpt-plan.repository.ts";
+export {
+  jobDiscoveryRunRepository,
+  type JobDiscoveryRunEntity
+} from "./job-discovery-run.repository.ts";

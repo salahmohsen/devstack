@@ -147,22 +147,22 @@ catalog:
   "@fontsource-variable/inter": ^5.2.8
   geist: ^1.7.2
   "@better-auth/drizzle-adapter": 1.7.0-rc.1
-  "mastra": "^1.20.3"
-  "@mastra/core": "^1.54.0"
-  "@mastra/duckdb": "^1.5.2"
-  "@mastra/evals": "^1.6.0"
+  "mastra": "^1.37.0"
+  "@mastra/core": "^1.81.0"
+  "@mastra/duckdb": "^1.17.0"
+  "@mastra/evals": "^1.10.10"
   "@mastra/libsql": "^1.15.1"
-  "@mastra/loggers": "^1.2.0"
-  "@mastra/memory": "^1.24.0"
-  "@mastra/observability": "^1.16.3"
-  "@mastra/hono": ^1.5.6
-  "@mastra/ai-sdk": ^1.7.0
+  "@mastra/loggers": "^1.3.10"
+  "@mastra/memory": "^1.40.0"
+  "@mastra/observability": "^1.23.0"
+  "@mastra/hono": "^1.7.23"
+  "@mastra/ai-sdk": "^1.11.3"
   "@mastra/auth-better-auth": ^1.1.2
   # Mastra's peerDep requires ai >= 5.0.76; current resolved is ai@6.0.208
-  "@mastra/pg": ^1.18.0
+  "@mastra/pg": "^1.34.0"
   pg: ^8.21.0
-  ai: ^6.0.208
-  "@ai-sdk/react": ^2.0.212
+  ai: ^6.0.250
+  "@ai-sdk/react": ^3.0.252
   "@duckdb/node-bindings": 1.5.4-r.1
   "@tanstack/react-table": ^8.21.3
   "@hono/node-server": ^1.19.14
@@ -195,6 +195,12 @@ catalog:
   yaml: ^2.9.0
   sanitize-html: ^2.17.7
   "@types/sanitize-html": ^2.16.1
+  "@better-auth/api-key": 1.6.23
+  "@better-auth/core": 1.6.23
+  "@modelcontextprotocol/sdk": 1.29.0
+  "@ai-sdk/openai": 3.0.88
+  undici: ^7.30.1
+  "@noble/ciphers": 2.2.0
 
 catalogMode: prefer
 
@@ -219,6 +225,9 @@ overrides:
   drizzle-orm: "catalog:"
   hono: "catalog:"
   kysely: 0.28.17
+  # Mastra bump pulled ws 8.22.1 beside 8.21.0; two ws variants duplicate @orpc/server
+  # (peer-keyed) and break oRPC plugin types in apps/server.
+  ws: 8.22.1
   yoga-layout: 2.0.1
   # assistant-ui doctor: one core/store. @assistant-ui/react@0.15.13 uses 0.3;
   # @assistant-ui/react-ai-sdk@1.3.40 (last AI SDK v6 pin) still declares 0.2.

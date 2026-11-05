@@ -3,7 +3,7 @@ import { type z } from "zod";
 
 import { type RuntimeLlmConfig } from "@tsu-stack/core";
 
-import { createByoRequestContext, type GenerateModelOverride } from "#@/mastra/runtime-llm";
+import { createByoRequestContext, type GenerateModel } from "#@/mastra/runtime-llm";
 
 export const REWRITE_CHUNK_TIMEOUT_MS = 60_000;
 export const LETTERS_TIMEOUT_MS = 90_000;
@@ -29,9 +29,11 @@ type RaceGenerateAgent = {
         /** Prefer capability-aware injection for BYO models without native SO. */
         jsonPromptInjection?: boolean | "auto" | "inline" | "system";
       };
-      model: GenerateModelOverride;
+      model: GenerateModel;
       requestContext: RequestContext;
       modelSettings?: { maxOutputTokens?: number };
+      abortSignal?: AbortSignal;
+      maxSteps?: number;
       /**
        * Apply-package agent registers skill tools. Combining tools + structured
        * output breaks several BYO models (object comes back undefined). Disable
@@ -39,7 +41,12 @@ type RaceGenerateAgent = {
        */
       toolChoice?: "auto" | "none" | "required";
     }
-  ) => Promise<{ object?: unknown; text?: string }>;
+  ) => Promise<{
+    object?: unknown;
+    text?: string;
+    finishReason?: string;
+    usage?: { outputTokens?: number; reasoningTokens?: number };
+  }>;
 };
 
 /** First complete JSON object/array in `text`, ignoring trailing prose. */
@@ -117,7 +124,7 @@ export async function raceGenerate<TSchema extends z.ZodTypeAny>(
   agent: RaceGenerateAgent,
   prompt: string,
   schema: TSchema,
-  model: GenerateModelOverride,
+  model: GenerateModel,
   requestContext: RequestContext,
   options: {
     maxOutputTokens: number;
@@ -127,50 +134,51 @@ export async function raceGenerate<TSchema extends z.ZodTypeAny>(
 ): Promise<z.infer<TSchema>> {
   const { maxOutputTokens, timeoutMs, stepLabel } = options;
 
-  let result: { object?: unknown; text?: string };
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    result = await Promise.race([
+    const deadline = new Promise<never>((_, reject) => {
+      timeout = setTimeout(() => {
+        reject(new Error(`${stepLabel} timeout ${timeoutMs}ms`));
+        controller.abort();
+      }, timeoutMs);
+    });
+    const result = await Promise.race([
       agent.generate([{ role: "user", content: prompt }], {
         structuredOutput: {
           schema,
-          // opencode-go/minimax-m3 and similar BYO routes lack native SO.
           jsonPromptInjection: "auto"
         },
         model,
         requestContext,
         toolChoice: "none",
-        // CallSettings (AI SDK / Mastra in-process) uses maxOutputTokens; HTTP probe uses maxTokens.
+        maxSteps: 1,
+        abortSignal: controller.signal,
         modelSettings: { maxOutputTokens }
       }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`${stepLabel} timeout ${timeoutMs}ms`)), timeoutMs)
-      )
+      deadline
     ]);
+    const payload = extractStructuredGeneratePayload(result);
+    if (payload === undefined) {
+      throw new Error(
+        `${stepLabel}: apply_package_schema_failed: no structured object (finishReason=${result.finishReason ?? "unknown"}, outputTokens=${result.usage?.outputTokens ?? "unknown"}, reasoningTokens=${result.usage?.reasoningTokens ?? "unknown"})`
+      );
+    }
+
+    const parsed = schema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error(
+        `${stepLabel}: apply_package_schema_failed: ${formatSchemaFailure(parsed.error)}`
+      );
+    }
+    return parsed.data as z.infer<TSchema>;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.startsWith(stepLabel)) {
       throw error instanceof Error ? error : new Error(message);
     }
     throw new Error(`${stepLabel}: ${message}`);
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const payload = extractStructuredGeneratePayload(result);
-  if (payload === undefined) {
-    const textPreview =
-      typeof result.text === "string" && result.text.trim().length > 0
-        ? result.text.trim().slice(0, 120)
-        : "(empty)";
-    throw new Error(
-      `${stepLabel}: apply_package_schema_failed: no structured object (text=${textPreview})`
-    );
-  }
-
-  const parsed = schema.safeParse(payload);
-  if (!parsed.success) {
-    throw new Error(
-      `${stepLabel}: apply_package_schema_failed: ${formatSchemaFailure(parsed.error)}`
-    );
-  }
-
-  return parsed.data as z.infer<TSchema>;
 }

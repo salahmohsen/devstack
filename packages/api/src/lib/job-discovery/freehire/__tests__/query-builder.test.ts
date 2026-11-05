@@ -35,8 +35,8 @@ describe("buildFreehireQuery", () => {
     expect(params.get("regions")).toBe("eu");
     expect(params.get("work_mode")).toBe("remote");
     expect(params.get("open_within_days")).toBe("14");
-    expect(params.get("salary_currency")).toBe("USD");
-    expect(params.get("salary_min")).toBe("100000");
+    expect(params.get("salary_currency")).toBeNull();
+    expect(params.get("salary_min")).toBeNull();
     expect(params.get("visa_sponsorship")).toBe("true");
     expect(params.get("company_type")).toBe("product");
     expect(params.get("collections")).toBe("yc");
@@ -71,7 +71,7 @@ describe("buildFreehireQuery", () => {
 
   it("omits unset facets entirely — only constants remain", async () => {
     const { params, filters, hash } = await buildFreehireQuery(prefsWith({}));
-    expect([...params.keys()].toSorted()).toEqual(["limit", "order", "sort"]);
+    expect([...params.keys()].toSorted()).toEqual(["description_format", "limit", "order", "sort"]);
     expect(filters).toEqual({});
     expect(hash).toBe(await preferenceQueryHash({}));
   });
@@ -82,8 +82,8 @@ describe("buildFreehireQuery", () => {
     expect(withMinOnly.params.get("salary_currency")).toBeNull();
 
     const both = await buildFreehireQuery(prefsWith({ salaryMin: 80000, salaryCurrency: "EUR" }));
-    expect(both.params.get("salary_min")).toBe("80000");
-    expect(both.params.get("salary_currency")).toBe("EUR");
+    expect(both.filters.local_monthly_salary_min).toBe(80000);
+    expect(both.filters.local_salary_currency).toBe("EUR");
   });
 
   it("drops a salary currency outside the freehire whitelist", async () => {
@@ -91,7 +91,7 @@ describe("buildFreehireQuery", () => {
       prefsWith({ salaryMin: 80000, salaryCurrency: "JPY" })
     );
     expect(params.get("salary_min")).toBeNull();
-    expect(dropped).toEqual(["salaryCurrency:JPY"]);
+    expect(dropped).toEqual([]);
   });
 
   it("passes boolean gates straight through (tri-state: unset → no param)", async () => {
@@ -120,7 +120,12 @@ describe("buildFreehireQuery", () => {
 
   it("sends every set geography facet (freehire OR-widens places)", async () => {
     const { params } = await buildFreehireQuery(
-      prefsWith({ regions: ["eu"], countries: ["de", "nl"], cities: ["berlin"] })
+      prefsWith({
+        workModes: ["hybrid"],
+        regions: ["eu"],
+        countries: ["de", "nl"],
+        cities: ["berlin"]
+      })
     );
     expect(params.get("regions")).toBe("eu");
     expect(params.get("countries")).toBe("de,nl");
@@ -159,4 +164,22 @@ describe("buildFreehireQuery", () => {
     );
     expect(hash).toBe(await preferenceQueryHash(filters));
   });
+});
+
+it("separates remote eligibility from physical geography in a mixed search", async () => {
+  const { params, filters } = await buildFreehireQuery(
+    prefsWith({
+      workModes: ["remote", "hybrid"],
+      regions: ["mena"],
+      countries: ["eg"],
+      cities: ["Cairo"]
+    })
+  );
+  expect(params.get("work_mode")).toBe("remote,hybrid");
+  expect(params.get("work_mode_remote_anywhere")).toBe("true");
+  expect(params.get("work_mode_remote_regions")).toBe("mena");
+  expect(params.get("regions")).toBeNull();
+  expect(params.get("countries")).toBe("eg");
+  expect(params.get("cities")).toBe("Cairo");
+  expect(filters.work_mode_remote_regions).toBe("mena");
 });

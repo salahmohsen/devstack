@@ -43,7 +43,7 @@ describe("scoreCatalogAgainstPreference", () => {
   it("applies the salary floor only when the stated currency matches", () => {
     const usdFloor = { ...prefs, salaryMin: 4000, salaryCurrency: "USD" };
     const below = scoreCatalogAgainstPreference(
-      { ...listing, salaryMin: 24_000, salaryCurrency: "USD" },
+      { ...listing, salaryMin: 24_000, salaryCurrency: "USD", salaryPeriod: "year" },
       usdFloor
     );
     expect(below.passed).toBe(false);

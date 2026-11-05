@@ -1,4 +1,4 @@
-export type SalaryPeriod = "month" | "year";
+export type SalaryPeriod = "month" | "year" | "day" | "hour";
 
 export type StatedJobPay = {
   salaryRange?: string | null;
@@ -36,6 +36,8 @@ function currencyFromRange(range: string): string | null {
 function periodFromRange(range: string): SalaryPeriod | null {
   if (MONTH_PERIOD.test(range)) return "month";
   if (YEAR_PERIOD.test(range)) return "year";
+  if (/(?:\/\s*(?:h|hr|hour)\b|per\s+hour\b|hourly\b)/i.test(range)) return "hour";
+  if (/(?:\/\s*day\b|per\s+day\b|daily\b)/i.test(range)) return "day";
   return null;
 }
 
@@ -64,10 +66,13 @@ export function comparableMonthlyPay(
   const amount = (range ? amountFromRange(range) : null) ?? finiteAmount(pay.salaryMin);
   const currency = (range ? currencyFromRange(range) : null) ?? upperCurrency(pay.salaryCurrency);
   const period = (range ? periodFromRange(range) : null) ?? pay.salaryPeriod ?? null;
-  if (amount == null || currency == null) return null;
+  if (amount == null || currency == null || /period (?:not stated|unknown)/i.test(range)) {
+    return null;
+  }
 
   if (period === "month") return { monthly: amount, currency };
   if (period === "year") return { monthly: amount / 12, currency };
+  if (period === "day" || period === "hour") return null;
   if (amount >= ANNUAL_AMOUNT_WITHOUT_PERIOD) {
     return { monthly: amount / 12, currency };
   }

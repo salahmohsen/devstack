@@ -32,7 +32,8 @@ type NavItem = {
     | "/dashboard/settings/jobs"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
-    | "/dashboard/settings/shortcuts";
+    | "/dashboard/settings/shortcuts"
+    | "/dashboard/settings/mcp";
   icon: typeof UserRound;
   group: "You" | "Workspace" | "Intelligence";
 };
@@ -64,6 +65,14 @@ const SETTINGS_NAV: readonly NavItem[] = [
     group: "You"
   },
   {
+    id: "mcp",
+    label: "MCP access",
+    description: "API keys for Claude Code and other MCP clients",
+    to: "/dashboard/settings/mcp",
+    icon: KeyRound,
+    group: "You"
+  },
+  {
     id: "domain",
     label: "Domain",
     description: "Custom hostname for your portfolio",
@@ -74,7 +83,7 @@ const SETTINGS_NAV: readonly NavItem[] = [
   {
     id: "connections",
     label: "Integrations",
-    description: "Gmail, GitHub, and Resend inbound",
+    description: "GitHub, Google sign-in, and optional Resend mail",
     to: "/dashboard/settings/connections",
     icon: Blocks,
     group: "Workspace"

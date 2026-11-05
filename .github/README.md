@@ -3,13 +3,13 @@
 Self-hostable job-apply assistant: discover roles, track applications, draft packages with a hub agent on your keys, and publish evidence on `/{username}`.
 
 [![CI](https://github.com/salahmohsen/devstack/actions/workflows/ci.yml/badge.svg)](https://github.com/salahmohsen/devstack/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm_Noncommercial-blue.svg)](../LICENSE)
 
 Live install: **[devstack.salahmohsen.com](https://devstack.salahmohsen.com)** · Apex portfolio: **[salahmohsen.com](https://salahmohsen.com)**
 
 ## About
 
-DEVSTACK closes the apply loop on infrastructure you control. Adapters fill **New jobs** from public boards; you promote roles into a tracked CRM; Career Inbox (optional Gmail) can move stages; a Mastra hub agent drafts apply packages with human review; opted-in evidence shows on your public profile or a verified custom domain.
+DEVSTACK closes the apply loop on infrastructure you control. Freehire fills **New jobs**; you promote roles into a tracked CRM; Career Inbox (optional BYO Resend) can move stages; a Mastra hub agent drafts apply packages with human review; opted-in evidence shows on your public profile or a verified custom domain.
 
 BYO AI and optional BYO Resend mean there is no platform model or mail budget. Missing keys degrade AI steps; CRUD still works.
 
@@ -17,7 +17,7 @@ Built on [tsu-stack](https://github.com/tsu-moe/tsu-stack). Parts of the GitHub 
 
 ## Features
 
-- **New jobs** — adapters for Freehire, Himalayas, Arbeitnow, Remotive, RemoteOK; rank against prefs; optional BYO AI scoring
+- **New jobs** — Freehire source; rank against prefs; optional BYO AI scoring
 - **Tracked jobs** — CRM board through offer; Career Inbox can classify hiring mail and move stages with undo
 - **Hub agent** — Mastra chat on sealed per-tenant provider keys; HITL for hard writes
 - **Apply packages** — resume, cover letter, outreach with review gates
@@ -33,7 +33,7 @@ Built on [tsu-stack](https://github.com/tsu-moe/tsu-stack). Parts of the GitHub 
 | Auth   | Better Auth (magic link, GitHub OAuth, passkeys)                 |
 | Data   | Postgres (Drizzle), Redis                                        |
 | AI     | Mastra agents / workflows, BYO provider keys                     |
-| Mail   | Gmail OAuth + optional BYO Resend                                |
+| Mail   | Optional BYO Resend                                              |
 | Deploy | Docker Compose, Dokploy, Cloudflare Tunnel for edge Host routing |
 
 Monorepo layout:
@@ -96,4 +96,8 @@ Custom domains for tenants: TXT verify + CNAME to the primary app host. Operator
 
 ## License
 
-MIT — see [LICENSE](../LICENSE).
+DEVSTACK's original code is source available under the [PolyForm Noncommercial License 1.0.0](../LICENSE). Use, modification, and redistribution are permitted for the purposes covered by that license, including its noncommercial organization provisions. Commercial use outside those permissions requires a separate commercial license from Salah Mohsen. Contact [@salahmohsen](https://github.com/salahmohsen) to discuss commercial licensing.
+
+Third-party code and dependencies retain their original licenses. See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for notices for the credited upstream projects.
+
+This change does not revoke permissions for copies previously distributed under MIT. Those copies remain available under their original terms.

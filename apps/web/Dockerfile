@@ -27,6 +27,7 @@ COPY --chown=vp:vp packages/email/package.json packages/email/
 COPY --chown=vp:vp packages/env/package.json packages/env/
 COPY --chown=vp:vp packages/github/package.json packages/github/
 COPY --chown=vp:vp packages/logger/package.json packages/logger/
+COPY --chown=vp:vp packages/mcp/package.json packages/mcp/
 COPY --chown=vp:vp packages/pdf/package.json packages/pdf/
 COPY --chown=vp:vp packages/seo/package.json packages/seo/
 COPY --chown=vp:vp packages/ui/package.json packages/ui/

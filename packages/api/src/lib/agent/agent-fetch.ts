@@ -9,7 +9,7 @@ export const AGENT_AUTH_HEADER = "Authorization";
 
 /**
  * Timing-safe string equality (UTF-8). Length mismatch → false.
- * Kept for Gmail push / other shared-secret checks that import this helper.
+ * Used by shared-secret checks that import this helper.
  */
 export function timingSafeStringEqual(a: string, b: string): boolean {
   const ba = Buffer.from(a, "utf8");

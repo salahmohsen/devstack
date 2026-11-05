@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import {
   AiSettingsOutputSchema,
+  CHATGPT_PLAN_PROVIDER_KIND,
   defaultAiModels,
   defaultAiSettingsOutput,
   hubAvatarById,
@@ -38,7 +39,8 @@ function toPublicProviders(providers: StoredAiProvider[]): AiProviderPublic[] {
       // Stored as string; validated on write via AiProviderKindSchema
       kind: p.kind as AiProviderKind,
       label: p.label,
-      hasApiKey: Boolean(p.apiKeyCiphertext),
+      // The plan provider has no API key; its row exists only while connected.
+      hasApiKey: Boolean(p.apiKeyCiphertext) || p.kind === CHATGPT_PLAN_PROVIDER_KIND,
       apiKeyLast4: p.apiKeyLast4
     };
   });

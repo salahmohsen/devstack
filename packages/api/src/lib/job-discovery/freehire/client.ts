@@ -3,6 +3,14 @@ import { z } from "zod";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { asFreehireError, FreehireError, freehireNetworkCode } from "./errors";
+import { fetchFreehire } from "./transport";
+
+const FREEHIRE_HEADERS = {
+  Accept: "application/json",
+  "User-Agent": "salahmohsen/dev-hub (+https://github.com/salahmohsen/dev-hub)"
+};
+
 const DEFAULT_FREEHIRE_BASE_URL = "https://freehire.me/api/v1";
 const SEARCH_TIMEOUT_MS = 15_000;
 const OPERATION = "api__freehire_agent_jobs_search";
@@ -34,6 +42,7 @@ export const FreehireEnrichmentSchema = z
     salary_min: z.number().nullish(),
     salary_max: z.number().nullish(),
     salary_currency: z.string().nullish(),
+    salary_period: z.string().nullish(),
     category: z.string().nullish(),
     experience_years_min: z.number().nullish(),
     domains: z.array(z.string()).nullish()
@@ -86,7 +95,8 @@ const FreehireSearchEnvelopeSchema = z.object({
     total: z.number().nullish(),
     limit: z.number().nullish(),
     offset: z.number().nullish(),
-    ignored_params: z.array(z.string()).nullish()
+    ignored_params: z.array(z.string()).nullish(),
+    ignored_values: z.record(z.string(), z.array(z.string())).nullish()
   })
 });
 
@@ -107,22 +117,24 @@ export async function searchFreehireJobs(
   if (opts?.signal?.aborted) controller.abort();
 
   try {
-    const res = await fetch(url, {
+    const res = await fetchFreehire(url, {
       signal: controller.signal,
-      headers: { Accept: "application/json" }
+      headers: FREEHIRE_HEADERS
     });
     const bodyText = await res.text();
 
     if (!res.ok) {
-      let detail = "";
-      try {
-        const rawError = (JSON.parse(bodyText) as { error?: unknown }).error;
-        detail = typeof rawError === "string" ? rawError : JSON.stringify(rawError);
-      } catch {
-        detail = bodyText.slice(0, 200);
-      }
-      throw new Error(
-        `freehire agent jobs search failed: HTTP ${res.status}${detail ? ` ${detail}` : ""}`
+      const retryHeader = res.headers.get("retry-after");
+      const retrySeconds = retryHeader == null ? NaN : Number(retryHeader);
+      const retryAfterMs = Number.isFinite(retrySeconds)
+        ? retrySeconds * 1000
+        : retryHeader
+          ? Date.parse(retryHeader) - Date.now()
+          : 0;
+      throw new FreehireError(
+        `Job source returned HTTP ${res.status}.`,
+        res.status === 429 || res.status === 408 || res.status >= 500,
+        Math.max(0, Math.min(300_000, retryAfterMs || 0))
       );
     }
 
@@ -130,11 +142,15 @@ export async function searchFreehireJobs(
     try {
       body = JSON.parse(bodyText);
     } catch (error) {
-      throw new Error(`freehire agent jobs search: bad envelope (HTTP ${res.status})`, {
+      throw new FreehireError("Job source returned an invalid response.", true, 0, {
         cause: error
       });
     }
-    const envelope = FreehireSearchEnvelopeSchema.parse(body);
+    const parsed = FreehireSearchEnvelopeSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new FreehireError("Job source response no longer matches its API contract.", false);
+    }
+    const envelope = parsed.data;
     const ignoredParams = envelope.meta.ignored_params ?? [];
     log.set({
       event: "freehire_agent_jobs_search_completed",
@@ -144,16 +160,22 @@ export async function searchFreehireJobs(
       ratelimitRemaining: res.headers.get("x-ratelimit-remaining"),
       durationMs: Date.now() - started
     });
-    if (ignoredParams.length > 0) log.warn("ignored_params_present", { ignoredParams });
+    if (ignoredParams.length > 0 || Object.keys(envelope.meta.ignored_values ?? {}).length > 0) {
+      throw new FreehireError(
+        "Job source did not accept the search filters. Review Job preferences.",
+        false
+      );
+    }
     log.emit();
     return { jobs: envelope.data, total: envelope.meta.total ?? envelope.data.length };
   } catch (error) {
     log.error(error instanceof Error ? error : new Error(String(error)), {
       event: "freehire_agent_jobs_search_failed",
-      durationMs: Date.now() - started
+      durationMs: Date.now() - started,
+      networkCode: freehireNetworkCode(error)
     });
     log.emit({ _forceKeep: true });
-    throw error;
+    throw asFreehireError(error);
   } finally {
     clearTimeout(timer);
     opts?.signal?.removeEventListener("abort", onCallerAbort);
@@ -188,10 +210,13 @@ export async function searchFreehireCities(query: string): Promise<FreehireGeoCi
   const timer = setTimeout(() => controller.abort(), GEO_CITIES_TIMEOUT_MS);
 
   try {
-    const res = await fetch(`${resolveFreehireBaseUrl()}/geo/cities?q=${encodeURIComponent(q)}`, {
-      signal: controller.signal,
-      headers: { Accept: "application/json" }
-    });
+    const res = await fetchFreehire(
+      `${resolveFreehireBaseUrl()}/geo/cities?q=${encodeURIComponent(q)}`,
+      {
+        signal: controller.signal,
+        headers: FREEHIRE_HEADERS
+      }
+    );
     const bodyText = await res.text();
     if (!res.ok) {
       throw new Error(`freehire geo cities failed: HTTP ${res.status}`);

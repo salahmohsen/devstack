@@ -9,18 +9,51 @@ import {
   FindJobsNowInputSchema,
   FindJobsNowOutputSchema,
   hasValidRoleQuery,
+  DiscoveryStatusInputSchema,
+  DiscoveryStatusOutputSchema,
   MAX_OPEN_INBOX
 } from "@tsu-stack/core";
-import { applicationRepository, userJobAiBudgetRepository } from "@tsu-stack/db/repositories";
+import {
+  jobDiscoveryRunRepository,
+  applicationRepository,
+  userJobAiBudgetRepository
+} from "@tsu-stack/db/repositories";
 
 import { loadJobPreferenceOutput } from "#@/lib/application/load-job-preference";
 import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
 import { utcDay } from "#@/lib/job-discovery/enrollment";
 import { searchFreehireCities } from "#@/lib/job-discovery/freehire/client";
+import { toDiscoveryRun } from "#@/lib/job-discovery/status";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export const jobDiscoveryRouter = {
+  status: protectedProcedure
+    .route({
+      description: "Read the current user's discovery progress and last successful sync",
+      method: "GET"
+    })
+    .input(DiscoveryStatusInputSchema)
+    .output(DiscoveryStatusOutputSchema)
+    .handler(async ({ context, input }) => {
+      const userId = context.session.user.id;
+      await jobDiscoveryRunRepository.expireStale(userId);
+      const [run, lastSuccessfulAt, nextScheduledAt] = await Promise.all([
+        input.runId
+          ? jobDiscoveryRunRepository.find(userId, input.runId)
+          : jobDiscoveryRunRepository
+              .findActive(userId)
+              .then(async (active) => active ?? jobDiscoveryRunRepository.latest(userId)),
+        jobDiscoveryRunRepository.lastSuccessful(userId),
+        jobDiscoveryRunRepository.nextScheduled(userId)
+      ]);
+      return {
+        userId,
+        run: run ? toDiscoveryRun(run) : null,
+        lastSuccessfulAt: lastSuccessfulAt?.toISOString() ?? null,
+        nextScheduledAt: nextScheduledAt?.toISOString() ?? null
+      };
+    }),
   findNow: protectedProcedure
     .route({
       description: "Land jobs from this user's own freehire fetch (per-user shelf)",
@@ -30,6 +63,22 @@ export const jobDiscoveryRouter = {
     .output(FindJobsNowOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
+      await jobDiscoveryRunRepository.expireStale(userId);
+      const active = await jobDiscoveryRunRepository.findActive(userId);
+      if (active) {
+        const requested = await requestJobDiscoveryLand({
+          userId,
+          runId: `find_${randomUUID()}`,
+          trigger: "find_now"
+        });
+        return {
+          enqueued: requested.enqueued,
+          ingestTriggered: false,
+          seats: 0,
+          reason: requested.enqueued ? "ok" : "queue_unavailable",
+          runId: requested.runId
+        };
+      }
       const [prefs, llm] = await Promise.all([
         loadJobPreferenceOutput(userId),
         resolveRuntimeAiCredentials(userId, "scorer")
@@ -81,7 +130,7 @@ export const jobDiscoveryRouter = {
       }
 
       const runId = `find_${userId}_${randomUUID()}`;
-      const enqueued = await requestJobDiscoveryLand({
+      const { enqueued, runId: trackedRunId } = await requestJobDiscoveryLand({
         userId,
         runId,
         trigger: "find_now"
@@ -100,6 +149,7 @@ export const jobDiscoveryRouter = {
         enqueued: true,
         ingestTriggered: false,
         seats,
+        runId: trackedRunId,
         reason: "ok"
       };
     }),

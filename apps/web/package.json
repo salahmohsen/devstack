@@ -26,6 +26,7 @@
     "@fontsource-variable/geist-mono": "catalog:",
     "@loadable/component": "catalog:",
     "@lonik/oh-image": "catalog:",
+    "@noble/ciphers": "catalog:",
     "@number-flow/react": "catalog:",
     "@orpc/client": "catalog:",
     "@shadcn/react": "catalog:",

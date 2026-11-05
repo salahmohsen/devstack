@@ -17,6 +17,7 @@ import { user } from "./auth.schema.ts";
 export const mailPurposeEnum = pgEnum("mail_purpose", ["career", "system_notification"]);
 
 /** Ingress source for debugging + idempotency key namespace. */
+// Retain the legacy Gmail source tag so previously imported messages remain readable.
 export const mailProviderEnum = pgEnum("mail_provider", ["resend", "gmail", "manual"]);
 
 /**

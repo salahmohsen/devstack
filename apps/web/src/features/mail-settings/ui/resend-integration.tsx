@@ -495,8 +495,8 @@ function ResendConfigureDialog({
                     <field.InputField
                       type="email"
                       autoComplete="off"
-                      label="Inbound address"
-                      description="Optional. When set, only mail to this address is stored."
+                      label="Career email address"
+                      description="Required for sending from your verified Resend domain. Also limits inbound mail to this address."
                       placeholder="jobs@your-domain.com"
                     />
                   )}

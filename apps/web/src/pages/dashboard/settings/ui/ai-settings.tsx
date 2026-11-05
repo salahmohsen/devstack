@@ -23,6 +23,7 @@ import {
   defaultAiModels,
   getMastraProvider,
   isFeatureOnDefault,
+  isMastraModelDeprecated,
   modelCapabilityFor,
   providerKindFromModelId,
   resolveProviderRowForModel,
@@ -66,6 +67,7 @@ import { useAppForm } from "@/shared/form";
 
 import {
   AiProvidersSection,
+  ChatgptPlanSection,
   useGetAiSettingsQuery,
   useListProviderModelsMutation,
   useTestAiProviderMutation,
@@ -282,9 +284,19 @@ function ModelCapabilityBadge({
   const state = capabilityState(cap);
   const meta = CAPABILITY_STATE_META[state];
   const missing = requirement ? requirementMissing(requirement, cap) : null;
+  const retired = isMastraModelDeprecated(modelId);
 
   return (
     <span className="flex items-center gap-2">
+      {retired ? (
+        <span
+          className="inline-flex items-center gap-1 text-[11px] leading-none text-amber-600"
+          title="The provider no longer serves this model"
+        >
+          <TriangleAlertIcon className="size-3" aria-hidden />
+          retired
+        </span>
+      ) : null}
       {missing && featureLabel ? (
         <span
           className="inline-flex items-center gap-1 text-[11px] leading-none text-amber-600"
@@ -889,6 +901,8 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
             modelProviderIds={data.modelProviderIds ?? {}}
           />
 
+          <ChatgptPlanSection />
+
           <SettingsSection
             title="Models"
             description="Test runs a small request with this model and the matching provider key."
@@ -1061,6 +1075,14 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
                                   </Button>
                                 </div>
                               )}
+                              {isMastraModelDeprecated(
+                                (showDefaultLabel ? defaultModel : featureModel).trim()
+                              ) ? (
+                                <p className="flex items-center gap-1.5 text-xs text-amber-600">
+                                  <TriangleAlertIcon className="size-3 shrink-0" aria-hidden />
+                                  This model is retired by the provider — pick another
+                                </p>
+                              ) : null}
                               {selectionMissing ? (
                                 <p className="flex items-center gap-1.5 text-xs text-amber-600">
                                   <TriangleAlertIcon className="size-3 shrink-0" aria-hidden />
