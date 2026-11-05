@@ -148,7 +148,12 @@ describe("createChatgptPlanFetch", () => {
     });
     expect(seen.url).toBe("https://api.openai.com/v1/responses");
     expect(seen.auth).toBe("Bearer tok");
-    expect(seen.body).toMatchObject({ model: "gpt-x", store: false, stream: true });
+    expect(seen.body).toMatchObject({
+      model: "gpt-x",
+      store: false,
+      stream: true,
+      include: ["reasoning.encrypted_content"]
+    });
     expect(seen.body).not.toHaveProperty("temperature");
     expect(seen.body).not.toHaveProperty("max_output_tokens");
     expect(JSON.stringify(seen.body?.input)).not.toContain('"role":"system"');
@@ -212,6 +217,154 @@ describe("createChatgptPlanFetch", () => {
     );
     expect(draft).toEqual({ items: [] });
   });
+
+  it.each([
+    ["generate", false],
+    ["stream", false],
+    ["generate", true],
+    ["stream", true]
+  ] as const)(
+    "replays stateless history during %s (server continuation: %s)",
+    async (mode, continuation) => {
+      const seen: { body?: Record<string, unknown> } = {};
+      vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+        seen.body = JSON.parse(init.body as string);
+        return new Response(
+          sse([
+            {
+              type: "response.completed",
+              response: {
+                id: "resp_followup",
+                created_at: 1,
+                model: "gpt-6.1-sol",
+                output: [],
+                usage: { input_tokens: 1, output_tokens: 0 }
+              }
+            }
+          ]),
+          { status: 200 }
+        );
+      });
+      const model = chatgptPlanLanguageModel({
+        modelId: "chatgpt-plan/gpt-6.1-sol",
+        accessToken: "test-token"
+      });
+      const options: Parameters<typeof model.doGenerate>[0] = {
+        prompt: [
+          { role: "user", content: [{ type: "text", text: "first turn" }] },
+          {
+            role: "assistant",
+            content: [
+              {
+                type: "reasoning",
+                text: "legacy reasoning",
+                providerOptions: { openai: { itemId: "rs_legacy" } }
+              },
+              {
+                type: "reasoning",
+                text: "empty encrypted payload",
+                providerOptions: {
+                  openai: { itemId: "rs_empty", reasoningEncryptedContent: "" }
+                }
+              },
+              {
+                type: "reasoning",
+                text: "encrypted reasoning",
+                providerOptions: {
+                  openai: {
+                    itemId: "rs_encrypted",
+                    reasoningEncryptedContent: "encrypted-payload"
+                  }
+                }
+              },
+              {
+                type: "text",
+                text: "previous answer",
+                providerOptions: { openai: { itemId: "msg_previous" } }
+              },
+              {
+                type: "tool-call",
+                toolCallId: "call_lookup",
+                toolName: "lookup",
+                input: { id: "own-record" },
+                providerOptions: { openai: { itemId: "fc_previous" } }
+              }
+            ]
+          },
+          {
+            role: "tool",
+            content: [
+              {
+                type: "tool-result",
+                toolCallId: "call_lookup",
+                toolName: "lookup",
+                output: { type: "text", value: "lookup result" }
+              }
+            ]
+          },
+          { role: "user", content: [{ type: "text", text: "continue" }] }
+        ],
+        providerOptions: {
+          openai: {
+            store: true,
+            conversation: continuation ? "conv_unstored" : undefined,
+            previousResponseId: continuation ? "resp_unstored" : undefined,
+            include: ["message.output_text.logprobs"],
+            reasoningEffort: "low"
+          }
+        }
+      };
+      const original = structuredClone(options);
+      if (mode === "generate") {
+        await model.doGenerate(options);
+      } else {
+        const result = await model.doStream(options);
+        for await (const _part of result.stream) {
+          // Consume the stream to exercise the complete provider path.
+        }
+      }
+      expect(options).toEqual(original);
+      const input = seen.body?.input as Array<Record<string, unknown>>;
+      expect(input.some((item) => item.type === "item_reference")).toBe(false);
+      expect(seen.body).toMatchObject({
+        store: false,
+        stream: true,
+        include: ["message.output_text.logprobs", "reasoning.encrypted_content"],
+        reasoning: { effort: "low" }
+      });
+      expect(seen.body).not.toHaveProperty("conversation");
+      expect(seen.body).not.toHaveProperty("previous_response_id");
+      expect(JSON.stringify(input)).not.toContain("rs_legacy");
+      expect(JSON.stringify(input)).not.toContain("rs_empty");
+      expect(input).toContainEqual({
+        type: "reasoning",
+        id: "rs_encrypted",
+        encrypted_content: "encrypted-payload",
+        summary: [{ type: "summary_text", text: "encrypted reasoning" }]
+      });
+      expect(input).toContainEqual(
+        expect.objectContaining({
+          role: "assistant",
+          content: [{ type: "output_text", text: "previous answer" }]
+        })
+      );
+      expect(input).toContainEqual(
+        expect.objectContaining({
+          type: "function_call",
+          call_id: "call_lookup",
+          name: "lookup",
+          arguments: '{"id":"own-record"}'
+        })
+      );
+      expect(input).toContainEqual(
+        expect.objectContaining({
+          type: "function_call_output",
+          call_id: "call_lookup",
+          output: "lookup result"
+        })
+      );
+    }
+  );
 
   it("restores completed output in output-index order rather than arrival order", async () => {
     vi.stubGlobal(
