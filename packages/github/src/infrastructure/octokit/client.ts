@@ -1,7 +1,11 @@
 import { Octokit, type Octokit as OctokitType } from "octokit";
 
 import { type GitHubRuntimeBindings } from "#@/runtime/bindings";
-import { type PublicGitHubSource } from "#@/shared/public-github-source";
+import {
+  invalidatePublicGitHubSourceCache,
+  resolvePublicGitHubSourceForUser,
+  type PublicGitHubSource
+} from "#@/shared/public-github-source";
 
 export type GitHubClient = OctokitType;
 export type GitHubContext = {
@@ -57,12 +61,43 @@ function createRequestScopedFetch(baseFetch: typeof fetch): typeof fetch {
 export function createGitHubOctokit(
   source?: Extract<PublicGitHubSource, { isConfigured: true }>
 ): GitHubClient {
+  const scopedFetch = createRequestScopedFetch(globalThis.fetch);
+  let token = source?.token;
+  const fetchWithTokenRecovery: typeof fetch = async (input, init) => {
+    const url = new URL(input instanceof Request ? input.url : input);
+    if (!source || url.origin !== "https://api.github.com") return scopedFetch(input, init);
+
+    const headers = new Headers(
+      init?.headers ?? (input instanceof Request ? input.headers : undefined)
+    );
+    const requestToken = token;
+    headers.set("authorization", `Bearer ${requestToken}`);
+    const response = await scopedFetch(input instanceof Request ? input.clone() : input, {
+      ...init,
+      headers
+    });
+    if (response.status !== 401) return response;
+
+    invalidatePublicGitHubSourceCache(source.userId);
+    const refreshed = await resolvePublicGitHubSourceForUser(source.userId);
+    if (!refreshed.isConfigured) return response;
+    if (refreshed.token === requestToken) {
+      invalidatePublicGitHubSourceCache(source.userId);
+      return response;
+    }
+
+    token = refreshed.token;
+    headers.set("authorization", `Bearer ${token}`);
+    const retried = await scopedFetch(input, { ...init, headers });
+    if (retried.status === 401) invalidatePublicGitHubSourceCache(source.userId);
+    return retried;
+  };
   return new Octokit({
     auth: source?.token,
     // Use the global `fetch` so the request is bound to the current
     // request's I/O context, then drain the body so an aborted
     // request can never leak its body stream to a sibling request.
-    request: { fetch: createRequestScopedFetch(globalThis.fetch) }
+    request: { fetch: fetchWithTokenRecovery }
   });
 }
 

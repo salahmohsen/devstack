@@ -440,6 +440,13 @@ export const auth = betterAuth({
       providers.github = {
         clientId: ENV_SERVER.GITHUB_CLIENT_ID,
         clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET,
+        // Only the shared GitHub resolver may consume rotating refresh tokens.
+        // Better Auth writes after this callback, outside our account-row lock.
+        async refreshAccessToken() {
+          throw new APIError("BAD_REQUEST", {
+            message: "GitHub token renewal is managed by the application's GitHub connection."
+          });
+        },
         // Request every available OAuth scope (per
         // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps)
         // so the access token can read private repositories and any

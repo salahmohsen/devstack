@@ -24,8 +24,8 @@ export async function enrichProjectsWithGithubRepos(
 ): Promise<ProjectPublicOutput[]> {
   if (projects.length === 0) return projects;
 
-  const source = await resolvePublicGitHubSourceForUser(userId);
-  if (!source.isConfigured) {
+  const source = await resolvePublicGitHubSourceForUser(userId).catch(() => null);
+  if (!source?.isConfigured) {
     return projects.map((p) => {
       return { ...p, githubRepos: [] };
     });

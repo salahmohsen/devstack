@@ -18,7 +18,7 @@ export type PublicGitHubSource =
     };
 
 const GITHUB_TOKEN_ENDPOINT = "https://github.com/login/oauth/access_token";
-const ACCESS_TOKEN_SKEW_MS = 5_000;
+const ACCESS_TOKEN_SKEW_MS = 60_000;
 /** Bound outbound GitHub HTTP so RPC context creation cannot hang the server. */
 const GITHUB_HTTP_TIMEOUT_MS = 5_000;
 /**
@@ -29,7 +29,11 @@ const SOURCE_CACHE_TTL_MS = 30_000;
 /** Don't cache hard auth failures for long — user may re-link immediately. */
 const SOURCE_CACHE_FAIL_TTL_MS = 5_000;
 
-const cachedByUserId = new Map<string, { value: PublicGitHubSource; expiresAt: number }>();
+type SourceCacheEntry = { expiresAt: number } & (
+  | { value: PublicGitHubSource }
+  | { error: unknown }
+);
+const cachedByUserId = new Map<string, SourceCacheEntry>();
 const inflightByUserId = new Map<string, Promise<PublicGitHubSource>>();
 /**
  * Per-account refresh mutex. A single process-global promise would cross-wire
@@ -53,6 +57,7 @@ export async function resolvePublicGitHubSourceForUser(
   const now = Date.now();
   const cached = cachedByUserId.get(userId);
   if (cached && cached.expiresAt > now) {
+    if ("error" in cached) throw cached.error;
     return cached.value;
   }
 
@@ -63,9 +68,14 @@ export async function resolvePublicGitHubSourceForUser(
 
   const promise = resolvePublicGitHubSourceForUserUncached(userId)
     .then((value) => {
+      if (!value.isConfigured && value.reason === "missing_github_configuration") return value;
       const ttl = value.isConfigured ? SOURCE_CACHE_TTL_MS : SOURCE_CACHE_FAIL_TTL_MS;
       cachedByUserId.set(userId, { value, expiresAt: Date.now() + ttl });
       return value;
+    })
+    .catch((error: unknown) => {
+      cachedByUserId.set(userId, { error, expiresAt: Date.now() + SOURCE_CACHE_FAIL_TTL_MS });
+      throw error;
     })
     .finally(() => {
       inflightByUserId.delete(userId);
@@ -82,14 +92,6 @@ export function invalidatePublicGitHubSourceCache(userId?: string): void {
     return;
   }
   cachedByUserId.clear();
-}
-
-/**
- * Lightweight probe: returns GitHub login if the token works, else null.
- * Used by context live-OAuth fallback so we never trust an unvalidated token.
- */
-export async function validateGitHubAccessToken(token: string): Promise<string | null> {
-  return fetchGitHubLogin(token);
 }
 
 async function resolvePublicGitHubSourceForUserUncached(
@@ -196,9 +198,11 @@ export async function resolveWorkingGitHubAccessToken(
 
   const { clientId, clientSecret } = deps.getClientCredentials();
   const canRefresh = Boolean(refreshToken && clientId && clientSecret);
+  let refreshAttempted = false;
 
   // Proactive refresh when we know the token is expired/near-expiry.
   if (canRefresh && (!accessToken || knownExpired)) {
+    refreshAttempted = true;
     accessToken = await runRefresh(
       {
         accountId: row.id,
@@ -223,7 +227,7 @@ export async function resolveWorkingGitHubAccessToken(
   }
 
   // Force refresh once on Bad credentials / 401 even when expiresAt says still valid.
-  if (!canRefresh) {
+  if (!canRefresh || refreshAttempted) {
     return { token: null, reason: "invalid" };
   }
 
@@ -268,12 +272,16 @@ async function runRefresh(
 }
 
 async function refreshAccessTokenHttp(args: RefreshAccessTokenArgs): Promise<string | null> {
-  try {
+  return betterAuthAccountRepository.rotateGitHubTokens(args, async (current) => {
+    if (!current.refreshToken) return null;
+    if (current.refreshTokenExpiresAt && current.refreshTokenExpiresAt.getTime() <= Date.now()) {
+      return null;
+    }
     const body = new URLSearchParams({
       client_id: args.clientId,
       client_secret: args.clientSecret,
       grant_type: "refresh_token",
-      refresh_token: args.refreshToken
+      refresh_token: current.refreshToken
     });
 
     const res = await fetch(GITHUB_TOKEN_ENDPOINT, {
@@ -296,10 +304,9 @@ async function refreshAccessTokenHttp(args: RefreshAccessTokenArgs): Promise<str
       error?: string;
     };
 
+    if (data.error === "bad_refresh_token") return null;
     if (!res.ok || !data.access_token || data.error) {
-      console.debug("[github] OAuth refresh failed:", data.error ?? res.status);
-      // Do not keep returning a known-bad access token after a failed refresh.
-      return null;
+      throw new Error(`GitHub OAuth refresh failed (${res.status})`);
     }
 
     const accessTokenExpiresAt =
@@ -307,38 +314,32 @@ async function refreshAccessTokenHttp(args: RefreshAccessTokenArgs): Promise<str
     const refreshTokenExpiresAt =
       typeof data.refresh_token_expires_in === "number"
         ? new Date(Date.now() + data.refresh_token_expires_in * 1000)
-        : null;
+        : current.refreshTokenExpiresAt;
 
-    await betterAuthAccountRepository.updateGitHubTokens(args.accountId, {
+    return {
       accessToken: data.access_token,
-      refreshToken: data.refresh_token ?? args.refreshToken,
+      refreshToken: data.refresh_token ?? current.refreshToken,
       accessTokenExpiresAt,
       refreshTokenExpiresAt,
-      scope: data.scope ?? args.scope
-    });
-
-    return data.access_token;
-  } catch (error) {
-    console.debug("[github] OAuth refresh threw:", error);
-    return null;
-  }
+      scope: data.scope ?? current.scope
+    };
+  });
 }
 
 async function fetchGitHubLogin(token: string): Promise<string | null> {
-  try {
-    const res = await fetch("https://api.github.com/user", {
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "User-Agent": "tsu-stack"
-      },
-      signal: AbortSignal.timeout(GITHUB_HTTP_TIMEOUT_MS)
-    });
-    if (!res.ok) return null;
-    const profile = (await res.json()) as { login?: string };
-    const login = profile.login?.trim();
-    return login && login.length > 0 ? login : null;
-  } catch {
-    return null;
+  const res = await fetch("https://api.github.com/user", {
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${token}`,
+      "User-Agent": "tsu-stack"
+    },
+    signal: AbortSignal.timeout(GITHUB_HTTP_TIMEOUT_MS)
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) {
+    throw new Error(`GitHub token validation failed (${res.status})`);
   }
+  const profile = (await res.json()) as { login?: string };
+  const login = profile.login?.trim();
+  return login && login.length > 0 ? login : null;
 }

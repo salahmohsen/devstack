@@ -8,6 +8,7 @@ import { betterAuthAccountRepository, githubConfigRepository } from "@tsu-stack/
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import {
   invalidatePublicGitHubSourceCache,
+  resolvePublicGitHubSourceForUser,
   resolveWorkingGitHubAccessToken
 } from "@tsu-stack/github/shared/public-github-source";
 
@@ -22,6 +23,8 @@ export const connectionsRouter = {
     .output(ConnectionsStatusOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
+      // A GitHub outage must not hide the user's other connection settings.
+      await resolvePublicGitHubSourceForUser(userId).catch(() => undefined);
       const [google, github, githubConfig, accountCount] = await Promise.all([
         betterAuthAccountRepository.findGoogleAccountForUser(userId),
         betterAuthAccountRepository.findGitHubAccountForUser(userId),
