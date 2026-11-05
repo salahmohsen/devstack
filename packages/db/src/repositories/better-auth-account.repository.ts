@@ -15,6 +15,14 @@ export type GitHubAccountTokens = {
   updatedAt: Date;
 };
 
+type GitHubTokenUpdate = {
+  accessToken: string;
+  refreshToken?: string | null;
+  accessTokenExpiresAt?: Date | null;
+  refreshTokenExpiresAt?: Date | null;
+  scope?: string | null;
+};
+
 export const betterAuthAccountRepository = {
   /**
    * Look up the GitHub OAuth access token for a signed-in user.
@@ -77,6 +85,37 @@ export const betterAuthAccountRepository = {
     }
   ) {
     return this.updateProviderTokens(accountRowId, tokens);
+  },
+
+  async rotateGitHubTokens(
+    expected: { accountId: string; accessToken: string | null; refreshToken: string },
+    rotate: (current: GitHubAccountTokens) => Promise<GitHubTokenUpdate | null>
+  ): Promise<string | null> {
+    return getDb().transaction(async (tx) => {
+      const [current] = await tx
+        .select()
+        .from(account)
+        .where(and(eq(account.id, expected.accountId), eq(account.providerId, "github")))
+        .for("update")
+        .limit(1);
+      if (!current) return null;
+
+      // Another process or OAuth callback may already have rotated this pair.
+      if (
+        current.accessToken !== expected.accessToken ||
+        current.refreshToken !== expected.refreshToken
+      ) {
+        return current.accessToken;
+      }
+
+      const tokens = await rotate(current);
+      if (!tokens) return null;
+      await tx
+        .update(account)
+        .set({ ...tokens, updatedAt: new Date() })
+        .where(eq(account.id, current.id));
+      return tokens.accessToken;
+    });
   },
 
   async countAccountsForUser(userId: string): Promise<number> {
