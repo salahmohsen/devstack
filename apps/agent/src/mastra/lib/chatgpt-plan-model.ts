@@ -163,5 +163,44 @@ export function chatgptPlanLanguageModel(args: {
     name: "chatgpt-plan",
     fetch: createChatgptPlanFetch(args.userId)
   });
-  return provider.responses(chatgptPlanSlugFromModelId(args.modelId));
+  const model = provider.responses(chatgptPlanSlugFromModelId(args.modelId));
+  type CallOptions = Parameters<typeof model.doGenerate>[0];
+
+  function statelessOptions(options: CallOptions): CallOptions {
+    const openai = options.providerOptions?.openai;
+    const include = Array.isArray(openai?.include) ? openai.include : [];
+    return {
+      ...options,
+      prompt: options.prompt.map((message) =>
+        message.role === "assistant"
+          ? {
+              ...message,
+              content: message.content.filter(
+                (part) =>
+                  part.type !== "reasoning" ||
+                  (typeof part.providerOptions?.openai?.reasoningEncryptedContent === "string" &&
+                    part.providerOptions.openai.reasoningEncryptedContent.length > 0)
+              )
+            }
+          : message
+      ),
+      providerOptions: {
+        ...options.providerOptions,
+        openai: {
+          ...openai,
+          store: false,
+          include: [...new Set([...include, "reasoning.encrypted_content"])],
+          conversation: undefined,
+          previousResponseId: undefined
+        }
+      }
+    };
+  }
+
+  // Set stateless mode before SDK serialization, which otherwise emits item references.
+  const generate = model.doGenerate.bind(model);
+  const stream = model.doStream.bind(model);
+  model.doGenerate = (options) => generate(statelessOptions(options));
+  model.doStream = (options) => stream(statelessOptions(options));
+  return model;
 }

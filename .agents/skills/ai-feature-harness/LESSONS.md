@@ -17,6 +17,13 @@
 
 ---
 
+## 2026-11-05 — Configure stateless Responses before SDK serialization
+
+- **Trigger:** ChatGPT-plan follow-up requests referenced reasoning items that were never stored.
+- **Finding:** Forcing `store: false` only in fetch is too late: the SDK has already converted history into server-side item references. Apply stateless provider options to both generation and streaming before serialization, and request encrypted reasoning explicitly.
+- **Finding:** Existing history may contain reasoning IDs without encrypted payloads. Omit those reasoning parts while preserving visible assistant text and function call/result pairs; clear conversation and previous-response options before conversion so the SDK does not skip full history.
+- **Evidence class:** Exact production provider error, controlled installed-SDK request capture, generation/streaming regression loop including legacy history and tool pairs. Live-provider recovery remains a rollout check.
+
 ## 2026-11-04 — Provider removal includes every delivery fallback
 
 - **Trigger:** Remove Gmail and require tenant-owned Resend for career mail.
